@@ -5,8 +5,11 @@ _zip/
 # generated at build time by scripts/gen-precache.mjs
 hub/sw-manifest.js
 
-# your data — trades, screenshots, backups, logs
-data/
+# your data — trades, screenshots, backups, logs.
+# Anchored: an unanchored "data/" matches a directory of that name at ANY
+# depth, which silently swallowed web/src/data/ — the app's own source data —
+# and left the repo unbuildable from a fresh clone.
+/data/
 
 # OS / local tooling — not part of the app
 .DS_Store
