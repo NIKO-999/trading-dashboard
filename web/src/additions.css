@@ -2760,6 +2760,99 @@ button.mc-cal-cell { cursor: pointer; }
   padding: 1px 5px;
 }
 
+/* Headings had no rules at all, so markdown ones fell back to the UA sheet:
+   a 2em bold h2 inside a 13px body. Kept close to the body size — these are
+   labels within an entry, not page titles. */
+.mc-fw-entry-body h1,
+.mc-fw-entry-body h2,
+.mc-fw-entry-body h3,
+.mc-fw-entry-body h4,
+.mc-fw-entry-body h5,
+.mc-fw-entry-body h6 {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--txt);
+  margin: 16px 0 6px;
+}
+.mc-fw-entry-body > :first-child { margin-top: 0; }
+
+.mc-fw-entry-body blockquote {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 2px solid var(--hairline);
+  background: var(--glass);
+  border-radius: 0 12px 12px 0;
+  color: var(--txt-dim);
+}
+.mc-fw-entry-body blockquote p:last-child { margin-bottom: 0; }
+
+/* ---------- toned callouts ----------
+   data-tone is set by utils/frameworkMarkdown.ts, which reads whatever colour
+   an entry hard-coded, removes it, and re-emits the meaning. Saturation lives
+   in the 2px bar; the fill is a wash and the text stays the ordinary body
+   colour. That is what makes these read as calm while still being unmistakably
+   coded — a fully saturated fill or coloured body text is the thing that made
+   the old ones shout.
+
+   Alphas follow the ladder already used for tinted panels elsewhere in the app
+   (fill .05–.13, border .22–.40) — see .mc-timing.ok and .mc-gate.on. */
+.mc-fw-entry-body [data-tone="danger"] { --tone-rgb: var(--loss-rgb); }
+.mc-fw-entry-body [data-tone="success"] { --tone-rgb: var(--win-rgb); }
+.mc-fw-entry-body [data-tone="warn"] { --tone-rgb: var(--warn-rgb); }
+/* Info has no token — this is the literal already used for info badges. */
+.mc-fw-entry-body [data-tone="info"] { --tone-rgb: 147, 197, 253; }
+
+.mc-fw-callout,
+.mc-fw-entry-body p[data-tone],
+.mc-fw-entry-body blockquote[data-tone] {
+  padding: 12px 15px 12px 16px;
+  border: 1px solid rgba(var(--tone-rgb), 0.22);
+  border-left: 2px solid rgba(var(--tone-rgb), 0.8);
+  /* Squared off on the bar side, matching .mc-note blockquote. */
+  border-radius: 0 12px 12px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--tone-rgb), 0.07),
+    rgba(var(--tone-rgb), 0.02) 62%,
+    transparent
+  );
+  box-shadow: 0 0 26px rgba(var(--tone-rgb), 0.05);
+}
+
+.mc-fw-callout { margin: 14px 0; }
+/* The label and its text are one statement — no gap inside the panel. */
+.mc-fw-callout > :first-child { margin-top: 0; }
+.mc-fw-callout > :last-child { margin-bottom: 0; }
+.mc-fw-callout > h1,
+.mc-fw-callout > h2,
+.mc-fw-callout > h3,
+.mc-fw-callout > h4,
+.mc-fw-callout > h5,
+.mc-fw-callout > h6 {
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+
+.mc-fw-entry-body p[data-tone],
+.mc-fw-entry-body blockquote[data-tone] {
+  margin: 12px 0;
+  color: var(--txt-dim);
+}
+
+/* A coloured word that was never a block of its own stays a word — turning
+   every inline span into a panel would be louder than what it replaced. */
+.mc-fw-entry-body span[data-tone] {
+  color: rgba(var(--tone-rgb), 0.9);
+  font-weight: 500;
+}
+/* …unless its own block already carries the tone, in which case repeating it
+   on the text is the shouting we just removed. */
+.mc-fw-entry-body [data-tone] span[data-tone] {
+  color: inherit;
+  font-weight: inherit;
+}
+
 .mc-fw-entry-images {
   display: flex;
   flex-wrap: wrap;
@@ -2800,4 +2893,12 @@ button.mc-cal-cell { cursor: pointer; }
   .mc-fw-section-title { font-size: 14.5px; }
   .mc-fw-section-body { padding: 4px 14px 14px; }
   .mc-fw-entry-image { width: 140px; }
+  .mc-fw-entry-body h1[data-tone],
+  .mc-fw-entry-body h2[data-tone],
+  .mc-fw-entry-body h3[data-tone],
+  .mc-fw-entry-body h4[data-tone],
+  .mc-fw-entry-body h5[data-tone],
+  .mc-fw-entry-body h6[data-tone],
+  .mc-fw-entry-body p[data-tone],
+  .mc-fw-entry-body blockquote[data-tone] { padding: 10px 12px 10px 13px; }
 }

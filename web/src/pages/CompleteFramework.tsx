@@ -15,15 +15,9 @@
 
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { marked } from 'marked';
 import { Empty, Lightbox } from '../components/kit';
 import { FRAMEWORK_SECTIONS, type FrameworkEntry } from '../data/completeFramework';
-
-marked.setOptions({ gfm: true, breaks: false });
-
-function renderBody(body: string): string {
-  return marked.parse(body, { async: false }) as string;
-}
+import { renderFrameworkBody } from '../utils/frameworkMarkdown';
 
 /**
  * Deliberately relative, no leading slash. These images live in
@@ -44,7 +38,10 @@ function FrameworkEntryCard({ entry, onImage }: { entry: FrameworkEntry; onImage
     <div className="mc-fw-entry">
       <div className="mc-fw-entry-title">{entry.title}</div>
       {entry.source && <div className="mc-fw-entry-source">{entry.source}</div>}
-      <div className="mc-fw-entry-body" dangerouslySetInnerHTML={{ __html: renderBody(entry.body) }} />
+      <div
+        className="mc-fw-entry-body"
+        dangerouslySetInnerHTML={{ __html: renderFrameworkBody(entry.body) }}
+      />
       {entry.images && entry.images.length > 0 && (
         <div className="mc-fw-entry-images">
           {entry.images.map((img) => (
