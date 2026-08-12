@@ -1,0 +1,258 @@
+/* ============================================================
+   Companion orbit — the lap. DEV ONLY.
+
+   Three animations run in lockstep on the same 3.4s timeline:
+
+     co-lap       position around Voyager  (identical in both layers)
+     co-fade-*    which layer is visible   (opposite phase)
+     co-shadow    whether the contact shadow is on the ground
+
+   The first two MUST share a duration. If the fade drifts out of step with the lap
+   by even a few percent, the companion visibly pops from one side of
+   Voyager to the other at the crossover instead of passing behind him.
+   That is the single fragile thing here, so the duration lives in one
+   custom property that both read.
+
+   ---------- WHY THE OFFSETS ARE IN px, NOT % ----------
+
+   The first cut of this file wrote the lap as translateX(±58%). A
+   percentage inside translate() resolves against the ELEMENT'S OWN width,
+   and the element here is the companion — 87px against Voyager's 190px.
+   So ±58% moved the pet ±50px: the entire lap fitted inside Voyager's
+   silhouette, and the whole behind-half of the arc was invisible. The
+   feature looked like it did nothing.
+
+   ---------- THE TWO CUSTOM PROPERTIES ----------
+
+     --co-x   how far out the companion swings at the crossovers. The
+              component measures it from the rendered figures. Horizontal
+              offsets are fractions of it, so ±1 is by construction the
+              point where the two are clear of each other.
+     --co-s   Voyager's rendered width. Vertical offsets are fractions of
+              it, because height does not vary between outfits the way
+              width does — ironclad's pauldrons make it half again as wide
+              as the standard rig but no taller.
+   ============================================================ */
+
+.co-stage {
+  --co-dur: 3.4s;
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  display: grid;
+  place-items: end center;
+}
+
+.co-stage:focus-visible {
+  outline: 2px solid #7fd8ff;
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.co-voyager {
+  position: relative;
+  z-index: 2;
+  line-height: 0;
+}
+
+.co-pet {
+  position: absolute;
+  bottom: 3%;
+  left: 50%;
+  line-height: 0;
+  pointer-events: none;
+  /* Parked at rest to the right of Voyager's feet. The -50% centres the
+     companion on its own box; everything after it is the lap offset.
+     Every keyframe below repeats this shape, so the resting pose and the
+     animated poses can never disagree about where "home" is. */
+  transform: translate(calc(-50% + var(--co-x) * 0.62), 0) scale(1);
+}
+
+.co-behind {
+  z-index: 1;
+  opacity: 0;
+}
+.co-front {
+  z-index: 3;
+  /* At rest the FRONT copy is the visible one — a companion standing at
+     Voyager's feet should be in front of him, not tucked behind. */
+  opacity: 1;
+}
+
+.co-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #6a707c;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .co-stage.is-running .co-behind {
+    animation:
+      co-lap var(--co-dur) ease-in-out,
+      co-fade-behind var(--co-dur) linear;
+  }
+  .co-stage.is-running .co-front {
+    animation:
+      co-lap var(--co-dur) ease-in-out,
+      co-fade-front var(--co-dur) linear;
+  }
+
+  /* Every companion carries its own contact shadow, which travels with it
+     and so hangs in mid-air the moment the lap lifts off the ground —
+     obvious at the top of the arc and worse on the hop. It is faded out
+     while airborne and brought back only where the pet is actually
+     standing on something: rest, the front-left walk, and the landing.
+
+     Those ellipses carry fillOpacity rather than opacity precisely so this
+     animation has a free channel. CSS opacity would otherwise override the
+     presentation attribute and blow every shadow up to solid. */
+  .co-stage.is-running .pl-contact {
+    animation: co-shadow var(--co-dur) linear;
+  }
+}
+
+@keyframes co-shadow {
+  0% {
+    opacity: 1;
+  }
+  14%,
+  73% {
+    opacity: 0;
+  }
+  80%,
+  85% {
+    opacity: 1;
+  }
+  90%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ---------- the lap ----------
+
+   Read as a clock around Voyager, starting at rest on his right:
+
+     0%    rest, front-right
+     21%   swung out right, clear of him   ← CROSSOVER, front hands to behind
+     36%   behind, rising past his arm
+     50%   behind, over his shoulders
+     58%   behind, dropping on the left
+     67%   swung out left, clear of him    ← CROSSOVER, behind hands to front
+     78%   front-left, back on the ground
+     89%   HOP — up onto the right shoulder
+     94%   a beat of hang time up there
+     100%  back to rest
+
+   One track, shared by both layers. They were separate keyframe blocks in
+   the first cut and were byte-identical, which is the same drift risk the
+   figures avoid by mirroring path data rather than redrawing it.
+
+   Depth is sold by scale alone: 0.76 at the back of the lap against 1.06
+   at the front. Cheap, and at this size indistinguishable from real
+   perspective. The vertical rise doubles as depth cue — things further
+   away sit higher in frame.
+
+   The hop lands on the NEAR shoulder. A companion that lands on the far
+   one is immediately occluded and reads as a bug rather than as a trick. */
+
+@keyframes co-lap {
+  0% {
+    transform: translate(calc(-50% + var(--co-x) * 0.62), 0) scale(1);
+  }
+  10% {
+    transform: translate(calc(-50% + var(--co-x) * 0.74), calc(var(--co-s) * -0.04)) scale(0.98);
+  }
+  21% {
+    transform: translate(calc(-50% + var(--co-x) * 1), calc(var(--co-s) * -0.12)) scale(0.92);
+  }
+  36% {
+    transform: translate(calc(-50% + var(--co-x) * 0.55), calc(var(--co-s) * -0.3)) scale(0.8);
+  }
+  50% {
+    transform: translate(calc(-50% + var(--co-x) * -0.06), calc(var(--co-s) * -0.36)) scale(0.76);
+  }
+  58% {
+    transform: translate(calc(-50% + var(--co-x) * -0.58), calc(var(--co-s) * -0.28)) scale(0.82);
+  }
+  67% {
+    transform: translate(calc(-50% + var(--co-x) * -1), calc(var(--co-s) * -0.12)) scale(0.94);
+  }
+  78% {
+    transform: translate(calc(-50% + var(--co-x) * -0.48), calc(var(--co-s) * 0.01)) scale(1.04);
+  }
+  84% {
+    transform: translate(calc(-50% + var(--co-x) * -0.1), calc(var(--co-s) * 0.02)) scale(1.06);
+  }
+  /* The hop. The height is measured, not guessed: Voyager's shoulder pad
+     tops out 112px above the stage floor, and a companion's feet sit ~11px
+     above its own box bottom at rest, so -0.53s lands the feet on the pad.
+
+     The x lands OUTBOARD of the pad rather than on its centre. Dead centre
+     puts the companion's body across the VISOR — Voyager's face — which
+     reads as smothering him rather than perching on him. Out by a
+     companion half-width it sits beside the helmet and overlaps only its
+     edge, which is what perching looks like.
+
+     89 overshoots and 94 settles, so the landing has weight. */
+  89% {
+    transform: translate(calc(-50% + var(--co-x) * 0.6), calc(var(--co-s) * -0.57)) scale(1.04);
+  }
+  94% {
+    transform: translate(calc(-50% + var(--co-x) * 0.64), calc(var(--co-s) * -0.53)) scale(1.02);
+  }
+  100% {
+    transform: translate(calc(-50% + var(--co-x) * 0.62), 0) scale(1);
+  }
+}
+
+/* ---------- the crossfade ----------
+
+   Hard cuts, not blends. A companion that dissolves through Voyager reads
+   as a ghost; an instant swap at the moment it is furthest out to the side
+   is genuinely invisible, because at that moment the two layers rasterise
+   to identical pixels — nothing overlaps, so nothing can change. Hence the
+   0/1 pairs one percent apart rather than an eased fade.
+
+   The cut percentages are welded to the 21% and 67% keyframes above. Move
+   one of those and this must move with it. */
+
+@keyframes co-fade-front {
+  0%,
+  21% {
+    opacity: 1;
+  }
+  22%,
+  67% {
+    opacity: 0;
+  }
+  68%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes co-fade-behind {
+  0%,
+  21% {
+    opacity: 0;
+  }
+  22%,
+  67% {
+    opacity: 1;
+  }
+  68%,
+  100% {
+    opacity: 0;
+  }
+}

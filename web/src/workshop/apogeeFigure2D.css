@@ -1,0 +1,183 @@
+/* ============================================================
+   Apogee — motion. BATCH 4.
+
+   Spec §6: "the tether should be the thing that moves at rest — a slack
+   cable makes sense swaying gently in a way a rigid limb doesn't." No
+   other crew member's idle motion is a loose, physically-simulated-looking
+   part — Vigil looks around, Ballast's rim light breathes, Corvid's torso
+   leans — all rigid-body motion. A cable that sways independently of the
+   rest of the figure is a genuinely different kind of idle, matching a
+   figure whose whole concept is "the one deliberately zero-g touch."
+
+   One idle animation, always running:
+
+     .ap-tether     the cable sways a few degrees either side of its reel
+                    attachment point, slow and slightly irregular-feeling
+                    via an asymmetric keyframe spacing (not a plain 0/50/100
+                    sine wave) so it doesn't read as a metronome.
+
+   One touch animation, one-shot, gated behind svg.is-poked:
+
+     .ap-tether       snaps further out and back — as if the cable was just
+                      tugged — replacing the idle sway for its duration.
+     .ap-connector    flares brighter at the same moment, selling "live
+                      line" rather than just "cable moved."
+
+   svg.is-poked .ap-tether REPLACES the idle sway rather than layering a
+   second animation on top of it, same technique Corvid's tool-arm uses:
+   two animations rotating the same group at once would fight, and when
+   is-poked is removed the idle rule regains control with no JS hand-off
+   needed.
+
+   transform-box: view-box and a pixel transform-origin (not a percentage)
+   — a percentage origin resolves against the element's own bounding box,
+   not the reel attachment point it actually needs to pivot on. Established
+   the hard way on Corvid's CompanionOrbit work; not repeating that mistake
+   here.
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ap-figure .ap-tether {
+    transform-box: view-box;
+    transform-origin: 46px 190px;
+    animation: ap-cable-sway 4.6s ease-in-out infinite;
+  }
+
+  svg.ap-figure.is-poked .ap-tether {
+    animation: ap-cable-pulse 1.1s ease-out;
+  }
+
+  svg.ap-figure.is-poked .ap-connector {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ap-connector-flare 1.1s ease-out;
+  }
+
+  /* REVISION 10 — aura idle pulse. Slow and low-amplitude on purpose: this
+     is ambient heat-glow, not a flashing alert, so it should sit at the
+     edge of notice rather than draw the eye away from the skull. */
+  .ap-figure .ap-aura {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ap-aura-pulse 5.2s ease-in-out infinite;
+  }
+
+  svg.ap-figure.is-poked .ap-aura {
+    animation: ap-aura-flare 1.1s ease-out;
+  }
+
+  /* REVISION 12 — cape sway. Pivots from the neck/shoulder attach point
+     (100,94), not the shape's own bounding-box center — the same
+     view-box + pixel-origin rule as the tether, so a wide trailing shape
+     rotates from where it's actually anchored. Slower and lower-amplitude
+     than the tether's sway: this is a much larger, heavier surface than a
+     loose cable, so it should read as drifting, not swinging. */
+  .ap-figure .ap-cape {
+    transform-box: view-box;
+    transform-origin: 100px 94px;
+    animation: ap-cape-drift 7.4s ease-in-out infinite;
+  }
+
+  svg.ap-figure.is-poked .ap-cape {
+    animation: ap-cape-flutter 1.1s ease-out;
+  }
+}
+
+@keyframes ap-cape-drift {
+  0% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-1.6deg);
+  }
+  75% {
+    transform: rotate(1deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ap-cape-flutter {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-4deg);
+  }
+  55% {
+    transform: rotate(2.5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ap-aura-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes ap-aura-flare {
+  0% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  35% {
+    opacity: 0.5;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+}
+
+@keyframes ap-cable-sway {
+  0% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-3.5deg);
+  }
+  70% {
+    transform: rotate(2deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ap-cable-pulse {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-9deg);
+  }
+  60% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ap-connector-flare {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+}

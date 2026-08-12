@@ -1,0 +1,126 @@
+/* ============================================================
+   Eclipse — motion. BATCH 4.
+
+   Spec §6/§3: "glowing white trim" is the whole visual premise, so the
+   idle motion is the trim itself acting lit rather than a rigid-body
+   gesture — genuinely different from every other figure's idle:
+
+     Vigil     looks around (rigid head turn)
+     Ballast   rim light breathes (uniform opacity pulse)
+     Corvid    torso leans + tool drifts (rigid-body sway)
+     Apogee    a loose cable sways independently (physically-simulated)
+     Eclipse   a travelling pulse runs along the tank-to-suit tubing, and
+               the neck status light blinks on its own short cycle — two
+               small, mechanical "systems are live" tells rather than one
+               big movement, matching a figure that's deliberately not
+               dramatic (spec: "regulation, not battle-worn").
+
+   Two idle animations, always running:
+
+     .ec-tube     stroke-dasharray/dashoffset animates so a bright segment
+                  appears to travel down each tube from tank to suit.
+     .ec-status   the neck ring light blinks on a short, sharp on/off
+                  cycle (stepped, not eased) — reads as an LED, not a glow.
+
+   One touch animation, one-shot, gated behind svg.is-poked:
+
+     .ec-tube      flares brighter and speeds up briefly.
+     .ec-status    flares hard, once — "ec-trim-flare" is the animation the
+                   component listens for via animationend to clear
+                   is-poked, same one-signal-to-watch pattern Apogee's
+                   ap-cable-pulse and ap-connector-flare use.
+     .ec-thruster  REVISION 6: the four RCS thruster tips punch brighter
+                   and scale up briefly, like a short correction burn —
+                   "the jetpack actually fires when you touch it."
+
+   transform-box is not needed for .ec-tube/.ec-status — only stroke and
+   opacity animate. .ec-thruster scales, so it needs fill-box/center, the
+   same reasoning Apogee's connector-flare used: these are small circles
+   that should grow from their own middle, not from the SVG origin.
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ec-figure .ec-tube {
+    stroke-dasharray: 4 10;
+    animation: ec-tube-flow 2.6s linear infinite;
+  }
+
+  .ec-figure .ec-status {
+    animation: ec-status-blink 3.4s steps(1, end) infinite;
+  }
+
+  svg.ec-figure.is-poked .ec-tube {
+    animation: ec-tube-flare 1.1s ease-out;
+  }
+
+  svg.ec-figure.is-poked .ec-status {
+    animation: ec-trim-flare 1.1s ease-out;
+  }
+
+  svg.ec-figure.is-poked .ec-thruster {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ec-thruster-fire 1.1s ease-out;
+  }
+}
+
+@keyframes ec-tube-flow {
+  0% {
+    stroke-dashoffset: 28;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ec-tube-flare {
+  0% {
+    stroke-dashoffset: 28;
+    opacity: 0.7;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.7;
+  }
+}
+
+@keyframes ec-status-blink {
+  0%,
+  55% {
+    opacity: 0.85;
+  }
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes ec-trim-flare {
+  0% {
+    opacity: 0.85;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes ec-thruster-fire {
+  0% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.8);
+  }
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+}

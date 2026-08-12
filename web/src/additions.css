@@ -1,0 +1,2803 @@
+/* ============================================================
+   Additions to the locked design system in index.css.
+
+   Only things index.css does not already cover: Obsidian-specific note
+   syntax, the mobile tree bar, touch-target sizing, and safe-area insets.
+   Everything here follows the existing tokens.
+   ============================================================ */
+
+/* ============================================================
+   Ambient field — carried over from the gateway page.
+
+   index.css darkened the shader with two stacked radial gradients on
+   .mc-ambient::after plus a full-screen .mc-vignette, which flattened the
+   smoke to near-black. The gateway renders the same shader with no overlay at
+   all, so the two screens looked like different apps. Match the gateway: the
+   glass cards already supply their own contrast for text.
+   ============================================================ */
+
+.mc-ambient::after {
+  display: none;
+}
+.mc-vignette {
+  display: none;
+}
+
+/* <canvas> is a replaced element, so `inset: 0` alone does NOT stretch it —
+   with width/height auto it falls back to its intrinsic bitmap size and the
+   field covered only part of the screen, leaving a hard black band below.
+   The gateway sets these explicitly for the same reason. */
+.mc-ambient {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Theme accents, mirroring the gateway's blocks so the colour you pick in
+   Settings carries through to the dashboard and Knowledge Base. The shader's
+   own hues are set from the same stored value in Ambient.tsx. */
+body[data-theme="emerald"] {
+  --accent: #00ff66;
+  --accent2: #00e5ff;
+  --glow: rgba(0, 255, 102, 0.14);
+}
+body[data-theme="london"] {
+  --accent: #4ea8ff;
+  --accent2: #00e5ff;
+  --glow: rgba(78, 168, 255, 0.15);
+}
+body[data-theme="void"] {
+  --accent: #a06bff;
+  --accent2: #ff6bd5;
+  --glow: rgba(160, 107, 255, 0.16);
+}
+body[data-theme="graphite"] {
+  --accent: #c9d2dc;
+  --accent2: #8a97a6;
+  --glow: rgba(180, 195, 210, 0.1);
+}
+
+/* The app never scrolls sideways — every scrolling region is an inner container
+   (.mc-main-scroll, .mc-kb-view, and wide tables/code carry their own). This
+   stops a stray fixed-position element or a rounding gap from producing a
+   horizontal scrollbar on the page itself. */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   Card hover shine
+
+   One rule on .mc-card rather than a component, because cards are a class
+   applied in 24 places across 6 files — this reaches all of them with nothing
+   to refactor and nothing to remember on the next card.
+
+   A diagonal band sweeps once and settles. It sits under the content and never
+   catches pointer events, so it can't interfere with anything on the card.
+   ============================================================ */
+
+/* Deliberately NOT `overflow: hidden` — that would clip anything designed to
+   escape a card, like the calendar's hover tips. The band clips itself instead
+   by inheriting the card's corner radius. */
+.mc-card {
+  position: relative;
+}
+
+.mc-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 255, 255, 0.055) 47%,
+    rgba(255, 255, 255, 0.085) 50%,
+    rgba(255, 255, 255, 0.055) 53%,
+    transparent 62%
+  );
+  background-size: 260% 100%;
+  background-position: 130% 0;
+  /* Base transition so the sweep also eases back out on release, not just in
+     on press — without this only the hover/active rules define a duration, so
+     letting go of a tap snaps the band back instantly instead of fading. */
+  transition: background-position 0.9s ease, opacity 0.4s ease;
+}
+
+@media (hover: hover) {
+  .mc-card:hover::after {
+    opacity: 1;
+    background-position: -30% 0;
+    transition:
+      background-position 1.6s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.3s ease;
+  }
+}
+
+/* Touch has no hover, so the sweep above never fires there at all — this
+   gives touch a way to see it too: press and hold, same band, no lingering
+   state once you lift your finger. */
+.mc-card:active::after {
+  opacity: 1;
+  background-position: -30% 0;
+  transition:
+    background-position 1.2s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
+}
+
+/* .mc-card.hot already owns ::before for its accent rule — untouched. */
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-card::after {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Voyager + the orbit rings
+   ============================================================ */
+
+:root {
+  --voyager-suit: #e8ecf2;
+  --voyager-suit-line: #b3bcc9;
+  --voyager-glass: #2a3340;
+  --voyager-gold: #e8c45f;
+  --voyager-trim: #8d99a8;
+  --voyager-pack: #c3ccd8;
+  --voyager-glove: #d3dae3;
+  --voyager-boot: #b9c2cf;
+  --voyager-badge-bg: #2a3340;
+  --bg-deep: #08090c;
+}
+
+.voyager {
+  display: block;
+  overflow: visible;
+  animation: voyager-float 4.5s ease-in-out infinite;
+}
+
+/* the wave — a slow, unhurried greeting, not a frantic one */
+.voyager-arm {
+  animation: voyager-wave 3.6s ease-in-out infinite;
+}
+
+@keyframes voyager-float {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes voyager-wave {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  70% {
+    transform: rotate(-17deg);
+  }
+  78% {
+    transform: rotate(6deg);
+  }
+  86% {
+    transform: rotate(-13deg);
+  }
+}
+
+/* ============================================================
+   Verdict cards + option grids
+
+   Amber, not red, for the honest-miss state. Red is the loss colour and reads
+   as punishment; admitting a rule break has to feel like catching something,
+   not being told off — otherwise you stop admitting it and the data goes bad.
+   ============================================================ */
+
+:root {
+  --warn: #e8c45f;
+  --warn-rgb: 232, 196, 95;
+}
+
+.mc-verdict-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mc-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 17px;
+  border-radius: 16px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--hairline-soft);
+  color: var(--txt-dim);
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.1s;
+}
+.mc-verdict:hover {
+  background: var(--glass-strong);
+}
+.mc-verdict:active {
+  transform: scale(0.995);
+}
+
+.mc-verdict-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--txt);
+}
+
+.mc-verdict-bullets {
+  margin: 0;
+  padding-left: 15px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mc-verdict.held.selected {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.4);
+}
+.mc-verdict.held.selected .mc-verdict-head {
+  color: var(--win);
+}
+
+.mc-verdict.broke.selected {
+  background: rgba(var(--warn-rgb), 0.09);
+  border-color: rgba(var(--warn-rgb), 0.38);
+}
+.mc-verdict.broke.selected .mc-verdict-head {
+  color: var(--warn);
+}
+
+/* two-column selectable options, as in the rule-break reflection */
+.mc-option-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mc-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--hairline-soft);
+  color: var(--txt-dim);
+  transition: all 0.16s;
+}
+.mc-option:hover {
+  color: var(--txt);
+  background: var(--glass-strong);
+}
+.mc-option .mc-option-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--hairline);
+}
+.mc-option.on {
+  color: var(--txt);
+  background: rgba(var(--warn-rgb), 0.09);
+  border-color: rgba(var(--warn-rgb), 0.38);
+}
+.mc-option.on .mc-option-dot {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+@media (max-width: 620px) {
+  .mc-verdict-grid,
+  .mc-option-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- journey page: visual left, actions right ---------- */
+
+/* Named areas rather than source order, because the two shapes want different
+   sequences: on a wide screen the road holds the left and the actions stack
+   beside it; on a phone today's checkpoint comes first, then the road, then the
+   legs. Source order follows the phone, which is where it's actually used. */
+.mc-journey-layout {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  grid-template-areas:
+    "road today"
+    "road legs";
+  grid-template-rows: auto auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.mc-journey-today {
+  grid-area: today;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.mc-journey-road {
+  grid-area: road;
+}
+.mc-journey-legs {
+  grid-area: legs;
+}
+
+/* the two readouts sit side by side and share a baseline */
+.mc-journey-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.mc-journey-stats > * {
+  padding: 10px 13px;
+  border-radius: 12px;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+
+.mc-journey-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .mc-journey-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "today"
+      "road"
+      "legs";
+  }
+}
+
+/* ---------- launch transition ----------
+   A small glass pill — eyebrow over a bold destination name — rather than a
+   standalone animated set piece. Matches the app's own card language instead
+   of being a one-off effect, and reads as calm rather than as a loading
+   spinner dressed up. */
+
+.mc-launch {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 9, 12, 0.72);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+  animation: mc-launch-in 0.28s ease both;
+}
+
+/* The glow lives entirely OUTSIDE the pill — behind it and larger than it, so
+   it reads as a halo bleeding out from behind the card rather than a colour
+   fill inside one. (An earlier version put a second glow inside the pill and
+   clipped it to the card's own corners — clipped that way, a radial gradient
+   never reaches its own transparent outer ring, so instead of fading it just
+   looked like a solid tinted card. This is the fix: one glow, unclipped,
+   allowed to actually reach transparent.) The drift is what makes it feel
+   alive: the whole blob eases sideways and breathes, like something
+   translucent passing through, rather than sitting still or spinning. */
+.mc-launch-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mc-launch-burst::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Declared statically too, not only inside the keyframes — reduced-motion
+     turns the animation off below, and without this the pseudo-element would
+     snap back to its unpositioned top-left corner instead of staying centred. */
+  transform: translate(-50%, -50%);
+  width: 580px;
+  height: 580px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 34%, transparent) 0%,
+    color-mix(in srgb, var(--accent2) 18%, transparent) 42%,
+    transparent 70%
+  );
+  filter: blur(54px);
+  animation: mc-launch-wash-drift 4.5s ease-in-out infinite;
+}
+
+.mc-launch-pill {
+  z-index: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 22px 40px;
+  border-radius: 20px;
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), 0 0 44px var(--glow);
+  animation: mc-launch-pill-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mc-launch-eyebrow,
+.mc-launch-title {
+  position: relative;
+  z-index: 1;
+}
+
+.mc-launch-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 18px var(--glow);
+}
+
+.mc-launch-title {
+  font-size: 26px;
+  font-weight: 300;
+  letter-spacing: -0.3px;
+  color: var(--txt);
+  text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes mc-launch-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes mc-launch-pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mc-launch-wash-drift {
+  0%, 100% {
+    transform: translate(-64%, -56%) scale(0.9);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-38%, -46%) scale(1.08);
+    opacity: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-launch-pill { animation: none; }
+  .mc-launch-burst::before { animation: none; }
+}
+
+/* ============================================================
+   Voyager card.
+
+   Header across the full width, then art beside the numbers. The numbers sit
+   in their own boxes rather than as stat rows — each one is a separate fact and
+   boxing them stops the eye running them together.
+   ============================================================ */
+
+.mc-voyager-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'head head'
+    'art  info';
+  /* Cap the data column. Left to stretch it hits ~940px on a desktop and two
+     short boxes sprawl across the whole card. */
+  grid-template-columns: auto minmax(0, 460px);
+  justify-content: start;
+  gap: 18px 22px;
+  align-items: center;
+}
+
+.mc-voyager-head { grid-area: head; }
+.mc-voyager-name {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.mc-voyager-sub {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--txt-dim);
+}
+
+.mc-voyager-art {
+  grid-area: art;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+/* The halo takes the theme accent, so it shifts with the colourway the suit is
+   already wearing. Inert to pointers, and explicitly behind the figure — an
+   absolutely positioned sibling paints ABOVE a static one by default, which
+   would put a haze over Voyager rather than a glow behind him. */
+.mc-voyager-glow {
+  position: absolute;
+  z-index: 0;
+  top: 46%;
+  left: 50%;
+  width: 230px;
+  height: 230px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  /* A hot, near-solid core so the centre actually reads as light rather than
+     just a tinted haze, then two fall-off rings for depth before it fades. */
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 85%, white 15%) 0%,
+    color-mix(in srgb, var(--accent) 55%, transparent) 22%,
+    color-mix(in srgb, var(--accent) 28%, transparent) 48%,
+    transparent 72%
+  );
+  filter: blur(9px);
+  animation: mc-voyager-halo 5.5s ease-in-out infinite;
+}
+@keyframes mc-voyager-halo {
+  0%, 100% { opacity: 0.88; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.mc-voyager-art svg {
+  position: relative;
+  z-index: 1;
+}
+
+.mc-voyager-enter {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 6px;
+  font-size: 9.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+
+.mc-voyager-info {
+  grid-area: info;
+  min-width: 0;
+}
+
+.mc-voyager-xp {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--txt-dim);
+}
+
+.mc-voyager-box {
+  margin-top: 10px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-voyager-box-sub {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--txt-faint);
+}
+
+@media (max-width: 620px) {
+  .mc-voyager-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'head'
+      'art'
+      'info';
+    gap: 14px;
+  }
+  .mc-voyager-art {
+    justify-self: center;
+  }
+  .mc-voyager-glow {
+    width: 195px;
+    height: 195px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-voyager-glow { animation: none; }
+}
+
+/* ---------- toolbelt ---------- */
+
+.mc-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+}
+
+.mc-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 8px 11px;
+  border-radius: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--hairline-soft);
+  transition: all 0.16s;
+}
+.mc-tool:hover:not(:disabled) {
+  background: var(--glass-strong);
+}
+
+.mc-tool-art {
+  display: grid;
+  place-items: center;
+  /* Tall enough for the wardrobe's tallest custom-body figures (up to a
+     1.675 aspect ratio at this size) as well as the shorter shared-rig and
+     crew renders — a fixed 50px clipped Pyro and Cryo at the edges. */
+  height: 64px;
+  color: var(--txt-faint);
+}
+.mc-tool-name {
+  font-size: 11px;
+  color: var(--txt-dim);
+  text-align: center;
+  line-height: 1.35;
+}
+.mc-tool-req {
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+
+.mc-tool.on {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.36);
+}
+.mc-tool.on .mc-tool-name {
+  color: var(--txt);
+}
+.mc-tool.on .mc-tool-req {
+  color: var(--win);
+}
+
+.mc-tool.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ringpath {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   The road from Earth to the Moon
+   ============================================================ */
+
+.mc-road-scroll {
+  /* the journey is meant to feel long — you scroll it rather than see it all */
+  max-height: 62vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 16px;
+  background: radial-gradient(
+    120% 70% at 50% 100%,
+    rgba(47, 111, 168, 0.16),
+    transparent 60%
+  );
+  -webkit-overflow-scrolling: touch;
+}
+
+.mc-road {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mc-road-label {
+  font-size: 11px;
+  letter-spacing: 2.4px;
+  fill: var(--txt-faint);
+}
+
+.mc-road-stop {
+  font-size: 11px;
+  fill: var(--txt-faint);
+  font-variant-numeric: tabular-nums;
+}
+.mc-road-stop.on {
+  fill: var(--txt);
+}
+
+.mc-road-ship {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mc-ship-flame {
+  transform-origin: 0 12px;
+  animation: mc-ship-burn 0.9s ease-in-out infinite;
+}
+@keyframes mc-ship-burn {
+  50% {
+    transform: scaleY(0.7);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-ship-flame {
+    animation: none;
+  }
+  .mc-road-ship {
+    transition: none;
+  }
+}
+
+/* ---------- toolbelt ---------- */
+
+.mc-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+}
+
+.mc-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 8px 11px;
+  border-radius: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--glass);
+  border: 1px solid var(--hairline-soft);
+  transition: all 0.16s;
+}
+.mc-tool:hover:not(:disabled) {
+  background: var(--glass-strong);
+}
+
+.mc-tool-art {
+  display: grid;
+  place-items: center;
+  /* Tall enough for the wardrobe's tallest custom-body figures (up to a
+     1.675 aspect ratio at this size) as well as the shorter shared-rig and
+     crew renders — a fixed 50px clipped Pyro and Cryo at the edges. */
+  height: 64px;
+  color: var(--txt-faint);
+}
+.mc-tool-name {
+  font-size: 11px;
+  color: var(--txt-dim);
+  text-align: center;
+  line-height: 1.35;
+}
+.mc-tool-req {
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+
+.mc-tool.on {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.36);
+}
+.mc-tool.on .mc-tool-name {
+  color: var(--txt);
+}
+.mc-tool.on .mc-tool-req {
+  color: var(--win);
+}
+
+.mc-tool.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ringpath {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* Voyager standing at the centre of the rings */
+.mc-ring-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.mc-ring-rider {
+  position: absolute;
+  /* nudged up so his feet sit on the origin rather than his midriff */
+  transform: translateY(-6%);
+  pointer-events: none;
+}
+
+/* the leg you're on gets a gentle pulse so the eye lands on it */
+.ringpath-active {
+  animation: ringpath-pulse 3s ease-in-out infinite;
+}
+
+@keyframes ringpath-pulse {
+  50% {
+    opacity: 0.62;
+  }
+}
+
+/* ============================================================
+   Voyager's mood — driven by voyagerMood() in utils/discipline.ts.
+
+   Applied as a class on the root <svg>, which is why it works identically on
+   the shared rig and on all nine custom-body outfit figures without any of
+   them containing a single line about it. Filter and animation only: nothing
+   here touches geometry, so no figure can be broken by a mood.
+   ============================================================ */
+
+/* Steady is the baseline the float animation already defines — no rule. */
+
+/* After a broken rule: heavier, lower, slower, and the wave stops. The colour
+   is pulled back rather than greyed out completely; this is a bad day, not a
+   punishment screen. */
+.voyager.mood-dimmed {
+  filter: saturate(0.6) brightness(0.85);
+  animation: voyager-sink 7s ease-in-out infinite;
+}
+.voyager.mood-dimmed .voyager-arm {
+  animation: none;
+}
+
+@keyframes voyager-sink {
+  0%,
+  100% {
+    transform: translateY(4px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+/* Mid-streak, from the run that earns the 1.5x boost: livelier float, a
+   slightly warmer read, and a soft halo. */
+.voyager.mood-bright {
+  filter: saturate(1.1) brightness(1.05) drop-shadow(0 0 10px rgba(var(--win-rgb), 0.28));
+  animation-duration: 3.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voyager,
+  .voyager-arm,
+  .ringpath-active {
+    animation: none;
+  }
+}
+
+/* ---------- note body: Obsidian syntax ---------- */
+
+.mc-note-embed {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 18px 0;
+  border-radius: 14px;
+  border: 1px solid var(--hairline-soft);
+  cursor: zoom-in;
+}
+
+.mc-note-mark {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--txt);
+  padding: 1px 5px;
+  border-radius: 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Long tables and code in vault notes must scroll themselves, never the page. */
+.mc-note pre,
+.mc-note table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* The reader itself only ever scrolls vertically — wide code and tables carry
+   their own horizontal scrollbars, and a stray one here would break the
+   sticky bar's full-width backdrop. */
+.mc-kb-view {
+  overflow-x: hidden;
+}
+
+/* ---------- knowledge base: mobile tree bar ---------- */
+
+/* The back control floats over the note as you scroll — no bar, no strip, just
+   the button. The container is transparent and carries no chrome of its own;
+   each button is its own self-contained pill so it stays legible over whatever
+   scrolls beneath it. */
+.mc-kb-mobile-bar {
+  display: none;
+  gap: 8px;
+  position: sticky;
+  top: 6px;
+  z-index: 5;
+  margin-bottom: 16px;
+  padding: 0;
+  background: none;
+  border: none;
+  /* only the buttons should catch taps — the rest of the strip lets the note
+     underneath scroll and be tapped normally */
+  pointer-events: none;
+}
+
+.mc-kb-mobile-bar .mc-btn {
+  pointer-events: auto;
+  background: rgba(20, 20, 25, 0.82);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-color: var(--hairline);
+  color: var(--txt);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.mc-kb-backlink-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-kb-backlink-row .folder {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--txt-faint);
+  white-space: nowrap;
+}
+
+/* Pill inputs inherit --txt, so their placeholders were reading as real
+   entered values. Dim them the way .mc-input already does. */
+.mc-trade-pill input::placeholder,
+.mc-trade-pill input::-webkit-input-placeholder {
+  color: var(--txt-faint);
+  opacity: 1;
+}
+
+/* ---------- offline indicator ---------- */
+
+.mc-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* ---------- dev preview toggle (TEMPORARY — see components/DevToggle.tsx) ---------- */
+
+.mc-dev-toggle {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--txt-dim);
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  transition: bottom 0.2s ease;
+}
+.mc-dev-toggle.on {
+  color: #1a1204;
+  background: #f0a52e;
+  border-color: #f0a52e;
+  box-shadow: 0 0 18px rgba(240, 165, 46, 0.5);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+  /* The rail becomes a fixed bottom bar down here (~56px tall, sitting at
+     12px + safe-area from the edge) — sitting at the same bottom offset put
+     this pill directly on top of the rail's rightmost icons. Lift it clear
+     rather than sharing the strip. */
+  .mc-dev-toggle {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  .mc-kb-mobile-bar {
+    display: flex;
+  }
+  .mc-kb-desktop-back {
+    display: none;
+  }
+
+  /* One pane at a time on a phone. While the folder list is up the reader is
+     dropped completely — an empty placeholder or a leftover half-scrolled note
+     under the list is just dead space you have to scroll past. */
+  .mc-kb-layout.tree-open .mc-kb-view {
+    display: none;
+  }
+  .mc-kb-layout.tree-open .mc-kb-tree {
+    max-height: none;
+  }
+
+  /* The bottom nav must clear the iPhone home indicator. */
+  .mc-rail {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .mc-main-scroll {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+  .mc-stage {
+    padding-top: max(22px, env(safe-area-inset-top)) !important;
+  }
+}
+
+/* Touch targets: the compact desktop controls are too small for a thumb. */
+@media (pointer: coarse) {
+  .mc-outcome-btn {
+    min-height: 34px;
+    padding: 8px 12px;
+  }
+  .mc-r-input {
+    min-height: 34px;
+    width: 68px;
+    font-size: 13px;
+  }
+  .mc-icon-btn {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  .mc-kb-note-row,
+  .mc-kb-folder-row {
+    min-height: 38px;
+  }
+  .mc-seg-btn {
+    min-height: 34px;
+  }
+  /* iOS zooms the page when a focused input is under 16px. */
+  .mc-input,
+  .mc-trade-pill input,
+  .mc-trade-pill select,
+  .mc-walk-note {
+    font-size: 16px;
+  }
+}
+
+/* ============================================================
+   Road ambience — motion inside the road canvas only.
+   The app's ambient background is deliberately untouched.
+   ============================================================ */
+
+/* only a minority of stars twinkle, on staggered clocks */
+@keyframes mc-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+.mc-star-twinkle {
+  animation: mc-twinkle 4.5s ease-in-out infinite;
+}
+
+/* dust drifts up and fades — slow enough to read as depth, not noise */
+@keyframes mc-dust-drift {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.35;
+  }
+  85% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateY(-70px) translateX(14px);
+    opacity: 0;
+  }
+}
+.mc-dust {
+  animation: mc-dust-drift linear infinite;
+}
+
+/* shooting stars are mostly absent — a short streak in a long cycle */
+@keyframes mc-shoot {
+  0%,
+  82% {
+    opacity: 0;
+    transform: translate(-90px, -50px) scale(0.6);
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(150px, 84px) scale(1);
+  }
+}
+.mc-shooter {
+  animation: mc-shoot ease-in infinite;
+}
+
+/* asteroids cross the full width, tumbling */
+@keyframes mc-asteroid-cross {
+  0% {
+    transform: translateX(-30px) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.55;
+  }
+  92% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(330px) rotate(420deg);
+    opacity: 0;
+  }
+}
+.mc-asteroid {
+  animation: mc-asteroid-cross linear infinite;
+}
+
+/* wind running up the lit road — dashes chasing the route you've earned */
+@keyframes mc-road-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -60;
+  }
+}
+.mc-road-flow {
+  stroke-dasharray: 3 57;
+  opacity: 0.55;
+  animation: mc-road-flow 2.2s linear infinite;
+}
+
+/* ---- stops are buttons ---- */
+.mc-road-stop-node {
+  cursor: pointer;
+}
+.mc-road-stop-node:focus {
+  outline: none;
+}
+.mc-road-stop-node:focus-visible > circle:first-child {
+  fill: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+@media (hover: hover) {
+  .mc-road-stop-node:hover {
+    filter: brightness(1.25);
+  }
+}
+
+/* ---- waypoint card ---- */
+@keyframes mc-wp-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mc-wp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.mc-wp-card {
+  position: relative;
+  width: min(360px, 100%);
+  text-align: center;
+  animation: mc-wp-in 0.22s ease-out;
+}
+.mc-wp-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.mc-wp-close:hover {
+  color: var(--text);
+}
+.mc-wp-art {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+.mc-wp-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.mc-wp-name {
+  margin: 6px 0 2px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.mc-wp-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+/* only the body type is capitalised — not the day count beside it */
+.mc-wp-kind {
+  text-transform: capitalize;
+}
+.mc-wp-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.mc-wp-cheer {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.mc-wp-locked {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* Motion is decoration here — if the user has asked the OS to stop it, stop it. */
+@media (prefers-reduced-motion: reduce) {
+  .mc-star-twinkle,
+  .mc-dust,
+  .mc-shooter,
+  .mc-asteroid,
+  .mc-road-flow,
+  .mc-wp-card {
+    animation: none;
+  }
+  .mc-shooter,
+  .mc-asteroid {
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   The verdict on the pre-flight screen.
+
+   The point of the whole screen is one sentence: does this match, or not.
+   Amber rather than red when it doesn't — the framework saying "wait for the
+   continuation" is the system working, not a failure to scold.
+   ============================================================ */
+
+.mc-match {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(var(--warn-rgb), 0.08);
+  border: 1px solid rgba(var(--warn-rgb), 0.32);
+  color: var(--warn);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+.mc-match.on {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.42);
+  color: var(--win);
+}
+.mc-match > svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.mc-match-head {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.mc-match-sub {
+  margin-top: 5px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--txt-dim);
+}
+
+/* Optional confluences read differently from gates — the source calls them an
+   added layer, and a checklist that cannot show the difference makes the
+   verdict lie about what is required. */
+.mc-optional {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--txt-faint);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  vertical-align: 1px;
+}
+
+/* ============================================================
+   The checklist as an ordered walk.
+
+   Number first, then the chart you do it on, then what to look for. The
+   timeframe is the part that was missing — knowing a step exists is useless
+   without knowing which chart to be on when you check it.
+   ============================================================ */
+
+.mc-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  margin-right: 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt-dim);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  vertical-align: 1px;
+}
+
+/* Fixed green, not --accent — this badge sits beside a checkbox that also
+   turns green when ticked (tone="win"), and --accent is a per-theme colour
+   the user picks separately. Tying the two together meant the timeframe tag
+   changed colour, sometimes to something that read as a warning, purely
+   because of an unrelated theme choice. */
+.mc-tf {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--win);
+  background: rgba(var(--win-rgb), 0.12);
+  border: 1px solid rgba(var(--win-rgb), 0.26);
+  vertical-align: 1px;
+}
+
+/* The two questions, above everything else: what should this candle do, and if
+   I miss it what does the next one give me. Key on the left so both answers
+   line up and can be read in one pass. */
+.mc-expect {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--txt-dim);
+}
+.mc-expect + .mc-expect {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.mc-expect-k {
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+@media (max-width: 480px) {
+  /* Stacked on a phone — 88px of label beside wrapping text leaves a column
+     too narrow to read. */
+  .mc-expect {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
+
+/* ============================================================
+   The live trade card.
+
+   Green while a position is open — not as reassurance, as presence. Amber the
+   moment the count passes one, because that is the state the whole module
+   exists to interrupt, and it has to be visible BEFORE the second entry is
+   logged rather than after.
+   ============================================================ */
+
+.mc-live { padding: 16px 17px; }
+
+.mc-live.on {
+  background: rgba(var(--win-rgb), 0.07);
+  border-color: rgba(var(--win-rgb), 0.34);
+}
+
+.mc-live-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--txt-dim);
+}
+.mc-live.on .mc-live-head { color: var(--win); }
+
+.mc-live-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.mc-live-time {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt-faint);
+}
+
+@keyframes mc-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.82); }
+}
+.mc-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--win);
+  animation: mc-live-pulse 2s ease-in-out infinite;
+}
+
+.mc-live-what {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.mc-live-rule {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--txt-dim);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+
+/* ---- trades today ---- */
+
+.mc-used-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.mc-used-label {
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.mc-used-n {
+  margin-left: auto;
+  font-size: 19px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+.mc-used.over .mc-used-n { color: var(--warn); }
+
+.mc-used-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.mc-used-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  /* dark until the trade is actually taken */
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  transition: background 0.25s ease;
+}
+.mc-used-seg.ok {
+  background: var(--accent);
+  border-color: transparent;
+}
+.mc-used-seg.over {
+  background: var(--warn);
+  border-color: transparent;
+}
+
+.mc-used-note {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--txt-faint);
+}
+.mc-used.over .mc-used-note { color: var(--warn); }
+
+.mc-live.on .mc-used { margin-top: 14px; }
+
+/* ============================================================
+   The clean-day calendar.
+
+   Dots rather than filled cells — a full-colour block per day for a whole
+   month reads as noisy long before it reads as informative. A small dot under
+   the day number keeps the number legible and still gives the month its shape
+   at a glance.
+   ============================================================ */
+
+.mc-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.mc-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mc-cal-month {
+  min-width: 108px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--txt-dim);
+}
+.mc-cal-nav .mc-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* minmax(0, 1fr), not 1fr. A bare 1fr floors each column at its MIN-CONTENT
+   width, so the longest unbreakable word in a cell sets the column width —
+   seven of those together pushed the grid wider than a phone and scrolled the
+   whole page sideways. minmax(0, …) lets a column go narrower than its text
+   and hand the wrapping back to the cell. */
+.mc-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 4px;
+}
+.mc-cal-weekdays span {
+  text-align: left;
+  padding-left: 10px;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  padding-bottom: 6px;
+}
+
+/* Same card language as the Journal calendar (trade-cal-cell) — a bordered
+   rectangle with the day number pinned top-left and the day's state pinned
+   to the bottom, not a centered square. Run this full width, same as
+   Journal's row, just seven columns instead of five. */
+.mc-cal-grid {
+  display: grid;
+  /* see .mc-cal-weekdays above for why this is minmax(0, 1fr) */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.mc-cal-cell {
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  text-align: left;
+  /* A faint cell edge on EVERY day, not just the ones carrying a state.
+     This used to be `transparent`, which meant a month made mostly of
+     out-of-range days (a new account, or the current month with the rest of
+     it still ahead) rendered as loose floating numbers with no grid at all —
+     the state tints below still override this where a day has one. */
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  /* Clean/dirty days render as a real <button> so they're openable — this
+     strips the browser's default button chrome back down to a plain cell. */
+  appearance: none;
+  font: inherit;
+  color: inherit;
+}
+/* Days outside the account's life sit a step quieter than a plain empty day,
+   but still inside the grid rather than invisible. */
+.mc-cal-cell.out {
+  opacity: 0.35;
+}
+button.mc-cal-cell { cursor: pointer; }
+.mc-cal-cell.blank { visibility: hidden; }
+
+/* The cell itself carries its state, not just the dot inside it — a tint
+   quiet enough that 30 of them together still read as a month, not a wall of
+   colour, but present enough to answer "which weeks" at a glance. */
+.mc-cal-cell.clean {
+  background: rgba(var(--win-rgb), 0.14);
+  border-color: rgba(var(--win-rgb), 0.3);
+}
+.mc-cal-cell.dirty {
+  background: rgba(var(--warn-rgb), 0.13);
+  border-color: rgba(var(--warn-rgb), 0.3);
+}
+/* Kept quieter than clean/dirty on purpose — this is an absence, not an
+   event, and a red block the same weight as the other two would read as the
+   loudest day on the calendar when it is actually the emptiest. */
+.mc-cal-cell.dark {
+  background: rgba(var(--loss-rgb), 0.07);
+  border-color: rgba(var(--loss-rgb), 0.22);
+}
+
+/* A weekend with no record. Deliberately the quietest live state on the grid:
+   no tint, no border colour, sitting between a real verdict and an
+   out-of-range day. It is not an achievement and it is not a miss. */
+.mc-cal-cell.rest {
+  background: transparent;
+  opacity: 0.6;
+}
+.mc-cal-cell:not(.blank):not(.out):hover { border-color: color-mix(in srgb, var(--txt) 30%, transparent); }
+.mc-cal-cell.today {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.mc-cal-daynum {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt-dim);
+}
+.mc-cal-cell.out .mc-cal-daynum { color: var(--txt-faint); opacity: 0.45; }
+.mc-cal-cell.clean .mc-cal-daynum,
+.mc-cal-cell.dirty .mc-cal-daynum,
+.mc-cal-cell.dark .mc-cal-daynum { color: var(--txt); }
+
+/* Pinned to the bottom of the cell, same as Journal's dots row — the day
+   number anchors the top, the verdict anchors the bottom. */
+.mc-cal-state {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  font-size: 9.5px;
+  color: var(--txt-faint);
+  /* The label has to be able to break mid-word in a narrow column, or it
+     becomes the min-content floor that widens the whole grid again. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mc-cal-cell.clean .mc-cal-state { color: var(--win); }
+.mc-cal-cell.dirty .mc-cal-state { color: var(--warn); }
+
+.mc-cal-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hairline-soft);
+}
+.mc-cal-cell.clean .mc-cal-dot { background: var(--win); box-shadow: 0 0 6px rgba(var(--win-rgb), 0.5); }
+.mc-cal-cell.dirty .mc-cal-dot { background: var(--warn); }
+/* No check-in is a hollow ring, not a filled dot — the absence is the point,
+   and a solid dot the same weight as "clean"/"dirty" would bury that. */
+.mc-cal-cell.dark .mc-cal-dot {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.3px rgba(var(--loss-rgb), 0.75);
+}
+
+.mc-cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 10.5px;
+  color: var(--txt-faint);
+}
+.mc-cal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mc-cal-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  font-style: normal;
+}
+.mc-cal-swatch.clean { background: var(--win); }
+.mc-cal-swatch.dirty { background: var(--warn); }
+.mc-cal-swatch.dark { background: transparent; box-shadow: inset 0 0 0 1.3px rgba(var(--loss-rgb), 0.75); }
+/* Matches the cell: no ring, no colour — just a faint mark so the legend row
+   still has something to point at. */
+.mc-cal-swatch.rest { background: var(--hairline-soft); opacity: 0.7; }
+
+/* ============================================================
+   The day log.
+   ============================================================ */
+
+.mc-daylog-verdict {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.mc-daylog-verdict.clean { color: var(--win); }
+.mc-daylog-verdict.dirty { color: var(--warn); }
+.mc-daylog-verdict.none { color: rgba(var(--loss-rgb), 0.85); }
+
+.mc-daylog-block { padding: 14px 16px; border-radius: 14px; }
+
+/* Voyager's read, as an actual speech bubble — the art sits where it always
+   did, but the note now lives inside a bubble with a tail pointing back at
+   him, rather than just text sitting in a card next to a picture. */
+.mc-daylog-voyager {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.mc-daylog-voyager-art { flex-shrink: 0; margin-top: -6px; }
+.mc-daylog-voyager-col { flex: 1; min-width: 0; display: flex; }
+.mc-daylog-voyager-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+/* The label lives inside the bubble now, not above it — the whole thing
+   (name + note) has to read as one shape with one tail, or the tail ends up
+   pointing at the label instead of at Voyager. */
+.mc-daylog-voyager-bubble {
+  position: relative;
+  margin-left: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+/* The tail: two stacked triangles (border colour, then fill, very slightly
+   smaller) so it reads as one continuous outlined shape rather than a flat
+   fill with no edge. Pinned to head height on the 64px figure beside it. */
+.mc-daylog-voyager-bubble::before,
+.mc-daylog-voyager-bubble::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  border-style: solid;
+  border-width: 8px 12px 8px 0;
+}
+.mc-daylog-voyager-bubble::before {
+  left: -12px;
+  border-color: transparent var(--hairline-soft) transparent transparent;
+}
+.mc-daylog-voyager-bubble::after {
+  left: -10.5px;
+  top: 18.5px;
+  border-width: 7.5px 11px 7.5px 0;
+  border-color: transparent var(--glass-input) transparent transparent;
+}
+.mc-daylog-voyager-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--txt-dim);
+}
+/* A broken-rule day is up to three of these stacked — each its own short,
+   labelled line rather than one paragraph running all of it together. */
+.mc-daylog-voyager-note + .mc-daylog-voyager-note { margin-top: 8px; }
+.mc-daylog-voyager-note strong { color: var(--txt); font-weight: 600; }
+
+/* ============================================================
+   Session now — the read-only "where are we in the day" strip that opens
+   the Trading dashboard. Nothing in here is clickable by design; see
+   components/SessionNow.tsx for why.
+   ============================================================ */
+
+.mc-sess {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--hairline));
+}
+.mc-sess.notrade {
+  border-color: rgba(var(--loss-rgb), 0.3);
+  background: linear-gradient(rgba(var(--loss-rgb), 0.05), rgba(var(--loss-rgb), 0.02));
+}
+
+.mc-sess-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mc-sess-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  flex-shrink: 0;
+}
+.mc-sess.notrade .mc-sess-status {
+  color: var(--loss);
+  background: rgba(var(--loss-rgb), 0.12);
+  border-color: rgba(var(--loss-rgb), 0.32);
+}
+.mc-sess-label {
+  font-size: 25px;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt);
+}
+.mc-sess-name { font-size: 12.5px; color: var(--txt-dim); }
+.mc-sess-count {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  color: var(--txt-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* The New York clock, called out because the session labels are quoted in it
+   and the device almost never is. */
+.mc-sess-ny {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--txt-dim);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--hairline);
+  background: var(--glass);
+}
+
+.mc-sess-expect {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--txt);
+}
+
+@media (max-width: 640px) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+.mc-sess-missed {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--txt-faint);
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.mc-sess-missed strong { color: var(--txt-dim); font-weight: 500; }
+
+.mc-sess-notrade-body {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  color: var(--loss);
+}
+.mc-sess-notrade-body svg { flex-shrink: 0; margin-top: 2px; }
+.mc-sess-notrade-head {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--txt);
+}
+
+/* ============================================================
+   Back-testing.
+
+   Its own section, so its own visual weight: the week strip is the hero
+   because seven-in-a-row is the entire goal, and the run multiplier sits
+   directly under it because that is the mechanism doing the work.
+   ============================================================ */
+
+.mc-bt-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mc-bt-hero-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mc-bt-count {
+  margin-left: auto;
+  font-size: 26px;
+  font-weight: 200;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Seven columns, oldest left. Fixed 1fr each so the week always reads as a
+   week rather than reflowing as days get filled in. */
+.mc-bt-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.mc-bt-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px;
+  border-radius: 14px;
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  transition: background 0.2s, border-color 0.2s;
+}
+.mc-bt-day-label {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.mc-bt-day-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--hairline);
+  color: transparent;
+}
+.mc-bt-day.done {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.28);
+}
+.mc-bt-day.done .mc-bt-day-dot {
+  background: rgba(var(--win-rgb), 0.35);
+  border-color: transparent;
+}
+/* A written-up day is the one that satisfies the week's second condition, so
+   it reads a step louder than a day that was only clicked through. */
+.mc-bt-day.journaled {
+  background: rgba(var(--win-rgb), 0.16);
+  border-color: rgba(var(--win-rgb), 0.45);
+}
+.mc-bt-day.journaled .mc-bt-day-dot {
+  background: var(--win);
+  border-color: transparent;
+  color: #06180e;
+}
+.mc-bt-day.today { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent); }
+
+.mc-bt-goal {
+  font-size: 11.5px;
+  color: var(--txt-faint);
+  line-height: 1.55;
+}
+.mc-bt-goal .ok { color: var(--win); }
+.mc-bt-goal .warn { color: var(--warn); }
+
+.mc-bt-run {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.mc-bt-flame {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  color: var(--txt-faint);
+}
+.mc-bt-flame.lit {
+  background: rgba(var(--warn-rgb), 0.12);
+  border-color: rgba(var(--warn-rgb), 0.34);
+  color: var(--warn);
+}
+.mc-bt-run-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mc-bt-mult {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--warn);
+  background: rgba(var(--warn-rgb), 0.12);
+  border: 1px solid rgba(var(--warn-rgb), 0.34);
+}
+.mc-bt-run-sub {
+  font-size: 11.5px;
+  color: var(--txt-faint);
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+.mc-bt-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+.mc-bt-stat { padding: 14px 16px; }
+.mc-bt-stat-value {
+  font-size: 22px;
+  font-weight: 200;
+  letter-spacing: -0.5px;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-bt-row {
+  border-radius: 14px;
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  overflow: hidden;
+}
+.mc-bt-row.journaled { border-color: rgba(var(--win-rgb), 0.28); }
+.mc-bt-row-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mc-bt-row-date {
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.mc-bt-row-meta {
+  font-size: 11.5px;
+  color: var(--txt-faint);
+}
+.mc-bt-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--win);
+}
+.mc-bt-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+.mc-bt-row-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mc-bt-shot {
+  position: relative;
+  align-self: flex-start;
+  max-width: 100%;
+}
+.mc-bt-shot img {
+  display: block;
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--hairline-soft);
+}
+.mc-bt-shot .mc-icon-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(10, 10, 12, 0.8);
+}
+
+/* ============================================================
+   Journal — flagged chips + the collapsible "what happened" group.
+   ============================================================ */
+
+/* A ticked flag (gave back, moved to BE, why it didn't play out) reads as a
+   loss the moment it's on — same red the LOSS outcome button already uses —
+   so it stands out from a plain selected chip instead of looking like any
+   other active tag. */
+.mc-tag-chip.flag-active {
+  color: var(--loss);
+  background: rgba(var(--loss-rgb), 0.1);
+  border-color: rgba(var(--loss-rgb), 0.32);
+}
+.mc-tag-chip.flag-active:hover {
+  color: var(--loss);
+  background: rgba(var(--loss-rgb), 0.15);
+}
+
+/* A ticked marker (the 9:30 note) is context, not a violation — same blue as
+   the missed/data badges elsewhere, deliberately not the flag-active red. */
+.mc-tag-chip.marker-active {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.1);
+  border-color: rgba(147, 197, 253, 0.28);
+}
+.mc-tag-chip.marker-active:hover {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.15);
+}
+
+.mc-outcome-group {
+  border-radius: 14px;
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  overflow: hidden;
+}
+.mc-outcome-group-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--txt-dim);
+  cursor: pointer;
+  text-align: left;
+}
+.mc-outcome-group-head:hover { color: var(--txt); }
+.mc-outcome-group-chevron {
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+  color: var(--txt-faint);
+}
+.mc-outcome-group-head.open .mc-outcome-group-chevron { transform: rotate(90deg); }
+.mc-outcome-group-title {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.mc-outcome-group-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--loss);
+  background: rgba(var(--loss-rgb), 0.12);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+/* Everything required is ticked — the one case where this badge is good news. */
+.mc-outcome-group-count.ok {
+  color: var(--win);
+  background: rgba(var(--win-rgb), 0.14);
+}
+.mc-outcome-group-body {
+  padding: 4px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* The retroactive gate checklist. A numbered column rather than wrapped
+   pills: these run in the framework's own checking order (4H down to the
+   entry), and wrapping them destroys that — you'd be reading a bag of tags
+   instead of a sequence. */
+.mc-gate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mc-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 11px;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+  cursor: pointer;
+  color: var(--txt-dim);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  transition: all 0.16s;
+}
+.mc-gate:hover { color: var(--txt); border-color: var(--hairline); }
+.mc-gate-num {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 9.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt-faint);
+  background: var(--glass);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-gate.on {
+  color: var(--win);
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.32);
+}
+.mc-gate.on .mc-gate-num {
+  color: #06180e;
+  background: var(--win);
+  border-color: transparent;
+}
+.mc-gate-optional {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  align-self: center;
+}
+.mc-gate-tf {
+  flex-shrink: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  color: var(--txt-faint);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-top: 2px;
+}
+
+/* The reminders group — separated from the numbered walk above it rather
+   than tagged inline within it. A dividing line plus its own label, the same
+   device the "AND WHATEVER YOU'RE TAKING" split uses on the dashboard. */
+.mc-gate-sub {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  margin-bottom: 6px;
+}
+/* Quieter than a confirmation row at rest — reminders are read, not worked
+   through in sequence, so the group should not compete with the checklist
+   above it for attention until one is actually ticked. */
+.mc-gate.reminder {
+  opacity: 0.82;
+}
+.mc-gate.reminder.on { opacity: 1; }
+
+
+
+
+
+
+
+
+
+/* The aligned-pairs reference table in the pre-flight screen. */
+.mc-aligned {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  font-size: 11.5px;
+}
+.mc-aligned-head {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--txt-faint);
+  padding-bottom: 4px;
+}
+.mc-aligned-pda { color: var(--txt-dim); font-variant-numeric: tabular-nums; }
+.mc-aligned-arrow { color: var(--txt-faint); }
+.mc-aligned-confirm { color: var(--txt); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* The pairing this app actually runs on — a 4H level confirms on the 15M. */
+.mc-aligned-row.key .mc-aligned-pda,
+.mc-aligned-row.key .mc-aligned-confirm { color: var(--accent); }
+
+/* A missed setup, called out in the trade editor. Deliberately neutral —
+   not a loss colour — because missing one is not a failure. */
+.mc-outcome-btn.on-missed {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.1);
+  border-color: rgba(147, 197, 253, 0.32);
+}
+.mc-missed-note {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--txt-dim);
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: rgba(147, 197, 253, 0.07);
+  border: 1px solid rgba(147, 197, 253, 0.22);
+}
+
+
+
+
+
+/* The timing decision — one line, colour-coded by what to actually do. */
+.mc-timing {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-timing-icon { flex-shrink: 0; margin-top: 1px; color: var(--txt-faint); }
+.mc-timing-head {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--txt);
+  line-height: 1.45;
+}
+.mc-timing-sub {
+  font-size: 11px;
+  color: var(--txt-faint);
+  line-height: 1.55;
+  margin-top: 3px;
+}
+.mc-timing.ok {
+  background: rgba(var(--win-rgb), 0.08);
+  border-color: rgba(var(--win-rgb), 0.26);
+}
+.mc-timing.ok .mc-timing-icon { color: var(--win); }
+.mc-timing.wait {
+  background: rgba(var(--warn-rgb), 0.08);
+  border-color: rgba(var(--warn-rgb), 0.26);
+}
+.mc-timing.wait .mc-timing-icon { color: var(--warn); }
+/* A driver says GO, so it carries the same green as "room to deliver" — colour
+   here encodes the action, not the situation. It was briefly tied to --accent
+   instead, which broke: --accent is a per-theme cosmetic choice, and under the
+   pale theme it resolved to #c9d2dc, rendering the most urgent verdict in the
+   tree as the quietest thing on screen. A semantic state cannot depend on a
+   decorative variable.
+   What makes this case different is that it is an EXCEPTION to the clock — so
+   that is carried structurally, by the tag and the bolt icon, rather than by
+   inventing a fifth colour nothing else in the app speaks. */
+.mc-timing.driver {
+  background: rgba(var(--win-rgb), 0.1);
+  border-color: rgba(var(--win-rgb), 0.34);
+}
+.mc-timing.driver .mc-timing-icon { color: var(--win); }
+.mc-timing.driver .mc-timing-head { color: var(--win); }
+.mc-timing-tag {
+  display: inline-block;
+  margin-right: 7px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  vertical-align: 1px;
+  color: #06180e;
+  background: var(--win);
+}
+
+/* The exit half of the hold rule, under .mc-live-rule. Styled as a quieter
+   sibling of that line rather than a warning — it is not a problem, it is the
+   second sentence of the same instruction. */
+.mc-live-exit {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--txt-faint);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-live-exit svg { flex-shrink: 0; margin-top: 2px; color: var(--txt-dim); }
+.mc-live-exit strong { color: var(--txt-dim); font-weight: 500; }
+.mc-live-exit em { font-style: normal; color: var(--txt-dim); }
+
+/* Both new blocks are stacked inside the open-position card, which lays its
+   children out with plain margins rather than a gap. */
+.mc-live .mc-timing { margin-top: 8px; }
+
+/* ============================================================
+   Complete log — the closing action of the trade editor.
+   ============================================================ */
+
+.mc-complete {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-complete-body { flex: 1; min-width: 180px; }
+.mc-complete-head {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--txt);
+}
+.mc-complete-sub {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--txt-faint);
+  margin-top: 3px;
+}
+.mc-complete .mc-btn { flex-shrink: 0; }
+
+/* Ready to be pressed — the one state that should pull the eye down the form. */
+.mc-complete.ready {
+  background: rgba(var(--win-rgb), 0.07);
+  border-color: rgba(var(--win-rgb), 0.28);
+}
+/* Already banked. Quiet: this is a receipt, not a call to action. */
+.mc-complete.done {
+  background: rgba(var(--win-rgb), 0.06);
+  border-color: rgba(var(--win-rgb), 0.22);
+}
+.mc-complete.done > svg { flex-shrink: 0; color: var(--win); }
+.mc-complete.done .mc-complete-head { color: var(--win); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* The per-candle read. Replaces one paragraph of prose that came out much the
+   same whichever candle you were on. */
+.mc-sess-play {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--txt);
+}
+.mc-sess-dirs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* The two branches read as a pair, so they share a shape and differ only in
+   the arrow and its colour — you should be able to pick the one that matches
+   the chart without reading both. */
+.mc-sess-dir {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--txt-dim);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-sess-dir svg { flex-shrink: 0; margin-top: 1px; }
+.mc-sess-dir strong {
+  color: var(--txt);
+  font-weight: 500;
+  margin-right: 4px;
+}
+/* Green says "this is the shape you want", red says "then it is not this
+   candle" — the pair reads as one decision, so they share everything except
+   the icon colour. */
+.mc-sess-dir.look svg { color: var(--win); }
+.mc-sess-dir.stand svg { color: var(--loss); }
+.mc-sess-dir.stand { background: rgba(var(--loss-rgb), 0.05); border-color: rgba(var(--loss-rgb), 0.2); }
+
+
+
+
+/* What the next trade is worth. Green even while the total above it is red —
+   that contrast is the entire point: the deficit is one ordinary trade deep,
+   not a hole. */
+.mc-comeback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--txt-dim);
+  background: rgba(var(--win-rgb), 0.08);
+  border: 1px solid rgba(var(--win-rgb), 0.26);
+}
+.mc-comeback svg { flex-shrink: 0; margin-top: 2px; color: var(--win); }
+.mc-comeback strong { color: var(--win); font-weight: 600; }
+
+/* Diagnose this — the one on-demand, costs-money AI comparison. Neutral
+   colours throughout on purpose: this is a second opinion, not a verdict —
+   the checklist above it already carries the actual pass/fail colour. */
+.mc-diagnose {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+}
+.mc-diagnose.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--txt-faint);
+}
+.mc-diagnose.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--loss);
+  flex-wrap: wrap;
+}
+.mc-diagnose.done p {
+  margin: 0 0 10px;
+  color: var(--txt-dim);
+}
+
+/* ---------- Complete Framework ---------- */
+
+.mc-fw-section { padding: 0; overflow: hidden; }
+.mc-fw-section-head {
+  width: 100%;
+  display: flex;
+  /* flex-start, not center — the description can wrap to two lines (it
+     regularly does at phone width), and centering against the whole row
+     left the chevron and count floating beside the description instead of
+     the title. Both get a small top offset below so they line up with the
+     title's own baseline instead of the row's vertical middle. */
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.mc-fw-section-head:hover { background: var(--glass); }
+.mc-fw-section-chevron {
+  flex-shrink: 0;
+  color: var(--txt-faint);
+  transition: transform 0.15s ease;
+  margin-top: 3px;
+}
+.mc-fw-section-head.open .mc-fw-section-chevron { transform: rotate(90deg); }
+.mc-fw-section-heading { min-width: 0; flex: 1; }
+.mc-fw-section-title { font-size: 16px; font-weight: 400; }
+.mc-fw-section-desc {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--txt-faint);
+  line-height: 1.5;
+}
+.mc-fw-section-count {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--txt-faint);
+  background: var(--glass-input);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.mc-fw-section-body {
+  padding: 4px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.mc-fw-section-body:has(.mc-empty) { border-top: none; padding-top: 0; }
+
+.mc-fw-entry {
+  padding-top: 16px;
+}
+.mc-fw-entry + .mc-fw-entry { border-top: 1px solid var(--hairline-soft); }
+.mc-fw-entry-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.mc-fw-entry-source {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--txt-faint);
+  margin-bottom: 10px;
+}
+.mc-fw-entry-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--txt-dim);
+}
+.mc-fw-entry-body p { margin: 0 0 10px; }
+.mc-fw-entry-body p:last-child { margin-bottom: 0; }
+.mc-fw-entry-body ul, .mc-fw-entry-body ol { margin: 0 0 10px; padding-left: 20px; }
+.mc-fw-entry-body strong { color: var(--txt); font-weight: 600; }
+.mc-fw-entry-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: var(--glass-input);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.mc-fw-entry-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mc-fw-entry-image {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 180px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--hairline-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: zoom-in;
+  font: inherit;
+  color: var(--txt-faint);
+  text-align: left;
+}
+.mc-fw-entry-image:hover { border-color: color-mix(in srgb, var(--txt) 30%, transparent); }
+.mc-fw-entry-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--glass-input);
+}
+.mc-fw-entry-caption {
+  font-size: 10.5px;
+  line-height: 1.4;
+  padding: 0 8px 8px;
+}
+
+@media (max-width: 720px) {
+  .mc-fw-section-head { padding: 13px 14px; gap: 10px; }
+  .mc-fw-section-title { font-size: 14.5px; }
+  .mc-fw-section-body { padding: 4px 14px 14px; }
+  .mc-fw-entry-image { width: 140px; }
+}

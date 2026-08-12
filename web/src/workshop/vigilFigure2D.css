@@ -1,0 +1,236 @@
+/* ============================================================
+   Vigil — idle behaviour and touch reaction.
+
+   Kept in CSS rather than driven from React state per frame: these are
+   purely decorative transforms on static SVG groups, so the compositor can
+   run them off the main thread. A useFrame/setInterval loop would re-render
+   the component 60x a second to move three groups, which is exactly the
+   kind of thing that makes a phone warm for no reason.
+
+   TRANSFORM ORIGINS are declared in view-box units (transform-box:
+   view-box), not percentages. Percentages resolve against each element's
+   own bounding box, and an arm's bbox top-centre is NOT its shoulder joint
+   once the arm has a cuff and a hand hanging off it — the rotation would
+   pivot around empty space. Naming the joint in the figure's own
+   coordinates (the same 0 0 200 300 space the paths are authored in) is
+   both exact and readable next to the path data.
+
+   EVERY animation sits inside prefers-reduced-motion: no-preference. With
+   the preference set the figure renders completely static, and the touch
+   handler no-ops rather than starting an animation nothing will play.
+   ============================================================ */
+
+.vg-figure {
+  /* the whole figure is the touch target */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* stops iOS double-tap-to-zoom stealing the second tap of a quick poke */
+  touch-action: manipulation;
+}
+
+.vg-figure:focus-visible {
+  outline: 2px solid #ffcf4d;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.vg-head,
+.vg-arm-l,
+.vg-arm-r {
+  transform-box: view-box;
+}
+
+/* the neck, where the mask actually pivots */
+.vg-head {
+  transform-origin: 100px 70px;
+}
+/* the two shoulder joints */
+.vg-arm-r {
+  transform-origin: 142px 84px;
+}
+.vg-arm-l {
+  transform-origin: 54px 84px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---------- idle ---------- */
+
+  /* Looking around. The long holds matter more than the movement: a head
+     that sweeps continuously reads as a scanning machine, whereas holding
+     a direction for ~2s and then moving reads as something deciding where
+     to look. Hence the paired keyframe stops. */
+  .vg-head {
+    animation: vg-gaze 11s ease-in-out infinite;
+  }
+
+  /* Arms breathe at deliberately mismatched periods (7s vs 8.5s) so they
+     drift in and out of phase instead of swinging like a metronome. */
+  .vg-arm-r {
+    animation: vg-idle-r 7s ease-in-out infinite;
+  }
+  .vg-arm-l {
+    animation: vg-idle-l 8.5s ease-in-out infinite;
+  }
+
+  /* Each bulb gets its own delay (set inline, from its index) so the five
+     lights flicker independently — one synchronised pulse reads as a
+     single circuit, several offset ones read as failing hardware. */
+  .vg-bulb {
+    animation: vg-bulb 3.4s ease-in-out infinite;
+  }
+
+  /* ---------- touch reaction ---------- */
+
+  .vg-figure.is-poked .vg-head {
+    animation: vg-startle 1.15s ease-in-out;
+  }
+  .vg-figure.is-poked .vg-arm-r {
+    animation: vg-wave-r 1.15s ease-in-out;
+  }
+  .vg-figure.is-poked .vg-arm-l {
+    animation: vg-wave-l 1.15s ease-in-out;
+  }
+  .vg-figure.is-poked .vg-bulb {
+    animation: vg-bulb-flash 1.15s ease-in-out;
+  }
+}
+
+/* ---------- keyframes ---------- */
+
+@keyframes vg-gaze {
+  0%,
+  16% {
+    transform: rotate(0deg);
+  }
+  23%,
+  37% {
+    transform: rotate(-4.5deg);
+  }
+  45%,
+  56% {
+    transform: rotate(0.5deg);
+  }
+  63%,
+  79% {
+    transform: rotate(3.5deg);
+  }
+  88%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* SVG's y axis points down, so a positive rotation is clockwise. For the
+   arm on the viewer's right, swinging the hand OUTWARD is anticlockwise
+   (negative); for the left arm it's the mirror. That's why the two idle
+   and two wave keyframe sets exist rather than one shared pair. */
+@keyframes vg-idle-r {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-1.6deg);
+  }
+}
+@keyframes vg-idle-l {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(1.6deg);
+  }
+}
+
+/* Swing angles are capped at ~15deg for a reason found by rendering it: the
+   arms are rigid shapes pinned at a single point, with no deforming shoulder
+   joint between them and the torso. Past roughly 15deg the top corner of the
+   armour plate rotates clear of the torso edge and a wedge of background
+   opens up at the armpit — the arm visibly detaches. 27deg looked lively in
+   the abstract and broken on screen. If a bigger throw is ever wanted, the
+   shoulder needs an overlapping pauldron drawn on top of the seam to hide
+   the gap; the angle alone can't buy it. */
+@keyframes vg-wave-r {
+  0% {
+    transform: rotate(0deg);
+  }
+  22% {
+    transform: rotate(-14deg);
+  }
+  42% {
+    transform: rotate(-9deg);
+  }
+  62% {
+    transform: rotate(-15deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+@keyframes vg-wave-l {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(6deg);
+  }
+  60% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Startle: a fast snap to face front, a small overshoot the other way, then
+   settle. Deliberately quicker in than out — that asymmetry is what makes
+   it read as reacting rather than as another idle sweep. */
+@keyframes vg-startle {
+  0% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(-7deg);
+  }
+  30% {
+    transform: rotate(4deg);
+  }
+  48% {
+    transform: rotate(-2.5deg);
+  }
+  70% {
+    transform: rotate(1deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes vg-bulb {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes vg-bulb-flash {
+  0% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.35;
+  }
+  35% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 1;
+  }
+}

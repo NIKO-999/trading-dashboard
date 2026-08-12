@@ -1,0 +1,104 @@
+/* ============================================================
+   Ballast — idle behaviour and touch reaction.
+
+   The motion brief is the OPPOSITE of Vigil's, and that opposition is the
+   design. Vigil looks around and waves: it responds. Ballast's whole
+   discipline is not moving while a position goes against it, so per spec §7
+   it gets no head scan and no arm unfold. Idle is a breathing rim light and
+   a highlight travelling the pipe crown. Touch gets one slow head turn
+   toward the viewer and back — Vigil responds, Ballast merely acknowledges.
+
+   Restraint here is a feature, not an unfinished animation. If this file
+   ever grows a wave or a bob, the character has stopped being the one who
+   holds.
+
+   Every rule sits inside prefers-reduced-motion: no-preference, same as
+   vigilFigure2D.css.
+   ============================================================ */
+
+.bl-figure {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* stops iOS double-tap-to-zoom eating the second tap of a quick poke */
+  touch-action: manipulation;
+}
+
+.bl-figure:focus-visible {
+  outline: 2px solid #ff3fae;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* The head pivots at the neck, named in the figure's own 200x300
+   coordinates rather than as a percentage — a percentage resolves against
+   the element's bounding box, and the head group's box includes the pipe
+   crown, so its centre is nowhere near the actual joint. */
+.bl-head-pivot {
+  transform-box: view-box;
+  transform-origin: 100px 78px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Idle: the rim breathes, slowly. This is the only thing that moves on
+     an untouched Ballast, and at 9s it is barely perceptible on purpose —
+     enough that the figure is not a static image, not enough to read as
+     fidgeting. */
+  .bl-rim {
+    animation: bl-rim-breathe 9s ease-in-out infinite;
+  }
+
+  /* Touch: one turn toward the viewer, a beat of stillness at the far end,
+     then back. The hold at 45-60% is what makes it read as a deliberate
+     look rather than a flinch. */
+  .bl-figure.is-poked .bl-head-pivot {
+    animation: bl-turn 2.4s ease-in-out;
+  }
+  .bl-figure.is-poked .bl-rim {
+    animation: bl-rim-flare 2.4s ease-in-out;
+  }
+}
+
+@keyframes bl-rim-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
+/* Deliberately small: 5 degrees. A big turn would need the mantle and the
+   folded arms to follow, and they are exactly what must not move. Five
+   degrees of head against a completely still body reads as more attention
+   than twenty degrees of the whole figure would. */
+@keyframes bl-turn {
+  0% {
+    transform: rotate(0deg);
+  }
+  22% {
+    transform: rotate(-5deg);
+  }
+  45%,
+  60% {
+    transform: rotate(-5.5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bl-rim-flare {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 1.4;
+  }
+  60% {
+    opacity: 1.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}

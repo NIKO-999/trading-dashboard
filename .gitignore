@@ -1,0 +1,16 @@
+node_modules/
+web/dist/
+_zip/
+
+# generated at build time by scripts/gen-precache.mjs
+hub/sw-manifest.js
+
+# your data — trades, screenshots, backups, logs
+data/
+
+# OS / local tooling — not part of the app
+.DS_Store
+.claude/
+
+# stale working-session snapshots, not app source
+/backups/

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en" style="background: #0a0a0c">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>crew3d workshop</title>
+  </head>
+  <body style="margin: 0">
+    <!--
+      Dev-only entry, not a build input (see vite.config.ts — rollupOptions
+      never lists this file, so `vite build` cannot emit it and it never
+      reaches dist/ or the service worker's precache list). Reached at
+      /workshop.html only while `vite` is running in dev mode.
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/workshop/main.tsx"></script>
+  </body>
+</html>

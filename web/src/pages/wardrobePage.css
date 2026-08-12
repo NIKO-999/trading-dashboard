@@ -1,0 +1,304 @@
+/* ============================================================
+   The Wardrobe page — the exact spec-sheet layout every outfit was approved
+   on (eyebrow, big title, lede, a tagged plate, a bold-lead-in diff list,
+   palette chips, body stats), one outfit at a time. The "rest of the
+   wardrobe" strip at the bottom is the navigation: click a card, it becomes
+   the one showing.
+   ============================================================ */
+
+/* The whole view — fixed over everything else, its own scroll container, and
+   deliberately overflow-x: hidden at every level below this: a full-screen
+   page that can be panned sideways reads as broken, not spacious. */
+.wb-screen {
+  --wb-bg: #0a0b10;
+  --wb-panel: #14161f;
+  --wb-panel-2: #191c27;
+  --wb-hairline: rgba(255, 255, 255, 0.09);
+  --wb-hairline-strong: rgba(255, 255, 255, 0.16);
+  --wb-text: #eae6dd;
+  --wb-text-dim: #a3a3ab;
+  --wb-text-faint: #66666f;
+  --wb-accent: #d9803a;
+  --wb-accent-soft: rgba(217, 128, 58, 0.16);
+  --wb-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--wb-bg);
+  color: var(--wb-text);
+  box-sizing: border-box;
+}
+.wb-screen *,
+.wb-screen *::before,
+.wb-screen *::after {
+  box-sizing: border-box;
+}
+
+.wb-back-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: color-mix(in srgb, var(--wb-bg) 85%, transparent);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  border-bottom: 1px solid var(--wb-hairline);
+}
+.wb-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wb-text-dim);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--wb-hairline-strong);
+  background: var(--wb-panel-2);
+  transition: color 0.2s, border-color 0.2s;
+}
+.wb-back-btn:hover { color: var(--wb-accent); border-color: color-mix(in srgb, var(--wb-accent) 40%, transparent); }
+
+/* The page's own name, sitting in the sticky bar so it stays readable the
+   whole way down rather than scrolling away with the first outfit. */
+.wb-page-name {
+  font-family: var(--wb-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wb-text-dim);
+}
+
+.wb-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 26px 20px 40px;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(217, 128, 58, 0.08), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(90, 110, 160, 0.07), transparent 55%);
+  overflow-wrap: anywhere;
+}
+
+.wb-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--wb-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--wb-accent);
+  margin-bottom: 10px;
+}
+.wb-eyebrow .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wb-accent);
+  box-shadow: 0 0 8px var(--wb-accent);
+  flex-shrink: 0;
+}
+
+.wb-h1 {
+  font-size: clamp(28px, 6vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  color: var(--wb-text);
+}
+
+.wb-lede {
+  color: var(--wb-text-dim);
+  font-size: 13.5px;
+  line-height: 1.65;
+  max-width: 62ch;
+  margin: 0 0 22px;
+}
+
+.wb-action { margin-bottom: 22px; }
+.wb-equip-btn {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--wb-hairline-strong);
+  background: var(--wb-panel-2);
+  color: var(--wb-text);
+  transition: border-color 0.2s, color 0.2s;
+}
+.wb-equip-btn:hover { border-color: color-mix(in srgb, var(--wb-accent) 45%, transparent); color: var(--wb-accent); }
+.wb-equip-btn.worn {
+  background: var(--wb-accent-soft);
+  border-color: color-mix(in srgb, var(--wb-accent) 45%, transparent);
+  color: var(--wb-accent);
+  cursor: default;
+}
+.wb-lock-notice {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--wb-text-faint);
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--wb-panel-2);
+  border: 1px solid var(--wb-hairline);
+  width: fit-content;
+}
+
+.wb-plate {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.05), transparent 65%),
+    var(--wb-panel);
+  border: 1px solid var(--wb-hairline);
+  border-radius: 18px;
+  padding: 30px 10px;
+  margin-bottom: 28px;
+}
+.wb-plate.locked { opacity: 0.55; }
+.wb-plate svg { width: 100%; max-width: 260px; height: auto; display: block; }
+.wb-plate-tag {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  font-family: var(--wb-mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wb-text-faint);
+}
+.wb-plate-tag b { color: var(--wb-text-dim); }
+
+.wb-sheet {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+@media (max-width: 640px) {
+  .wb-sheet { grid-template-columns: 1fr; }
+}
+
+.wb-block {
+  background: var(--wb-panel);
+  border: 1px solid var(--wb-hairline);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.wb-block h3 {
+  font-family: var(--wb-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wb-text-faint);
+  margin: 0 0 12px;
+}
+.wb-block.wb-diff-block { grid-column: 1 / -1; }
+
+.wb-diff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.wb-diff-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.55; color: var(--wb-text); }
+.wb-diff-list .tick {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--wb-accent-soft);
+  color: var(--wb-accent);
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
+.wb-diff-list b { color: #fff; }
+
+.wb-palette-row { display: flex; flex-direction: column; gap: 10px; }
+.wb-swatch { display: flex; align-items: center; gap: 10px; }
+.wb-swatch .chip { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--wb-hairline-strong); flex-shrink: 0; }
+.wb-swatch span { font-family: var(--wb-mono); font-size: 10.5px; color: var(--wb-text-dim); letter-spacing: 0.02em; }
+
+.wb-stat-table { display: flex; flex-direction: column; }
+.wb-stat-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--wb-hairline); font-size: 12.5px; }
+.wb-stat-row:last-child { border-bottom: none; }
+.wb-stat-row .k { color: var(--wb-text-faint); flex-shrink: 0; }
+/* This was the actual overflow bug: a flex item's default min-width is its
+   content's width, so an unwrapped "220x280, wider than tall" string forced
+   the row — and the whole fixed-position screen — wider than the viewport.
+   min-width: 0 lets it shrink and wrap like any other block of text. */
+.wb-stat-row .v {
+  color: var(--wb-text);
+  font-family: var(--wb-mono);
+  font-size: 11px;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.wb-compare {
+  margin-top: 8px;
+  padding-top: 26px;
+  border-top: 1px solid var(--wb-hairline);
+}
+.wb-compare-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wb-text);
+}
+.wb-compare-head span { font-size: 12px; font-weight: 400; color: var(--wb-text-faint); }
+
+.wb-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.wb-compare-card {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--wb-panel-2);
+  border: 1px solid var(--wb-hairline);
+  border-radius: 12px;
+  padding: 13px;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.wb-compare-card:hover { border-color: color-mix(in srgb, var(--wb-accent) 35%, transparent); }
+.wb-compare-card:active { transform: scale(0.98); }
+.wb-compare-card.current { border-color: var(--wb-accent); background: var(--wb-accent-soft); }
+.wb-compare-swatches { display: flex; gap: 5px; margin-bottom: 9px; }
+.wb-compare-swatches i { display: block; width: 13px; height: 13px; border-radius: 4px; border: 1px solid var(--wb-hairline-strong); }
+.wb-compare-name { font-size: 12.5px; font-weight: 600; color: var(--wb-text-dim); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wb-compare-card.current .wb-compare-name { color: var(--wb-text); }
+.wb-compare-badge {
+  font-family: var(--wb-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--wb-accent);
+  background: var(--wb-accent-soft);
+}
+.wb-compare-note { font-size: 10.5px; color: var(--wb-text-faint); line-height: 1.45; }
+
+.wb-footer {
+  margin-top: 26px;
+  font-family: var(--wb-mono);
+  font-size: 10px;
+  color: var(--wb-text-faint);
+  letter-spacing: 0.02em;
+}

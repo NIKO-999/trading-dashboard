@@ -1,0 +1,117 @@
+/* ============================================================
+   Corvid — motion. BATCH 6.
+
+   Spec §7: "the idle motion is a slow weight-shift onto the strut leg and
+   back, plus the held tool drifting a few degrees as if about to be used.
+   On touch: the head tilts toward the viewer, then the held hand raises
+   the tool slightly before returning."
+
+   Two idle animations, always running:
+
+     .cv-torso      the weight-shift. Everything above the legs leans
+                    slightly toward the strut leg and back — the legs
+                    themselves are outside this group on purpose, since
+                    they're what the weight shifts ONTO.
+     .cv-tool-arm   the tool drift. A few degrees of rotation, its own
+                    period so it never lines up with the torso's.
+
+   Two touch animations, one-shot, gated behind svg.is-poked:
+
+     .cv-head       tilts toward the viewer. No delay — starts immediately.
+     .cv-tool-arm   raises the tool. Delayed 0.3s so it visibly follows the
+                    head rather than happening at the same instant, then
+                    finishes at the same moment the head's animation does
+                    (0.3s delay + 1.3s duration = 1.6s, matching the head's
+                    un-delayed 1.6s) — see the component's animationend
+                    listener, which only needs to watch the head's animation
+                    name because of that shared end time.
+
+   svg.is-poked .cv-tool-arm REPLACES the idle drift for its duration rather
+   than layering a second animation on top of it — two animations rotating
+   the same group at once would fight. When is-poked is removed, the idle
+   rule regains control automatically; no JS hand-off needed.
+
+   transform-box: view-box and pixel transform-origin values (not
+   percentages) throughout — a percentage origin resolves against the
+   element's own bounding box, not the joint it's meant to pivot on. That
+   was a real bug the first time this project used percentages (see
+   CompanionOrbit.tsx's header), so every group here is anchored in figure
+   coordinates instead.
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Scoped under .cv-figure, which the component only applies when
+     interactive AND not in silhouette mode. Without this scope the idle
+     animations would run during the 80px gate too, which needs a frozen,
+     reproducible shape to judge — the same reason Ballast gates its whole
+     animated className behind the same two conditions. */
+  .cv-figure .cv-torso {
+    transform-box: view-box;
+    transform-origin: 100px 172px;
+    animation: cv-weight-shift 7s ease-in-out infinite;
+  }
+
+  .cv-figure .cv-tool-arm {
+    transform-box: view-box;
+    transform-origin: 150px 122px;
+    animation: cv-tool-drift 4.5s ease-in-out infinite;
+  }
+
+  svg.cv-figure.is-poked .cv-head {
+    transform-box: view-box;
+    transform-origin: 100px 128px;
+    animation: cv-head-tilt 1.6s ease-out;
+  }
+
+  svg.cv-figure.is-poked .cv-tool-arm {
+    animation: cv-tool-raise 1.3s ease-out 0.3s;
+  }
+}
+
+@keyframes cv-weight-shift {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    /* toward the strut leg, which sits to the right of centre (x~130
+       against the figure's x100 midline) */
+    transform: translateX(1.5px) rotate(0.5deg);
+  }
+}
+
+@keyframes cv-tool-drift {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes cv-head-tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  30%,
+  65% {
+    transform: rotate(-9deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes cv-tool-raise {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  45%,
+  75% {
+    transform: translate(-3px, -6px) rotate(-10deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}

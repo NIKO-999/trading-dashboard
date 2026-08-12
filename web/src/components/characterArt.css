@@ -1,0 +1,64 @@
+/* ============================================================
+   Crew art — ambient motion for the pets.
+
+   A pet's idle is about being ALIVE — a blink, a bob, a tag swinging
+   because the thing it hangs off never quite stops moving. Small,
+   constant, slightly irregular.
+
+   Periods are deliberately coprime-ish (3.1s / 4.3s / 5.7s) so that ten
+   companions on one page never fall into step. Anything that syncs reads
+   as a screensaver.
+
+   Everything sits inside prefers-reduced-motion: no-preference.
+   ============================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* a lit element breathing — lamps, cores, running lights */
+  .pl-pulse {
+    animation: pl-pulse 4.3s ease-in-out infinite;
+  }
+
+  /* anything hanging: tags, straps, tendrils. Pivot is set inline in
+     figure coordinates because a tag's bounding-box centre is nowhere
+     near the loop it actually swings from. */
+  .pl-swing {
+    transform-box: view-box;
+    animation: pl-swing 3.1s ease-in-out infinite;
+  }
+
+  /* whole-body float for the hoverers */
+  .pl-bob {
+    transform-box: view-box;
+    animation: pl-bob 5.7s ease-in-out infinite;
+  }
+}
+
+@keyframes pl-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes pl-swing {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes pl-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}

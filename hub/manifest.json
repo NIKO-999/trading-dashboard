@@ -1,0 +1,51 @@
+{
+  "name": "Mission Control",
+  "short_name": "Mission",
+  "description": "Trading dashboard and a read-only pathway into the AIOS vault.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#08090C",
+  "theme_color": "#08090C",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Moonshot",
+      "url": "/trading/#moonshot"
+    },
+    {
+      "name": "Trading",
+      "url": "/trading/"
+    },
+    {
+      "name": "Knowledge Base",
+      "url": "/trading/#knowledge"
+    }
+  ]
+}
