@@ -17,6 +17,12 @@ export const VAULT_ROOT =
 export const DATA_DIR = path.join(ROOT, 'data');
 export const MEDIA_DIR = path.join(DATA_DIR, 'media');
 export const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+
+/** Where launchd points the agent's stdout and stderr. Named here so the
+ *  installer that writes those paths into the plist and the process that has
+ *  to keep them from growing without bound cannot disagree about them. */
+export const LOG_FILE = path.join(DATA_DIR, 'server.log');
+export const ERROR_LOG_FILE = path.join(DATA_DIR, 'server.error.log');
 export const TRADES_FILE = path.join(DATA_DIR, 'trades.json');
 export const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 

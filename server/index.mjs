@@ -27,6 +27,7 @@ import { disciplineRouter } from './discipline.mjs';
 import { ensureMediaDir, mediaRouter } from './media.mjs';
 import { settingsRouter } from './settings.mjs';
 import { diagnoseRouter } from './diagnose.mjs';
+import { startLogCapping } from './logs.mjs';
 
 const app = express();
 app.disable('x-powered-by');
@@ -82,6 +83,7 @@ app.get('/trading/*', (_req, res) => res.sendFile(`${WEB_DIST}/index.html`));
 async function main() {
   await ensureDataDirs();
   await ensureMediaDir();
+  startLogCapping();
 
   try {
     await access(VAULT_ROOT);

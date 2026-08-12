@@ -41,20 +41,51 @@ For development with hot reload, `npm run dev` runs the API on 4400 and Vite on
 3. **Add to Home Screen** from the share sheet. It opens fullscreen with its own
    icon and keeps working offline from cache when the Mac is asleep.
 
-**The Mac has to be awake** to serve live data. Set Energy Saver to prevent
-sleeping while on power, or the phone falls back to its cached copy.
+**The Mac has to be awake** to serve live data, or the phone falls back to its
+cached copy. In System Settings → Energy (or Battery → Options) turn on
+*Prevent automatic sleeping on power adapter*. From the terminal that is:
+
+```bash
+sudo pmset -c sleep 0        # never sleep on power; display still sleeps
+```
+
+Sleep is per-machine state, not something the app can hold open for you — a
+closed lid on battery will always drop the connection.
 
 ### Keep it running across reboots
 
 ```bash
-cp scripts/com.niko.missioncontrol.plist ~/Library/LaunchAgents/ && launchctl load ~/Library/LaunchAgents/com.niko.missioncontrol.plist
+npm run build && npm run agent:install
 ```
+
+That generates `~/Library/LaunchAgents/com.niko.missioncontrol.plist` from
+wherever this checkout actually lives, loads it, and waits for `/api/health` to
+answer before reporting success. It starts at login and restarts if it dies.
+
+Re-run it after moving the folder, renaming it, or upgrading node — the agent
+pins absolute paths for both, and a stale one fails silently.
 
 To stop it:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.niko.missioncontrol.plist
+npm run agent:uninstall
 ```
+
+Your `data/` is never touched by either.
+
+**Note it starts at *login*, not at boot.** A Mac that reboots and sits at the
+login screen is not serving anything until someone signs in.
+
+To see what it is doing:
+
+```bash
+launchctl print gui/$UID/com.niko.missioncontrol   # state, PID, exit codes
+tail -f data/server.log                            # its stdout
+```
+
+The server caps `data/server.log` and `data/server.error.log` at 5MB each,
+truncating in place — an agent that runs for weeks would otherwise grow them
+forever, and a crash loop would do it overnight.
 
 ## Logging a trade
 
