@@ -6,7 +6,11 @@
    the UI shows about discipline is derived here and nowhere else.
    ============================================================ */
 
-import { findGate, isComplete, outstanding, setupSpec } from '../data/framework.ts';
+// Note what is NOT imported: isComplete/outstanding. "Did you finish the
+// checklist" is no longer the question a verdict asks — only whether the
+// compulsory gates are answered. The pre-flight screen still uses those two
+// for its own live gate, which is a different job.
+import { findGate, outstandingCompulsory, setupSpec } from '../data/framework.ts';
 import { isNonTradingDay } from './marketDays.ts';
 import type {
   Account,
@@ -309,17 +313,32 @@ function gateExplanations(dayEntries: Entry[]): BrokenRule[] {
     }
   };
 
+  // Two ways a rule actually breaks, and only two.
+  //
+  // 1. You explicitly marked a gate as killed. Deliberate statement that a
+  //    criterion failed — always counts, compulsory or not.
+  // 2. You left a COMPULSORY gate unticked. Key level, open draw, SMT: the
+  //    trade does not exist without them, so a blank box there is a real
+  //    miss rather than an unanswered question.
+  //
+  // Everything else unticked is silence. This used to fold in every
+  // unticked required gate, which made the checklist punitive — leaving a
+  // confirmation blank read identically to a setup criterion failing, and
+  // since nothing is ever ticked completely, almost every day came out
+  // dirty and the signal was worthless.
   for (const e of dayEntries) {
     for (const id of e.killedBy ?? []) {
       const g = findGate(id);
       if (g) add(g.label, g.avoid);
     }
 
-    // Gated on "has ticked anything at all" on purpose — an entry logged
+    // Gated on "has ticked anything at all" on purpose — a trade logged
     // before this checklist existed, or one nobody has reviewed yet, must
-    // read as unreviewed, not failed.
+    // read as unreviewed rather than as every compulsory gate having failed.
     if (e.candleRole && e.gatesPassed && e.gatesPassed.length > 0) {
-      for (const g of outstanding(e.candleRole, e.gatesPassed, e.sessionProfile)) add(g.label, g.avoid);
+      for (const g of outstandingCompulsory(e.candleRole, e.gatesPassed, e.sessionProfile)) {
+        add(g.label, g.avoid);
+      }
     }
   }
 
@@ -338,10 +357,13 @@ function gateExplanations(dayEntries: Entry[]): BrokenRule[] {
 function betterAdvice(dayEntries: Entry[]): string | undefined {
   for (const e of dayEntries) {
     if (!e.candleRole) continue;
-    const failed =
-      (e.killedBy?.length ?? 0) > 0 ||
-      (e.gatesPassed && e.gatesPassed.length > 0 && !isComplete(e.candleRole, e.gatesPassed, e.sessionProfile));
-    if (!failed) continue;
+    // Same rule as gateExplanations: a killed gate, or a compulsory one left
+    // unanswered, is a failed setup. A blank confirmation is not — offering
+    // "take the continuation instead" over that would be advice about nothing.
+    const reviewed = (e.gatesPassed?.length ?? 0) > 0;
+    const missedCompulsory =
+      reviewed && outstandingCompulsory(e.candleRole, e.gatesPassed ?? [], e.sessionProfile).length > 0;
+    if ((e.killedBy?.length ?? 0) === 0 && !missedCompulsory) continue;
     const line = setupSpec(e.candleRole)?.ifItFails;
     if (line) return line;
   }

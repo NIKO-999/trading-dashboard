@@ -2673,6 +2673,37 @@ button.mc-cal-cell { cursor: pointer; }
 
 /* ---------- Complete Framework ---------- */
 
+/* Source picker. Deliberately larger than a segmented control: which author's
+   model you are reading is the most consequential choice on the page, and
+   these two disagree in places. */
+.mc-fw-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.mc-fw-source {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mc-fw-source:hover { border-color: color-mix(in srgb, var(--txt) 25%, transparent); }
+.mc-fw-source.active {
+  background: var(--glass-strong);
+  border-color: color-mix(in srgb, var(--txt) 42%, transparent);
+}
+.mc-fw-source-label { font-size: 14px; font-weight: 500; color: var(--txt-dim); }
+.mc-fw-source.active .mc-fw-source-label { color: var(--txt); }
+.mc-fw-source-blurb { font-size: 11.5px; line-height: 1.5; color: var(--txt-faint); }
+
 .mc-fw-section { padding: 0; overflow: hidden; }
 .mc-fw-section-head {
   width: 100%;
@@ -2760,44 +2791,143 @@ button.mc-cal-cell { cursor: pointer; }
   padding: 1px 5px;
 }
 
-.mc-fw-entry-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
+/* Diagrams read as figures, not thumbnails. The previous version cropped each
+   one into a 16/10 box with object-fit: cover — but every diagram here is a
+   tall portrait slide, so that threw away most of the chart and left a band of
+   whitespace. These are the reference material; they get shown whole. */
+/* Callouts — a bright accent rail with its own bloom, over a dark tint of the
+   same hue, with a soft outer glow. The structure is copied from the
+   reference; the HUES are the app's own --win/--loss/--warn tokens rather
+   than the reference's exact values, so a red box here means the same thing
+   as red everywhere else in Mission Control.
+
+   Everything hangs off two custom properties so a new tone is two lines. */
+.mc-fw-callout {
+  --cal: var(--loss);
+  --cal-rgb: var(--loss-rgb);
+  position: relative;
+  margin: 16px 0;
+  padding: 13px 16px 13px 20px;
+  border-radius: 13px;
+  border: 1px solid rgba(var(--cal-rgb), 0.34);
+  background:
+    radial-gradient(120% 100% at 0% 50%, rgba(var(--cal-rgb), 0.16), transparent 62%),
+    linear-gradient(180deg, rgba(var(--cal-rgb), 0.09), rgba(var(--cal-rgb), 0.03));
+  /* Outer extent is deliberately capped at ~16px (blur 22 + spread -6). The
+     parent .mc-fw-section is overflow:hidden and the callout sits ~19px from
+     its edge, so a wider halo is silently sliced off — it looked weak for a
+     reason that had nothing to do with the alpha. Strength comes from opacity
+     and a second tight ring instead of from reach. */
+  box-shadow:
+    0 0 22px -6px rgba(var(--cal-rgb), 0.5),
+    0 0 6px -1px rgba(var(--cal-rgb), 0.28),
+    inset 0 0 44px -20px rgba(var(--cal-rgb), 0.55);
 }
-.mc-fw-entry-image {
+/* The rail. Brightest thing in the component — in the reference this is what
+   you see first, so it gets a real bloom rather than a hairline. */
+.mc-fw-callout::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--cal);
+  box-shadow:
+    0 0 3px rgba(var(--cal-rgb), 1),
+    0 0 9px rgba(var(--cal-rgb), 0.9),
+    0 0 20px rgba(var(--cal-rgb), 0.45);
+}
+.mc-fw-callout.danger { --cal: var(--loss); --cal-rgb: var(--loss-rgb); }
+.mc-fw-callout.success { --cal: var(--win); --cal-rgb: var(--win-rgb); }
+.mc-fw-callout.warn { --cal: var(--warn); --cal-rgb: var(--warn-rgb); }
+.mc-fw-callout.info { --cal: #4ea8ff; --cal-rgb: 78, 168, 255; }
+
+.mc-fw-callout-title {
+  font-size: 11px;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--cal);
+  margin-bottom: 9px;
+  text-shadow: 0 0 14px rgba(var(--cal-rgb), 0.45);
+}
+.mc-fw-callout-body { font-size: 12.5px; line-height: 1.65; color: var(--txt-dim); }
+.mc-fw-callout-body > :first-child { margin-top: 0; }
+.mc-fw-callout-body > :last-child { margin-bottom: 0; }
+.mc-fw-callout-body p { margin: 0 0 8px; }
+.mc-fw-callout-body ul,
+.mc-fw-callout-body ol { margin: 0; padding-left: 18px; }
+.mc-fw-callout-body li { margin: 4px 0; }
+.mc-fw-callout-body strong { color: var(--txt); font-weight: 600; }
+
+/* Cross-source pointer. Reads as a link, not a primary action — it is the way
+   out of a gap, not the point of the entry. */
+.mc-fw-crossref {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline-soft);
+  background: var(--glass-input);
+  color: var(--txt-dim);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.mc-fw-crossref:hover {
+  color: var(--txt);
+  border-color: color-mix(in srgb, var(--txt) 30%, transparent);
+}
+
+.mc-fw-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px 18px;
+  margin-top: 16px;
+}
+.mc-fw-figure {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 180px;
+  gap: 10px;
+  min-width: 0;
+}
+.mc-fw-figure-btn {
+  display: block;
+  width: 100%;
   padding: 0;
-  background: none;
   border: 1px solid var(--hairline-soft);
   border-radius: 12px;
   overflow: hidden;
+  background: none;
   cursor: zoom-in;
   font: inherit;
-  color: var(--txt-faint);
-  text-align: left;
+  color: inherit;
 }
-.mc-fw-entry-image:hover { border-color: color-mix(in srgb, var(--txt) 30%, transparent); }
-.mc-fw-entry-image img {
+.mc-fw-figure-btn:hover { border-color: color-mix(in srgb, var(--txt) 30%, transparent); }
+.mc-fw-figure-btn img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  background: var(--glass-input);
+  height: auto;
 }
-.mc-fw-entry-caption {
-  font-size: 10.5px;
-  line-height: 1.4;
-  padding: 0 8px 8px;
+.mc-fw-figure-caption {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--txt-dim);
 }
 
 @media (max-width: 720px) {
   .mc-fw-section-head { padding: 13px 14px; gap: 10px; }
   .mc-fw-section-title { font-size: 14.5px; }
   .mc-fw-section-body { padding: 4px 14px 14px; }
-  .mc-fw-entry-image { width: 140px; }
+  /* One per row on a phone — a 300px minimum would otherwise force a second
+     column at the wider end of "mobile" and shrink each diagram again. */
+  .mc-fw-figures { grid-template-columns: 1fr; gap: 20px; }
+  .mc-lightbox { padding: 20px; }
+  .mc-lightbox img { max-height: calc(100vh - 130px); }
 }

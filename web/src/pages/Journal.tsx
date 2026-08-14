@@ -1012,12 +1012,10 @@ function EntryEditor({
                   </div>
                 </>
               )}
-              {gatesReviewed && !gatesComplete && (
-                <div style={{ fontSize: 11, color: 'var(--loss)', marginTop: 4, lineHeight: 1.5 }}>
-                  A required gate isn't ticked — same as the pre-flight checklist catching it live,
-                  this counts as a broken rule for the day.
-                </div>
-              )}
+              {/* No warning for unticked gates any more. Leaving a box blank
+                  is not a violation — only a gate you deliberately mark as
+                  killed counts against the day. See gateExplanations() in
+                  utils/discipline.ts. */}
               {setup && <DiagnoseButton entry={entry} setup={setup} ticked={ticked} requiredChecksList={requiredChecksList} />}
             </div>
           )}

@@ -47,7 +47,7 @@ export function ModalHead({ title, onClose }: { title: string; onClose: () => vo
 
 /* ---------- lightbox ---------- */
 
-export function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+export function Lightbox({ src, caption, onClose }: { src: string; caption?: string; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
@@ -56,9 +56,20 @@ export function Lightbox({ src, onClose }: { src: string; onClose: () => void })
 
   // Same reasoning as Modal above — portalled so a backdrop-filter card
   // upstream can't box it in.
+  //
+  // The <figure> wrapper is not decoration: the image needs a block-level
+  // parent whose height the CSS can actually constrain. See .mc-lightbox in
+  // index.css for why `max-height: 100%` on a bare centered child was
+  // silently doing nothing.
   return createPortal(
     <div className="mc-lightbox" onClick={onClose}>
-      <img src={src} alt="" />
+      {/* No stopPropagation here on purpose — click-anywhere-to-close is the
+          established behaviour for the Journal and Knowledge Base lightboxes,
+          and quietly changing it for them would be a regression. */}
+      <figure className="mc-lightbox-figure">
+        <img src={src} alt={caption ?? ''} />
+        {caption && <figcaption className="mc-lightbox-caption">{caption}</figcaption>}
+      </figure>
     </div>,
     document.body,
   );

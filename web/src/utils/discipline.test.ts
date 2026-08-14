@@ -275,20 +275,59 @@ test('a trade nobody has reviewed the checklist for is never treated as having f
   assert.equal(v.clean, true);
 });
 
-test('ticking some gates but leaving a required one off flags the day, same as pre-flight catching it live', () => {
+test('leaving CONFIRMATION gates unticked is not a broken rule', () => {
+  // The checklist is a reference, not an attendance sheet. With every
+  // compulsory gate answered, leaving the confirmations blank means they were
+  // never checked — not that they failed.
+  const compulsory = SETUPS.find((s) => s.id === 'C2')!.checks.filter((c) => c.compulsory).map((c) => c.id);
+  assert.ok(compulsory.length > 0, 'C2 must have compulsory gates for this test to mean anything');
+
   const v = judgeDayFromTrades(
     '2026-03-02',
-    [entry({ risk: 100, candleRole: 'C2', gatesPassed: [C2_REQUIRED[0]] })],
+    [entry({ risk: 100, candleRole: 'C2', gatesPassed: compulsory })],
+    100,
+  );
+  assert.equal(v.clean, true, 'unticked confirmations must not dirty the day');
+  assert.equal(v.reasons.length, 0);
+  // signature and timeLeft are confirmations here — neither may be reported.
+  for (const id of ['signature', 'timeLeft']) {
+    assert.ok(!v.reasons.includes(findGate(id)!.avoid!), `${id} should not be reported`);
+  }
+});
+
+test('leaving a COMPULSORY gate unticked IS a broken rule', () => {
+  // Key level, open draw and SMT are the ones the trade cannot exist without.
+  const v = judgeDayFromTrades(
+    '2026-03-02',
+    [entry({ risk: 100, candleRole: 'C2', gatesPassed: ['keyLevel'] })],
     100,
   );
   assert.equal(v.clean, false);
-  // Named specifically now — each still-outstanding required gate contributes
-  // its OWN avoid sentence, not a flat "missing a required gate" label.
-  const outstandingIds = C2_REQUIRED.slice(1);
-  const outstandingAvoids = outstandingIds.map((id) => findGate(id)!.avoid!);
-  for (const line of outstandingAvoids) assert.ok(v.reasons.includes(line), `missing reason: ${line}`);
-  // And because a reversal is what failed, the framework's own "what to do
-  // instead" line comes along automatically too.
+  for (const id of ['openDraw', 'smtStage1', 'smtStage2']) {
+    assert.ok(v.reasons.includes(findGate(id)!.avoid!), `${id} should be reported`);
+  }
+  // keyLevel WAS ticked, so it must not appear.
+  assert.ok(!v.reasons.includes(findGate('keyLevel')!.avoid!));
+});
+
+test('a trade nobody has reviewed yet reads as unreviewed, not failed', () => {
+  // Nothing ticked at all — a trade logged before the checklist existed, or
+  // one not yet gone over. It must not report every compulsory gate as missed.
+  const v = judgeDayFromTrades('2026-03-02', [entry({ risk: 100, candleRole: 'C2' })], 100);
+  assert.equal(v.clean, true);
+  assert.equal(v.reasons.length, 0);
+});
+
+test('an explicitly killed gate still breaks the rule, even with everything else ticked', () => {
+  // The other half of the same rule — this is the case that must keep working.
+  const ticked = C2_REQUIRED.filter((id) => id !== 'signature');
+  const v = judgeDayFromTrades(
+    '2026-03-02',
+    [entry({ risk: 100, candleRole: 'C2', gatesPassed: ticked, killedBy: ['signature'] })],
+    100,
+  );
+  assert.equal(v.clean, false);
+  assert.ok(v.reasons.includes(findGate('signature')!.avoid!));
   assert.ok(v.reasons.some((r) => r.includes('Take the continuation instead')));
 });
 
@@ -301,15 +340,13 @@ test('ticking every required gate clears it', () => {
   assert.equal(v.clean, true);
 });
 
-test('the missing-gate check applies the same way on a checked-in day', () => {
-  const v = judgeDay(
-    '2026-03-02',
-    check(),
-    [entry({ risk: 100, candleRole: 'C2', gatesPassed: [C2_REQUIRED[0]] })],
-    100,
-  );
-  assert.equal(v.clean, false);
-  assert.ok(v.reasons.some((r) => r === findGate(C2_REQUIRED[1])!.avoid!));
+test('the compulsory rule applies the same way on a checked-in day', () => {
+  const compulsory = SETUPS.find((s) => s.id === 'C2')!.checks.filter((c) => c.compulsory).map((c) => c.id);
+  const clean = judgeDay('2026-03-02', check(), [entry({ risk: 100, candleRole: 'C2', gatesPassed: compulsory })], 100);
+  assert.equal(clean.clean, true, 'confirmations left blank stay clean');
+
+  const dirty = judgeDay('2026-03-02', check(), [entry({ risk: 100, candleRole: 'C2', gatesPassed: ['keyLevel'] })], 100);
+  assert.equal(dirty.clean, false, 'a missing compulsory gate still breaks it');
 });
 
 test('the checkpoint path reads killedBy off the trade too, not just the unused setupValid flag', () => {
@@ -1272,11 +1309,9 @@ test('the exact shape of the real trade this was built for', () => {
   // more gate simply never answered either way (present in neither gatesPassed
   // nor killedBy). Mirrors what actually shipped this feature.
   //
-  // The never-answered gate used to be 'fractal'; that gate has since been cut
-  // from the checklist. It is now 'wickSetsTarget', which falls out naturally:
-  // ticked is built from C2's BASE checks, and wickSetsTarget is a 10:00
-  // session add, so it is required here but never in the ticked list. That
-  // makes this case exercise the session-composition path too.
+  // wickSetsTarget is a 10:00 session add, so it is required here but never
+  // in the ticked list — it stays unanswered. It must NOT be reported: an
+  // unticked gate is silence, not a violation.
   const c2Required = SETUPS.find((s) => s.id === 'C2')!.checks.filter((c) => !c.optional).map((c) => c.id);
   const ticked = c2Required.filter((id) => id !== 'signature');
   const trade = entry({
@@ -1291,11 +1326,9 @@ test('the exact shape of the real trade this was built for', () => {
   assert.equal(v.clean, false);
   // The killed gate's own line, automatically, no note required.
   assert.ok(v.reasons.includes(findGate('signature')!.avoid!));
-  // The gate that was simply never answered — outstanding() catches it even
-  // though it was never explicitly killed.
-  assert.ok(v.reasons.includes(findGate('wickSetsTarget')!.avoid!));
-  // 'signature' appears in both killedBy and as an outstanding required gate
-  // for this candleRole — deduped to one line, not repeated.
+  // The gate that was simply never answered stays out of it entirely.
+  assert.ok(!v.reasons.includes(findGate('wickSetsTarget')!.avoid!));
+  // The killed gate is reported exactly once, not repeated.
   assert.equal(v.reasons.filter((r) => r === findGate('signature')!.avoid!).length, 1);
   // And the "take the continuation instead" line, exactly once, not once per
   // failed gate.
