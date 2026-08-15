@@ -165,7 +165,8 @@ async function main() {
     return;
   }
   await run('git', ['commit', '-m', `Cloud sync: ${new Date().toISOString()}`], { cwd: ROOT });
-  await run('git', ['push'], { cwd: ROOT });
+  // Binary screenshots push large — the default postBuffer can 400 on this host.
+  await run('git', ['-c', 'http.postBuffer=157286400', 'push'], { cwd: ROOT });
   console.log('[sync-cloud] pushed — Vercel will redeploy shortly');
 }
 
