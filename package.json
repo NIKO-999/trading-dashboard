@@ -10,7 +10,8 @@
     "start": "NODE_ENV=production node server/index.mjs",
     "setup": "npm install && npm --prefix web install",
     "test": "node --test web/src/**/*.test.ts",
-    "framework:hashes": "node scripts/gen-framework-hashes.mjs"
+    "framework:hashes": "node scripts/gen-framework-hashes.mjs",
+    "sync:cloud": "node scripts/sync-cloud.mjs"
   },
   "dependencies": {
     "compression": "^1.8.1",

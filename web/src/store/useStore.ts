@@ -19,6 +19,7 @@ import type {
   StoreState,
 } from '../types';
 import { ApiError, api } from '../utils/api';
+import { loadCloudSnapshot } from '../utils/cloudSnapshot';
 import { nextSequence, tradesOnDay } from '../utils/discipline';
 
 const MIRROR_KEY = 'mc-trades-mirror';
@@ -45,6 +46,8 @@ let state: StoreState = {
   offline: null,
   pendingWrites: 0,
   discipline: EMPTY_DISCIPLINE,
+  cloudMode: false,
+  cloudSyncedAt: null,
 };
 
 const listeners = new Set<() => void>();
@@ -61,6 +64,17 @@ function set(patch: Partial<StoreState>) {
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/**
+ * Every mutator checks this first. The cloud deploy has no server to write
+ * to — silently accepting an edit into the in-memory mirror would let it
+ * vanish on next load with nothing telling you it never actually saved.
+ */
+function blockedInCloudMode(): boolean {
+  if (!state.cloudMode) return false;
+  pushToast('Read-only cloud view — log trades on your Mac');
+  return true;
 }
 
 export function useStore(): StoreState {
@@ -124,11 +138,32 @@ export async function load() {
   if (!alive) {
     // Still attempt the read: the service worker may hold a cached copy that is
     // better than an empty mirror (e.g. first load on a second device).
+    let filled = false;
     try {
       const cached = await api.get<{ entries: Entry[] }>('/api/trades');
-      if (!mirrored) set({ entries: cached.entries });
+      if (!mirrored) {
+        set({ entries: cached.entries });
+        filled = true;
+      }
     } catch {
       /* nothing cached either */
+    }
+    // A device that has never talked to the Mac (no mirror at all) and can't
+    // reach any API — e.g. the Vercel deploy, which has no server — falls back
+    // to the static snapshot committed by `npm run sync:cloud`.
+    if (!mirrored && !discMirror && !filled) {
+      const snap = await loadCloudSnapshot();
+      if (snap) {
+        set({
+          entries: snap.trades.entries,
+          discipline: { ...EMPTY_DISCIPLINE, ...snap.discipline },
+          loading: false,
+          offline: null,
+          cloudMode: true,
+          cloudSyncedAt: snap.syncedAt,
+        });
+        return;
+      }
     }
     set({ loading: false, offline: 'Server unreachable' });
     return;
@@ -228,6 +263,7 @@ async function saveDiscipline() {
 }
 
 function patchDiscipline(patch: Partial<DisciplineData>) {
+  if (blockedInCloudMode()) return;
   set({ discipline: { ...state.discipline, ...patch } });
   scheduleDisciplineSave();
 }
@@ -448,6 +484,11 @@ function newId() {
 }
 
 export function addEntry(partial: Partial<Entry> = {}): Entry {
+  if (blockedInCloudMode()) {
+    // A harmless, never-persisted stand-in — callers immediately read `.id`
+    // to navigate to the new entry, and there is nothing sensible to show.
+    return { id: newId(), date: partial.date ?? '', outcome: null, tags: [], walkthrough: [], ...partial };
+  }
   const now = new Date();
   const date = partial.date || now.toISOString().slice(0, 10);
   const accountId = partial.accountId ?? activeAccount()?.id;
@@ -471,6 +512,7 @@ export function addEntry(partial: Partial<Entry> = {}): Entry {
 }
 
 export function updateEntry(id: string, patch: Partial<Entry>) {
+  if (blockedInCloudMode()) return;
   set({
     entries: state.entries.map((e) =>
       e.id === id ? { ...e, ...patch, updatedAt: new Date().toISOString() } : e,
@@ -480,11 +522,13 @@ export function updateEntry(id: string, patch: Partial<Entry>) {
 }
 
 export function removeEntry(id: string) {
+  if (blockedInCloudMode()) return;
   set({ entries: state.entries.filter((e) => e.id !== id) });
   scheduleSave();
 }
 
 export function clearAll() {
+  if (blockedInCloudMode()) return;
   set({ entries: [] });
   scheduleSave();
 }

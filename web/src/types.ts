@@ -231,4 +231,8 @@ export type StoreState = {
   offline: string | null;
   pendingWrites: number;
   discipline: DisciplineData;
+  /** true when running off the static cloud snapshot — no server exists to write to */
+  cloudMode: boolean;
+  /** when the cloud snapshot was generated, if cloudMode is true */
+  cloudSyncedAt: string | null;
 };

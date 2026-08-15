@@ -1,5 +1,7 @@
 /* Thin fetch wrapper. Same origin in production; Vite proxies /api in dev. */
 
+import { cachedCloudSnapshot, loadCloudSnapshot } from './cloudSnapshot';
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -65,16 +67,51 @@ export type VaultNote = {
 };
 
 export const vault = {
-  tree: (refresh = false) =>
-    api.get<VaultTree>(`/api/vault/tree${refresh ? '?refresh=1' : ''}`),
-  note: (path: string) =>
-    api.get<VaultNote>(`/api/vault/note?path=${encodeURIComponent(path)}`),
-  backlinks: (path: string) =>
-    api.get<{ backlinks: VaultNoteRef[] }>(
-      `/api/vault/backlinks?path=${encodeURIComponent(path)}`,
-    ),
-  mediaUrl: (path: string) => `/api/vault/media?path=${encodeURIComponent(path)}`,
+  tree: async (refresh = false) => {
+    try {
+      return await api.get<VaultTree>(`/api/vault/tree${refresh ? '?refresh=1' : ''}`);
+    } catch (err) {
+      const snap = await cloudFallback(err);
+      if (!snap) throw err;
+      return { vault: snap.vault.vault, noteCount: snap.vault.noteCount, tree: snap.vault.tree };
+    }
+  },
+  note: async (path: string) => {
+    try {
+      return await api.get<VaultNote>(`/api/vault/note?path=${encodeURIComponent(path)}`);
+    } catch (err) {
+      const snap = await cloudFallback(err);
+      const note = snap?.vault.notes[path];
+      if (!note) throw err;
+      return note;
+    }
+  },
+  backlinks: async (path: string) => {
+    try {
+      return await api.get<{ backlinks: VaultNoteRef[] }>(
+        `/api/vault/backlinks?path=${encodeURIComponent(path)}`,
+      );
+    } catch (err) {
+      const snap = await cloudFallback(err);
+      if (!snap) throw err;
+      return { backlinks: snap.vault.backlinksByPath[path] ?? [] };
+    }
+  },
+  /**
+   * Synchronous by contract (used directly as an <img src>), so this only
+   * resolves the cloud mapping once a snapshot has already been cached by an
+   * earlier await (tree/note calls above, or the store's boot-time load).
+   */
+  mediaUrl: (path: string) => {
+    const mapped = cachedCloudSnapshot()?.vault.mediaMap[path];
+    return mapped ?? `/api/vault/media?path=${encodeURIComponent(path)}`;
+  },
 };
+
+async function cloudFallback(err: unknown) {
+  if (!(err instanceof ApiError)) return null;
+  return loadCloudSnapshot();
+}
 
 /* ---------- media upload ---------- */
 

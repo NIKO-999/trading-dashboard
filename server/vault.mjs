@@ -135,7 +135,7 @@ export function extractLinks(body, fromPath, index) {
 /* ---------- tree ---------- */
 
 /** Flat note list → nested folder tree the sidebar can render. */
-function buildTree(notes) {
+export function buildTree(notes) {
   const root = { name: VAULT_ROOT.split('/').pop(), path: '', folders: [], notes: [] };
   const byPath = new Map([['', root]]);
 

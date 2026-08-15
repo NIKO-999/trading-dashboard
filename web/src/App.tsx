@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { AccountPanel } from './components/AccountPanel';
 import { Ambient } from './components/Ambient';
+import { CloudGate, cloudPinOk } from './components/CloudGate';
 import { DevToggle } from './components/DevToggle'; // TEMPORARY — see store/devMode.ts
 import { Toasts } from './components/Toasts';
 import { Modal, ModalHead } from './components/kit';
@@ -113,6 +114,7 @@ function withinTimeframe(entries: ReturnType<typeof gradedEntries>, days: number
 
 export default function App() {
   const data = useStore();
+  const [pinUnlocked, setPinUnlocked] = useState(() => cloudPinOk());
   const [page, setPage] = useState<Page>(() => {
     const hash = window.location.hash;
     if (hash === '#knowledge') return 'knowledge';
@@ -191,12 +193,20 @@ export default function App() {
   }
 
   function logTrade() {
+    if (data.cloudMode) {
+      pushToast('Read-only cloud view — log trades on your Mac');
+      return;
+    }
     setPage('journal');
     setJournalIntent({ kind: 'new' });
   }
 
   const meta = PAGE_META[page];
   const inTrading = TRADING_PAGES.has(page); // sections are self-contained — no cross-section chrome
+
+  if (data.cloudMode && !pinUnlocked) {
+    return <CloudGate onUnlocked={() => setPinUnlocked(true)} />;
+  }
 
   // Wardrobe is a full-screen view, not another page inside the rail/topbar
   // shell — no nav chrome at all, just the page and a way back to the hub.
@@ -221,15 +231,19 @@ export default function App() {
       >
         {/* ---------- icon rail (desktop only — mobile navigates via the panel) ---------- */}
         <nav className="mc-rail">
-          <a
-            className="mc-rail-btn"
-            title="Back to Hub"
-            href="../index.html"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
-          >
-            <Home size={18} />
-          </a>
-          <div style={{ height: 1, width: 26, background: 'var(--hairline-soft)', margin: '2px 0' }} />
+          {!data.cloudMode && (
+            <>
+              <a
+                className="mc-rail-btn"
+                title="Back to Hub"
+                href="../index.html"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: 'inherit' }}
+              >
+                <Home size={18} />
+              </a>
+              <div style={{ height: 1, width: 26, background: 'var(--hairline-soft)', margin: '2px 0' }} />
+            </>
+          )}
           {NAV.map((item) => (
             <button
               key={item.id}
@@ -289,7 +303,12 @@ export default function App() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-              {data.offline && (
+              {data.cloudMode && (
+                <div className="mc-offline" title={`Synced ${data.cloudSyncedAt ? new Date(data.cloudSyncedAt).toLocaleString() : 'unknown'} — read-only, log trades on your Mac`}>
+                  <CloudOff size={11} /> Cloud view
+                </div>
+              )}
+              {!data.cloudMode && data.offline && (
                 <button className="mc-offline" onClick={retrySync} title={`${data.offline} — tap to retry`}>
                   <CloudOff size={11} /> Offline
                 </button>
