@@ -26,6 +26,30 @@ const VAULT_MEDIA_OUT = path.join(CLOUD_DATA, 'vault-media');
 const TRADE_MEDIA_OUT = path.join(WEB_PUBLIC, 'media');
 const DISCIPLINE_FILE = path.join(DATA_DIR, 'discipline.json');
 
+/**
+ * The live app stores media URLs root-absolute ("/media/x.png") because the
+ * Mac's Express server always answers at the domain root. The cloud snapshot
+ * gets deployed at different roots (Vercel's root, GitHub Pages'
+ * /trading-dashboard/ subpath) — so screenshot URLs in the snapshot's copy of
+ * trades/backtests are relativized. This never touches data/trades.json or
+ * data/discipline.json themselves, only the exported snapshot.
+ */
+function relativizeImage(url) {
+  return typeof url === 'string' && url.startsWith('/media/') ? url.slice(1) : url;
+}
+
+function relativizeEntries(entries) {
+  return entries.map((e) => ({
+    ...e,
+    image: relativizeImage(e.image),
+    walkthrough: (e.walkthrough ?? []).map((w) => ({ ...w, image: relativizeImage(w.image) })),
+  }));
+}
+
+function relativizeBacktests(backtests) {
+  return backtests.map((b) => ({ ...b, image: relativizeImage(b.image) }));
+}
+
 async function readJson(file, fallback) {
   try {
     return JSON.parse(await readFile(file, 'utf8'));
@@ -95,7 +119,7 @@ async function buildVaultSnapshot() {
   for (const m of index.media) {
     const safe = Buffer.from(m.path).toString('base64url') + path.extname(m.path);
     await copyFile(path.join(VAULT_ROOT, m.path), path.join(VAULT_MEDIA_OUT, safe));
-    mediaMap[m.path] = `/cloud-data/vault-media/${safe}`;
+    mediaMap[m.path] = `cloud-data/vault-media/${safe}`;
   }
 
   return {
@@ -134,7 +158,7 @@ async function main() {
   await mkdir(CLOUD_DATA, { recursive: true });
   const snapshot = {
     syncedAt: new Date().toISOString(),
-    trades: { entries: trades.entries },
+    trades: { entries: relativizeEntries(trades.entries) },
     discipline: {
       version: 1,
       accounts: discipline.accounts ?? [],
@@ -144,7 +168,7 @@ async function main() {
       equippedOutfit: discipline.equippedOutfit ?? 'standard',
       equippedCompanion: discipline.equippedCompanion ?? null,
       live: discipline.live ?? null,
-      backtests: discipline.backtests ?? [],
+      backtests: relativizeBacktests(discipline.backtests ?? []),
     },
     vault,
   };
