@@ -4,7 +4,7 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
 import { createGame } from '../src/game/mapgen.ts';
-import { cityIncome, citiesOf, def, doAction, moveOptions, score, tileActions } from '../src/game/rules.ts';
+import { applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, score, tileActions } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -125,6 +125,119 @@ test('a farm or a mine can only be built once on a tile', () => {
     assert.ok(!tileActions(s, 0, t).some((a) => a.id === id), `no second ${id} is offered on the same tile`);
     assert.equal(doAction(s, 0, t, id), false, `a second ${id} can't be bought`);
   }
+});
+
+/** A small two-empire game with the capital's neighbours cleared to plain fields. */
+function sandbox() {
+  const s = createGame({ seed: 21, human: 'rome', opponents: ['egypt'], mode: 'domination' });
+  const cap = citiesOf(s, 0)[0];
+  const ring = s.tiles.filter((t) => Math.max(Math.abs(t.x - cap.x), Math.abs(t.y - cap.y)) === 1);
+  for (const t of ring) Object.assign(t, { terrain: 'field', resource: null, improvement: null, village: false, ruin: false, road: false });
+  s.units = s.units.filter((u) => u.owner !== 0);
+  for (const c of s.cities) c.units = 0;
+  s.players[0].explored.fill(true);
+  s.players[1].explored.fill(true);
+  return { s, cap, ring };
+}
+
+test('boarding and leaving a boat keeps a unit\'s health as it is', () => {
+  const { s, cap, ring } = sandbox();
+  const land = ring.find((t) => t.x === cap.x || t.y === cap.y)!;
+  const port = ring.find((t) => t !== land && Math.max(Math.abs(t.x - land.x), Math.abs(t.y - land.y)) === 1)!;
+  Object.assign(port, { terrain: 'shallow', improvement: 'port' });
+  const u = spawnUnit(s, 'defender', 0, land.x, land.y, null);
+  u.hp = 12;
+  for (let trip = 0; trip < 4; trip++) {
+    u.moved = u.attacked = false;
+    assert.ok(moveUnit(s, u, port.x, port.y), 'boards at the port');
+    assert.equal(u.hp, 12);
+    assert.equal(maxHp(u), 15, 'a boat has its passenger\'s full health');
+    u.moved = u.attacked = false;
+    assert.ok(moveUnit(s, u, land.x, land.y), 'lands again');
+    assert.equal(u.kind, 'defender');
+    assert.equal(u.hp, 12, 'no health gained or lost on the round trip');
+  }
+});
+
+test('Grand Gardens add a star of income even with a workshop', () => {
+  const { s, cap } = sandbox();
+  applyReward(s, cap, 'workshop');
+  const before = cityIncome(s, cap);
+  cap.pendingRewards = [5];
+  applyReward(s, cap, 'park');
+  assert.equal(cityIncome(s, cap), before + 1);
+});
+
+test('units with Escape can move again after attacking, even if they moved first', () => {
+  const { s, cap } = sandbox();
+  s.players[0].techs.push('riding');
+  const rider = spawnUnit(s, 'rider', 0, cap.x + 2, cap.y, null);
+  const foe = spawnUnit(s, 'warrior', 1, cap.x + 4, cap.y, null);
+  for (const t of s.tiles) if (Math.abs(t.y - cap.y) <= 1 && t.x > cap.x) Object.assign(t, { terrain: 'field', cityId: null, village: false, ruin: false });
+  rider.moved = rider.attacked = false;
+  assert.ok(moveUnit(s, rider, cap.x + 3, cap.y), 'rider moves up');
+  assert.ok(attack(s, rider, foe), 'then attacks');
+  assert.ok(moveOptions(s, rider).length > 0, 'and can still retreat');
+  const warrior = spawnUnit(s, 'warrior', 0, cap.x + 3, cap.y + 1, null);
+  warrior.moved = warrior.attacked = false;
+  if (s.units.includes(foe)) {
+    assert.ok(attack(s, warrior, foe));
+    assert.equal(moveOptions(s, warrior).length, 0, 'a unit without Escape stops after attacking');
+  }
+});
+
+test('only units that can fortify get the city defence bonus', () => {
+  const { s, cap } = sandbox();
+  const w = spawnUnit(s, 'warrior', 0, cap.x, cap.y, null);
+  assert.equal(defenseBonus(s, w), 1.5);
+  s.units = s.units.filter((u) => u !== w);
+  const sw = spawnUnit(s, 'swordsman', 0, cap.x, cap.y, null);
+  assert.ok(!def(sw).skills.includes('fortify'));
+  assert.equal(defenseBonus(s, sw), 1);
+});
+
+test('nothing can be harvested under an enemy unit', () => {
+  const { s, ring } = sandbox();
+  const fruit = ring[0];
+  fruit.resource = 'fruit';
+  s.players[0].techs.push('gathering');
+  s.players[0].stars = 20;
+  assert.ok(tileActions(s, 0, fruit).some((a) => a.id === 'harvest' && a.enabled));
+  spawnUnit(s, 'warrior', 1, fruit.x, fruit.y, null);
+  assert.ok(!tileActions(s, 0, fruit).some((a) => a.id === 'harvest'));
+  assert.equal(doAction(s, 0, fruit, 'harvest'), false);
+});
+
+test('Recover heals 4 HP at home and 2 away', () => {
+  const { s, cap, ring } = sandbox();
+  const home = spawnUnit(s, 'warrior', 0, ring[0].x, ring[0].y, null);
+  home.hp = 3;
+  home.moved = home.attacked = false;
+  assert.ok(doAction(s, 0, ring[0], 'recover'));
+  assert.equal(home.hp, 7);
+  const far = s.tiles.find((t) => t.owner === null && t.terrain === 'field' && !t.village && !t.ruin && t.cityId === null && !s.units.some((u) => u.x === t.x && u.y === t.y) && Math.max(Math.abs(t.x - cap.x), Math.abs(t.y - cap.y)) > 3)!;
+  const away = spawnUnit(s, 'warrior', 0, far.x, far.y, null);
+  away.hp = 3;
+  away.moved = away.attacked = false;
+  assert.ok(doAction(s, 0, far, 'recover'));
+  assert.equal(away.hp, 5);
+});
+
+test('capturing the last rival city ends the game at once, and the captor joins that city', () => {
+  const { s, cap } = sandbox();
+  const theirs = citiesOf(s, 1)[0];
+  s.units = s.units.filter((u) => u.owner !== 1);
+  const u = spawnUnit(s, 'warrior', 0, theirs.x, theirs.y, cap.id);
+  cap.units = 1;
+  u.moved = u.attacked = false;
+  assert.ok(doAction(s, 0, tileAt(s, theirs.x, theirs.y)!, 'capture'));
+  assert.equal(theirs.owner, 0);
+  assert.equal(u.homeCity, theirs.id, 'the captor now belongs to the captured city');
+  assert.equal(cap.units, 0, 'its old city slot is free again');
+  assert.equal(theirs.units, 1);
+  assert.equal(s.players[1].alive, false);
+  assert.equal(s.over, true, 'victory is declared straight away');
+  assert.equal(s.winner, 0);
 });
 
 test('every empire gets its starting tech, unique unit and capital', () => {

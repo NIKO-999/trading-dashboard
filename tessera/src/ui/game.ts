@@ -263,11 +263,13 @@ export class GameView {
         if (this.ov.attacks.some((a) => a.x === x && a.y === y)) {
           const target = unitAt(this.s, x, y)!;
           this.act(() => attack(this.s, u, target));
+          this.checkRewards(); // a kill can level up a city
           const still = this.s.units.includes(u);
           return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
         }
         if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
           this.act(() => moveUnit(this.s, u, x, y));
+          this.checkRewards(); // stepping on ruins can level up a city
           const sp = this.tileScreen(x, y);
           if (sp.x < this.vw * 0.15 || sp.x > this.vw * 0.85 || sp.y < this.vh * 0.22 || sp.y > this.vh * 0.7) this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 550);
           this.advanceHints();

@@ -1,6 +1,5 @@
-import { emit } from './events';
 import { revealAround } from './mapgen';
-import { checkElimination, citiesOf, income, livingPlayers, score } from './rules';
+import { checkElimination, checkGameOver, citiesOf, income, maxHp } from './rules';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -16,6 +15,7 @@ export function startTurn(s: GameState) {
     if (u.owner !== p.id) continue;
     u.moved = false;
     u.attacked = false;
+    u.hp = Math.min(u.hp, maxHp(u)); // saves from before boats kept their passenger's health
   }
   revealAround(s, p.id);
 }
@@ -36,26 +36,7 @@ export function endTurn(s: GameState) {
   if (!s.over) startTurn(s);
 }
 
-export function checkGameOver(s: GameState) {
-  if (s.over) return;
-  const alive = livingPlayers(s);
-  const humans = s.players.filter((p) => p.human);
-  if (humans.length && humans.every((p) => !p.alive)) {
-    s.over = true;
-    s.winner = bestScorer(s);
-  } else if (alive.length === 1) {
-    s.over = true;
-    s.winner = alive[0].id;
-  } else if (s.mode === 'perfection' && s.maxTurns > 0 && s.turn >= s.maxTurns) {
-    s.over = true;
-    s.winner = bestScorer(s);
-  }
-  if (s.over) emit({ type: 'toast', player: -1, text: 'Game over' });
-}
-
-function bestScorer(s: GameState) {
-  return livingPlayers(s).sort((a, b) => score(s, b.id) - score(s, a.id))[0]?.id ?? null;
-}
+export { checkGameOver };
 
 export const isHumanTurn = (s: GameState) => s.players[s.current].human && !s.over;
 export const cityCount = (s: GameState, pid: number) => citiesOf(s, pid).length;

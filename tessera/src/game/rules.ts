@@ -10,7 +10,8 @@ import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 export const hasTech = (s: GameState, pid: number, tech: string | null) => tech === null || s.players[pid].techs.includes(tech);
 export const def = (u: Unit): UnitDef => UNITS[u.kind];
-export const maxHp = (u: Unit) => def(u).hp + (u.veteran ? 5 : 0);
+/** Full health. A boat carrying a unit has that unit's health, as in Polytopia. */
+export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0);
 export const cityById = (s: GameState, id: number | null) => (id === null ? undefined : s.cities.find((c) => c.id === id));
 export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) => u.x === x && u.y === y);
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
@@ -25,7 +26,7 @@ const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pira
 // ---------------------------------------------------------------- economy
 
 export function cityIncome(s: GameState, c: City) {
-  let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0);
+  let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0) + c.parks;
   inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length;
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
@@ -123,7 +124,7 @@ export function applyReward(s: GameState, c: City, id: RewardOption['id']) {
     case 'resources': p.stars += 5; break;
     case 'growth': addPop(s, c, 3); break;
     case 'borders': c.borderRadius = 2; claimTerritory(s, c.id); revealAround(s, c.owner); break;
-    case 'park': c.parks++; c.workshop = true; p.bonusScore += 250; break;
+    case 'park': c.parks++; p.bonusScore += 250; break;
     case 'giant': {
       const spot = freeSpotNear(s, c.x, c.y, false);
       if (spot) spawnUnit(s, 'giant', c.owner, spot.x, spot.y, null);
@@ -201,7 +202,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
-    if (u.hp < maxHp(u)) add('recover', 'Recover', `Heal ${mine ? 8 : 4} HP.`, 0, null, 'heal', u.moved || u.attacked ? 'Unit has already acted' : undefined);
+    if (u.hp < maxHp(u)) add('recover', 'Recover', `Heal ${mine ? 4 : 2} HP.`, 0, null, 'heal', u.moved || u.attacked ? 'Unit has already acted' : undefined);
     const up = NAVAL_UPGRADE[u.kind];
     if (up && def(u).naval) add(`upgrade:${up}`, `Upgrade to ${UNITS[up].name}`, UNITS[up].blurb, UNITS[up].cost, UNITS[up].tech, 'ship');
   }
@@ -215,6 +216,9 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
     }
     return acts;
   }
+
+  // an enemy unit standing on a tile blocks harvesting and building there
+  if (u && u.owner !== pid) return acts;
 
   if (!mine || !city) {
     if (isLand(t) && t.terrain !== 'mountain' && !t.road && !t.village && t.cityId === null && tileOwnerPlayer(s, t) === null && isExplored(s, pid, t.x, t.y))
@@ -282,7 +286,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   switch (id) {
     case 'capture': return capture(s, u!, t);
     case 'recover':
-      u!.hp = Math.min(maxHp(u!), u!.hp + (tileOwnerPlayer(s, t) === pid ? 8 : 4));
+      u!.hp = Math.min(maxHp(u!), u!.hp + (tileOwnerPlayer(s, t) === pid ? 4 : 2));
       u!.moved = u!.attacked = true;
       return true;
     case 'road': t.road = true; return true;
@@ -307,8 +311,16 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
 
 function capture(s: GameState, u: Unit, t: Tile) {
   const pid = u.owner;
+  // the capturing unit joins the settlement it takes, freeing its old city's slot (as in Polytopia)
+  const joinCity = (c: City) => {
+    const old = cityById(s, u.homeCity);
+    if (old) old.units = Math.max(0, old.units - 1);
+    u.homeCity = c.id;
+    c.units++;
+  };
   if (t.village) {
     const c = foundCity(s, t.x, t.y, pid, false);
+    joinCity(c);
     emit({ type: 'capture', player: pid, cityId: c.id, from: null });
   } else if (t.cityId !== null) {
     const c = cityById(s, t.cityId)!;
@@ -319,6 +331,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
     c.units = 0;
     // Units homed in a lost city become unsupported.
     for (const x of s.units) if (x.homeCity === c.id) x.homeCity = null;
+    joinCity(c);
     claimTerritory(s, c.id);
     emit({ type: 'capture', player: pid, cityId: c.id, from });
     checkElimination(s, from, pid);
@@ -334,6 +347,29 @@ export function checkElimination(s: GameState, pid: number, by: number) {
   p.alive = false;
   s.units = s.units.filter((u) => u.owner !== pid);
   emit({ type: 'eliminated', player: pid, by });
+  checkGameOver(s);
+}
+
+/** Ends the game when every human is out, one empire is left, or the score-mode turn limit is reached. */
+export function checkGameOver(s: GameState) {
+  if (s.over) return;
+  const alive = livingPlayers(s);
+  const humans = s.players.filter((p) => p.human);
+  if (humans.length && humans.every((p) => !p.alive)) {
+    s.over = true;
+    s.winner = bestScorer(s);
+  } else if (alive.length === 1) {
+    s.over = true;
+    s.winner = alive[0].id;
+  } else if (s.mode === 'perfection' && s.maxTurns > 0 && s.turn >= s.maxTurns) {
+    s.over = true;
+    s.winner = bestScorer(s);
+  }
+  if (s.over) emit({ type: 'toast', player: -1, text: 'Game over' });
+}
+
+function bestScorer(s: GameState) {
+  return livingPlayers(s).sort((a, b) => score(s, b.id) - score(s, a.id))[0]?.id ?? null;
 }
 
 // ---------------------------------------------------------------- movement
@@ -384,8 +420,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       if (naval) {
         if (isLand(to)) {
           if (to.terrain === 'mountain' && !hasTech(s, pid, 'climbing')) continue;
-          if (from !== start) continue; // disembark only as a single step from the boat's position
-          opt = { ...opt, disembark: true };
+          opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;
         } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship') continue;
       } else {
@@ -491,7 +526,7 @@ function openRuin(s: GameState, u: Unit, t: Tile) {
 export function defenseBonus(s: GameState, u: Unit) {
   const t = tileAt(s, u.x, u.y)!;
   const c = cityById(s, t.cityId);
-  if (c && c.owner === u.owner) return c.walls ? 4 : 1.5;
+  if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return c.walls ? 4 : 1.5;
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
   if (t.terrain === 'mountain' && hasTech(s, u.owner, 'climbing')) return 1.5;
   if (isWater(t) && hasTech(s, u.owner, 'aquaculture')) return 1.5;
@@ -563,7 +598,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   a.attacked = true;
   const skills = def(a).skills;
   if (kills && skills.includes('persist')) a.attacked = false;
-  if (!skills.includes('escape')) a.moved = true;
+  a.moved = !skills.includes('escape');
   return true;
 }
 

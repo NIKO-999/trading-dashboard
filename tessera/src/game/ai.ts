@@ -1,5 +1,5 @@
 import { UNITS } from '../data/units';
-import { dist, tileAt } from './grid';
+import { dist, isLand, neighbors, tileAt } from './grid';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, unitCap, unitAt,
@@ -60,7 +60,8 @@ function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
   const myUnits = s.units.filter((u) => u.owner === pid);
-  const enemiesNear = s.units.some((u) => u.owner !== pid && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
+  const enemiesNear = s.units.some((u) => u.owner !== pid && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
+  const abroad = targetsOnlyOverseas(s, pid);
 
   // Harvest: cheapest population gain first.
   const harvests: { t: Tile; id: string; cost: number; value: number }[] = [];
@@ -72,7 +73,7 @@ function economyStep(s: GameState, pid: number): boolean {
       if ((a.id === 'temple' || a.id === 'shrine') && p.stars < 16) continue;
       // one port is enough for most empires; pirates' ports also pay income, so they build more
       if (a.id === 'port' && p.tribe !== 'pirates' && s.tiles.some((x) => x.improvement === 'port' && tileOwnerPlayer(s, x) === pid)) continue;
-      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' ? 4 : 2;
+      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' ? 4 : a.id === 'port' && abroad ? 6 : 2;
       harvests.push({ t, id: a.id, cost: a.cost, value: value / Math.max(1, a.cost) });
     }
   }
@@ -99,7 +100,7 @@ function economyStep(s: GameState, pid: number): boolean {
       switch (id) {
         case 'gathering': return has((t) => t.resource === 'fruit') ? 10 : 2;
         case 'hunting': return has((t) => t.resource === 'animal') ? 10 : 2;
-        case 'fishing': return has((t) => t.resource === 'fish') ? 9 : 3;
+        case 'fishing': return has((t) => t.resource === 'fish') || abroad ? 9 : 3;
         case 'farming': return has((t) => t.resource === 'crop') ? 8 : 1;
         case 'mining': return has((t) => t.resource === 'ore') ? 8 : 1;
         case 'whaling': return has((t) => t.resource === 'whale') ? 7 : 1;
@@ -111,7 +112,7 @@ function economyStep(s: GameState, pid: number): boolean {
         case 'tactics': return 3;
         case 'smithing': return 5;
         case 'chivalry': return 4;
-        case 'sailing': return 3;
+        case 'sailing': return abroad ? 6 : 3;
         case 'philosophy': return 3;
         default: return 2;
       }
@@ -175,18 +176,55 @@ function unitStep(s: GameState, u: Unit): boolean {
     if (rec) return doAction(s, pid, t, 'recover');
   }
 
+  const naval = def(u).naval;
+  // boats: upgrade to cross open ocean when there are stars to spare
+  if (naval && !u.moved) {
+    const up = tileActions(s, pid, t).find((a) => a.id.startsWith('upgrade:') && a.enabled);
+    if (up && s.players[pid].stars >= up.cost + 5) return doAction(s, pid, t, up.id);
+  }
+
   const opts = moveOptions(s, u);
   if (!opts.length) return false;
   const goals = findGoals(s, u);
   if (!goals.length) return false;
+  const mass = landmasses(s);
+  const massAt = (x: number, y: number) => mass[y * s.size + x];
+  let aims = goals;
+  let allowEmbark = goals.some((g) => g.water);
+  let allowLanding = (_x: number, _y: number) => true;
+
+  if (!naval) {
+    const home = massAt(u.x, u.y);
+    const local = goals.filter((g) => massAt(g.x, g.y) === home);
+    const overseas = goals.filter((g) => g.w > 0 && massAt(g.x, g.y) !== home);
+    if (local.some((g) => g.w > 0) || !overseas.length) {
+      aims = local.length ? local : goals;
+    } else {
+      // everything worth doing is across the water: board a boat, or walk to where one can be boarded
+      const boarding = opts.filter((o) => o.embark);
+      if (boarding.length) {
+        const near = (o: { x: number; y: number }) => Math.min(...overseas.map((g) => dist(o.x, o.y, g.x, g.y) - g.w));
+        const o = boarding.sort((a, b) => near(a) - near(b))[0];
+        return moveUnit(s, u, o.x, o.y);
+      }
+      const spots = boardingSpots(s, u, home);
+      aims = spots.length ? spots : local.length ? local : goals;
+      allowEmbark = spots.length > 0;
+    }
+  } else {
+    // at sea: only go ashore on land that holds something worth taking
+    const worth = new Set(goals.filter((g) => g.w > 0).map((g) => massAt(g.x, g.y)).filter((m) => m >= 0));
+    if (worth.size) allowLanding = (x, y) => worth.has(massAt(x, y));
+  }
+
   const score = (x: number, y: number) => {
     let best = Infinity;
-    for (const g of goals) best = Math.min(best, dist(x, y, g.x, g.y) - g.w);
+    for (const g of aims) best = Math.min(best, dist(x, y, g.x, g.y) - g.w);
     return best;
   };
   const here = score(u.x, u.y);
   const ranked = opts
-    .filter((o) => !(o.embark && def(u).naval === false && !goals.some((g) => g.water)))
+    .filter((o) => !(o.embark && !allowEmbark) && !(o.disembark && !allowLanding(o.x, o.y)))
     .map((o) => ({ o, v: score(o.x, o.y) + (o.embark ? 0.5 : 0) }))
     .sort((a, b) => a.v - b.v);
   if (!ranked.length || ranked[0].v >= here) {
@@ -194,6 +232,64 @@ function unitStep(s: GameState, u: Unit): boolean {
     return false;
   }
   return moveUnit(s, u, ranked[0].o.x, ranked[0].o.y);
+}
+
+/** Connected land regions (an id per tile, -1 for water), computed once per game. */
+const massCache = new WeakMap<GameState, Int32Array>();
+function landmasses(s: GameState): Int32Array {
+  const hit = massCache.get(s);
+  if (hit) return hit;
+  const ids = new Int32Array(s.size * s.size).fill(-1);
+  let next = 0;
+  for (const t of s.tiles) {
+    if (!isLand(t) || ids[t.y * s.size + t.x] >= 0) continue;
+    ids[t.y * s.size + t.x] = next;
+    const stack = [t];
+    while (stack.length) {
+      const c = stack.pop()!;
+      for (const n of neighbors(s, c.x, c.y)) {
+        const i = n.y * s.size + n.x;
+        if (isLand(n) && ids[i] < 0) {
+          ids[i] = next;
+          stack.push(n);
+        }
+      }
+    }
+    next++;
+  }
+  massCache.set(s, ids);
+  return ids;
+}
+
+/** True when every settlement this empire can see to take is on land its cities aren't on. */
+function targetsOnlyOverseas(s: GameState, pid: number): boolean {
+  const mass = landmasses(s);
+  const mine = new Set(citiesOf(s, pid).map((c) => mass[c.y * s.size + c.x]));
+  let home = false, away = false;
+  for (const t of s.tiles) {
+    if (!isExplored(s, pid, t.x, t.y)) continue;
+    const target = t.village || (t.cityId !== null && s.cities.find((c) => c.id === t.cityId)!.owner !== pid);
+    if (!target) continue;
+    if (mine.has(mass[t.y * s.size + t.x])) home = true;
+    else away = true;
+  }
+  return away && !home;
+}
+
+/** Where a land unit on this landmass can board a boat: its empire's ports, or (Polynesians) any coast. */
+function boardingSpots(s: GameState, u: Unit, home: number): Goal[] {
+  const pid = u.owner;
+  const mass = landmasses(s);
+  const polynesian = s.players[pid].tribe === 'polynesia';
+  const out: Goal[] = [];
+  for (const t of s.tiles) {
+    if (unitAt(s, t.x, t.y)) continue;
+    const port = t.improvement === 'port' && tileOwnerPlayer(s, t) === pid;
+    const coast = polynesian && t.terrain === 'shallow';
+    if (!port && !coast) continue;
+    if (neighbors(s, t.x, t.y).some((n) => mass[n.y * s.size + n.x] === home)) out.push({ x: t.x, y: t.y, w: 0 });
+  }
+  return out;
 }
 
 interface Goal { x: number; y: number; w: number; water?: boolean }
