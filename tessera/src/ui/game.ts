@@ -264,9 +264,9 @@ export class GameView {
     const mine = mover && mover.owner === this.me ? mover : undefined;
     let { x, y } = under;
     let asTile = false;
-    if (mine && figure && this.ov.attacks.some((a) => a.x === figure.x && a.y === figure.y)) ({ x, y } = figure); // strike the enemy you touched
-    else if (mine && this.ov.moves.some((m) => m.x === under.x && m.y === under.y)) ({ x, y } = under); // or go where you touched
-    else if (figure) ({ x, y } = figure);
+    // a unit you touch wins (attack it if you can, else select it); otherwise the tile or label under the finger
+    if (figure) ({ x, y } = figure);
+    else if (mine && this.ov.moves.some((m) => m.x === under.x && m.y === under.y)) ({ x, y } = under);
     else if (labelCity !== null) {
       const c = cityById(this.s, labelCity)!;
       ({ x, y } = c);
@@ -325,6 +325,7 @@ export class GameView {
     fn();
     const now = performance.now();
     const evs = drain();
+    this.lastEvents = evs;
     for (const e of evs) if (e.type === 'move') moved.add(e.unitId);
     const { end } = this.handleEvents(evs);
     let settle = end;
@@ -342,6 +343,21 @@ export class GameView {
   }
 
   private lastRivalRedraw = 0;
+  private lastEvents: GameEvent[] = [];
+
+  /** Whether any of these events happens inside the part of the map on screen right now. */
+  private onScreen(evs: GameEvent[]) {
+    const inView = (p: { x: number; y: number }) => {
+      if (!isExplored(this.s, this.me, p.x, p.y)) return false;
+      const q = this.tileScreen(p.x, p.y);
+      return q.x > -40 && q.x < this.vw + 40 && q.y > -40 && q.y < this.vh + 40;
+    };
+    return evs.some((e) => {
+      if (e.type === 'move') return e.path.some(inView);
+      if (e.type === 'attack') return inView(e.from) || inView(e.to);
+      return 'x' in e && typeof e.x === 'number' && inView(e as { x: number; y: number });
+    });
+  }
   /**
    * The HUD during rival turns, and the map redrawn at most every quarter-second: rivals take
    * many small steps and redrawing the whole map after each one slowed big maps down.
@@ -615,7 +631,7 @@ export class GameView {
           if (segs < 1) break;
           const seg = isWater(e.path[0]) && isWater(e.path[segs]) ? SAIL_MS : HOP_MS;
           const start = Math.max(impact ?? now, now);
-          fx.moves.set(e.unitId, { path: e.path, t0: start, dur: seg * segs });
+          fx.moves.set(e.unitId, { path: e.path, t0: start, dur: seg * segs, before: e.before });
           const a = e.path[segs - 1], b = e.path[segs];
           const sdx = b.x - b.y - (a.x - a.y);
           if (sdx !== 0) fx.facing.set(e.unitId, sdx > 0 ? 1 : -1);
@@ -933,9 +949,9 @@ export class GameView {
         continue;
       }
       steps++;
-      // wait for what you can see; moves hidden in the fog don't hold the turn up
-      const visible = settle - performance.now() > 5;
-      if (!fast && visible) await sleep(Math.min(900, settle - performance.now()));
+      // wait only for what is on screen (briefly); everything else plays out without holding the turn up
+      const visible = settle - performance.now() > 5 && this.onScreen(this.lastEvents);
+      if (!fast && visible) await sleep(Math.min(450, settle - performance.now()));
       else if (++quiet % 8 === 0) await sleep(0);
     }
     this.banner.classList.add('hidden');

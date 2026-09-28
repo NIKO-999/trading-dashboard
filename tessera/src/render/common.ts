@@ -36,7 +36,7 @@ export const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain ===
 export const uv = (cx: number, cy: number, u: number, v: number): Pt => ({ x: cx + (u - v) * HW, y: cy + (u + v) * HH });
 
 export interface Fx {
-  moves: Map<number, { path: { x: number; y: number }[]; t0: number; dur: number }>;
+  moves: Map<number, { path: { x: number; y: number }[]; t0: number; dur: number; before?: UnitKind }>; // before: kind at the start (a boat, when landing)
   lunges: Map<number, { tx: number; ty: number; t0: number }>;
   flashes: Map<number, number>;
   facing: Map<number, number>; // -1 faces left, 1 faces right

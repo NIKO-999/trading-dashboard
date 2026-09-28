@@ -476,7 +476,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
 export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   const opt = moveOptions(s, u).find((o) => o.x === x && o.y === y);
   if (!opt) return false;
-  emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark });
+  emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark, before: u.kind });
   u.x = x;
   u.y = y;
   u.moved = true;

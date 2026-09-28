@@ -100,6 +100,12 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const body: (Node | string)[] = [h('p', {}, unlocks)];
     if (st === 'locked') body.push(h('p', { class: 'muted' }, `Research ${TECH_BY_ID[t.parent!].name} first.`));
     if (st === 'owned') body.push(h('p', { class: 'muted' }, 'Already known.'));
+    /** The first tech still to research on the way to `target` (itself once its parent is known). */
+    const nextStep = (target: string): string | null => {
+      let t = target;
+      while (researchStatus(s, pid, t) === 'locked') t = TECH_BY_ID[t].parent!;
+      return researchStatus(s, pid, t) === 'available' ? t : null;
+    };
     const goTo = (next: string) => {
       focused = next;
       render();
@@ -119,8 +125,9 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
             onClick: () => {
               if (research(s, pid, id)) {
                 onChange();
-                // researched a missing step on the way to the goal: bring the goal's card back
-                if (goal && goal !== id && researchStatus(s, pid, goal) === 'available') goTo(goal);
+                // researched a step on the way to the goal: go on to the next missing one (or the goal)
+                const next = goal && goal !== id ? nextStep(goal) : null;
+                if (next) goTo(next);
                 else render();
               }
             },

@@ -4,7 +4,7 @@ import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
 import { cityIncome, maxHp } from '../game/rules';
-import type { City, GameState, Tile, TribeId, Unit } from '../game/types';
+import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
 import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
@@ -168,8 +168,12 @@ function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewe
   const flashing = flashK >= 0 && flashK <= 1;
   const shake = flashing ? Math.sin(flashK * 42) * 2.2 * (1 - flashK) : 0;
   const x = m.x + shake, y = m.y - m.lift + 5;
-  drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, us, m.sx, m.sy, m.facing < 0);
-  if (flashing) drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, 'white', exact), x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
+  // mid-trip a unit that boarded or landed shows as whatever fits the tile it's crossing (boat on water)
+  const before = ov.fx.moves.get(u.id)?.before;
+  const fits = (k: UnitKind) => !!UNITS[k].naval === m.water;
+  const kind = before && !fits(u.kind) && fits(before) ? before : u.kind;
+  drawSprite(ctx, unitSprite(kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, us, m.sx, m.sy, m.facing < 0);
+  if (flashing) drawSprite(ctx, unitSprite(kind, tribe, pxScale, 'white', exact), x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
 }
 
 // ---------------------------------------------------------------- water life

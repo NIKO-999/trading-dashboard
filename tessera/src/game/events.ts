@@ -8,7 +8,7 @@ export type GameEvent =
   | { type: 'damage'; unitId: number; x: number; y: number; amount: number }
   | { type: 'death'; unitId: number; x: number; y: number; owner: number; kind: UnitKind }
   | { type: 'harvest'; player: number; x: number; y: number; pop: number }
-  | { type: 'move'; unitId: number; owner: number; path: { x: number; y: number }[]; embark: boolean; disembark: boolean }
+  | { type: 'move'; unitId: number; owner: number; path: { x: number; y: number }[]; embark: boolean; disembark: boolean; before?: UnitKind }
   | { type: 'levelup'; player: number; cityId: number; level: number }
   | { type: 'ruin'; player: number; title: string; text: string }
   | { type: 'heal'; unitId: number; x: number; y: number; amount: number }
