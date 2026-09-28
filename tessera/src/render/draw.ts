@@ -271,19 +271,66 @@ function surf(ctx: Ctx, a: Pt, b: Pt, cx: number, cy: number, seed: number) {
   }
 }
 
+/** A farm's tilled plot: a sunken bed of soil with furrows (its wheat stands in the scenery layer). */
 function drawFarm(ctx: Ctx, cx: number, cy: number) {
-  const k = 0.42;
+  const k = 0.43;
   const a = uv(cx, cy, -k, -k), b = uv(cx, cy, k, -k), c = uv(cx, cy, k, k), d = uv(cx, cy, -k, k);
-  poly(ctx, [a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y], '#e2c65a');
-  ctx.strokeStyle = '#b8942f';
+  poly(ctx, [a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y], '#c99a4b');
+  // a darker rim along the back edges reads as the bed sitting a little below the field
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#9a6f33';
   ctx.lineWidth = 1.6;
-  for (let i = 1; i < 5; i++) {
-    const v = -k + (i * 2 * k) / 5;
-    const p = uv(cx, cy, -k, v), q = uv(cx, cy, k, v);
+  ctx.beginPath();
+  ctx.moveTo(d.x, d.y);
+  ctx.lineTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.strokeStyle = '#e4c27a';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(b.x, b.y);
+  ctx.lineTo(c.x, c.y);
+  ctx.lineTo(d.x, d.y);
+  ctx.stroke();
+  // furrows between the rows of wheat
+  ctx.strokeStyle = '#a97a3a';
+  ctx.lineWidth = 1.1;
+  for (const v of FARM_ROWS.slice(0, -1).map((r, i) => (r + FARM_ROWS[i + 1]) / 2)) {
+    const p = uv(cx, cy, -k + 0.04, v), q = uv(cx, cy, k - 0.04, v);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(q.x, q.y);
     ctx.stroke();
+  }
+}
+
+const FARM_ROWS = [-0.3, -0.1, 0.1, 0.3];
+
+/** Neat rows of ripe wheat standing on a farm plot, drawn back to front. */
+function drawFarmCrops(ctx: Ctx, cx: number, cy: number, seed: number) {
+  const tufts: { x: number; y: number; i: number }[] = [];
+  FARM_ROWS.forEach((v, r) => {
+    for (let j = 0; j < 5; j++) {
+      const u = -0.32 + j * 0.16 + (rand(seed, 300 + r * 5 + j) - 0.5) * 0.03;
+      tufts.push({ ...uv(cx, cy, u, v), i: r * 5 + j });
+    }
+  });
+  tufts.sort((p, q) => p.y - q.y);
+  ctx.lineCap = 'round';
+  for (const p of tufts) {
+    for (let j = -1; j <= 1; j++) {
+      const h = 6.5 + rand(seed, 400 + p.i * 3 + j) * 2.5;
+      const lean = j * 0.9 + (rand(seed, 500 + p.i * 3 + j) - 0.5) * 0.8;
+      const x0 = p.x + j * 1.4, top = p.y - h;
+      ctx.strokeStyle = '#b08a2c';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(x0, p.y);
+      ctx.lineTo(x0 + lean, top);
+      ctx.stroke();
+      ellipse(ctx, x0 + lean, top - 1.4, 1.35, 2.7, j === 0 ? '#f6d35e' : '#eec14a');
+    }
   }
 }
 
@@ -423,8 +470,10 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
   if (t.terrain === 'forest' && t.improvement !== 'lumber') drawForest(ctx, t, c.x, c.y, P);
   if (t.terrain === 'mountain') drawMountains(ctx, t, c.x, c.y, P);
-  if (t.resource && t.resource !== 'fish' && t.resource !== 'whale') drawResource(ctx, t, c.x, c.y, t.biome);
-  if (t.improvement && t.improvement !== 'farm') drawImprovement(ctx, s, t, c.x, c.y);
+  // once a farm or mine is built it replaces the wild crop or ore it was built on
+  if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') drawResource(ctx, t, c.x, c.y, t.biome);
+  if (t.improvement === 'farm') drawFarmCrops(ctx, c.x, c.y, t.seed);
+  else if (t.improvement) drawImprovement(ctx, s, t, c.x, c.y);
   if (t.village) drawVillage(ctx, c.x, c.y);
   if (t.ruin) drawRuin(ctx, t, c.x, c.y);
   if (t.cityId !== null) {
@@ -793,7 +842,8 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
       ellipse(ctx, x, y + 4, 21, 10, P.shallow);
       return drawResource(ctx, fake({ resource: icon }), x, y - 4, tribe);
     case 'farm':
-      return drawFarm(ctx, x, y + 2);
+      drawFarm(ctx, x, y + 2);
+      return drawFarmCrops(ctx, x, y + 2, 7);
     case 'mine':
     case 'lumber':
     case 'temple':

@@ -220,7 +220,8 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   }
 
   const tribe = p.tribe;
-  switch (t.resource) {
+  // a resource can be developed once: a farm or mine keeps its crop or ore but can't be rebuilt
+  if (!t.improvement) switch (t.resource) {
     case 'fruit': add('harvest', 'Harvest Fruit', '+1 population.', 2, 'gathering', 'fruit'); break;
     case 'animal': add('harvest', 'Hunt', `+1 population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
     case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;

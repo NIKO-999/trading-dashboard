@@ -936,8 +936,8 @@ function describeTile(s: GameState, t: Tile): { title: string; desc: string } {
   const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market' };
   if (t.village) return { title: 'Village', desc: 'Move a unit here, then claim it next turn to found a city.' };
   if (t.ruin) return { title: 'Ancient Ruins', desc: 'Step on them to discover what was left behind.' };
-  if (t.resource) return { title: `${res[t.resource][0]}`, desc: `${res[t.resource][1]} ${where}` };
   if (t.improvement) return { title: imp[t.improvement], desc: `${terrain[t.terrain]}. ${where}` };
+  if (t.resource) return { title: `${res[t.resource][0]}`, desc: `${res[t.resource][1]} ${where}` };
   const extra = t.terrain === 'mountain' ? ` Needs ${TECH_BY_ID.climbing.name} to enter.` : t.terrain === 'ocean' ? ' Needs a Galley to cross.' : '';
   return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}` };
 }

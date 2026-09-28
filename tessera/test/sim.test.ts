@@ -110,6 +110,23 @@ test('pirates get their Sea Raiders bonus on the water', () => {
   assert.equal(reach(theirs), 2);
 });
 
+test('a farm or a mine can only be built once on a tile', () => {
+  const s = createGame({ seed: 5, human: 'egypt', opponents: ['rome'], mode: 'domination' });
+  const cap = citiesOf(s, 0)[0];
+  const ring = s.tiles.filter((t) => Math.max(Math.abs(t.x - cap.x), Math.abs(t.y - cap.y)) === 1 && t.cityId === null && !t.village);
+  const [field, hill] = ring;
+  Object.assign(field, { terrain: 'field', resource: 'crop', improvement: null, road: false });
+  Object.assign(hill, { terrain: 'mountain', resource: 'ore', improvement: null, road: false });
+  s.players[0].techs.push('farming', 'climbing', 'mining');
+  s.players[0].stars = 100;
+  for (const [t, id] of [[field, 'farm'], [hill, 'mine']] as const) {
+    assert.ok(doAction(s, 0, t, id), `the first ${id} gets built`);
+    assert.equal(t.improvement, id);
+    assert.ok(!tileActions(s, 0, t).some((a) => a.id === id), `no second ${id} is offered on the same tile`);
+    assert.equal(doAction(s, 0, t, id), false, `a second ${id} can't be bought`);
+  }
+});
+
 test('every empire gets its starting tech, unique unit and capital', () => {
   for (const tribe of TRIBE_IDS) {
     const s = createGame({ seed: 3, human: tribe, opponents: TRIBE_IDS.filter((t) => t !== tribe).slice(0, 1), mode: 'domination' });
