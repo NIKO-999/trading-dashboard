@@ -126,8 +126,8 @@
     var barbs = '';
     for (i = 1; i < 12; i++) {
       var t3 = i / 12, by = -len * t3, bx = Math.sin(t3 * 2.2) * w * 0.5, bw = w * Math.sin(Math.PI * (0.12 + 0.8 * t3)) * 0.85;
-      barbs += 'M' + f(bx) + ' ' + f(by) + ' q' + f(bw * 0.5) + ' ' + f(-2) + ' ' + f(bw) + ' ' + f(1.5) +
-        'M' + f(bx) + ' ' + f(by) + ' q' + f(-bw * 0.5) + ' ' + f(-2) + ' ' + f(-bw) + ' ' + f(1.5);
+      barbs += 'M' + f(bx) + ' ' + f(by) + ' q' + f(bw * 0.4) + ' ' + f(-2.6) + ' ' + f(bw * 0.9) + ' ' + f(0.4) + ' q' + f(bw * 0.15) + ' ' + f(1) + ' ' + f(-0.2) + ' ' + f(1.8) +
+        'M' + f(bx) + ' ' + f(by) + ' q' + f(-bw * 0.4) + ' ' + f(-2.6) + ' ' + f(-bw * 0.9) + ' ' + f(0.4) + ' q' + f(-bw * 0.15) + ' ' + f(1) + ' ' + f(0.2) + ' ' + f(1.8);
     }
     return '<g transform="translate(' + f(x) + ' ' + f(y) + ') rotate(' + f(ang) + ')">' +
       '<path d="' + d + '" fill="' + col + '" stroke="' + O + '" stroke-width="1.8" stroke-linejoin="round"/>' +
@@ -316,19 +316,60 @@
     return s;
   }
 
+  // tapered furry tail along a quadratic curve
+  function tail(x0, y0, cx, cy, x1, y1, w0, w1, base, ring, hi, rings, seed) {
+    var N = 12, Lp = [], Rp = [], i, pts = [];
+    function pt(t) {
+      return [(1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1, (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy + t * t * y1];
+    }
+    function nrm(t) {
+      var dx = 2 * (1 - t) * (cx - x0) + 2 * t * (x1 - cx), dy = 2 * (1 - t) * (cy - y0) + 2 * t * (y1 - cy), l = Math.sqrt(dx * dx + dy * dy);
+      return [-dy / l, dx / l];
+    }
+    for (i = 0; i <= N; i++) {
+      var t = i / N, P0 = pt(t), n = nrm(t), w = (w0 + (w1 - w0) * t) / 2 * (1 + 0.12 * Math.sin(t * 9));
+      pts.push([P0, n, w]);
+      Rp.push(f(P0[0] + n[0] * w) + ' ' + f(P0[1] + n[1] * w));
+      Lp.unshift(f(P0[0] - n[0] * w) + ' ' + f(P0[1] - n[1] * w));
+    }
+    var e = pts[N], ew = e[2];
+    var d = 'M' + Rp.join(' L') + ' Q' + f(e[0][0] - e[1][1] * ew * 1.8) + ' ' + f(e[0][1] + e[1][0] * ew * 1.8) + ' ' + Lp.join(' L') + 'Z';
+    var s = '<path d="' + d + '" fill="' + base + '" stroke="' + O + '" stroke-width="1.7" stroke-linejoin="round"/>';
+    // rings / spots
+    var rg = '';
+    for (i = 0; i < rings.length; i++) {
+      var k = Math.round(rings[i] * N), q = pts[k], ww = q[2] * 0.95, ax = -q[1][1], ay = q[1][0];
+      rg += 'M' + f(q[0][0] + q[1][0] * ww) + ' ' + f(q[0][1] + q[1][1] * ww) +
+        ' Q' + f(q[0][0] + ax * 0.9) + ' ' + f(q[0][1] + ay * 0.9) + ' ' + f(q[0][0] - q[1][0] * ww) + ' ' + f(q[0][1] - q[1][1] * ww);
+    }
+    s += '<path d="' + rg + '" stroke="' + ring + '" stroke-width="1.7" fill="none"/>';
+    // highlight + fur ticks
+    var hl = 'M' + f(pts[1][0][0] - pts[1][1][0] * pts[1][2] * 0.45) + ' ' + f(pts[1][0][1] - pts[1][1][1] * pts[1][2] * 0.45);
+    for (i = 2; i < N - 2; i++) hl += ' L' + f(pts[i][0][0] - pts[i][1][0] * pts[i][2] * 0.45) + ' ' + f(pts[i][0][1] - pts[i][1][1] * pts[i][2] * 0.45);
+    s += '<path d="' + hl + '" stroke="' + hi + '" stroke-width="0.8" fill="none" stroke-linecap="round" opacity=".8"/>';
+    var tk = '';
+    for (i = 3; i < N; i += 4) {
+      var sg = (i + seed) % 4 < 2 ? 1 : -1, qq = pts[i];
+      tk += 'M' + f(qq[0][0] + qq[1][0] * qq[2] * sg) + ' ' + f(qq[0][1] + qq[1][1] * qq[2] * sg) + ' l' + f(qq[1][0] * 1.4 * sg) + ' ' + f(1.2);
+    }
+    s += '<path d="' + tk + '" stroke="' + O + '" stroke-width="0.8" stroke-linecap="round"/>';
+    return s;
+  }
+
   function isinene() {
-    // front apron of twisted fur tails (genet & civet)
+    // front apron of fur tails (genet, civet, monkey)
     var s = '';
-    s += '<path d="M88 163 Q104 169 122 163 L124 190 Q106 196 86 190Z" fill="#4a2c16" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round"/>';
-    for (var k = 0; k < 9; k++) {
-      var x0 = 88.5 + k * 4.1, sp = (x0 - 105) * 0.18;
-      var end = 195 + (k % 3) * 2.2 - (k % 2) * 1.2;
-      var d = 'M' + f(x0) + ' 165 Q' + f(x0 + sp * 0.4 + (k % 2 ? 1 : -0.6)) + ' 182 ' + f(x0 + sp) + ' ' + f(end);
-      var genet = k % 2 === 0;
-      s += '<path d="' + d + '" stroke="' + O + '" stroke-width="5.4" fill="none" stroke-linecap="round"/>';
-      s += '<path d="' + d + '" stroke="' + (genet ? '#e2c48e' : '#7b6a5c') + '" stroke-width="3.6" fill="none" stroke-linecap="round"/>';
-      s += '<path d="' + d + '" stroke="' + (genet ? '#3b2616' : '#f3ece0') + '" stroke-width="3.6" fill="none" stroke-dasharray="' + (genet ? '0 4 2.2 2.6 2.2 3' : '0 5 1.6 3.4') + '"/>';
-      s += '<path d="' + d + '" stroke="#fff" stroke-width="0.8" fill="none" stroke-dasharray="0 2 6 40" opacity=".55" transform="translate(-0.9 0)"/>';
+    s += '<path d="M88 163 Q104 169 122 163 L124 188 Q106 194 86 188Z" fill="#4a2c16" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round"/>';
+    var kinds = [
+      ['#d9c08e', '#3b2616', '#fff4d6', [0.2, 0.36, 0.52, 0.68, 0.84]],   // genet
+      ['#5b4e46', '#f1eadc', '#9a8c80', [0.3, 0.55, 0.8]],               // civet
+      ['#a8794a', '#4a2c16', '#e6be8a', [0.25, 0.5, 0.75]]                // hide tail
+    ];
+    var order = [2, 0, 1, 0, 1, 0, 2];
+    for (var k = 0; k < 7; k++) {
+      var x0 = 90 + k * 5.2, sp = (x0 - 105) * 0.22, kd = kinds[order[k]];
+      var end = 194 + (k % 3) * 2.4 - (k % 2) * 1.4;
+      s += tail(x0, 164, x0 + sp * 0.4 + (k % 2 ? 1 : -0.6), 180, x0 + sp, end, 6.4, 3.6, kd[0], kd[1], kd[2], kd[3], k);
     }
     return s;
   }
@@ -467,9 +508,9 @@
     var eyes = eye(97, 83, P) + eye(124, 83, P);
     s += anim ? '<g class="part-eyes" style="transform-origin: 111px 83px">' + eyes + '</g>' : '<g>' + eyes + '</g>';
     // nose (broad)
-    s += '<path d="M114 87 Q119 92 116.5 95 Q113.5 96.4 111 94.6" stroke="' + O + '" stroke-width="1.7" fill="none" stroke-linecap="round"/>';
-    s += '<path d="M111.4 94.8 Q109.6 94 110 92.4" stroke="' + O + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
-    s += '<path d="M115 88.4 Q117 90.6 116.2 92.4" stroke="' + SKIN_GL + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M109.4 92.6 Q108 95.4 111 96 Q113.4 97.2 116 96 Q119.6 95.6 119 92.6" stroke="' + O + '" stroke-width="1.7" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M111.6 94.6 Q112.6 95.6 113.6 94.8 M116 94.8 Q117 95.6 117.6 94.4" stroke="' + SKIN_DK + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
+    s += '<ellipse cx="115.4" cy="92.4" rx="2" ry="1.3" fill="' + SKIN_GL + '" opacity=".75"/>';
     // mouth: warm, confident grin
     s += '<path d="M103 99.5 Q113 102 122 98 Q120 106.5 112 106.8 Q105 106.6 103 99.5Z" fill="#5a1a14" stroke="' + O + '" stroke-width="2" stroke-linejoin="round"/>';
     s += '<path d="M104.4 100.1 Q113 102.1 120.8 98.9 L120 101.4 Q112.5 104 105.4 102.2Z" fill="#fffaf0"/>';
@@ -569,14 +610,14 @@
     s += '<path d="M75 188 L74 218 Q74 222 80 222 L88 222 Q90 219 89 214 L90 188Z" fill="' + SKIN_SH + '" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>';
     s += foot(72, SKIN_SH, SKIN_DK, SKIN);
     s += anklet(82, 215, 17);
-    s += ruff(82.5, 197, 0, 17, 13, 5, 3);
+    s += ruff(82.5, 199, 0, 20, 14, 6, 3);
     // front leg
     s += '<path d="M100 188 L100 218 Q100 222 106 222 L114 222 Q116 219 115 214 L116 188Z" fill="' + SKIN + '" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>';
     s += '<path d="M112 196 L112 214" stroke="' + SKIN_SH + '" stroke-width="3" stroke-linecap="round" opacity=".75"/>';
     s += '<path d="M103.4 206 L103.4 212" stroke="' + SKIN_GL + '" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>';
     s += foot(99, SKIN, SKIN_SH, SKIN_GL);
     s += anklet(108, 215, 17);
-    s += ruff(108, 197, 0, 17.5, 13, 5, 9);
+    s += ruff(108, 199, 0, 20.5, 14, 6, 9);
     return s;
   }
 
@@ -629,7 +670,7 @@
         '<rect x="0" y="0" width="120" height="120" fill="url(#' + id('pbg') + ')"/>' +
         '<circle cx="60" cy="50" r="44" fill="#fff" opacity=".16"/>' +
         '<path d="' + tri + '" fill="#8a3a18" opacity=".5"/>' +
-        '<g transform="translate(-12 4) scale(0.72)">' +
+        '<g transform="translate(-10 9) scale(0.7)">' +
         shieldArmBack() + torso(P) + chestBand() + necklaces() + head(P, false) +
         '<g transform="translate(121 117) rotate(62)"><rect x="-4" y="-8.5" width="33" height="17" rx="8.5" fill="' + SKIN + '" stroke="' + O + '" stroke-width="3"/></g>' +
         ruff(127, 124, -28, 17, 16, 6, 21) + ruff(76, 122, 26, 15, 13, 5, 33) +

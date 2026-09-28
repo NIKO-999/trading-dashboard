@@ -428,12 +428,12 @@ svg { display: block; }
 .splash { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 12%; overflow: hidden; }
 .splash .scene, .splash .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .splash .dim { position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(14,10,22,.85)); }
-.splash .lineup { position: absolute; left: 0; right: 0; top: 18%; display: flex; justify-content: center; align-items: flex-end; }
-.splash .lineup > div { flex: 1 1 0; max-width: 30%; margin: 0 -3%; animation: floaty 2.4s ease-in-out infinite; }
+.splash .lineup { position: absolute; left: 0; right: 0; top: 18%; padding: 0 14px; display: flex; justify-content: center; align-items: flex-end; }
+.splash .lineup > div { flex: 1 1 0; min-width: 0; max-width: 26%; margin: 0 -1.5%; animation: floaty 2.4s ease-in-out infinite; }
 .splash .lineup > div:nth-child(3n+2) { animation-delay: .4s; }
 .splash .lineup > div:nth-child(3n) { animation-delay: .8s; }
 /* centre heroes stand in front and a touch larger */
-.splash .lineup > div:nth-child(3), .splash .lineup > div:nth-child(4) { flex-grow: 1.25; max-width: 34%; z-index: 2; }
+.splash .lineup > div:nth-child(3), .splash .lineup > div:nth-child(4) { flex-grow: 1.3; max-width: 30%; z-index: 2; }
 .splash .lineup svg { width: 100%; overflow: visible; }
 .splash .logo { position: relative; font-size: 64px; line-height: .9; text-align: center; transform: rotate(-4deg); margin-bottom: 6px; }
 .splash .sub { position: relative; font-size: 18px; margin-bottom: 24px; }

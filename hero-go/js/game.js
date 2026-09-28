@@ -127,7 +127,7 @@
       <div class="scene">${art.scene('forest')}</div><div class="dim"></div>
       <div class="lineup">${['zulu', 'aztec', 'samurai', 'knight', 'polynesian', 'viking'].filter(k => HEROES[k]).map(k => `<div>${art.hero(k)}</div>`).join('')}</div>
       <div class="logo title-gold">HERO<br>GO!</div>
-      <div class="sub stroke-sm">Four legends. One endless road.</div>
+      <div class="sub stroke-sm">${HERO_KEYS.length} legends. One endless road.</div>
       <button class="btn big tap">Play</button></div>`);
     app.append(s);
     $('.tap', s).onclick = () => { SND.init(); SND.music('home'); SND.play('select'); s.style.transition = 'opacity .35s'; s.style.opacity = 0; setTimeout(() => s.remove(), 350); };
@@ -227,6 +227,7 @@
       </div></div>`);
     scr.append(tabbar());
     app.append(scr);
+    const on = $('.hcard.on', scr); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
     $$('.hcard', scr).forEach(b => b.onclick = () => { heroView = b.dataset.h; show('heroes'); });
     $('#use', scr).onclick = () => { save.hero = k; persist(); toast(`${H.name} will lead the journey!`); show('heroes'); };
     $('#up', scr).onclick = () => { if (save.gold < cost) return; save.gold -= cost; save.heroLv[k] = lv + 1; persist(); SND.play('levelup'); toast(`${H.name} reached Lv.${lv + 1}!`); show('heroes'); };
