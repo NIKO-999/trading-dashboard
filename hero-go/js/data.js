@@ -1,0 +1,137 @@
+/* Hero Go! — static game data: skills, chapters, events, icons. */
+(function () {
+  'use strict';
+
+  // ---------- Small inline icons for skills / UI ----------
+  const O = 'stroke="#2b1d14" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"';
+  const ICONS = {
+    dagger: `<svg viewBox="0 0 64 64"><path d="M50 8 L30 40 L24 34 Z" fill="#dfe7ef" ${O}/><path d="M50 8 L30 40 L27 37 Z" fill="#fff"/><path d="M20 30 L34 44" ${O} fill="none"/><path d="M26 38 L14 50" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/><circle cx="12" cy="52" r="5" fill="#ffd24a" ${O}/></svg>`,
+    bolt: `<svg viewBox="0 0 64 64"><path d="M36 4 L14 36 H30 L24 60 L50 24 H34 Z" fill="#ffe14a" ${O}/><path d="M34 10 L20 32 H28" fill="none" stroke="#fff8c4" stroke-width="3"/></svg>`,
+    storm: `<svg viewBox="0 0 64 64"><path d="M14 30 a12 12 0 0 1 8-20 a14 14 0 0 1 26 4 a10 10 0 0 1 2 16 Z" fill="#8d8fb8" ${O}/><path d="M28 30 L20 46 H30 L26 60 L42 40 H32 L36 30" fill="#ffe14a" ${O}/></svg>`,
+    fire: `<svg viewBox="0 0 64 64"><path d="M32 60 C14 60 10 44 18 32 C22 40 26 40 26 40 C22 26 30 14 38 6 C38 18 54 26 52 44 C50 54 42 60 32 60 Z" fill="#ff7a2e" ${O}/><path d="M32 56 C24 56 22 48 26 42 C28 46 32 46 32 46 C30 38 36 32 38 28 C40 36 46 40 44 48 C42 54 38 56 32 56 Z" fill="#ffd24a"/></svg>`,
+    shield: `<svg viewBox="0 0 64 64"><path d="M32 4 L54 12 V30 C54 46 42 56 32 60 C22 56 10 46 10 30 V12 Z" fill="#4a90e2" ${O}/><path d="M32 12 L46 17 V30 C46 40 39 47 32 51 Z" fill="#8cc3ff"/></svg>`,
+    heart: `<svg viewBox="0 0 64 64"><path d="M32 56 C8 40 4 28 10 18 C16 8 28 10 32 20 C36 10 48 8 54 18 C60 28 56 40 32 56 Z" fill="#ff4d6d" ${O}/><ellipse cx="20" cy="22" rx="5" ry="3" fill="#fff" opacity=".8"/></svg>`,
+    vamp: `<svg viewBox="0 0 64 64"><path d="M32 56 C8 40 4 28 10 18 C16 8 28 10 32 20 C36 10 48 8 54 18 C60 28 56 40 32 56 Z" fill="#9b1b3a" ${O}/><path d="M24 26 L28 38 L32 26 L36 38 L40 26" fill="#fff" stroke="#2b1d14" stroke-width="2"/></svg>`,
+    sword: `<svg viewBox="0 0 64 64"><path d="M54 6 L58 10 L26 42 L20 38 Z" fill="#e8eef5" ${O}/><path d="M16 34 L30 48" ${O}/><path d="M22 44 L10 56" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/></svg>`,
+    swords: `<svg viewBox="0 0 64 64"><path d="M50 6 L56 12 L24 44 L18 38 Z" fill="#e8eef5" ${O}/><path d="M14 6 L8 12 L40 44 L46 38 Z" fill="#e8eef5" ${O}/><path d="M22 46 L12 56 M42 46 L52 56" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/></svg>`,
+    crit: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#fff" ${O}/><circle cx="32" cy="32" r="15" fill="#ff4d4d" ${O}/><circle cx="32" cy="32" r="5" fill="#fff" ${O}/></svg>`,
+    ice: `<svg viewBox="0 0 64 64"><path d="M32 4 V60 M8 18 L56 46 M56 18 L8 46" stroke="#2b1d14" stroke-width="9" stroke-linecap="round"/><path d="M32 4 V60 M8 18 L56 46 M56 18 L8 46" stroke="#9fe4ff" stroke-width="4" stroke-linecap="round"/></svg>`,
+    poison: `<svg viewBox="0 0 64 64"><path d="M24 6 H40 V20 L54 50 C56 56 52 60 46 60 H18 C12 60 8 56 10 50 L24 20 Z" fill="#7be35a" ${O}/><circle cx="26" cy="46" r="4" fill="#d8ffcc"/><circle cx="38" cy="40" r="3" fill="#d8ffcc"/></svg>`,
+    angel: `<svg viewBox="0 0 64 64"><ellipse cx="32" cy="10" rx="12" ry="4" fill="none" stroke="#ffd24a" stroke-width="4"/><path d="M18 34 C4 30 4 18 12 16 C14 24 20 26 24 28 Z M46 34 C60 30 60 18 52 16 C50 24 44 26 40 28 Z" fill="#fff" ${O}/><circle cx="32" cy="36" r="14" fill="#8fd8ff" ${O}/><circle cx="27" cy="34" r="2" fill="#2b1d14"/><circle cx="37" cy="34" r="2" fill="#2b1d14"/></svg>`,
+    devil: `<svg viewBox="0 0 64 64"><path d="M14 20 L10 4 L24 14 M50 20 L54 4 L40 14" fill="#c0392b" ${O}/><circle cx="32" cy="34" r="20" fill="#e74c3c" ${O}/><path d="M22 30 L28 34 M42 30 L36 34" ${O}/><path d="M24 44 Q32 50 40 44" fill="none" ${O}/></svg>`,
+    rage: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="24" fill="#ff5a36" ${O}/><path d="M18 22 L28 28 M46 22 L36 28" ${O}/><path d="M20 46 Q32 36 44 46" fill="none" ${O}/></svg>`,
+    wind: `<svg viewBox="0 0 64 64"><path d="M6 24 H40 A8 8 0 1 0 32 16 M6 36 H50 A8 8 0 1 1 42 44 M10 48 H28" fill="none" stroke="#2b1d14" stroke-width="8" stroke-linecap="round"/><path d="M6 24 H40 A8 8 0 1 0 32 16 M6 36 H50 A8 8 0 1 1 42 44 M10 48 H28" fill="none" stroke="#bff3ff" stroke-width="4" stroke-linecap="round"/></svg>`,
+    meteor: `<svg viewBox="0 0 64 64"><path d="M4 4 L34 30" stroke="#ffb03a" stroke-width="10" stroke-linecap="round" opacity=".7"/><circle cx="40" cy="40" r="17" fill="#8a4b2b" ${O}/><circle cx="34" cy="36" r="4" fill="#5e3219"/><circle cx="46" cy="46" r="3" fill="#5e3219"/></svg>`,
+    counter: `<svg viewBox="0 0 64 64"><path d="M52 32 A20 20 0 1 1 40 14" fill="none" stroke="#2b1d14" stroke-width="10" stroke-linecap="round"/><path d="M52 32 A20 20 0 1 1 40 14" fill="none" stroke="#ffd24a" stroke-width="5" stroke-linecap="round"/><path d="M34 6 L46 14 L36 24 Z" fill="#ffd24a" ${O}/></svg>`,
+    coin: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#f5a623" ${O}/><circle cx="32" cy="32" r="17" fill="#ffd24a" stroke="#d48806" stroke-width="3"/><circle cx="26" cy="24" r="4" fill="#fff6c8"/></svg>`,
+    gem: `<svg viewBox="0 0 64 64"><path d="M32 4 L56 22 L32 60 L8 22 Z" fill="#b14cff" ${O}/><path d="M8 22 H56 M22 22 L32 60 L42 22 L32 4 L22 22" fill="none" stroke="#e7b8ff" stroke-width="2"/></svg>`,
+    energy: `<svg viewBox="0 0 64 64"><path d="M36 4 L14 36 H30 L24 60 L50 24 H34 Z" fill="#4be0a6" ${O}/></svg>`,
+    chest: `<svg viewBox="0 0 64 64"><path d="M8 28 H56 V54 H8 Z" fill="#b8742f" ${O}/><path d="M8 28 C8 10 56 10 56 28 Z" fill="#d28b3c" ${O}/><path d="M8 32 H56" ${O}/><rect x="26" y="26" width="12" height="14" rx="2" fill="#ffd24a" ${O}/></svg>`,
+    skull: `<svg viewBox="0 0 64 64"><path d="M32 6 C14 6 8 20 10 32 C12 40 18 42 18 48 V56 H46 V48 C46 42 52 40 54 32 C56 20 50 6 32 6 Z" fill="#f2e9dc" ${O}/><circle cx="23" cy="30" r="6" fill="#2b1d14"/><circle cx="41" cy="30" r="6" fill="#2b1d14"/></svg>`,
+    question: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#ff9f43" ${O}/><path d="M24 24 C24 14 42 14 42 24 C42 32 32 32 32 40" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="50" r="3.5" fill="#fff"/></svg>`,
+    heal: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#5fd35f" ${O}/><path d="M32 18 V46 M18 32 H46" stroke="#fff" stroke-width="8" stroke-linecap="round"/></svg>`,
+    gear: `<svg viewBox="0 0 64 64"><path d="M28 4 H36 L38 12 L44 14 L50 9 L55 14 L50 20 L52 26 L60 28 V36 L52 38 L50 44 L55 50 L50 55 L44 50 L38 52 L36 60 H28 L26 52 L20 50 L14 55 L9 50 L14 44 L12 38 L4 36 V28 L12 26 L14 20 L9 14 L14 9 L20 14 L26 12 Z" fill="#fff" ${O}/><circle cx="32" cy="32" r="9" fill="#2f86d6" ${O}/></svg>`,
+    egg: `<svg viewBox="0 0 64 64"><path d="M32 4 C18 4 10 26 10 38 C10 52 20 60 32 60 C44 60 54 52 54 38 C54 26 46 4 32 4 Z" fill="#8e5cd9" ${O}/><path d="M11 34 H53 V42 H11 Z" fill="#ffd24a" stroke="#2b1d14" stroke-width="3"/></svg>`,
+    talent: `<svg viewBox="0 0 64 64"><path d="M32 4 L40 24 L60 24 L44 38 L50 58 L32 46 L14 58 L20 38 L4 24 L24 24 Z" fill="#ffd24a" ${O}/></svg>`,
+    shop: `<svg viewBox="0 0 64 64"><path d="M8 22 L14 8 H50 L56 22 Z" fill="#ff6b6b" ${O}/><rect x="10" y="22" width="44" height="34" fill="#ffe7c2" ${O}/><rect x="26" y="36" width="12" height="20" fill="#b8742f" ${O}/></svg>`,
+    helm: `<svg viewBox="0 0 64 64"><path d="M12 40 C12 16 52 16 52 40 V50 H12 Z" fill="#c9d3dd" ${O}/><path d="M18 36 H46" ${O}/><path d="M32 8 C40 4 48 6 50 14" fill="none" stroke="#e74c3c" stroke-width="6" stroke-linecap="round"/></svg>`,
+    paw: `<svg viewBox="0 0 64 64"><ellipse cx="32" cy="42" rx="14" ry="12" fill="#ffb07a" ${O}/><circle cx="16" cy="26" r="6" fill="#ffb07a" ${O}/><circle cx="26" cy="16" r="6" fill="#ffb07a" ${O}/><circle cx="38" cy="16" r="6" fill="#ffb07a" ${O}/><circle cx="48" cy="26" r="6" fill="#ffb07a" ${O}/></svg>`,
+    battle: `<svg viewBox="0 0 64 64"><path d="M50 6 L56 12 L24 44 L18 38 Z" fill="#e8eef5" ${O}/><path d="M14 6 L8 12 L40 44 L46 38 Z" fill="#ffd24a" ${O}/><path d="M22 46 L12 56 M42 46 L52 56" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/></svg>`,
+    campfire: `<svg viewBox="0 0 64 64"><path d="M10 54 L54 44 M10 44 L54 54" stroke="#8a5a2b" stroke-width="8" stroke-linecap="round"/><path d="M32 46 C20 46 18 34 24 26 C26 32 28 32 28 32 C26 22 32 14 36 8 C36 18 46 24 44 36 C42 44 38 46 32 46 Z" fill="#ff7a2e" ${O}/></svg>`,
+    wheel: `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#fff" ${O}/><path d="M32 32 L32 6 A26 26 0 0 1 55 20 Z" fill="#ff6b6b"/><path d="M32 32 L55 20 A26 26 0 0 1 50 51 Z" fill="#ffd24a"/><path d="M32 32 L50 51 A26 26 0 0 1 14 51 Z" fill="#4be0a6"/><path d="M32 32 L14 51 A26 26 0 0 1 9 20 Z" fill="#4a90e2"/><circle cx="32" cy="32" r="26" fill="none" ${O}/><circle cx="32" cy="32" r="5" fill="#2b1d14"/></svg>`,
+  };
+
+  // ---------- Skills ----------
+  // rarity drives card header colour: common=blue, rare=orange, epic=red, legendary=purple
+  // max = max level the skill can stack to
+  const SKILLS = {
+    dagger:   { name: 'Combo Dagger', icon: 'dagger', rarity: 'epic', max: 3, desc: l => `Throw ${l + 1} <b>Dagger${l ? 's' : ''}</b> in a row each turn (60% ATK each).` },
+    lightning:{ name: 'Lightning', icon: 'bolt', rarity: 'rare', max: 3, desc: l => `Each turn, ${25 + l * 15}% chance to call <b>Lightning</b> for 150% ATK.` },
+    storm:    { name: 'Thunderstorm', icon: 'storm', rarity: 'rare', max: 1, needs: 'lightning', desc: () => `<b>Lightning</b> has a chance to trigger <b>Thunderstorm</b> when it hits a target.` },
+    angel:    { name: "Angel's Power", icon: 'angel', rarity: 'rare', max: 1, desc: () => `At the start of battle, gain protection of the <b>Angel</b> — heal 6% Max HP each turn, lasts for 6 turns.` },
+    fireball: { name: 'Fire Burst', icon: 'fire', rarity: 'epic', max: 3, desc: l => `Every 3 turns, blast all enemies with <b>Fire</b> for ${160 + l * 60}% ATK.` },
+    burn:     { name: 'Ignite', icon: 'fire', rarity: 'common', max: 3, desc: l => `Attacks set enemies on <b>Burn</b>: ${10 + l * 6}% ATK per turn.` },
+    poison:   { name: 'Venom Blade', icon: 'poison', rarity: 'common', max: 3, desc: l => `Attacks apply <b>Poison</b> that stacks: ${6 + l * 4}% ATK per stack per turn.` },
+    wall:     { name: 'Iron Wall', icon: 'shield', rarity: 'common', max: 3, desc: l => `Start each battle with a <b>Shield</b> of ${15 + l * 10}% Max HP.` },
+    vamp:     { name: 'Vampire Fang', icon: 'vamp', rarity: 'rare', max: 3, desc: l => `<b>Lifesteal</b>: heal ${8 + l * 5}% of damage dealt.` },
+    keen:     { name: 'Keen Eye', icon: 'crit', rarity: 'common', max: 3, desc: l => `+${12 + l * 6}% <b>Crit</b> chance.` },
+    deadly:   { name: 'Deadly Strike', icon: 'crit', rarity: 'rare', max: 2, desc: l => `+${50 + l * 30}% <b>Crit</b> damage.` },
+    double:   { name: 'Double Strike', icon: 'swords', rarity: 'epic', max: 3, desc: l => `${20 + l * 12}% chance to <b>attack twice</b>.` },
+    counter:  { name: 'Counter', icon: 'counter', rarity: 'common', max: 3, desc: l => `${20 + l * 10}% chance to <b>Counterattack</b> when hit.` },
+    rage:     { name: 'Berserk', icon: 'rage', rarity: 'rare', max: 2, desc: l => `When HP is below 50%, <b>ATK +${40 + l * 30}%</b>.` },
+    regen:    { name: 'Regeneration', icon: 'heal', rarity: 'common', max: 3, desc: l => `Heal ${3 + l * 2}% Max HP every turn.` },
+    frost:    { name: 'Frost Blade', icon: 'ice', rarity: 'rare', max: 3, desc: l => `${12 + l * 8}% chance to <b>Freeze</b> the enemy for 1 turn.` },
+    dodge:    { name: 'Wind Step', icon: 'wind', rarity: 'common', max: 3, desc: l => `+${8 + l * 5}% chance to <b>Dodge</b> attacks.` },
+    meteor:   { name: 'Meteor', icon: 'meteor', rarity: 'legendary', max: 2, desc: l => `Every 5 turns, drop a <b>Meteor</b> on all enemies for ${320 + l * 150}% ATK.` },
+    spirit:   { name: 'Spirit Swords', icon: 'sword', rarity: 'epic', max: 3, desc: l => `Summon ${l + 2} flying <b>Swords</b> at the start of battle that strike for 80% ATK each.` },
+    atk:      { name: 'Power Up', icon: 'sword', rarity: 'common', max: 5, desc: () => `<b>ATK +18%</b>.` },
+    hp:       { name: 'Vitality', icon: 'heart', rarity: 'common', max: 5, desc: () => `<b>Max HP +22%</b> and heal the same amount.` },
+    def:      { name: 'Harden', icon: 'shield', rarity: 'common', max: 5, desc: () => `<b>DEF +25%</b>.` },
+  };
+
+  // ---------- Chapters ----------
+  const CHAPTERS = [
+    { id: 1, name: 'Whispering Forest', scene: 'forest', days: 30, mult: 1,
+      mobs: ['slime', 'helmslime', 'mushroom', 'bat', 'goblin'], elites: ['helmslime', 'goblin'], boss: 'kingslime' },
+    { id: 2, name: 'Scorching Sands', scene: 'desert', days: 40, mult: 1.6,
+      mobs: ['cactus', 'bandit', 'skeleton', 'bat', 'slime'], elites: ['paladin', 'bandit'], boss: 'dragon' },
+    { id: 3, name: 'Cursed Marsh', scene: 'swamp', days: 50, mult: 2.6,
+      mobs: ['skeleton', 'mushroom', 'bat', 'goblin', 'slime'], elites: ['paladin', 'skeleton'], boss: 'darkknight' },
+    { id: 4, name: 'Frostpeak', scene: 'snow', days: 60, mult: 4.2,
+      mobs: ['wolf', 'skeleton', 'bandit', 'helmslime'], elites: ['wolf', 'paladin'], boss: 'yeti' },
+    { id: 5, name: 'Ember Core', scene: 'volcano', days: 60, mult: 6.8,
+      mobs: ['skeleton', 'bandit', 'cactus', 'goblin', 'wolf'], elites: ['dragon', 'paladin'], boss: 'darkknight' },
+  ];
+
+  // Per-enemy stat shape (multipliers on the chapter baseline)
+  const ENEMY_STATS = {
+    slime: { hp: 0.8, atk: 0.8, def: 0.6 }, helmslime: { hp: 1.2, atk: 1, def: 1.2 },
+    mushroom: { hp: 0.9, atk: 0.9, def: 0.8 }, cactus: { hp: 1.1, atk: 1.1, def: 1.3 },
+    goblin: { hp: 0.9, atk: 1.2, def: 0.7 }, skeleton: { hp: 1, atk: 1.15, def: 0.9 },
+    bat: { hp: 0.6, atk: 1, def: 0.5 }, bandit: { hp: 1.2, atk: 1.2, def: 1 },
+    paladin: { hp: 1.5, atk: 1.2, def: 1.5 }, wolf: { hp: 1, atk: 1.3, def: 0.8 },
+    dragon: { hp: 1.6, atk: 1.4, def: 1.2 }, darkknight: { hp: 1.8, atk: 1.4, def: 1.6 },
+    kingslime: { hp: 1.6, atk: 1.1, def: 1 }, yeti: { hp: 1.8, atk: 1.3, def: 1.2 },
+  };
+
+  // ---------- Journal flavour text ----------
+  const TEXT = {
+    start: [
+      'You tighten your gear and set off. The road ahead is long, but your resolve is longer.',
+      'A new journey begins. Somewhere ahead, a great evil waits.',
+    ],
+    battle: {
+      slime: ['A wobbly slime blocks the path. It looks… squishy.', 'Slimes ooze out of the bushes and surround you!'],
+      helmslime: ['A <em>strong</em> slime with a peculiar hat charges at you, and a battle seems inevitable.'],
+      mushroom: ['The mushrooms here have faces. Angry faces.', 'A grumpy mushroom shakes its cap at you.'],
+      bat: ['A swarm of bats swoops down from the canopy!'],
+      goblin: ['A goblin leaps from behind a rock, waving a rusty dagger.', 'Goblins! They smell terrible and fight dirty.'],
+      cactus: ['That cactus is wearing boxing gloves. It wants a fight.'],
+      bandit: ['A bearded bandit demands your coins. You offer your blade instead.'],
+      skeleton: ['Bones rattle — a skeleton warrior rises from the sand.'],
+      paladin: ['A paladin is patrolling ahead. Before you can react, a massive hammer comes crashing down.'],
+      wolf: ['Howls echo across the ridge. A wolf pack has your scent.'],
+      dragon: ['The sky darkens. A great red dragon lands before you!'],
+      darkknight: ['A towering knight of cursed steel blocks the way, a ghostly flame burning where its head should be.'],
+      kingslime: ['The King of Slimes wobbles forward, crown glinting. "Who dares enter my forest?"'],
+      yeti: ['The snow shakes. A furious yeti bursts out of the blizzard!'],
+    },
+    win: ['Victory! You obtained {g} coins.', 'The enemy falls. {g} coins scatter on the ground.', 'Humans are not that impressive as expected. You obtained {g} coins.'],
+    story: [
+      { t: 'You find a bubbling spring. The water tastes like strawberries.', fx: { hpPct: 15 } },
+      { t: 'An old blacksmith sharpens your weapon for free. "Go get \'em."', fx: { atkPct: 10 } },
+      { t: 'A turtle teaches you the art of hiding in your shell.', fx: { defPct: 15 } },
+      { t: 'You eat a suspicious berry. Your stomach disagrees.', fx: { hurtPct: 10 } },
+      { t: 'You help a lost child find home. The villagers cheer!', fx: { gold: 60 } },
+      { t: 'The holy light did not favor this knight. You obtained a golden chest.', fx: { gold: 90 } },
+      { t: 'You nap under a big tree. Best nap ever.', fx: { healPct: 30 } },
+      { t: 'A wandering monk shows you a meditation technique.', fx: { maxHpPct: 15 } },
+      { t: 'You trip over a root and land face-first in a pile of coins.', fx: { gold: 40 } },
+      { t: 'A mysterious traveller shares stories of heroes past. You feel inspired.', fx: { xp: 40 } },
+      { t: 'A squirrel steals your lunch. Rude.', fx: { hurtPct: 5 } },
+      { t: 'You practice your stance at dawn. Every strike feels sharper.', fx: { atkPct: 8 } },
+    ],
+  };
+
+  window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT };
+})();
