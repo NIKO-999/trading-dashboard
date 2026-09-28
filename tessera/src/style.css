@@ -141,7 +141,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   animation: drop-in 0.3s ease-out; }
 
 .bottom-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 24px 8px calc(12px + var(--safe-bottom)); display: flex; justify-content: center; gap: clamp(4px, 4vw, 26px); background: linear-gradient(transparent, rgba(0,0,0,0.4)); }
-.bottom-bar.waiting .end-turn { opacity: 0.4; pointer-events: none; }
+.bottom-bar.waiting :is(.end-turn, .dock-btn.blue) { opacity: 0.4; pointer-events: none; }
 
 /* selection sheet: title + description + round action buttons */
 .sheet { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 12px calc(14px + var(--safe-bottom)); text-align: center;
@@ -218,9 +218,12 @@ button:disabled { opacity: 0.45; cursor: default; }
 @keyframes glow { 0%, 100% { box-shadow: 0 10px 26px rgba(10,60,140,0.5), 0 0 0 0 rgba(77,179,255,0.45), inset 0 3px 4px rgba(255,255,255,0.35), inset 0 -8px 14px rgba(0,30,90,0.4); } 50% { box-shadow: 0 10px 26px rgba(10,60,140,0.5), 0 0 0 12px rgba(77,179,255,0), inset 0 3px 4px rgba(255,255,255,0.35), inset 0 -8px 14px rgba(0,30,90,0.4); } }
 .gift { display: flex; align-items: center; gap: 4px; }
 .rank { padding-left: 1.3em; margin: 6px 0; font-weight: 600; }
+.stat-unknown { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #1d1f27; color: #8b90a0; font-weight: 700; font-size: 1.4rem; flex: none; }
 .stat-row { display: flex; gap: 10px; align-items: center; padding: 6px 8px; margin-bottom: 6px; border-left: 4px solid var(--tc); background: #111; border-radius: 12px; font-size: 1rem; }
 
 .toasts { position: absolute; top: calc(150px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 30; width: min(90vw, 380px); }
+/* keep messages clear of the Scout's Guide card while it is up */
+#ui:has(.hint:not(.hidden)) .toasts { top: calc(236px + var(--safe-top)); }
 .toast { padding: 11px 16px 8px; border-left: 5px solid var(--blue); border-radius: 14px; font-weight: 600; transition: opacity 0.4s, transform 0.4s;
   background: linear-gradient(180deg, rgba(26,28,42,0.95), rgba(10,11,18,0.95)); box-shadow: 0 10px 24px rgba(0,0,0,0.45); animation: drop-in-plain 0.3s ease-out; }
 @keyframes drop-in-plain { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }

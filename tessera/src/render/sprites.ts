@@ -59,6 +59,67 @@ export function unitSprite(kind: UnitKind, tribe: TribeId, pxScale: number, vari
   return sprite;
 }
 
+/** Opaque extent of a figure in unit-art units around its feet: x0..x1 across, y0 (top)..y1. */
+export interface FigureBounds { x0: number; y0: number; x1: number; y1: number }
+interface FigureShape extends FigureBounds { mask: Uint8Array | null; w: number; h: number; ox: number; oy: number; q: number }
+const shapes = new Map<string, FigureShape>();
+
+/** A unit's drawn shape (measured once from its bitmap), so taps match exactly what's on screen. */
+function figureShape(kind: UnitKind, tribe: TribeId): FigureShape {
+  const key = `${kind}|${tribe}`;
+  const hit = shapes.get(key);
+  if (hit) return hit;
+  const q = 2;
+  const sp = unitSprite(kind, tribe, q, 'base', true);
+  const { width: w, height: h } = sp.canvas;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  let mask: Uint8Array | null = null;
+  try {
+    const px = sp.canvas.getContext('2d')!.getImageData(0, 0, w, h).data;
+    mask = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        if (px[(y * w + x) * 4 + 3] > 40) {
+          mask[y * w + x] = 1;
+          if (x < x0) x0 = x;
+          if (x > x1) x1 = x;
+          if (y < y0) y0 = y;
+          if (y > y1) y1 = y;
+        }
+  } catch {
+    mask = null; // pixels unreadable: the bounds below still work
+  }
+  const shape: FigureShape = x1 < 0
+    ? { x0: -10, y0: -34, x1: 10, y1: 3, mask: null, w, h, ox: sp.ox, oy: sp.oy, q }
+    : { x0: (x0 - sp.ox) / q, y0: (y0 - sp.oy) / q, x1: (x1 + 1 - sp.ox) / q, y1: (y1 + 1 - sp.oy) / q, mask, w, h, ox: sp.ox, oy: sp.oy, q };
+  shapes.set(key, shape);
+  return shape;
+}
+
+export function figureBounds(kind: UnitKind, tribe: TribeId): FigureBounds {
+  return figureShape(kind, tribe);
+}
+
+/**
+ * Whether a point (in unit-art units from the feet; +u to the right as drawn) lands on the figure,
+ * allowing `slack` units around it for a fingertip. `flip` for a unit drawn facing left.
+ */
+export function figureHit(kind: UnitKind, tribe: TribeId, u: number, v: number, slack: number, flip = false): boolean {
+  const f = figureShape(kind, tribe);
+  const uu = flip ? -u : u;
+  if (uu < f.x0 - slack || uu > f.x1 + slack || v < f.y0 - slack || v > f.y1 + slack) return false;
+  if (!f.mask) return true;
+  const r = Math.ceil(slack * f.q);
+  const cx = Math.round(f.ox + uu * f.q), cy = Math.round(f.oy + v * f.q);
+  for (let dy = -r; dy <= r; dy += Math.max(1, r >> 1))
+    for (let dx = -r; dx <= r; dx += Math.max(1, r >> 1)) {
+      if (dx * dx + dy * dy > r * r) continue;
+      const x = cx + dx, y = cy + dy;
+      if (x >= 0 && y >= 0 && x < f.w && y < f.h && f.mask[y * f.w + x]) return true;
+    }
+  return false;
+}
+
 /**
  * Draws a cached unit with its feet at (x, y) in world space. `scale` is world units per
  * unit-space unit; sx/sy squash and stretch around the feet; `flip` mirrors it to face left.

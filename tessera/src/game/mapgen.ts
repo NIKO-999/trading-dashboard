@@ -41,6 +41,7 @@ export function createGame(opts: NewGameOptions): GameState {
     alive: true,
     kills: 0,
     bonusScore: 0,
+    met: [],
   }));
 
   const state: GameState = {
@@ -291,4 +292,16 @@ export function revealAround(state: GameState, playerId: number) {
     const t = tileAt(state, u.x, u.y)!;
     mark(u.x, u.y, t.terrain === 'mountain' || u.kind === 'explorer' ? 2 : 1);
   }
+  // anyone whose units or cities are now in sight has been met
+  const seen = (x: number, y: number) => p.explored[y * state.size + x];
+  for (const u of state.units) if (u.owner !== playerId && seen(u.x, u.y)) meet(state, playerId, u.owner);
+  for (const c of state.cities) if (c.owner !== playerId && seen(c.x, c.y)) meet(state, playerId, c.owner);
+}
+
+/** Records that two empires have met (seen each other's units or cities, or fought). */
+export function meet(state: GameState, a: number, b: number) {
+  if (a === b) return;
+  const pa = state.players[a], pb = state.players[b];
+  if (!(pa.met ??= []).includes(b)) pa.met.push(b);
+  if (!(pb.met ??= []).includes(a)) pb.met.push(a);
 }

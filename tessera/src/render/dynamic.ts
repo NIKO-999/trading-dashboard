@@ -8,7 +8,7 @@ import type { City, GameState, Tile, TribeId, Unit } from '../game/types';
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
 import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
-import { drawSprite, unitSprite } from './sprites';
+import { drawSprite, figureHit, unitSprite } from './sprites';
 
 interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -106,6 +106,14 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     const shrink = 1 - Math.min(0.45, m.lift / 22);
     softShadow(ctx, m.x, m.y + 6, (naval ? 21 : 12) * us * 0.78 * shrink, (naval ? 6.5 : 4.6) * us * 0.78 * shrink, naval ? 0.22 : 0.34);
   }
+  ctx.restore();
+
+  // City labels go under the units, so a unit standing in front of a city is never hidden.
+  drawCityLabels(ctx, s, cam, dpr, explored, onScreen);
+
+  ctx.save();
+  ctx.translate(cam.x, cam.y);
+  ctx.scale(cam.zoom, cam.zoom);
   const pxScale = us * cam.zoom * dpr;
   for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact, us);
 
@@ -143,7 +151,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   }
   ctx.restore();
 
-  drawScreenOverlay(ctx, s, viewer, cam, ov, vw, vh, dpr, units, motion, explored, onScreen);
+  drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);
 }
 
 // ---------------------------------------------------------------- units
@@ -529,24 +537,73 @@ function drawParticle(ctx: Ctx, p: Fx['particles'][number], now: number) {
 
 // ---------------------------------------------------------------- screen-space overlay
 
-function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number,
-  units: Unit[], motion: Map<number, Motion>, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
-  const snap = (v: number) => Math.round(v * dpr) / dpr;
-  // Labels and badges shrink with the map (more slowly, so they stay legible) and show less
-  // the further out you zoom: the full label close up, name and population in the middle
-  // distance, just the name far out, where only wounded units keep their health badge.
-  const z = cam.zoom;
-  const k = Math.max(0.58, Math.min(1.25, 0.2 + 0.8 * z));
-  const kh = Math.max(0.52, Math.min(1.25, 0.15 + 0.85 * z));
-  const detail: LabelDetail = z >= 0.8 ? 'full' : z >= 0.6 ? 'mid' : 'name';
-  const us = unitScale(z);
+/** How big city labels and health badges are drawn, and how much a label shows, at this zoom. */
+function overlayScale(zoom: number) {
+  // They shrink with the map (more slowly, so they stay legible) and show less further out: the
+  // full label close up, name and population in the middle distance, just the name far out,
+  // where only wounded units keep their health badge.
+  return {
+    k: Math.max(0.58, Math.min(1.25, 0.2 + 0.8 * zoom)),
+    kh: Math.max(0.52, Math.min(1.25, 0.15 + 0.85 * zoom)),
+    detail: (zoom >= 0.8 ? 'full' : zoom >= 0.6 ? 'mid' : 'name') as LabelDetail,
+  };
+}
 
+/** Screen rectangles of the city labels drawn this frame, for tapping a label to open its city. */
+let labelRects: { id: number; x0: number; y0: number; x1: number; y1: number }[] = [];
+
+/** The city whose label is under screen point (sx, sy), if any. */
+export function cityLabelAt(sx: number, sy: number): number | null {
+  for (let i = labelRects.length - 1; i >= 0; i--) {
+    const r = labelRects[i];
+    if (sx >= r.x0 && sx <= r.x1 && sy >= r.y0 && sy <= r.y1) return r.id;
+  }
+  return null;
+}
+
+/**
+ * The unit whose figure is drawn under screen point (sx, sy), front-most first, among units the
+ * viewer can see. Units stand about a tile's height above their tile, so tapping a figure should
+ * pick the unit rather than whatever tile lies behind it.
+ */
+export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: number, sy: number, facing?: Map<number, number>): Unit | null {
+  const w = cam.toWorld(sx, sy);
+  const us = unitScale(cam.zoom);
+  const slack = 5 / (cam.zoom * us); // about 5 screen px of fingertip around the figure
+  let best: Unit | null = null;
+  let bestFeet = -Infinity;
+  for (const u of s.units) {
+    if (viewer >= 0 && !s.players[viewer].explored[u.y * s.size + u.x]) continue;
+    const g = ground(s, u.x, u.y);
+    const feet = g.y + 5;
+    if (!figureHit(u.kind, s.players[u.owner].tribe, (w.x - g.x) / us, (w.y - feet) / us, slack, (facing?.get(u.id) ?? 1) < 0)) continue;
+    if (feet > bestFeet) {
+      bestFeet = feet;
+      best = u;
+    }
+  }
+  return best;
+}
+
+function drawCityLabels(ctx: Ctx, s: GameState, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
+  const snap = (v: number) => Math.round(v * dpr) / dpr;
+  const { k, detail } = overlayScale(cam.zoom);
+  labelRects = [];
   for (const c of s.cities) {
     const p = tileCenter(c.x, c.y);
     if (!explored(c.x, c.y) || !onScreen(p)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
-    drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
+    const r = drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
+    labelRects.push({ id: c.id, ...r });
   }
+}
+
+function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, dpr: number,
+  units: Unit[], motion: Map<number, Motion>) {
+  const snap = (v: number) => Math.round(v * dpr) / dpr;
+  const { k, kh, detail } = overlayScale(cam.zoom);
+  const us = unitScale(cam.zoom);
+
   for (const u of units) {
     const m = motion.get(u.id)!;
     const hold = ov.fx.hpHold.get(u.id);
@@ -580,7 +637,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
 
 type LabelDetail = 'full' | 'mid' | 'name';
 
-function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail) {
+function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail): { x0: number; y0: number; x1: number; y1: number } {
   const T = TRIBES[s.players[c.owner].tribe];
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
@@ -645,6 +702,9 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     ctx.fillText('!', px, py + 1);
     ctx.textBaseline = 'alphabetic';
   }
+  // the area a tap on this label should count for (pill, reward badge and population bar)
+  const bottom = detail !== 'name' ? y0 + h + 4 * k + 9 * k + 1.5 : y0 + h + 2.5 * k;
+  return { x0, y0, x1: x0 + w + (c.pendingRewards.length ? 18 * k : 0), y1: bottom };
 }
 
 /** The bar under a city's name: one pip per population needed for the next level. */

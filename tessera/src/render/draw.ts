@@ -362,12 +362,13 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
   // Walls where the cloud layer ends: towards revealed land or off the map edge.
   const r = tileAt(s, t.x + 1, t.y);
   const l = tileAt(s, t.x, t.y + 1);
+  // (in front of explored water the wall reaches down to the lower water line, leaving no gap)
   if (!r || explored(r.x, r.y)) {
-    const d = FOG_LIFT + (r ? 0 : LAND_DEPTH);
+    const d = FOG_LIFT + (r ? (isWaterTile(r) ? WATER_DROP : 0) : LAND_DEPTH);
     poly(ctx, [x + HW, y + HH, x, y + TH, x, y + TH + d, x + HW, y + HH + d], FOG_WALL.right);
   }
   if (!l || explored(l.x, l.y)) {
-    const d = FOG_LIFT + (l ? 0 : LAND_DEPTH);
+    const d = FOG_LIFT + (l ? (isWaterTile(l) ? WATER_DROP : 0) : LAND_DEPTH);
     poly(ctx, [x - HW, y + HH, x, y + TH, x, y + TH + d, x - HW, y + HH + d], FOG_WALL.left);
   }
   // Faceted top: each tile is split into eight triangles. The eight triangles that meet at a

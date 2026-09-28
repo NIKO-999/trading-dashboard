@@ -68,6 +68,8 @@ export interface Player {
   alive: boolean;
   kills: number;
   bonusScore: number;
+  /** Empires this one has met: seen a unit or city of, or fought (missing in older saves). */
+  met?: number[];
 }
 
 export type GameMode = 'perfection' | 'domination';

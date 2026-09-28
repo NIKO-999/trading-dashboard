@@ -25,7 +25,7 @@ const TECH_ICON: Record<string, string> = {
  * highlighted and its card opened; if its parent isn't known yet the card offers to go there,
  * and once the missing parents are researched the card for the original goal comes back up.
  */
-export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () => void, onClose: () => void, focus?: string) {
+export function showTechTree(s: GameState, pid: number, hud: () => Node, onChange: () => void, onClose: () => void, focus?: string) {
   const p = s.players[pid];
   const tribe = TRIBES[p.tribe];
   const layer = h('div', { class: 'techtree' });
@@ -83,7 +83,7 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
     layer.append(
       h('div', { class: 'tt-top' },
         h('button', { class: 'round-btn light', onclick: close, 'aria-label': 'Close tech tree' }, iconEl('back')),
-        hud.cloneNode(true),
+        hud(),
       ),
       h('div', { class: 'tt-wrap' }, board),
       h('div', { class: 'tt-foot' }, 'Each new city makes research a little pricier.'),

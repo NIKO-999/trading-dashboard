@@ -5,7 +5,7 @@ import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
-  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, doAction, income, isExplored, maxHp,
+  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, doAction, hasTech, income, isExplored, maxHp,
   moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
@@ -13,6 +13,7 @@ import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { renderDpr } from '../render/common';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
+import { cityLabelAt, unitAtScreen } from '../render/dynamic';
 import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
@@ -253,34 +254,46 @@ export class GameView {
 
   private tap(sx: number, sy: number) {
     if (this.busy) return;
-    const { x, y } = this.cam.pickTile(sx, sy);
+    // What was tapped: a unit's figure (units stand about a tile above their tile), a city's
+    // label, or else the tile under the finger.
+    const figure = unitAtScreen(this.s, this.me, this.cam, sx, sy, this.ov.fx.facing);
+    const labelCity = cityLabelAt(sx, sy);
+    const under = this.cam.pickTile(sx, sy);
+    const sel = this.sel;
+    const mover = sel && sel.mode === 'unit' && this.myTurn() ? unitAt(this.s, sel.x, sel.y) : undefined;
+    const mine = mover && mover.owner === this.me ? mover : undefined;
+    let { x, y } = under;
+    let asTile = false;
+    if (mine && figure && this.ov.attacks.some((a) => a.x === figure.x && a.y === figure.y)) ({ x, y } = figure); // strike the enemy you touched
+    else if (mine && this.ov.moves.some((m) => m.x === under.x && m.y === under.y)) ({ x, y } = under); // or go where you touched
+    else if (figure) ({ x, y } = figure);
+    else if (labelCity !== null) {
+      const c = cityById(this.s, labelCity)!;
+      ({ x, y } = c);
+      asTile = true;
+    }
     const t = tileAt(this.s, x, y);
     if (!t) return this.select(null);
-    const sel = this.sel;
-    if (sel && sel.mode === 'unit' && this.myTurn()) {
-      const u = unitAt(this.s, sel.x, sel.y);
-      if (u && u.owner === this.me) {
-        if (this.ov.attacks.some((a) => a.x === x && a.y === y)) {
-          const target = unitAt(this.s, x, y)!;
-          this.act(() => attack(this.s, u, target));
-          this.checkRewards(); // a kill can level up a city
-          const still = this.s.units.includes(u);
-          return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
-        }
-        if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
-          this.act(() => moveUnit(this.s, u, x, y));
-          this.checkRewards(); // stepping on ruins can level up a city
-          const sp = this.tileScreen(x, y);
-          if (sp.x < this.vw * 0.15 || sp.x > this.vw * 0.85 || sp.y < this.vh * 0.22 || sp.y > this.vh * 0.7) this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 550);
-          this.advanceHints();
-          return this.select({ x: u.x, y: u.y, mode: 'unit' });
-        }
+    if (mine) {
+      const u = mine;
+      if (this.ov.attacks.some((a) => a.x === x && a.y === y)) {
+        const target = unitAt(this.s, x, y)!;
+        this.rewardsAfter(this.act(() => attack(this.s, u, target))); // a kill can level up a city
+        const still = this.s.units.includes(u);
+        return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
+      }
+      if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
+        this.rewardsAfter(this.act(() => moveUnit(this.s, u, x, y))); // stepping on ruins can level up a city
+        const sp = this.tileScreen(x, y);
+        if (sp.x < this.vw * 0.15 || sp.x > this.vw * 0.85 || sp.y < this.vh * 0.22 || sp.y > this.vh * 0.7) this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 550);
+        this.advanceHints();
+        return this.select({ x: u.x, y: u.y, mode: 'unit' });
       }
     }
-    const hasUnit = !!unitAt(this.s, x, y) && isExplored(this.s, this.me, x, y);
+    const hasUnit = !asTile && !!unitAt(this.s, x, y) && isExplored(this.s, this.me, x, y);
     if (sel && sel.x === x && sel.y === y) {
       if (sel.mode === 'unit') return this.select({ x, y, mode: 'tile' });
-      return this.select(null);
+      if (!asTile) return this.select(null);
     }
     sfx.play('tap');
     this.select({ x, y, mode: hasUnit ? 'unit' : 'tile' });
@@ -306,7 +319,7 @@ export class GameView {
    * Runs a state-changing action, then plays its animations: attacks first, then any unit that
    * moved hops to its new tile. Returns when (performance.now() time) the visible effects settle.
    */
-  private act(fn: () => unknown): number {
+  private act(fn: () => unknown, rival = false): number {
     const before = new Map(this.s.units.map((u) => [u.id, { x: u.x, y: u.y }]));
     const moved = new Set<number>();
     fn();
@@ -322,9 +335,23 @@ export class GameView {
       this.ov.fx.moves.set(u.id, { path: [b, { x: u.x, y: u.y }], t0: now, dur: HOP_MS * 1.3 });
       settle = Math.max(settle, now + HOP_MS * 1.3);
     }
-    this.refresh();
+    if (rival) this.refreshDuringRivals();
+    else this.refresh();
     if (isHumanTurn(this.s)) saveGame(this.s);
     return settle;
+  }
+
+  private lastRivalRedraw = 0;
+  /**
+   * The HUD during rival turns, and the map redrawn at most every quarter-second: rivals take
+   * many small steps and redrawing the whole map after each one slowed big maps down.
+   */
+  private refreshDuringRivals() {
+    const now = performance.now();
+    if (now - this.lastRivalRedraw > 250) {
+      this.lastRivalRedraw = now;
+      this.refresh();
+    }
   }
 
   private sound(name: SoundName, delayMs: number, player: number) {
@@ -405,6 +432,17 @@ export class GameView {
     this.updateHint();
     this.version++;
     if (this.sel) this.select(this.sel);
+  }
+
+  /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
+  private hudSnapshot(): HTMLElement {
+    const p = this.s.players[this.me];
+    const turnText = this.s.maxTurns > 0 ? `${Math.min(this.s.turn, this.s.maxTurns)}/${this.s.maxTurns}` : String(this.s.turn);
+    return h('div', { class: 'hud' },
+      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Score'), h('div', { class: 'hud-val' }, score(this.s, this.me).toLocaleString())),
+      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
+      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
+    );
   }
 
   /** Tiles in my territory where a harvest, farm or mine can be bought right now. */
@@ -488,7 +526,7 @@ export class GameView {
     const city = t.cityId !== null ? cityById(this.s, t.cityId) : undefined;
     if (city) return this.cityPanel(city, close, head, allActs.filter((a) => !UNIT_ACTIONS(a.id)));
 
-    const { title, desc } = describeTile(this.s, t);
+    const { title, desc } = describeTile(this.s, t, this.me);
     this.panel.append(close, head(title, desc));
     this.renderActions(allActs.filter((a) => !UNIT_ACTIONS(a.id)), p.tribe);
   }
@@ -656,10 +694,25 @@ export class GameView {
             sfx.play('stars');
           }
           break;
+        case 'heal':
+          if (seen(e.x, e.y)) {
+            fx.floaters.push({ x: e.x, y: e.y, text: `+${e.amount}`, color: '#7cf07c', t0: now });
+            this.burst(e.x, e.y, now, 10, ['#7cf07c', '#ffffff', '#b6ffb6'], 'puff', 40);
+            sfx.play('harvest');
+          }
+          break;
         case 'ruin':
           if (e.player === this.me) {
-            sfx.play('ruin');
-            modal({ title: e.title, body: [h('p', {}, e.text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30), `icon:flag:${this.s.players[this.me].tribe}:64`) });
+            const { title, text } = e;
+            const show = () => {
+              if (this.destroyed) return;
+              sfx.play('ruin');
+              modal({ title, body: [h('p', {}, text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30), `icon:flag:${this.s.players[this.me].tribe}:64`) });
+            };
+            // open the card once the unit has landed on the ruins, not while it is still walking
+            const wait = end - performance.now();
+            if (wait > 30) window.setTimeout(show, wait);
+            else show();
           }
           break;
         case 'capture': {
@@ -692,8 +745,20 @@ export class GameView {
     return { impact, end };
   }
 
+  /** Offers any pending level-up reward once the animations that caused it have played out. */
+  private rewardsAfter(settle: number) {
+    window.setTimeout(() => this.checkRewards(), Math.max(0, settle - performance.now()) + 60);
+  }
+
+  private rewardTimer = 0;
   private checkRewards() {
-    if (this.rewardOpen || !this.myTurn()) return;
+    if (this.rewardOpen || !this.myTurn() || this.destroyed || this.s.over) return;
+    // let a card that is already open (a ruin's find, a message) be read first
+    if (document.querySelector('#ui .modal-layer')) {
+      window.clearTimeout(this.rewardTimer);
+      this.rewardTimer = window.setTimeout(() => this.checkRewards(), 350);
+      return;
+    }
     const c = citiesOf(this.s, this.me).find((k) => k.pendingRewards.length);
     if (!c) return;
     this.rewardOpen = true;
@@ -726,14 +791,33 @@ export class GameView {
     const s = this.s;
     const me = this.s.players[this.me];
     const cap = citiesOf(s, this.me).find((c) => c.capital);
-    const startRes: Record<string, string> = { gathering: 'fruit', hunting: 'wild animals', fishing: 'fish', riding: 'fruit', climbing: 'fruit' };
     return [
-      { title: 'Scout’s Guide 1/5', text: `Tap the ${startRes[TRIBES[me.tribe].startTech]} near ${cap?.name ?? 'your capital'} and harvest it to grow your city.`, done: () => citiesOf(s, this.me).some((c) => c.pop > 0 || c.level > 1) },
+      { title: 'Scout’s Guide 1/5', text: this.firstHint(cap), done: () => citiesOf(s, this.me).some((c) => c.pop > 0 || c.level > 1) },
       { title: 'Scout’s Guide 2/5', text: 'Tap your unit, then a glowing dot to move. Explore to find villages and ruins.', done: () => me.explored.filter(Boolean).length > 30 },
       { title: 'Scout’s Guide 3/5', text: 'Open the Tech Tree and research a new skill.', done: () => me.techs.length > 1 },
       { title: 'Scout’s Guide 4/5', text: 'Stand on a village and claim it next turn to found a new city.', done: () => citiesOf(s, this.me).length > 1 },
       { title: 'Scout’s Guide 5/5', text: 'Grow cities to level up and unlock rewards. Press End Turn when you are done.', done: () => s.turn > 3 },
     ];
+  }
+
+  /** The opening tip, fitted to what this empire can actually do with the resources around its capital. */
+  private firstHint(cap: City | undefined) {
+    const where = cap?.name ?? 'your capital';
+    const names: Record<string, [string, string]> = {
+      fruit: ['fruit', 'it'], animal: ['wild animals', 'them'], fish: ['fish', 'them'], crop: ['crops', 'them'], ore: ['ore', 'it'], whale: ['whales', 'them'],
+    };
+    const grow = ['harvest', 'farm', 'mine'];
+    let locked: { res: string; pron: string; tech: string } | null = null;
+    for (const t of this.s.tiles) {
+      if (!cap || t.owner !== cap.id || !t.resource) continue;
+      const a = tileActions(this.s, this.me, t).find((x) => grow.includes(x.id));
+      if (!a) continue;
+      const [name, pron] = names[t.resource];
+      if (!a.needs) return `Tap the ${name} near ${where} and harvest ${pron} to grow your city.`;
+      locked ??= { res: name, pron, tech: TECH_BY_ID[a.needs].name };
+    }
+    if (locked) return `The ${locked.res} near ${where} ${locked.pron === 'it' ? 'needs' : 'need'} ${locked.tech}. Tap ${locked.pron}, then the locked button to research ${locked.tech}.`;
+    return `Nothing to harvest near ${where} yet: tap your unit, then a glowing dot, and go exploring.`;
   }
 
   private advanceHints() {
@@ -832,6 +916,7 @@ export class GameView {
     this.refresh();
     const fast = this.settings.fastAi;
     let steps = 0;
+    let quiet = 0;
     while (!this.s.over && !isHumanTurn(this.s) && !this.destroyed) {
       const p = this.s.players[this.s.current];
       const T = TRIBES[p.tribe];
@@ -839,7 +924,7 @@ export class GameView {
       this.banner.style.setProperty('--tc', T.color);
       this.banner.textContent = `${T.people} turn…`;
       let acted = false;
-      const settle = this.act(() => (acted = aiStep(this.s)));
+      const settle = this.act(() => (acted = aiStep(this.s)), true);
       if (!acted) {
         endTurn(this.s);
         this.handleEvents(drain());
@@ -848,8 +933,10 @@ export class GameView {
         continue;
       }
       steps++;
-      if (!fast) await sleep(Math.min(900, Math.max(25, settle - performance.now())));
-      else if (steps % 25 === 0) await sleep(0);
+      // wait for what you can see; moves hidden in the fog don't hold the turn up
+      const visible = settle - performance.now() > 5;
+      if (!fast && visible) await sleep(Math.min(900, settle - performance.now()));
+      else if (++quiet % 8 === 0) await sleep(0);
     }
     this.banner.classList.add('hidden');
     this.busy = false;
@@ -889,6 +976,9 @@ export class GameView {
   // ------------------------------------------------------------ menus
 
   private openMenu() {
+    const onOff = (name: string, on: boolean) => `${name}: ${on ? 'On' : 'Off'}`;
+    const hintsLabel = h('span', {}, onOff('Hints', this.settings.hints));
+    const soundLabel = h('span', {}, onOff('Sound', this.settings.sound));
     modal({
       title: 'Menu',
       body: [
@@ -898,8 +988,9 @@ export class GameView {
       dismissable: true,
       buttons: [
         { label: 'Resume', primary: true },
-        { label: 'Hints: ' + (this.settings.hints ? 'On' : 'Off'), onClick: () => { this.settings.hints = !this.settings.hints; saveSettings(this.settings); this.updateHint(); } },
-        { label: 'Sound: ' + (this.settings.sound ? 'On' : 'Off'), onClick: () => { this.settings.sound = !this.settings.sound; sfx.enabled = this.settings.sound; saveSettings(this.settings); } },
+        // toggles flip in place and keep the menu open
+        { label: hintsLabel, keepOpen: true, onClick: () => { this.settings.hints = !this.settings.hints; saveSettings(this.settings); this.updateHint(); hintsLabel.textContent = onOff('Hints', this.settings.hints); } },
+        { label: soundLabel, keepOpen: true, onClick: () => { this.settings.sound = !this.settings.sound; sfx.enabled = this.settings.sound; saveSettings(this.settings); soundLabel.textContent = onOff('Sound', this.settings.sound); } },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },
       ],
@@ -910,10 +1001,10 @@ export class GameView {
   private openStats() {
     const s = this.s;
     const rows = s.players.map((p) => {
-      const known = p.id === this.me || s.cities.some((c) => c.owner === p.id && isExplored(s, this.me, c.x, c.y));
+      const known = p.id === this.me || (s.players[this.me].met ?? []).includes(p.id) || s.cities.some((c) => c.owner === p.id && isExplored(s, this.me, c.x, c.y));
       const T = TRIBES[p.tribe];
       return h('div', { class: 'stat-row', style: { '--tc': T.color } as Record<string, string> },
-        unitPortrait(portraitKind(p.tribe), p.tribe, 44),
+        known ? unitPortrait(portraitKind(p.tribe), p.tribe, 44) : h('div', { class: 'stat-unknown' }, '?'),
         h('div', {},
           h('b', {}, known ? `${T.people}${p.id === this.me ? ' (you)' : ''}` : 'Unknown empire'),
           h('div', { class: 'muted small' }, !p.alive ? 'Destroyed' : known ? `${score(s, p.id).toLocaleString()} pts · ${citiesOf(s, p.id).length} cities · ${p.techs.length} techs` : 'Not yet met'),
@@ -926,7 +1017,7 @@ export class GameView {
   /** Opens the tech tree; with `focus`, that tech is highlighted and its research card opened. */
   private openTech(focus?: string) {
     if (this.busy) return;
-    showTechTree(this.s, this.me, this.hud, () => {
+    showTechTree(this.s, this.me, () => this.hudSnapshot(), () => {
       sfx.play('research');
       this.refresh();
       this.advanceHints();
@@ -935,7 +1026,7 @@ export class GameView {
   }
 }
 
-function describeTile(s: GameState, t: Tile): { title: string; desc: string } {
+function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
   const where = owner === null ? 'Unclaimed land.' : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
   const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean' };
@@ -950,9 +1041,13 @@ function describeTile(s: GameState, t: Tile): { title: string; desc: string } {
   const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market' };
   if (t.village) return { title: 'Village', desc: 'Move a unit here, then claim it next turn to found a city.' };
   if (t.ruin) return { title: 'Ancient Ruins', desc: 'Step on them to discover what was left behind.' };
-  if (t.improvement) return { title: imp[t.improvement], desc: `${terrain[t.terrain]}. ${where}` };
+  if (t.improvement) {
+    const title = t.improvement === 'temple' ? (t.terrain === 'field' ? 'Temple' : t.terrain === 'forest' ? 'Grove Shrine' : 'Mountain Shrine') : imp[t.improvement];
+    return { title, desc: `${terrain[t.terrain]}. ${where}` };
+  }
   if (t.resource) return { title: `${res[t.resource][0]}`, desc: `${res[t.resource][1]} ${where}` };
-  const extra = t.terrain === 'mountain' ? ` Needs ${TECH_BY_ID.climbing.name} to enter.` : t.terrain === 'ocean' ? ' Needs a Galley to cross.' : '';
+  const extra = t.terrain === 'mountain' && !hasTech(s, viewer, 'climbing') ? ` Needs ${TECH_BY_ID.climbing.name} to enter.`
+    : t.terrain === 'ocean' && !hasTech(s, viewer, 'sailing') ? ' Needs a Galley (Sailing) to cross.' : '';
   return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}` };
 }
 

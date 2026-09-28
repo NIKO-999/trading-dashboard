@@ -11,6 +11,7 @@ export type GameEvent =
   | { type: 'move'; unitId: number; owner: number; path: { x: number; y: number }[]; embark: boolean; disembark: boolean }
   | { type: 'levelup'; player: number; cityId: number; level: number }
   | { type: 'ruin'; player: number; title: string; text: string }
+  | { type: 'heal'; unitId: number; x: number; y: number; amount: number }
   | { type: 'capture'; player: number; cityId: number; from: number | null }
   | { type: 'eliminated'; player: number; by: number }
   | { type: 'stars'; player: number; x: number; y: number; amount: number };

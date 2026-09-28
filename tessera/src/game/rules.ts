@@ -3,7 +3,7 @@ import { unitFor } from '../data/tribes';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
-import { claimTerritory, foundCity, revealAround, spawnUnit } from './mapgen';
+import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -285,10 +285,13 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   }
   switch (id) {
     case 'capture': return capture(s, u!, t);
-    case 'recover':
+    case 'recover': {
+      const before = u!.hp;
       u!.hp = Math.min(maxHp(u!), u!.hp + (tileOwnerPlayer(s, t) === pid ? 4 : 2));
       u!.moved = u!.attacked = true;
+      emit({ type: 'heal', unitId: u!.id, x: u!.x, y: u!.y, amount: u!.hp - before });
       return true;
+    }
     case 'road': t.road = true; return true;
     case 'harvest': {
       const r = t.resource;
@@ -556,6 +559,7 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
 
 export function attack(s: GameState, a: Unit, d: Unit): boolean {
   if (!attackOptions(s, a).includes(d)) return false;
+  meet(s, a.owner, d.owner);
   const { dmg, ret, kills } = previewCombat(s, a, d);
   const ranged = dist(a.x, a.y, d.x, d.y) > 1;
   emit({ type: 'attack', unitId: a.id, kind: a.kind, player: a.owner, from: { x: a.x, y: a.y }, to: { x: d.x, y: d.y }, ranged });
