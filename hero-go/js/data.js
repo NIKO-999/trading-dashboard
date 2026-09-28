@@ -133,5 +133,15 @@
     ],
   };
 
-  window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT };
+  // ---------- Hero passive bonuses (on top of each hero's signature ability) ----------
+  const HERO_BONUS = {
+    samurai:    { name: 'Bushido', desc: 'ATK +15%. Your first strike in every battle is always a critical hit.', fx: { atkPct: 15, firstCrit: true } },
+    knight:     { name: 'Chivalry', desc: 'DEF +25%. Take 20% less damage from elites and bosses.', fx: { defPct: 25, bigFoeGuard: 0.2 } },
+    aztec:      { name: 'Jaguar Spirit', desc: '+12% Dodge. Heal 6% of Max HP whenever an enemy falls.', fx: { dodge: 0.12, killHeal: 0.06 } },
+    polynesian: { name: "Ocean's Bounty", desc: 'Max HP +20%. All healing is 40% stronger.', fx: { hpPct: 20, healBoost: 0.4 } },
+    viking:     { name: 'Plunder', desc: '+30% coins from every source. Start each journey with Power Up.', fx: { coinPct: 30, startSkill: 'atk' } },
+    zulu:       { name: 'Impi Swiftness', desc: '+30% EXP. Open every battle with a free spear throw (100% ATK).', fx: { xpPct: 30, openingThrow: 1 } },
+  };
+
+  window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT, HERO_BONUS };
 })();

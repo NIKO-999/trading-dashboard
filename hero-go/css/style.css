@@ -350,6 +350,7 @@ svg { display: block; }
 .sig { margin-top: 10px; display: flex; gap: 10px; align-items: center; background: #2e2540; border: 2px solid #000; border-radius: 12px; padding: 8px; }
 .sig .badge { flex: none; width: 46px; height: 46px; border-radius: 10px; border: 3px solid var(--ink); display: grid; place-items: center; font-family: var(--font-game); font-size: 22px; }
 .sig .st { font-family: var(--font-game); font-size: 16px; }
+.sig .kind { font-size: 11px; padding: 1px 6px; border-radius: 6px; background: rgba(255,255,255,.14); vertical-align: 2px; margin-left: 4px; }
 .sig .sd { font-size: 13px; color: #d7cfe8; }
 .hero-row { display: flex; gap: 10px; padding: 10px 14px; overflow-x: auto; }
 .hcard { flex: none; width: 82px; border-radius: 14px; border: 3px solid var(--ink); background: #3a2e4e; overflow: hidden; position: relative; }
@@ -428,10 +429,11 @@ svg { display: block; }
 .splash .scene, .splash .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .splash .dim { position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(14,10,22,.85)); }
 .splash .lineup { position: absolute; left: 0; right: 0; top: 18%; display: flex; justify-content: center; align-items: flex-end; }
-.splash .lineup > div { width: 30%; margin: 0 -5%; animation: floaty 2.4s ease-in-out infinite; }
-.splash .lineup > div:nth-child(2) { width: 34%; z-index: 2; animation-delay: .3s; }
-.splash .lineup > div:nth-child(3) { width: 34%; z-index: 2; animation-delay: .6s; }
-.splash .lineup > div:nth-child(4) { animation-delay: .9s; }
+.splash .lineup > div { flex: 1 1 0; max-width: 30%; margin: 0 -3%; animation: floaty 2.4s ease-in-out infinite; }
+.splash .lineup > div:nth-child(3n+2) { animation-delay: .4s; }
+.splash .lineup > div:nth-child(3n) { animation-delay: .8s; }
+/* centre heroes stand in front and a touch larger */
+.splash .lineup > div:nth-child(3), .splash .lineup > div:nth-child(4) { flex-grow: 1.25; max-width: 34%; z-index: 2; }
 .splash .lineup svg { width: 100%; overflow: visible; }
 .splash .logo { position: relative; font-size: 64px; line-height: .9; text-align: center; transform: rotate(-4deg); margin-bottom: 6px; }
 .splash .sub { position: relative; font-size: 18px; margin-bottom: 24px; }

@@ -1,13 +1,15 @@
 /* Hero Go! — game engine: meta screens, day-by-day adventure, auto battles. */
 (function () {
   'use strict';
-  const { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT } = window.GAME_DATA;
+  const { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT, HERO_BONUS } = window.GAME_DATA;
   const HEROES = window.HEROES || {};
   const ENEMIES = window.ENEMIES || {};
   const PETS = window.PETS || {};
   const SCENES = window.SCENES || {};
   const EGGS = window.EGGS || {};
-  const HERO_KEYS = ['samurai', 'knight', 'aztec', 'polynesian'].filter(k => HEROES[k]);
+  const HERO_KEYS = ['samurai', 'knight', 'aztec', 'polynesian', 'viking', 'zulu'].filter(k => HEROES[k]);
+  const HERO_SCENE = { samurai: 'forest', knight: 'desert', aztec: 'swamp', polynesian: 'volcano', viking: 'snow', zulu: 'desert' };
+  const bonusOf = k => (HERO_BONUS[k] || { name: '', desc: '', fx: {} });
 
   // ---------------------------------------------------------------- utils
   const app = document.getElementById('app');
@@ -123,7 +125,7 @@
   function splash() {
     const s = el(`<div class="splash">
       <div class="scene">${art.scene('forest')}</div><div class="dim"></div>
-      <div class="lineup">${['aztec', 'samurai', 'knight', 'polynesian'].filter(k => HEROES[k]).map(k => `<div>${art.hero(k)}</div>`).join('')}</div>
+      <div class="lineup">${['zulu', 'aztec', 'samurai', 'knight', 'polynesian', 'viking'].filter(k => HEROES[k]).map(k => `<div>${art.hero(k)}</div>`).join('')}</div>
       <div class="logo title-gold">HERO<br>GO!</div>
       <div class="sub stroke-sm">Four legends. One endless road.</div>
       <button class="btn big tap">Play</button></div>`);
@@ -206,7 +208,7 @@
     const scr = el(`<div class="screen">
       <div class="page-h"><div class="t stroke">Heroes</div>${chip('coin', fmt(save.gold))}</div>
       <div class="hero-scroll">
-      <div class="hero-show"><div class="scene">${art.scene(['forest', 'desert', 'swamp', 'snow'][HERO_KEYS.indexOf(k) % 4])}</div><div class="ped"></div><div class="big">${art.hero(k)}</div></div>
+      <div class="hero-show"><div class="scene">${art.scene(HERO_SCENE[k] || 'forest')}</div><div class="ped"></div><div class="big">${art.hero(k)}</div></div>
       <div class="hero-row">${HERO_KEYS.map(h => `<button class="hcard ${h === k ? 'on' : ''}" data-h="${h}"><span class="lv">Lv.${heroLv(h)}</span>${art.portrait(h)}<div class="n">${HEROES[h].name}</div></button>`).join('')}</div>
       <div class="hero-info">
         <div class="nm stroke" style="color:${H.color}">${H.name}</div>
@@ -215,7 +217,8 @@
         <div class="hstats">
           <div class="hstat">${ICONS.heart}${fmt(st.hp)}</div><div class="hstat">${ICONS.sword}${fmt(st.atk)}</div><div class="hstat">${ICONS.shield}${fmt(st.def)}</div>
         </div>
-        <div class="sig"><div class="badge" style="background:${H.color}">★</div><div><div class="st">${H.signature.name}</div><div class="sd">${H.signature.desc}</div></div></div>
+        <div class="sig"><div class="badge" style="background:${H.color}">★</div><div><div class="st">${H.signature.name} <span class="kind">Signature</span></div><div class="sd">${H.signature.desc}</div></div></div>
+        <div class="sig"><div class="badge" style="background:${H.color}">✦</div><div><div class="st">${bonusOf(k).name} <span class="kind">Hero Bonus</span></div><div class="sd">${bonusOf(k).desc}</div></div></div>
       </div>
       </div>
       <div class="hero-actions">
@@ -370,12 +373,16 @@
       ch, day: 0, lv: 1, xp: 0, coins: 0, kills: 0, over: false, skip: false, revived: false,
       base: st, hpPct: 0, atkPct: 0, defPct: 0, skills: {}, sig: H ? H.signature.type : 'crit', heroKey: save.hero,
       hp: st.hp, maxHp: st.hp, atk: st.atk, def: st.def, shield: 0, enemies: [], pet: save.team[0] || null,
+      bonus: bonusOf(save.hero).fx,
     };
+    R.atkPct += R.bonus.atkPct || 0; R.defPct += R.bonus.defPct || 0; R.hpPct += R.bonus.hpPct || 0;
+    if (R.bonus.startSkill) { R.skills[R.bonus.startSkill] = 1; if (R.bonus.startSkill === 'atk') R.atkPct += 18; }
     recalc();
     R.hp = R.maxHp;
     save.runs++; persist();
     SND.music('adventure');
     buildRunScreen();
+    log(`<b>${bonusOf(R.heroKey).name}</b>: ${bonusOf(R.heroKey).desc}`);
     runLoop();
   }
   const xpNeed = lv => Math.round(24 + lv * 16);
@@ -391,6 +398,7 @@
   function effAtk() {
     let a = R.atk;
     if (sk('rage') && R.hp < R.maxHp / 2) a *= 1 + 0.4 + 0.3 * (sk('rage') - 1);
+    if (R.sig === 'rage') a *= 1 + 0.6 * (1 - R.hp / R.maxHp); // Berserkergang
     return a;
   }
 
@@ -651,9 +659,9 @@
   };
 
   // ---------------------------------------------------------------- economy
-  function addCoins(v) { v = Math.round(v * (1 + talentLv('gold') * 0.06)); R.coins += v; snd('coin'); updateStats(); return v; }
-  function addXp(v) { v = Math.round(v * (1 + talentLv('xp') * 0.06)); R.xp += v; updateStats(); return v; }
-  function heal(v) { v = Math.round(Math.min(v, R.maxHp - R.hp)); R.hp += v; updateStats(); return v; }
+  function addCoins(v) { v = Math.round(v * (1 + talentLv('gold') * 0.06) * (1 + (R.bonus.coinPct || 0) / 100)); R.coins += v; snd('coin'); updateStats(); return v; }
+  function addXp(v) { v = Math.round(v * (1 + talentLv('xp') * 0.06) * (1 + (R.bonus.xpPct || 0) / 100)); R.xp += v; updateStats(); return v; }
+  function heal(v) { v = Math.round(Math.min(v * (1 + (R.bonus.healBoost || 0)), R.maxHp - R.hp)); R.hp += v; updateStats(); return v; }
   async function checkLevelUp() {
     while (R.xp >= xpNeed(R.lv) && !R.over) {
       R.xp -= xpNeed(R.lv); R.lv++; recalc(); R.hp = Math.min(R.maxHp, R.hp + Math.round(R.maxHp * 0.1));
@@ -795,6 +803,7 @@
     if (ls && cls !== 'dot') { const h = heal(amount * ls); if (h > 0 && chance(0.35)) num(S.hero, '+' + fmt(h), 'heal'); }
     if (e.hp <= 0) {
       e.alive = false; e.hp = 0; R.kills++;
+      if (R.bonus.killHeal && R.hp > 0) { const h = heal(R.maxHp * R.bonus.killHeal); if (h) num(S.hero, '+' + fmt(h), 'heal'); }
       e.el.classList.add('dead'); snd('poof');
       setBar(e.el, 0, e.maxHp, 0);
     }
@@ -816,7 +825,9 @@
   async function heroStrike(target, mult = 1) {
     if (!target || !target.alive) return;
     const H = HEROES[R.heroKey];
-    const cm = critRoll();
+    let cm = critRoll();
+    if (R.bonus.firstCrit && !R.struckThisBattle) cm = cm || (R.sig === 'crit' ? 2.5 : 1.5);
+    R.struckThisBattle = true;
     if (!R.skip) { restart(S.hero, 'lunge', 'attack'); await wait(150); slashAt(target.el, H ? H.fx.slash : '#fff', H ? H.fx.glow : '#fff'); snd(cm ? 'crit' : 'slash'); }
     const dmg = dmgCalc(effAtk() * mult, target.def) * (cm || 1);
     damageEnemy(target, dmg, cm ? 'crit' : '');
@@ -836,8 +847,14 @@
     if (sk('fireball') && round % 3 === 0 && alive().length) {
       for (const e of alive()) { snd('fire'); await projectile(S.hero, e.el, ICONS.fire, 'spin', 220); boomAt(e.el); damageEnemy(e, dmgCalc(effAtk() * (1.6 + 0.6 * (sk('fireball') - 1)), e.def)); }
     }
+    // Impi Swiftness: free opening spear throw
+    if (round === 1 && R.bonus.openingThrow && front()) {
+      const t = front(); snd('throw'); await projectile(S.hero, t.el, ICONS.sword, '', 240);
+      damageEnemy(t, dmgCalc(effAtk() * R.bonus.openingThrow, t.def));
+    }
     // main attack
     await heroStrike(front());
+    if (R.sig === 'multi' && chance(0.3) && front()) { num(S.hero, 'Flurry!', 'blk'); await heroStrike(front()); }
     if (sk('double') && chance(0.2 + 0.12 * (sk('double') - 1)) && front()) { num(S.hero, 'Double!', 'blk'); await heroStrike(front()); }
     // daggers
     for (let i = 0; i < sk('dagger'); i++) {
@@ -864,10 +881,11 @@
     if (!e.alive || R.hp <= 0) return;
     if (e.frozen) { e.frozen = false; e.el.classList.remove('frozen'); statusIcons(e); return; }
     if (!R.skip) { restart(e.el, 'lunge'); await wait(170); }
-    const dodge = sk('dodge') ? 0.08 + 0.05 * (sk('dodge') - 1) : 0;
+    const dodge = (sk('dodge') ? 0.08 + 0.05 * (sk('dodge') - 1) : 0) + (R.bonus.dodge || 0);
     if (chance(dodge)) { num(S.hero, 'Miss', 'miss'); snd('miss'); }
     else {
       let d = dmgCalc(e.atk, R.def);
+      if (e.tier !== 'mob' && R.bonus.bigFoeGuard) d = Math.round(d * (1 - R.bonus.bigFoeGuard));
       if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) { num(S.hero, fmt(a), 'blk'); snd('block'); } }
       if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), 'hero'); snd('hurt'); flashHit(S.hero); }
       updateStats();
@@ -915,6 +933,7 @@
     await wait(500);
 
     let result;
+    R.struckThisBattle = false;
     for (;;) {
       result = await fightRounds(maxRounds);
       if (result === 'win' || (result === 'timeout' && tier === 'mob')) break;
@@ -1022,6 +1041,7 @@
     if (!R || R.over || R.paused) return;
     const m = modal(`<div class="ribbon stroke">Paused</div><div class="panel">
       <p>Chapter ${R.ch.id} · Day ${R.day}</p>
+      <p style="font-size:13px">${HEROES[R.heroKey] ? `<b>${HEROES[R.heroKey].signature.name}</b> · ` : ''}<b>${bonusOf(R.heroKey).name}</b></p>
       <div style="text-align:left;font-size:13px;margin:8px 0">${Object.keys(R.skills).map(id => `<span class="tag" style="margin:2px">${ICONS[SKILLS[id].icon]}${SKILLS[id].name} Lv${R.skills[id]}</span>`).join('') || 'No skills yet.'}</div>
       ${soundToggles()}
 
