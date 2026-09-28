@@ -215,7 +215,7 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
     const T = { x, y: top }, R = { x: x + HW, y: top + HH }, L = { x: x - HW, y: top + HH };
     for (const [dx, dy, a, b] of [[-1, 0, T, L], [0, -1, T, R]] as const) {
       const n = tileAt(s, t.x + dx, t.y + dy);
-      if (!n || isWaterTile(n)) continue;
+      if (!n || isWaterTile(n) || !explored(n.x, n.y)) continue; // no surf giving away land under the clouds
       surf(ctx, a, b, x, top + HH, t.seed + dx * 7 + dy * 13);
     }
   } else {

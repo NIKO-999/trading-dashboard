@@ -95,7 +95,9 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const st = researchStatus(s, pid, id);
     const cost = techCost(s, pid, id);
     const unit = Object.values(UNITS).find((u) => u.tech === id && u.trainable && (u.kind === tribe.unique || u.kind !== tribe.replaces));
-    const body: (Node | string)[] = [h('p', {}, t.unlocks)];
+    // Egyptians' farms grow cities by 3
+    const unlocks = id === 'farming' && p.tribe === 'egypt' ? t.unlocks.replace('+2 pop', '+3 pop') : t.unlocks;
+    const body: (Node | string)[] = [h('p', {}, unlocks)];
     if (st === 'locked') body.push(h('p', { class: 'muted' }, `Research ${TECH_BY_ID[t.parent!].name} first.`));
     if (st === 'owned') body.push(h('p', { class: 'muted' }, 'Already known.'));
     const goTo = (next: string) => {

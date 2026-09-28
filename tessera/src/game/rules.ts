@@ -140,6 +140,7 @@ function explore(s: GameState, pid: number, x: number, y: number, steps: number)
   let cy = y;
   let seed = s.nextId * 7919 + s.turn * 31;
   const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const before = p.explored.filter(Boolean).length;
   for (let i = 0; i < steps; i++) {
     // Walk preferring unexplored directions.
     const opts = neighbors(s, cx, cy).filter(isLand);
@@ -149,6 +150,9 @@ function explore(s: GameState, pid: number, x: number, y: number, steps: number)
     cy = opts[0].y;
     for (const t of area(s, cx, cy, 1)) p.explored[t.y * s.size + t.x] = true;
   }
+  const found = p.explored.filter(Boolean).length - before;
+  emit({ type: 'toast', player: pid, text: found ? `The pathfinder mapped ${found} new tiles.` : 'The pathfinder found nothing new nearby.' });
+  revealAround(s, pid); // meet whoever the pathfinder spotted
 }
 const unexploredAround = (s: GameState, pid: number, t: Tile) => area(s, t.x, t.y, 1).filter((n) => !isExplored(s, pid, n.x, n.y)).length;
 
