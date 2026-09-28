@@ -16,6 +16,20 @@ export const FLOAT_MS = 1100;
 export const HOP_MS = 170; // one tile of a walk
 export const SAIL_MS = 150; // one tile of a boat trip
 
+const coarsePointer = typeof matchMedia === 'function' ? matchMedia('(pointer: coarse)') : null;
+
+/**
+ * Pixel density to render canvases at: the screen's own (times any page zoom), never below 2x,
+ * and never below 3x on a phone. An app can load its web view off-screen, where the page is told
+ * the pixel ratio is 1, and then show it on a 3x screen without a resize event, so a canvas sized
+ * from that first reading stays blurry. Every current iPhone is 3x, so phones don't trust it.
+ */
+export function renderDpr() {
+  const phone = !!coarsePointer?.matches && Math.min(screen.width, screen.height) <= 540;
+  const raw = (window.devicePixelRatio || 1) * (window.visualViewport?.scale ?? 1);
+  return Math.min(3, Math.max(phone ? 3 : 2, raw));
+}
+
 export const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain === 'ocean';
 
 /** Screen point for tile-local coords (u along +x, v along +y, both -0.5..0.5) around a tile centre. */

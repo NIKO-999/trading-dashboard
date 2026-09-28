@@ -1,3 +1,5 @@
+import { renderDpr } from '../render/common';
+
 type Child = Node | string | null | undefined | false;
 
 export function h<K extends keyof HTMLElementTagNameMap>(
@@ -47,7 +49,7 @@ export function paint(w: number, hgt: number, draw: (ctx: CanvasRenderingContext
   const cached = key ? pictures.get(key) : undefined;
   if (cached) return picture(cached);
   const c = document.createElement('canvas');
-  const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+  const dpr = renderDpr();
   c.width = Math.round(w * dpr);
   c.height = Math.round(hgt * dpr);
   c.style.width = `${w}px`;

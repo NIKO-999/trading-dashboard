@@ -9,7 +9,7 @@ import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
 import { box, drawStar, ellipse, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
-import { HH, HW, isWaterTile, uv, type Overlay } from './common';
+import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 
 const FISH_ICON = FISH;
@@ -20,7 +20,9 @@ export { drawStar } from './prims';
 export { FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, SAIL_MS, newFx, type Fx, type Overlay } from './common';
 
 const FOG_LIFT = 8;
-const FOG = ['#ffffff', '#e4e8f8', '#c9d1f2', '#a8b5ea'];
+// Cloud facets: soft white to pale blue-grey, calm enough to fill most of the early screen.
+const FOG = ['#ffffff', '#edf0f9', '#dbe2f3', '#c3cde9'];
+const FOG_WALL = { right: '#a5b3da', left: '#c6cfea' };
 
 function diamond(ctx: Ctx, x: number, y: number, fill: string) {
   ctx.beginPath();
@@ -41,23 +43,55 @@ function diamond(ctx: Ctx, x: number, y: number, fill: string) {
 
 // ---------------------------------------------------------------- background
 
-let stars: { x: number; y: number; s: number; a: number }[] = [];
-export function drawBackground(ctx: Ctx, w: number, h: number) {
+interface SkyStar { x: number; y: number; r: number; a: number; tw: number; ph: number }
+let sky: SkyStar[] = [];
+const SKY_PATCH = 520; // the star pattern repeats every this many CSS px
+const SKY_PARALLAX = 0.06; // stars drift at this fraction of the map's speed, so they read as far away
+
+/**
+ * The night sky around the map, drawn every frame in screen space: small round stars, a few
+ * of them twinkling, that drift slower than the map. (Baked into the cached map layer they were
+ * pinned to its edges and jumped whenever the layer was rebuilt during a pan.)
+ */
+function drawSky(ctx: Ctx, cam: Camera, vw: number, vh: number, now: number) {
   ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, w, h);
-  if (!stars.length) stars = Array.from({ length: 120 }, (_, i) => ({ x: rand(i, 1), y: rand(i, 2), s: rand(i, 3) < 0.8 ? 2 : 3, a: 0.35 + rand(i, 4) * 0.65 }));
-  for (const s of stars) {
-    ctx.fillStyle = `rgba(255,255,255,${s.a})`;
-    ctx.fillRect(Math.round(s.x * w), Math.round(s.y * h), s.s, s.s);
+  ctx.fillRect(0, 0, vw, vh);
+  if (!sky.length) {
+    sky = Array.from({ length: 60 }, (_, i) => ({
+      x: rand(i, 1), y: rand(i, 2),
+      r: 0.5 + Math.pow(rand(i, 3), 3) * 0.85, // mostly pinpricks, a few brighter
+      a: 0.28 + rand(i, 4) * 0.55,
+      tw: rand(i, 5) < 0.35 ? 0.25 + rand(i, 6) * 0.5 : 0, // twinkles per second (0 = steady)
+      ph: rand(i, 7) * Math.PI * 2,
+    }));
   }
+  const P = SKY_PATCH;
+  const ox = (((cam.x * SKY_PARALLAX) % P) + P) % P, oy = (((cam.y * SKY_PARALLAX) % P) + P) % P;
+  ctx.fillStyle = '#fff';
+  for (let py = oy - P; py < vh; py += P) {
+    for (let px = ox - P; px < vw; px += P) {
+      for (const st of sky) {
+        const x = px + st.x * P, y = py + st.y * P;
+        if (x < -2 || y < -2 || x > vw + 2 || y > vh + 2) continue;
+        const twinkle = st.tw && !REDUCED_MOTION ? 0.62 + 0.38 * Math.sin((now / 1000) * st.tw * Math.PI * 2 + st.ph) : 1;
+        ctx.globalAlpha = st.a * twinkle;
+        ctx.beginPath();
+        ctx.arc(x, y, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
 }
 
 // ---------------------------------------------------------------- renderer
 
 /** Keeps each map layer within this many device pixels (iOS caps canvas size and memory). */
-const LAYER_PIXEL_BUDGET = 8_000_000;
+const LAYER_PIXEL_BUDGET = 10_000_000;
 /** Extra map rendered beyond each screen edge, so short pans only shift the cached layers. */
 const LAYER_MARGIN = 0.22;
+/** ...but never more than this (CSS px), so tablets and laptops keep full sharpness too. */
+const LAYER_MARGIN_MAX = 180;
 
 /**
  * Two cached layers: the ground (terrain, water, borders) and everything standing on it
@@ -72,7 +106,7 @@ export class WorldRenderer {
   private size = { vw: 0, vh: 0, mx: 0, my: 0, dpr: 0 };
 
   render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number, interacting = false) {
-    const mx = Math.round(vw * LAYER_MARGIN), my = Math.round(vh * LAYER_MARGIN);
+    const mx = Math.round(Math.min(LAYER_MARGIN_MAX, vw * LAYER_MARGIN)), my = Math.round(Math.min(LAYER_MARGIN_MAX, vh * LAYER_MARGIN));
     const W = vw + mx * 2, H = vh + my * 2;
     const L = this.cam;
     const scale = cam.zoom / L.zoom;
@@ -115,6 +149,7 @@ export class WorldRenderer {
       blit = (layer) => ctx.drawImage(layer, tx, ty, lw, lh);
     }
     ctx.imageSmoothingQuality = 'high';
+    drawSky(ctx, cam, vw, vh, ov.now);
     blit(this.ground);
     drawWaterLife(ctx, s, viewer, cam, ov, vw, vh);
     blit(this.top);
@@ -137,7 +172,6 @@ function visibleTiles(s: GameState, cam: Camera, vw: number, vh: number) {
 }
 
 function drawStaticGround(ctx: Ctx, s: GameState, viewer: number, cam: Camera, _ov: Overlay, vw: number, vh: number) {
-  drawBackground(ctx, vw, vh);
   ctx.save();
   ctx.translate(cam.x, cam.y);
   ctx.scale(cam.zoom, cam.zoom);
@@ -281,11 +315,11 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
   const l = tileAt(s, t.x, t.y + 1);
   if (!r || explored(r.x, r.y)) {
     const d = FOG_LIFT + (r ? 0 : LAND_DEPTH);
-    poly(ctx, [x + HW, y + HH, x, y + TH, x, y + TH + d, x + HW, y + HH + d], '#95a3dc');
+    poly(ctx, [x + HW, y + HH, x, y + TH, x, y + TH + d, x + HW, y + HH + d], FOG_WALL.right);
   }
   if (!l || explored(l.x, l.y)) {
     const d = FOG_LIFT + (l ? 0 : LAND_DEPTH);
-    poly(ctx, [x - HW, y + HH, x, y + TH, x, y + TH + d, x - HW, y + HH + d], '#b4bee9');
+    poly(ctx, [x - HW, y + HH, x, y + TH, x, y + TH + d, x - HW, y + HH + d], FOG_WALL.left);
   }
   // Faceted top: each tile is split into eight triangles. The eight triangles that meet at a
   // tile corner (from four neighbouring tiles) are shaded as one pinwheel around that corner.

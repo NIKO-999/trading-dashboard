@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: './',
+  // shown on the title screen and in the in-game menu, so a screenshot says which build it is
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version) },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',

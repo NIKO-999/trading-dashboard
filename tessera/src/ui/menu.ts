@@ -105,6 +105,7 @@ export function showTitle(handlers: MenuHandlers) {
       h('button', { class: 'pill', onclick: () => showSetup(handlers, false) }, 'NEW GAME'),
       h('button', { class: 'pill', onclick: () => showSetup(handlers, true) }, 'PASS & PLAY'),
     ),
+    h('div', { class: 'title-version' }, `v${__APP_VERSION__.replace(/\.0$/, '')}`),
     h('div', { class: 'title-dock' },
       dockButton('menu', 'Settings', () => showSettings(handlers)),
       dockButton('trophy', 'High Scores', () => showScores(handlers)),

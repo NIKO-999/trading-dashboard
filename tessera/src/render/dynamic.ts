@@ -7,7 +7,7 @@ import { cityIncome, maxHp } from '../game/rules';
 import type { City, GameState, Tile, TribeId, Unit } from '../game/types';
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
-import { drawStar, ellipse, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
+import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawSprite, unitSprite } from './sprites';
 
 interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
@@ -67,9 +67,18 @@ export function unitMotion(s: GameState, u: Unit, fx: Fx, now: number, ready: bo
   return { x: p.x, y: p.y, lift, sx, sy, facing: fx.facing.get(u.id) ?? 1, water: p.water };
 }
 
+let lastZoom = 0;
+let zoomChangedAt = 0;
+
 export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number) {
   const now = ov.now;
   const fx = ov.fx;
+  // unit bitmaps are made at the exact on-screen scale once the zoom has settled
+  if (cam.zoom !== lastZoom) {
+    lastZoom = cam.zoom;
+    zoomChangedAt = now;
+  }
+  const exact = now - zoomChangedAt > 160;
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
   const w0 = cam.toWorld(-90, -140), w1 = cam.toWorld(vw + 90, vh + 140);
   const onScreen = (p: Pt) => p.x > w0.x && p.x < w1.x && p.y > w0.y && p.y < w1.y;
@@ -96,16 +105,16 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     softShadow(ctx, m.x, m.y + 6, (naval ? 21 : 12) * UNIT_SCALE * 0.78 * shrink, (naval ? 6.5 : 4.6) * UNIT_SCALE * 0.78 * shrink, naval ? 0.22 : 0.34);
   }
   const pxScale = UNIT_SCALE * cam.zoom * dpr;
-  for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale);
+  for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact);
 
   for (const g of fx.ghosts) {
     const k = (now - g.t0) / GHOST_MS;
     if (k < 0 || k > 1) continue;
     const c = tileCenter(g.x, g.y);
     const y = c.y + 5 + k * 8;
-    drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'base'), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
+    drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'base', exact), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
     const white = Math.max(0, 0.9 - k * 2.5);
-    if (white > 0) drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'white'), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
+    if (white > 0) drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'white', exact), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
   }
 
   for (const p of fx.projectiles) drawProjectile(ctx, p, now);
@@ -137,7 +146,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
 
 // ---------------------------------------------------------------- units
 
-function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number) {
+function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number, exact: boolean) {
   const now = ov.now;
   const tribe = s.players[u.owner].tribe;
   const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
@@ -146,8 +155,8 @@ function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewe
   const flashing = flashK >= 0 && flashK <= 1;
   const shake = flashing ? Math.sin(flashK * 42) * 2.2 * (1 - flashK) : 0;
   const x = m.x + shake, y = m.y - m.lift + 5;
-  drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, spent ? 'spent' : 'base'), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0);
-  if (flashing) drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, 'white'), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
+  drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0);
+  if (flashing) drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, 'white', exact), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
 }
 
 // ---------------------------------------------------------------- water life
@@ -188,44 +197,148 @@ export function drawWaterLife(ctx: Ctx, s: GameState, viewer: number, cam: Camer
   ctx.restore();
 }
 
+const LEAP_MS = 760;
+const LEAP_ARC = 1.5; // how far round its loop a leaping fish lands (radians)
+
+/**
+ * Three fish circling just under the surface (tinted by the water, so they read as submerged),
+ * and every few seconds one of them leaps clear with a splash going in and coming out.
+ */
 function drawFishSchool(ctx: Ctx, t: Tile, cx: number, cy: number, now: number) {
   const [body, back] = FISH[t.biome];
-  // ripples spreading from where the fish are feeding
-  const period = 2600;
-  const rk = ((now + t.seed * 37) % period) / period;
-  const rp = uv(cx, cy, rand(t.seed, 41) * 0.3 - 0.15, rand(t.seed, 42) * 0.3 - 0.15);
-  ctx.strokeStyle = `rgba(255,255,255,${0.55 * (1 - rk)})`;
-  ctx.lineWidth = 1.2;
+  const P = TRIBES[t.biome].palette;
+  const water = t.terrain === 'shallow' ? P.shallow : P.ocean;
+  const dir = rand(t.seed, 201) < 0.5 ? 1 : -1;
+  const rate = (0.45 + rand(t.seed, 202) * 0.15) * dir; // radians a second around the loop
+  const spin = (now / 1000) * rate + rand(t.seed, 203) * 6.28;
+  const ou = rand(t.seed, 204) * 0.08 - 0.04, ov = rand(t.seed, 205) * 0.08 - 0.04;
+  const ru = 0.26 + rand(t.seed, 206) * 0.04, rv = 0.17 + rand(t.seed, 207) * 0.03;
+  // the leap: which fish, and where along its loop it happens
+  const period = 6000 + rand(t.seed, 208) * 3000;
+  const clock = now + rand(t.seed, 209) * period;
+  const cycle = Math.floor(clock / period);
+  const since = clock - cycle * period; // ms into this cycle; the leap is its first LEAP_MS
+  const leaper = REDUCED_MOTION ? -1 : cycle % 3;
+
+  // a lazy ripple where the school is feeding
+  const rk = ((now + t.seed * 37) % 2600) / 2600;
+  const rp = uv(cx, cy, ou, ov);
+  ctx.strokeStyle = `rgba(255,255,255,${0.4 * (1 - rk)})`;
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.ellipse(rp.x, rp.y, 3 + rk * 12, (3 + rk * 12) * 0.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(rp.x, rp.y, 4 + rk * 13, (4 + rk * 13) * 0.5, 0, 0, Math.PI * 2);
   ctx.stroke();
+
   for (let i = 0; i < 3; i++) {
-    const speed = 0.32 + rand(t.seed, 200 + i) * 0.22;
-    const dir = i % 2 ? 1 : -1;
-    const ph = (now / 1000) * speed * dir + rand(t.seed, 210 + i) * 6.28;
-    const ru = 0.16 + rand(t.seed, 220 + i) * 0.08, rv = 0.1 + rand(t.seed, 230 + i) * 0.06;
-    const ou = rand(t.seed, 240 + i) * 0.1 - 0.05, ov = rand(t.seed, 250 + i) * 0.1 - 0.05;
-    const p = uv(cx, cy, ou + Math.cos(ph) * ru, ov + Math.sin(ph) * rv);
+    const ph = spin + (i * Math.PI * 2) / 3;
+    const wob = 1 + Math.sin(now / 900 + i * 2.1 + t.seed) * 0.08;
+    const k = 0.8 + rand(t.seed, 260 + i) * 0.2;
+    const at = (a: number) => uv(cx, cy, ou + Math.cos(a) * ru * wob, ov + Math.sin(a) * rv * wob);
+    // it jumps LEAP_ARC ahead along its loop, then stays under until the loop catches up with
+    // where it splashed down, so it resurfaces exactly there
+    if (i === leaper && since < (LEAP_ARC / Math.abs(rate)) * 1000) {
+      const ph0 = ph - (since / 1000) * rate;
+      drawLeap(ctx, at(ph0), at(ph0 + LEAP_ARC * dir), Math.min(1, since / LEAP_MS), since, body, back, k);
+      continue;
+    }
+    const p = at(ph);
     // heading on the ground plane (before the 2:1 isometric squash)
     const du = -Math.sin(ph) * ru * dir, dv = Math.cos(ph) * rv * dir;
     const heading = Math.atan2(du + dv, du - dv);
-    drawFish(ctx, p.x, p.y, heading, body, back, now / 110 + i * 2, 0.95 + rand(t.seed, 260 + i) * 0.3);
+    drawFish(ctx, p.x, p.y, heading, body, back, now / 110 + i * 2, k, water);
   }
+}
+
+/** One fish arcing out of the water from `a` to `b` (k = 0..1), with splashes in and out. */
+function drawLeap(ctx: Ctx, a: Pt, b: Pt, k: number, ms: number, body: string, back: string, size: number) {
+  const splash = (p: Pt, t: number) => {
+    if (t < 0 || t > 1) return;
+    ctx.strokeStyle = `rgba(255,255,255,${0.8 * (1 - t)})`;
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 3 + t * 11, (3 + t * 11) * 0.45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // droplets thrown up and falling back
+    for (let d = 0; d < 4; d++) {
+      const ang = -Math.PI / 2 + (d - 1.5) * 0.55;
+      const r = t * (6 + d * 1.5);
+      const dx = p.x + Math.cos(ang) * r, dy = p.y + Math.sin(ang) * r * 1.2 + t * t * 10;
+      ctx.globalAlpha = 1 - t;
+      ellipse(ctx, dx, dy, 1.1, 1.3, '#ffffff');
+    }
+    ctx.globalAlpha = 1;
+  };
+  splash(a, ms / 520);
+  splash(b, (ms - LEAP_MS) / 520);
+  if (k >= 1) return;
+  const h = 10 * size;
+  const x = a.x + (b.x - a.x) * k, y = a.y + (b.y - a.y) * k - Math.sin(Math.PI * k) * h;
+  const dx = b.x - a.x, dy = b.y - a.y - Math.PI * h * Math.cos(Math.PI * k);
+  // a little under the surface at both ends
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, Math.sin(Math.PI * k) * 3.5);
+  ctx.translate(x, y);
+  ctx.rotate(Math.atan2(dy, dx));
+  if (dx < 0) ctx.scale(1, -1); // keep the fin on top when heading left
+  ctx.scale(size * 0.72, size * 0.72);
+  // tail
+  poly(ctx, [-6, 0, -11, -4, -9.5, 0, -11, 4], shade(back, 0.05));
+  // body in profile: darker back, pale belly
+  ctx.beginPath();
+  ctx.moveTo(8, 0.4);
+  ctx.bezierCurveTo(6, -4.2, -2, -4.4, -6.5, -0.8);
+  ctx.lineTo(-6.5, 0.8);
+  ctx.bezierCurveTo(-2, 3.6, 5.5, 3.8, 8, 0.4);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0, -4.2, 0, 3.8);
+  g.addColorStop(0, shade(back, 0.08));
+  g.addColorStop(0.45, shade(body, 0.12));
+  g.addColorStop(1, shade(body, 0.55));
+  ctx.fillStyle = g;
+  ctx.fill();
+  poly(ctx, [1.5, -3.6, -2.5, -6.2, -3.5, -2.8], back); // dorsal fin
+  ellipse(ctx, 4.8, -1.1, 0.9, 0.9, '#ffffff');
+  ellipse(ctx, 5, -1.1, 0.55, 0.55, '#0d1a22');
+  ctx.restore();
 }
 
 /**
  * A small fish seen from above, lying on the water plane: `heading` is measured on the ground
  * plane and the drawing is squashed 2:1 like the tiles, so it turns naturally as it swims.
+ * With `water` set it is tinted by that water, as if just below the surface.
  */
-export function drawFish(ctx: Ctx, x: number, y: number, heading: number, body: string, back: string, wiggle: number, k: number) {
+export function drawFish(ctx: Ctx, x: number, y: number, heading: number, body: string, back: string, wiggle: number, k: number, water?: string) {
+  if (water) {
+    // its shadow on the sandy bottom, straight below (light from above), then the fish itself
+    // a little washed out by the water it swims in
+    ctx.save();
+    ctx.translate(x, y + 2.2);
+    ctx.scale(1, 0.5);
+    ctx.rotate(heading);
+    ctx.scale(k * 0.85, k * 0.85);
+    ctx.beginPath();
+    ctx.moveTo(9, 0);
+    ctx.bezierCurveTo(7, -3.8, 0, -3.6, -7, -1);
+    ctx.lineTo(-12, -3.6);
+    ctx.lineTo(-10.5, 0);
+    ctx.lineTo(-12, 3.6);
+    ctx.lineTo(-7, 1);
+    ctx.bezierCurveTo(0, 3.6, 7, 3.8, 9, 0);
+    ctx.closePath();
+    ctx.fillStyle = shade(water, -0.45);
+    ctx.globalAlpha *= 0.22;
+    ctx.fill();
+    ctx.restore();
+    body = mix(body, water, 0.22);
+    back = mix(back, shade(water, -0.3), 0.3);
+  }
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1, 0.5);
   ctx.rotate(heading);
   ctx.scale(k * 0.85, k * 0.85);
-  ellipse(ctx, 1.5, 7.5, 9, 3, 'rgba(0,40,90,0.14)'); // shadow on the sea floor
   const alpha = ctx.globalAlpha;
-  ctx.globalAlpha = alpha * 0.9;
+  ctx.globalAlpha = alpha * (water ? 0.9 : 0.95);
   // tail, swishing from side to side
   ctx.save();
   ctx.translate(-6.5, 0);
@@ -257,8 +370,10 @@ export function drawFish(ctx: Ctx, x: number, y: number, heading: number, body: 
   ctx.lineTo(-5.5, 0);
   ctx.stroke();
   ctx.globalAlpha = alpha;
-  ellipse(ctx, 6.3, -1.4, 0.6, 0.6, '#0d1a22');
-  ellipse(ctx, 6.3, 1.4, 0.6, 0.6, '#0d1a22');
+  if (!water) {
+    ellipse(ctx, 6.3, -1.4, 0.6, 0.6, '#0d1a22');
+    ellipse(ctx, 6.3, 1.4, 0.6, 0.6, '#0d1a22');
+  }
   ctx.restore();
 }
 

@@ -11,6 +11,7 @@ import {
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
+import { renderDpr } from '../render/common';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
@@ -115,10 +116,8 @@ export class GameView {
   }
 
   private resize() {
-    // Render at the screen's real pixel density (and never below 2x), times any page zoom, so the
-    // map stays sharp on high-density phone screens and in scaled-up app views.
-    const zoom = window.visualViewport?.scale ?? 1;
-    const dpr = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * zoom));
+    // Render at the screen's real pixel density (see renderDpr) so the map stays sharp.
+    const dpr = renderDpr();
     this.dpr = dpr;
     const oldW = this.vw, oldH = this.vh;
     this.vw = window.innerWidth;
@@ -137,6 +136,9 @@ export class GameView {
 
   private loop = (now: number = performance.now()) => {
     if (this.destroyed) return;
+    // Screens can change density without any resize event (an app showing a web view it loaded
+    // off-screen, a window dragged to another monitor), so check every frame; it costs nothing.
+    if (window.innerWidth !== this.vw || window.innerHeight !== this.vh || renderDpr() !== this.dpr) this.resize();
     const dt = Math.min(50, now - (this.lastTick || now));
     this.lastTick = now;
     this.ov.now = now;
@@ -872,7 +874,10 @@ export class GameView {
   private openMenu() {
     modal({
       title: 'Menu',
-      body: [h('p', { class: 'muted' }, 'Your game is saved automatically every turn.')],
+      body: [
+        h('p', { class: 'muted' }, 'Your game is saved automatically every turn.'),
+        h('p', { class: 'muted small build' }, `Tessera v${__APP_VERSION__.replace(/\.0$/, '')} · drawn at ${+this.dpr.toFixed(2)}× (${this.canvas.width}×${this.canvas.height})`),
+      ],
       dismissable: true,
       buttons: [
         { label: 'Resume', primary: true },
