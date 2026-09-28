@@ -49,7 +49,7 @@
   const DEFAULT_SAVE = () => ({
     gold: 800, gems: 600, energy: 30, energyTs: Date.now(), speed: 1,
     hero: HERO_KEYS[0] || 'samurai', heroLv: {}, talents: {}, unlocked: 1, best: {},
-    pets: {}, team: [], freeEggs: 3, eggDay: today(), hatches: 0, giftDay: '', runs: 0, music: true, sfx: true,
+    pets: {}, team: [], freeEggs: 3, bonusEggs: 0, eggDay: today(), hatches: 0, giftDay: '', runs: 0, music: true, sfx: true,
   });
   let save = DEFAULT_SAVE();
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) save = Object.assign(DEFAULT_SAVE(), s); } catch (e) { /* storage unavailable */ }
@@ -101,7 +101,7 @@
   function toast(msg) { const t = el(`<div class="toast">${msg}</div>`); app.append(t); setTimeout(() => t.remove(), 1800); }
   function modal(html, cls = '') { const m = el(`<div class="modal ${cls}">${html}</div>`); app.append(m); return m; }
   function chip(icon, val, id) { return `<div class="chip" ${id ? `id="${id}"` : ''}>${ICONS[icon]}<span>${val}</span></div>`; }
-  function resChips() { tickEnergy(); return chip('energy', `${save.energy}/${ENERGY_MAX}`) + chip('gem', fmt(save.gems)) + chip('coin', fmt(save.gold)); }
+  function resChips() { tickEnergy(); return chip('energy', `${save.energy}/${ENERGY_MAX}`, 'energy') + chip('gem', fmt(save.gems)) + chip('coin', fmt(save.gold)); }
 
   // ---------------------------------------------------------------- navigation
   let tab = 'battle';
@@ -113,7 +113,7 @@
   }
   function tabbar() {
     const tabs = [['shop', 'shop', 'Shop'], ['heroes', 'helm', 'Heroes'], ['battle', 'battle', 'Battle'], ['pets', 'paw', 'Pets'], ['talents', 'talent', 'Talents']];
-    const bar = el(`<nav class="tabbar">${tabs.map(([k, i, n]) => `<button class="tab ${tab === k ? 'on' : ''}" data-t="${k}">${ICONS[i]}${n}${k === 'pets' && save.freeEggs > 0 ? '<i class="dot"></i>' : ''}${k === 'shop' && save.giftDay !== today() ? '<i class="dot"></i>' : ''}</button>`).join('')}</nav>`);
+    const bar = el(`<nav class="tabbar">${tabs.map(([k, i, n]) => `<button class="tab ${tab === k ? 'on' : ''}" data-t="${k}">${ICONS[i]}${n}${k === 'pets' && save.freeEggs + save.bonusEggs > 0 ? '<i class="dot"></i>' : ''}${k === 'shop' && save.giftDay !== today() ? '<i class="dot"></i>' : ''}</button>`).join('')}</nav>`);
     bar.addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) show(b.dataset.t); });
     return bar;
   }
@@ -145,12 +145,12 @@
   }
   function settingsModal() {
     const m = modal(`<div class="ribbon stroke">Settings</div><div class="panel">${soundToggles()}<div class="actions"><button class="btn" id="cl">Close</button></div></div>`);
-    bindToggles(m, () => show(tab));
+    bindToggles(m, () => { const sb = $('.snd-btn'); if (sb) sb.innerHTML = SPEAKER(save.music || save.sfx); });
     $('#cl', m).onclick = () => m.remove();
   }
   // first tap anywhere unlocks audio; buttons click
+  ['click', 'touchend'].forEach(t => app.addEventListener(t, () => SND.init(), { passive: true }));
   app.addEventListener('pointerdown', e => {
-    SND.init();
     if (e.target.closest('.btn:not([disabled]),.tab,.hcard,.egg-slot,.pcard,.ch-nav,.gear,.show-pets,.platform')) snd('click');
   });
 
@@ -180,6 +180,12 @@
     scr.append(tabbar());
     app.append(scr);
     $('.snd-btn', scr).onclick = settingsModal;
+    // energy refills over time; keep the counter honest while the player sits on this screen
+    const eTimer = setInterval(() => {
+      const c = $('#energy span');
+      if (!c || !document.body.contains(scr)) return clearInterval(eTimer);
+      tickEnergy(); c.textContent = `${save.energy}/${ENERGY_MAX}`;
+    }, 10000);
     $('.ch-nav.l', scr).onclick = () => { viewCh--; show('battle'); };
     $('.ch-nav.r', scr).onclick = () => { viewCh++; show('battle'); };
     $('#start', scr).onclick = () => {
@@ -237,7 +243,7 @@
         <div class="roamers"></div>
       </div>
       <div class="eggs">
-        <button class="egg-slot" data-e="free"><div class="eg">${art.egg('common')}</div><span class="cnt stroke">x${save.freeEggs}</span><span class="cost">Free ${save.freeEggs}/3</span></button>
+        <button class="egg-slot" data-e="free"><div class="eg">${art.egg('common')}</div><span class="cnt stroke">x${save.freeEggs + save.bonusEggs}</span><span class="cost">${save.freeEggs ? `Free ${save.freeEggs}/3` : save.bonusEggs ? 'Reward' : 'Tomorrow'}</span></button>
         <button class="egg-slot rare" data-e="r1"><div class="eg">${art.egg('rare')}</div><span class="cnt stroke">x1</span><span class="cost">${ICONS.gem}${RARE_EGG_COST}</span></button>
         <button class="egg-slot rare" data-e="r10"><div class="eg">${art.egg('rare')}</div><span class="cnt stroke">x10</span><span class="cost">${ICONS.gem}${RARE_EGG10_COST}</span></button>
       </div>
@@ -258,7 +264,11 @@
     $('.show-pets', scr).onclick = () => petCollection();
     $$('.egg-slot', scr).forEach(b => b.onclick = () => {
       const e = b.dataset.e;
-      if (e === 'free') { if (save.freeEggs <= 0) return toast('Come back tomorrow for more free eggs!'); save.freeEggs--; hatch(['common']); }
+      if (e === 'free') {
+        if (save.freeEggs > 0) save.freeEggs--; else if (save.bonusEggs > 0) save.bonusEggs--;
+        else { SND.play('error'); return toast('Come back tomorrow for more free eggs!'); }
+        hatch(['common']);
+      }
       else if (e === 'r1') { if (save.gems < RARE_EGG_COST) return toast('Not enough gems'); save.gems -= RARE_EGG_COST; hatch(['rare']); }
       else { if (save.gems < RARE_EGG10_COST) return toast('Not enough gems'); save.gems -= RARE_EGG10_COST; hatch(Array(10).fill('rare')); }
     });
@@ -474,8 +484,21 @@
   }
 
   // ---------------------------------------------------------------- timing
-  const wait = ms => (R && R.skip) ? Promise.resolve() : new Promise(r => setTimeout(r, ms / (save.speed || 1)));
-  const realWait = ms => new Promise(r => setTimeout(r, ms));
+  // Every await in the adventure goes through these. When the run is over (retreat, results) the promise
+  // never settles, so the abandoned day/battle loop simply stops; while paused, time stands still.
+  const NEVER = new Promise(() => {});
+  function gate(run, resolve) {
+    if (!run || run.over || R !== run) return;
+    if (run.paused) { setTimeout(() => gate(run, resolve), 100); return; }
+    resolve();
+  }
+  const wait = ms => {
+    const run = R;
+    if (!run || run.over) return NEVER;
+    if (run.skip && !run.paused) return Promise.resolve();
+    return new Promise(r => setTimeout(() => gate(run, r), ms / (save.speed || 1)));
+  };
+  const realWait = ms => { const run = R; return new Promise(r => setTimeout(() => gate(run, r), ms)); };
 
   // ---------------------------------------------------------------- walking
   let stepTimer = null;
@@ -966,7 +989,7 @@
     save.best[ch.id] = Math.max(prevBest, day);
     const gems = Math.round(day * 1.5 + (cleared ? 80 * ch.id : 0));
     const eggs = cleared ? 2 : day >= ch.days / 2 ? 1 : 0;
-    save.gold += R.coins; save.gems += gems; save.freeEggs += eggs;
+    save.gold += R.coins; save.gems += gems; save.bonusEggs += eggs;
     let unlocked = false;
     if (cleared && save.unlocked === ch.id && ch.id < CHAPTERS.length) { save.unlocked++; unlocked = true; viewCh = save.unlocked; }
     persist();
@@ -984,20 +1007,23 @@
         ${unlocked ? `<p style="color:#2a6fd6">Chapter ${ch.id + 1} unlocked!</p>` : ''}
         <div class="actions"><button class="btn" id="home">Continue</button></div>
       </div>`);
-    $('#home', m).onclick = () => { R = null; S = {}; show('battle'); };
+    $('#home', m).onclick = () => { if (!R) return; R = null; S = {}; show('battle'); };
   }
 
   function pauseMenu() {
-    if (!R || R.over) return;
+    if (!R || R.over || R.paused) return;
     const m = modal(`<div class="ribbon stroke">Paused</div><div class="panel">
       <p>Chapter ${R.ch.id} · Day ${R.day}</p>
       <div style="text-align:left;font-size:13px;margin:8px 0">${Object.keys(R.skills).map(id => `<span class="tag" style="margin:2px">${ICONS[SKILLS[id].icon]}${SKILLS[id].name} Lv${R.skills[id]}</span>`).join('') || 'No skills yet.'}</div>
       ${soundToggles()}
-      <p style="font-size:13px;color:#7a6a5a">The journey continues in the background while this is open.</p>
+
       <div class="actions"><button class="btn" id="res">Resume</button><button class="btn red" id="quit">Retreat</button></div></div>`);
     bindToggles(m);
-    $('#res', m).onclick = () => m.remove();
-    $('#quit', m).onclick = () => { m.remove(); $$('.modal').forEach(x => x.remove()); finishRun(false); };
+    const wasWalking = S.stage.classList.contains('walking');
+    R.paused = true; setWalking(false);
+    const run = R;
+    $('#res', m).onclick = () => { m.remove(); run.paused = false; if (wasWalking && !run.over) setWalking(true); };
+    $('#quit', m).onclick = () => { m.remove(); $$('.modal').forEach(x => x.remove()); run.paused = false; finishRun(false); };
   }
 
   // ---------------------------------------------------------------- boot

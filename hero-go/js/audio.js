@@ -6,7 +6,9 @@
   const last = {};
 
   function init() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    // iOS: 'playback' session keeps sound on even with the ring/silent switch set to silent
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* unsupported */ }
+    if (ctx) { if (ctx.state !== 'running' && !document.hidden) ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     try { ctx = new AC(); } catch (e) { return; }
@@ -22,6 +24,8 @@
     for (let k = 1; k < n; k++) im[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * 0.25);
     pulse25 = ctx.createPeriodicWave(re, im);
     document.addEventListener('visibilitychange', () => { if (!ctx) return; document.hidden ? ctx.suspend() : ctx.resume(); });
+    // a context that starts (or gets) suspended/interrupted is resumed on the next real gesture
+    if (ctx.state !== 'running') ctx.resume();
     if (pendingTrack) { const t = pendingTrack; pendingTrack = null; music(t); }
   }
 
