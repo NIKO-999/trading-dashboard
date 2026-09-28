@@ -37,6 +37,7 @@ export class GameView {
   private lastFrame = 0;
   private lastTick = 0;
   private dpr = 1;
+  private wantedDpr = 0; // what renderDpr asked for, before the canvas-size cap
   private touching = 0; // fingers currently on the map
   private wasTouching = false;
   private sel: Selection | null = null;
@@ -122,7 +123,9 @@ export class GameView {
 
   private resize() {
     // Render at the screen's real pixel density (see renderDpr) so the map stays sharp.
-    const dpr = renderDpr();
+    this.wantedDpr = renderDpr();
+    // iOS refuses canvases much past 16 million pixels, so a high density gives way on big screens
+    const dpr = Math.min(this.wantedDpr, Math.sqrt(16_000_000 / (window.innerWidth * window.innerHeight)));
     this.dpr = dpr;
     this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+dpr.toFixed(2)}×`;
     const oldW = this.vw, oldH = this.vh;
@@ -147,7 +150,7 @@ export class GameView {
     if (this.destroyed) return;
     // Screens can change density without any resize event (an app showing a web view it loaded
     // off-screen, a window dragged to another monitor), so check every frame; it costs nothing.
-    if (window.innerWidth !== this.vw || window.innerHeight !== this.vh || renderDpr() !== this.dpr) this.resize();
+    if (window.innerWidth !== this.vw || window.innerHeight !== this.vh || renderDpr() !== this.wantedDpr) this.resize();
     const dt = Math.min(50, now - (this.lastTick || now));
     this.lastTick = now;
     this.ov.now = now;
