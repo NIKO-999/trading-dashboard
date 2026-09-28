@@ -10,14 +10,14 @@
   var O = '#2b1d14';            // outline
   var C = {
     skin: '#b87445', skinS: '#91532b', skinL: '#d99a64', skinD: '#7a4222', blush: '#e0735e',
-    kohl: '#15100c', brow: '#1f140e', mal: '#1fa38c',
+    kohl: '#15100c', brow: '#1f140e', mal: '#19b39c',
     blue: '#2456a6', blueS: '#173a78', blueL: '#5b8fdc',
     gold: '#f5c542', goldS: '#c98f1c', goldL: '#fff1a8',
     lapis: '#2a4fb0', lapisL: '#6f95ea', turq: '#2fc2b8', turqS: '#17857e', turqL: '#a6f1ea',
     carn: '#d2452b', carnS: '#8e2419', carnL: '#f07b5e',
     lin: '#fbf6ea', linS: '#ddd3bb', pleat: '#c7bb9e',
     lea: '#8a5a2b', leaS: '#5e3a1a', leaL: '#b8834a',
-    brz: '#d4903a', brzS: '#8c4f1c', brzL: '#ffe2a8', brzD: '#5e3310',
+    brz: '#c27a2a', brzS: '#7e4416', brzL: '#ffd48a', brzD: '#5e3310',
     lotus: '#3f7fd6', lotusL: '#8fc0ff', leaf: '#3aa66a', leafS: '#1f6e42',
     lip: '#a8404a', mouth: '#6e2418'
   };
@@ -352,9 +352,9 @@
     s += '<path d="M104.4 103.2 Q 105.2 104.6 106.6 104.2 M117.6 102.6 Q 119.2 102.8 119.6 101.4" stroke="' + O + '" stroke-width="1.1" fill="none" stroke-linecap="round"/>';
     s += '<path d="M112 111 Q 116 110.8 119 109" stroke="#e2a877" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.8"/>';
     // uraeus: body snaking over the headcloth, rearing cobra at the brow
-    s += '<path d="M108 58 C 104 50, 110 44, 104 36 C 101 32, 103 28, 106 26" stroke="' + O + '" stroke-width="4.4" fill="none" stroke-linecap="round"/>';
-    s += '<path d="M108 58 C 104 50, 110 44, 104 36 C 101 32, 103 28, 106 26" stroke="' + C.gold + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
-    s += '<path d="M107.2 52 L 108.6 50.6 M106.4 42 L 108 40.6 M103 34 L 104.4 32.8" stroke="' + C.goldS + '" stroke-width="0.8"/>';
+    s += '<path d="M108 56 C 104.5 50, 109.5 45, 105.5 39.5 C 103.5 37, 104.5 34.5, 107 33.5" stroke="' + O + '" stroke-width="4.4" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M108 56 C 104.5 50, 109.5 45, 105.5 39.5 C 103.5 37, 104.5 34.5, 107 33.5" stroke="' + C.gold + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    s += '<path d="M107.4 45.6 L 108.8 44.6 M105 38.6 L 106.4 37.6" stroke="' + C.goldS + '" stroke-width="0.8"/>';
     s += '<path d="M103.4 64 C 101.6 58.5, 103.4 53, 108 50.4 C 112.6 53, 114.4 58.5, 112.6 64 Z" fill="url(#' + id('gold') + ')" stroke="' + O + '" stroke-width="1.8" stroke-linejoin="round"/>';
     s += '<path d="M106 62.6 C 105.2 59, 106 56, 108 54.6 C 110 56, 110.8 59, 110 62.6 Z" fill="' + C.lapis + '"/>';
     s += '<path d="M108 55.6 L 108 62 M106.4 58 L 109.6 58" stroke="' + C.carn + '" stroke-width="0.9"/>';
@@ -418,7 +418,7 @@
     s += '<path d="' + BLADE + '" fill="url(#' + id('brz') + ')" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round"/>';
     s += '<g clip-path="url(#' + id('blade-c') + ')">' +
       // honed outer edge (lighter band) + inner shade
-      '<path d="' + BO + '" stroke="' + C.brzL + '" stroke-width="6" fill="none"/>' +
+      '<path d="' + BO + '" stroke="' + C.brzL + '" stroke-width="4.4" fill="none"/>' +
       '<path d="' + BO + '" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.5" transform="translate(1.4 0.8)"/>' +
       '<path d="' + BI + '" stroke="' + C.brzS + '" stroke-width="4" fill="none" opacity="0.75"/>' +
       // engraved central line + hieroglyphs
