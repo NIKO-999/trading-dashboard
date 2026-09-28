@@ -9,6 +9,7 @@ export type MapSize = 'normal' | 'large' | 'huge';
 export interface NewGameOptions {
   seed?: number;
   human: TribeId | null; // null = all AI (used by simulations)
+  humans?: TribeId[]; // pass & play: every human seat in turn order (takes precedence over `human`)
   opponents: TribeId[];
   mode: GameMode;
   difficulty?: Difficulty;
@@ -26,13 +27,14 @@ const SIZES: Record<MapSize, Record<number, number>> = {
 export function createGame(opts: NewGameOptions): GameState {
   const seed = opts.seed ?? Math.floor(Math.random() * 2 ** 31);
   const rng = makeRng(seed);
-  const tribes: TribeId[] = [...(opts.human ? [opts.human] : []), ...opts.opponents];
+  const humanTribes = opts.humans ?? (opts.human ? [opts.human] : []);
+  const tribes: TribeId[] = [...humanTribes, ...opts.opponents];
   const size = SIZES[opts.mapSize ?? 'normal'][tribes.length] ?? 16;
 
   const players: Player[] = tribes.map((tribe, i) => ({
     id: i,
     tribe,
-    human: opts.human !== null && i === 0,
+    human: i < humanTribes.length,
     stars: 5,
     techs: [TRIBES[tribe].startTech],
     explored: new Array(size * size).fill(false),

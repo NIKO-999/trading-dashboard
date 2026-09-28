@@ -20,7 +20,7 @@ export interface Fx {
   lunges: Map<number, { tx: number; ty: number; t0: number }>;
   flashes: Map<number, number>;
   ghosts: { kind: UnitKind; tribe: TribeId; x: number; y: number; t0: number }[];
-  projectiles: { fx: number; fy: number; tx: number; ty: number; t0: number; dur: number; kind: 'arrow' | 'stone' | 'shot' }[];
+  projectiles: { fx: number; fy: number; tx: number; ty: number; t0: number; dur: number; kind: 'arrow' | 'bolt' | 'stone' | 'nut' | 'ball' | 'shot' }[];
   particles: { x: number; y: number; vx: number; vy: number; g: number; t0: number; life: number; color: string; size: number; shape: 'star' | 'square' | 'puff' }[];
   floaters: { x: number; y: number; text: string; color: string; t0: number }[];
   hpHold: Map<number, { hp: number; until: number }>; // health shown until a blow visibly lands
@@ -240,17 +240,28 @@ function drawProjectile(ctx: Ctx, p: Fx['projectiles'][number], now: number) {
   const at = (q: number) => ({ x: a.x + (b.x - a.x) * q, y: a.y - 22 + (b.y - a.y) * q - Math.sin(Math.PI * q) * arc });
   const pt = at(k), nx = at(Math.min(1, k + 0.02));
   const ang = Math.atan2(nx.y - pt.y, nx.x - pt.x);
-  if (p.kind === 'arrow') {
+  if (p.kind === 'arrow' || p.kind === 'bolt') {
+    const L = p.kind === 'bolt' ? 1.8 : 1;
     ctx.strokeStyle = '#5a3b1e';
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.6 * L;
     ctx.beginPath();
-    ctx.moveTo(pt.x - Math.cos(ang) * 8, pt.y - Math.sin(ang) * 8);
-    ctx.lineTo(pt.x + Math.cos(ang) * 4, pt.y + Math.sin(ang) * 4);
+    ctx.moveTo(pt.x - Math.cos(ang) * 8 * L, pt.y - Math.sin(ang) * 8 * L);
+    ctx.lineTo(pt.x + Math.cos(ang) * 4 * L, pt.y + Math.sin(ang) * 4 * L);
     ctx.stroke();
-    poly(ctx, [pt.x + Math.cos(ang) * 6, pt.y + Math.sin(ang) * 6, pt.x + Math.cos(ang + 2.5) * 3, pt.y + Math.sin(ang + 2.5) * 3, pt.x + Math.cos(ang - 2.5) * 3, pt.y + Math.sin(ang - 2.5) * 3], '#dfe5ec');
+    const tip = { x: pt.x + Math.cos(ang) * 4 * L, y: pt.y + Math.sin(ang) * 4 * L };
+    poly(ctx, [tip.x + Math.cos(ang) * 3 * L, tip.y + Math.sin(ang) * 3 * L, tip.x + Math.cos(ang + 2.3) * 2.6 * L, tip.y + Math.sin(ang + 2.3) * 2.6 * L, tip.x + Math.cos(ang - 2.3) * 2.6 * L, tip.y + Math.sin(ang - 2.3) * 2.6 * L], p.kind === 'bolt' ? '#c9974a' : '#dfe5ec');
   } else if (p.kind === 'stone') {
     ellipse(ctx, pt.x, pt.y, 3.6, 3.2, '#77777e');
     ellipse(ctx, pt.x - 1, pt.y - 1, 1.6, 1.3, '#a3a3aa');
+  } else if (p.kind === 'nut') {
+    ellipse(ctx, pt.x, pt.y, 3.4, 3.1, '#6b4424');
+    ellipse(ctx, pt.x - 0.8, pt.y - 0.8, 0.9, 0.9, '#2a1a10');
+  } else if (p.kind === 'ball') {
+    for (let i = 1; i <= 3; i++) {
+      const q = at(Math.max(0, k - i * 0.05));
+      ellipse(ctx, q.x, q.y, 2 + i, 1.6 + i, `rgba(220,220,220,${0.35 - i * 0.08})`);
+    }
+    ellipse(ctx, pt.x, pt.y, 3.2, 3.2, '#16161a');
   } else {
     ellipse(ctx, pt.x, pt.y, 2, 2, '#1a1a1a');
     ctx.strokeStyle = 'rgba(255,220,120,0.8)';

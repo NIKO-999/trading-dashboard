@@ -39,8 +39,8 @@ export function endTurn(s: GameState) {
 export function checkGameOver(s: GameState) {
   if (s.over) return;
   const alive = livingPlayers(s);
-  const human = s.players.find((p) => p.human);
-  if (human && !human.alive) {
+  const humans = s.players.filter((p) => p.human);
+  if (humans.length && humans.every((p) => !p.alive)) {
     s.over = true;
     s.winner = bestScorer(s);
   } else if (alive.length === 1) {

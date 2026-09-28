@@ -7,12 +7,16 @@ import { sfx } from '../audio/sfx';
 import { loadGame, loadScores, loadSettings, saveSettings } from '../save';
 import { $ui, h, iconEl, paint } from './dom';
 
+export type Seat = 'human' | 'ai' | 'off';
+
 export interface NewGameChoice {
   tribe: TribeId;
   opponents: number;
   mode: GameMode;
   difficulty: Difficulty;
   mapSize: MapSize;
+  hotseat: boolean; // pass & play on one device
+  seats: Record<TribeId, Seat>; // pass & play: who plays each empire
 }
 
 export interface MenuHandlers {
@@ -96,9 +100,10 @@ export function showTitle(handlers: MenuHandlers) {
       h('div', { class: 'logo-sub' }, h('span', { class: 'rule' }), 'TILE EMPIRES OF', h('span', { class: 'rule' })),
       h('div', { class: 'logo-main' }, 'TESSERA'),
     ),
-    h('div', { class: 'title-buttons' },
+    h('div', { class: `title-buttons${hasSave ? ' many' : ''}` },
       hasSave ? h('button', { class: 'pill', onclick: handlers.onContinue }, 'CONTINUE') : null,
-      h('button', { class: 'pill', onclick: () => showSetup(handlers) }, 'NEW GAME'),
+      h('button', { class: 'pill', onclick: () => showSetup(handlers, false) }, 'NEW GAME'),
+      h('button', { class: 'pill', onclick: () => showSetup(handlers, true) }, 'PASS & PLAY'),
     ),
     h('div', { class: 'title-dock' },
       dockButton('menu', 'Settings', () => showSettings(handlers)),
@@ -128,34 +133,15 @@ export function unitPortrait(kind: keyof typeof UNITS, tribe: TribeId, size = 64
 
 // ---------------------------------------------------------------- new game setup
 
-function showSetup(handlers: MenuHandlers) {
-  const choice: NewGameChoice = { tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal' };
-  const cards = h('div', { class: 'tribe-grid' });
-  const render = () => {
-    cards.innerHTML = '';
-    for (const id of TRIBE_IDS) {
-      const t = TRIBES[id];
-      cards.append(
-        h('button', {
-          class: `tribe-card${choice.tribe === id ? ' active' : ''}`,
-          style: { '--tc': t.color } as Record<string, string>,
-          onclick: () => { choice.tribe = id; render(); },
-        },
-          h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
-          h('span', { class: 'tc-name' }, t.people),
-        ),
-      );
-    }
-    detail.innerHTML = '';
-    const t = TRIBES[choice.tribe];
-    detail.append(
-      h('h4', {}, t.name),
-      h('p', {}, t.blurb),
-      h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
-      h('p', {}, h('b', {}, `${UNITS[t.unique].name}: `), UNITS[t.unique].blurb),
-    );
+const SEAT_LABEL: Record<Seat, string> = { human: 'Player', ai: 'AI', off: 'Off' };
+const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
+
+function showSetup(handlers: MenuHandlers, hotseat: boolean) {
+  const choice: NewGameChoice = {
+    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', hotseat,
+    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'ai' },
   };
-  const detail = h('div', { class: 'tribe-detail' });
+  const scroll = h('div', { class: 'scroll' });
   const seg = <T extends string | number>(label: string, opts: [T, string][], get: () => T, set: (v: T) => void) => {
     const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, label));
     const group = h('div', { class: 'seg' });
@@ -167,21 +153,63 @@ function showSetup(handlers: MenuHandlers) {
     row.append(group);
     return row;
   };
-  render();
-  screen(
-    'setup',
-    backBar('New Game', () => showTitle(handlers)),
-    h('div', { class: 'scroll' },
-      h('h3', {}, 'Choose your empire'),
+
+  const render = () => {
+    const humans = TRIBE_IDS.filter((t) => choice.seats[t] === 'human').length;
+    const active = TRIBE_IDS.filter((t) => choice.seats[t] !== 'off').length;
+    const problem = !choice.hotseat ? null
+      : humans < 2 ? 'Pass & Play needs at least two players. Tap an empire to change who plays it.'
+        : active < 2 ? 'Add at least one more empire.' : null;
+
+    const cards = h('div', { class: 'tribe-grid' });
+    for (const id of TRIBE_IDS) {
+      const t = TRIBES[id];
+      const seat = choice.seats[id];
+      cards.append(
+        h('button', {
+          class: `tribe-card${choice.hotseat ? ` seat-${seat}` : choice.tribe === id ? ' active' : ''}`,
+          style: { '--tc': t.color } as Record<string, string>,
+          onclick: () => {
+            if (choice.hotseat) choice.seats[id] = NEXT_SEAT[seat];
+            choice.tribe = id;
+            render();
+          },
+        },
+          h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
+          h('span', { class: 'tc-name' }, t.people),
+          choice.hotseat ? h('span', { class: `seat ${seat}` }, SEAT_LABEL[seat]) : null,
+        ),
+      );
+    }
+    const t = TRIBES[choice.tribe];
+    const detail = h('div', { class: 'tribe-detail' },
+      h('h4', {}, t.name),
+      h('p', {}, t.blurb),
+      h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
+      h('p', {}, h('b', {}, `${UNITS[t.unique].name}: `), UNITS[t.unique].blurb),
+    );
+    const start = h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START');
+    if (problem) start.disabled = true;
+
+    scroll.innerHTML = '';
+    const parts: (Node | null)[] = [
+      seg('Players', [[0, 'Solo'], [1, 'Pass & Play']], () => (choice.hotseat ? 1 : 0), (v) => { choice.hotseat = v === 1; render(); }),
+      h('h3', {}, choice.hotseat ? 'Who plays each empire?' : 'Choose your empire'),
       cards,
+      choice.hotseat
+        ? h('p', { class: `setup-note${problem ? ' bad' : ''}` }, problem ?? `${humans} players take turns on this device, ${active - humans} AI ${active - humans === 1 ? 'rival' : 'rivals'}. Tap an empire to switch it between Player, AI and Off.`)
+        : null,
       detail,
-      seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
+      choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
       seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']], () => choice.mapSize, (v) => (choice.mapSize = v)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
-      h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START'),
-    ),
-  );
+      start,
+    ];
+    scroll.append(...parts.filter((n): n is Node => n !== null));
+  };
+  render();
+  screen('setup', backBar(hotseat ? 'Pass & Play' : 'New Game', () => showTitle(handlers)), scroll);
 }
 
 // ---------------------------------------------------------------- misc screens

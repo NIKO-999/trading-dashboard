@@ -420,20 +420,99 @@ function drawChariot(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   line(ctx, x - 11.2, y - 1, x - 2.8, y - 1, '#6b4424', 1);
 }
 
+/** Each empire fields its own siege engine. */
 function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   const T = TRIBES[tribe];
-  box(ctx, x, y - 2, 18, 4, '#8a5a2b');
-  for (const [wx, wy] of [[-7, 1], [6, 3]]) {
-    ellipse(ctx, x + wx, y + wy, 3.4, 3.8, '#5a3b1e');
-    ellipse(ctx, x + wx, y + wy, 1.2, 1.4, '#c9974a');
+  const wheels = (hub: string) => {
+    for (const [wx, wy] of [[-7, 1], [6, 3]]) {
+      ellipse(ctx, x + wx, y + wy, 3.4, 3.8, '#5a3b1e');
+      ellipse(ctx, x + wx, y + wy, 1.2, 1.4, hub);
+    }
+  };
+  const flag = (fx: number, fy: number, color: string) => {
+    line(ctx, fx, fy, fx, fy - 15, '#5a3b1e', 1.4);
+    poly(ctx, [fx, fy - 15, fx + 7, fy - 13, fx, fy - 10], color);
+  };
+  switch (tribe) {
+    case 'pirates': {
+      // deck cannon on a timber carriage, with a stack of shot
+      box(ctx, x - 1, y - 1, 16, 5, '#6b4424');
+      wheels('#2a2a30');
+      line(ctx, x - 7, y - 8, x + 11, y - 15, '#1f1f24', 6.5);
+      line(ctx, x - 6, y - 9.5, x + 10, y - 16, '#4a4a54', 1.6);
+      ellipse(ctx, x + 11.5, y - 15.3, 3.4, 3.4, '#101014');
+      ellipse(ctx, x + 11.5, y - 15.3, 1.8, 1.8, '#000000');
+      ellipse(ctx, x - 8, y - 7.5, 2.2, 2.2, '#3a3a42');
+      for (const [bx, by] of [[-13, 4], [-10, 5], [-11.5, 2.4]]) ellipse(ctx, x + bx, y + by, 1.9, 1.9, '#1a1a1f');
+      flag(x - 3, y - 4, '#15151a');
+      ellipse(ctx, x + 1.2, y - 17, 1, 1, '#ffffff');
+      break;
+    }
+    case 'egypt': {
+      // giant bow on a sledge, painted gold and blue
+      box(ctx, x, y - 1, 19, 3, '#c9974a');
+      box(ctx, x - 2, y - 4, 4, 6, '#8a5a2b');
+      line(ctx, x - 9, y - 7, x + 9, y - 13, '#8a5a2b', 3.2);
+      faceQuadLine(ctx, x - 9, y - 7, x + 9, y - 13);
+      ctx.strokeStyle = '#5a3b1e';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(x + 2, y - 23);
+      ctx.quadraticCurveTo(x + 11, y - 15, x + 10, y - 3);
+      ctx.stroke();
+      line(ctx, x + 2, y - 23, x - 3, y - 11, '#f4efe0', 0.8);
+      line(ctx, x - 3, y - 11, x + 10, y - 3, '#f4efe0', 0.8);
+      line(ctx, x - 4, y - 10, x + 13, y - 14, '#6b4424', 1.6);
+      poly(ctx, [x + 13, y - 16, x + 16.5, y - 14.2, x + 13, y - 12.4], BRONZE);
+      flag(x - 9, y - 1, '#2b5fb8');
+      break;
+    }
+    case 'aztec': {
+      // tall painted A-frame stone thrower hung with feathers
+      box(ctx, x, y - 1, 17, 4, '#8a5a2b');
+      wheels(GOLD);
+      line(ctx, x - 5, y - 3, x - 1, y - 21, '#b0443a', 2.6);
+      line(ctx, x + 4, y - 1, x + 0, y - 21, '#1faa9b', 2.6);
+      line(ctx, x - 7, y - 4, x + 10, y - 27, '#6b4424', 2.8);
+      ellipse(ctx, x + 10.5, y - 28, 3.8, 2.8, '#8a5a2b');
+      ellipse(ctx, x + 10.5, y - 30, 2.6, 2.4, '#8a8a90');
+      for (let i = 0; i < 3; i++) poly(ctx, [x - 1 + i * 0.4, y - 20, x - 4 + i * 2.5, y - 26, x + 0.5 + i * 1.5, y - 20], ['#1faa6b', '#d6453b', GOLD][i]);
+      break;
+    }
+    case 'polynesia': {
+      // bamboo sling frame with a pile of coconuts
+      box(ctx, x, y - 1, 17, 3, '#d2b56e');
+      for (const ox of [-6, 5]) line(ctx, x + ox, y - 1, x + ox * 0.3, y - 19, '#c9a95a', 2.2);
+      line(ctx, x - 7, y - 19, x + 6, y - 19, '#c9a95a', 2.2);
+      line(ctx, x - 1, y - 19, x + 12, y - 29, '#8a6a3b', 1.4);
+      ellipse(ctx, x + 12, y - 29, 3, 2.6, '#6b4424');
+      for (const [bx, by] of [[-12, 4], [-9, 5], [-10.5, 2]]) {
+        ellipse(ctx, x + bx, y + by, 2.4, 2.2, '#6b4424');
+        ellipse(ctx, x + bx - 0.6, y + by - 0.6, 0.7, 0.7, '#2a1a10');
+      }
+      flag(x + 7, y + 1, T.color);
+      break;
+    }
+    case 'rome':
+    default: {
+      // heavy red-painted onager with bronze fittings
+      box(ctx, x, y - 2, 18, 4, '#8a5a2b');
+      faceQuadLine(ctx, x - 9, y - 4, x + 9, y - 4);
+      wheels(BRONZE);
+      box(ctx, x - 3, y - 6, 3, 8, '#b3302a');
+      box(ctx, x + 3, y - 4.5, 3, 8, '#b3302a');
+      line(ctx, x - 2, y - 11, x + 11, y - 26, '#6b4424', 3);
+      ellipse(ctx, x + 11.5, y - 27, 4.2, 3, '#8a5a2b');
+      ellipse(ctx, x + 11.5, y - 29, 2.8, 2.6, '#8a8a90');
+      flag(x - 8, y - 5, T.color);
+      break;
+    }
   }
-  box(ctx, x - 3, y - 6, 3, 8, '#7a5230');
-  box(ctx, x + 3, y - 4.5, 3, 8, '#7a5230');
-  line(ctx, x - 2, y - 11, x + 11, y - 26, '#6b4424', 3);
-  ellipse(ctx, x + 11.5, y - 27, 4.2, 3, '#8a5a2b');
-  ellipse(ctx, x + 11.5, y - 29, 2.8, 2.6, '#8a8a90');
-  line(ctx, x - 8, y - 5, x - 8, y - 22, '#5a3b1e', 1.4);
-  poly(ctx, [x - 8, y - 22, x - 1, y - 20, x - 8, y - 17], T.color);
+}
+
+/** A thin highlight along a beam so wooden parts read as solid. */
+function faceQuadLine(ctx: Ctx, x0: number, y0: number, x1: number, y1: number) {
+  line(ctx, x0, y0 - 1, x1, y1 - 1, 'rgba(255,255,255,0.25)', 0.8);
 }
 
 // ---------------------------------------------------------------- boats

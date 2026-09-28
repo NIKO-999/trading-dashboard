@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Tessera — a turn-based tile-empire strategy game, installable as a PWA.",
+  "description": "Tessera \u2014 a turn-based tile-empire strategy game, installable as a PWA.",
   "scripts": {
     "dev": "vite",
     "icons": "node scripts/gen-icons.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "build:artifact": "node scripts/build-artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

@@ -26,10 +26,12 @@ let view: GameView | null = null;
 let lastChoice: NewGameChoice | null = null;
 
 function play(state: GameState) {
+  current = state;
   view?.destroy();
   view = new GameView(state, (next) => {
     view?.destroy();
     view = null;
+    current = null;
     if (next === 'new' && lastChoice) newGame(lastChoice);
     else title();
   });
@@ -44,11 +46,20 @@ function newGame(choice: NewGameChoice) {
     const j = Math.floor(Math.random() * (i + 1));
     [others[i], others[j]] = [others[j], others[i]];
   }
-  const state = createGame({ human: choice.tribe, opponents: others.slice(0, choice.opponents), mode: choice.mode, difficulty: choice.difficulty, mapSize: choice.mapSize });
+  const common = { mode: choice.mode, difficulty: choice.difficulty, mapSize: choice.mapSize };
+  const state = choice.hotseat
+    ? createGame({ ...common, human: null, humans: TRIBE_IDS.filter((t) => choice.seats[t] === 'human'), opponents: TRIBE_IDS.filter((t) => choice.seats[t] === 'ai') })
+    : createGame({ ...common, human: choice.tribe, opponents: others.slice(0, choice.opponents) });
   startTurn(state);
   saveGame(state);
   play(state);
 }
+
+// When this page is hosted as a shared artifact, keep an in-progress game across live updates.
+interface Hot { ready?: (start: (data: { state?: GameState }) => void) => void; data?: { state?: GameState }; snapshot?: (get: () => unknown) => void }
+const hot = (window as unknown as { claude?: { hot?: Hot } }).claude?.hot;
+let current: GameState | null = null;
+if (typeof hot?.snapshot === 'function') hot.snapshot(() => (current && !current.over ? { state: current } : {}));
 
 function title() {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -63,4 +74,6 @@ function title() {
   });
 }
 
-title();
+const boot = (data: { state?: GameState }) => (data?.state && !data.state.over ? play(data.state) : title());
+if (typeof hot?.ready === 'function') hot.ready(boot);
+else boot(hot?.data ?? {});

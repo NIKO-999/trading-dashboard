@@ -62,6 +62,25 @@ test('huge 5-empire map runs 30 AI turns cleanly', () => {
   console.log(`huge map: ${s.cities.length} cities, ${s.units.length} units, ${Date.now() - t0}ms`);
 });
 
+test('pass & play seats several humans and ends when every human is gone', () => {
+  const s = createGame({ seed: 5, human: null, humans: ['rome', 'egypt'], opponents: ['pirates'], mode: 'domination' });
+  assert.deepEqual(s.players.map((p) => p.human), [true, true, false]);
+  startTurn(s);
+  // humans take their turns too (driven by the AI here), and the game keeps going between them
+  for (let i = 0; i < 9 && !s.over; i++) {
+    aiTurn(s);
+    endTurn(s);
+    drain();
+  }
+  // wiping out both human empires ends the game even though an AI is still alive
+  for (const p of s.players.filter((q) => q.human)) {
+    s.cities = s.cities.filter((c) => c.owner !== p.id);
+    for (const t of s.tiles) if (t.owner !== null && !s.cities.some((c) => c.id === t.owner)) t.owner = null;
+  }
+  endTurn(s);
+  assert.ok(s.over, 'game should end once every human empire is gone');
+});
+
 test('every empire gets its starting tech, unique unit and capital', () => {
   for (const tribe of TRIBE_IDS) {
     const s = createGame({ seed: 3, human: tribe, opponents: TRIBE_IDS.filter((t) => t !== tribe).slice(0, 1), mode: 'domination' });

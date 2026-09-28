@@ -9,7 +9,7 @@ import {
   moveOptions, moveUnit, previewCombat, rewardOptions, score, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
-import type { City, GameState, Tile, UnitKind } from '../game/types';
+import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, LUNGE_MS, newFx, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { sfx, type SoundName } from '../audio/sfx';
@@ -38,7 +38,8 @@ export class GameView {
   private sel: Selection | null = null;
   private busy = false;
   private raf = 0;
-  private me: number;
+  private me: number; // the human player whose view is shown (changes hands in pass & play)
+  private hotseat: boolean;
   private vw = 0;
   private vh = 0;
   private hud!: HTMLElement;
@@ -52,7 +53,8 @@ export class GameView {
   private ro = () => this.resize();
 
   constructor(private s: GameState, private onExit: (next: 'title' | 'new') => void) {
-    this.me = s.players.findIndex((p) => p.human);
+    this.me = s.players[s.current].human ? s.current : s.players.findIndex((p) => p.human);
+    this.hotseat = s.players.filter((p) => p.human).length > 1;
     this.buildUi();
     this.resize();
     window.addEventListener('resize', this.ro);
@@ -65,9 +67,12 @@ export class GameView {
     this.loop();
     this.refresh();
     if (import.meta.env.DEV) Object.assign(window, { __game: this });
-    if (s.turn === 0 && s.current === this.me && !s.log.some((l) => l.text === 'welcome')) this.welcome();
-    else if (!isHumanTurn(s) && !s.over) void this.runRivals();
-    else this.checkRewards();
+    if (!isHumanTurn(s) && !s.over) void this.runRivals();
+    else if (!s.over) this.startHumanTurn(true);
+  }
+
+  private myTurn() {
+    return isHumanTurn(this.s) && this.s.current === this.me;
   }
 
   /** Screen position of a tile centre (used by browser tests). */
@@ -232,7 +237,7 @@ export class GameView {
     const t = tileAt(this.s, x, y);
     if (!t) return this.select(null);
     const sel = this.sel;
-    if (sel && sel.mode === 'unit' && isHumanTurn(this.s)) {
+    if (sel && sel.mode === 'unit' && this.myTurn()) {
       const u = unitAt(this.s, sel.x, sel.y);
       if (u && u.owner === this.me) {
         if (this.ov.attacks.some((a) => a.x === x && a.y === y)) {
@@ -264,7 +269,7 @@ export class GameView {
     this.ov.selected = sel ? { x: sel.x, y: sel.y } : null;
     this.ov.moves = [];
     this.ov.attacks = [];
-    if (sel && sel.mode === 'unit' && isHumanTurn(this.s)) {
+    if (sel && sel.mode === 'unit' && this.myTurn()) {
       const u = unitAt(this.s, sel.x, sel.y);
       if (u && u.owner === this.me) {
         this.ov.moves = moveOptions(this.s, u);
@@ -335,7 +340,7 @@ export class GameView {
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
     );
-    this.bottom.classList.toggle('waiting', !isHumanTurn(this.s));
+    this.bottom.classList.toggle('waiting', !this.myTurn());
     this.ov.glow = this.harvestable();
     this.updateHint();
     this.version++;
@@ -345,7 +350,7 @@ export class GameView {
   /** Tiles in my territory where a harvest, farm or mine can be bought right now. */
   private harvestable() {
     const out = new Set<number>();
-    if (!isHumanTurn(this.s)) return out;
+    if (!this.myTurn()) return out;
     for (const t of this.s.tiles) {
       if (!t.resource || tileOwnerPlayer(this.s, t) !== this.me) continue;
       if (tileActions(this.s, this.me, t).some((a) => a.enabled && (a.id === 'harvest' || a.id === 'farm' || a.id === 'mine'))) out.add(t.y * this.s.size + t.x);
@@ -371,7 +376,7 @@ export class GameView {
       return;
     }
     const u = unitAt(this.s, t.x, t.y);
-    const myTurn = isHumanTurn(this.s);
+    const myTurn = this.myTurn();
     const allActs = myTurn ? tileActions(this.s, this.me, t) : [];
 
     if (sel.mode === 'unit' && u) {
@@ -481,7 +486,7 @@ export class GameView {
           if (e.ranged) {
             const d = Math.max(Math.abs(e.from.x - e.to.x), Math.abs(e.from.y - e.to.y));
             const dur = 240 + d * 80;
-            fx.projectiles.push({ fx: e.from.x, fy: e.from.y, tx: e.to.x, ty: e.to.y, t0: start, dur, kind: projectileFor(e.kind) });
+            fx.projectiles.push({ fx: e.from.x, fy: e.from.y, tx: e.to.x, ty: e.to.y, t0: start, dur, kind: projectileFor(e.kind, this.s.players[e.player].tribe) });
             impact = start + dur;
           } else {
             fx.lunges.set(e.unitId, { tx: e.to.x, ty: e.to.y, t0: start });
@@ -564,7 +569,7 @@ export class GameView {
   }
 
   private checkRewards() {
-    if (this.rewardOpen || !isHumanTurn(this.s)) return;
+    if (this.rewardOpen || !this.myTurn()) return;
     const c = citiesOf(this.s, this.me).find((k) => k.pendingRewards.length);
     if (!c) return;
     this.rewardOpen = true;
@@ -616,7 +621,7 @@ export class GameView {
   private updateHint() {
     const steps = this.hintSteps();
     const step = steps[this.s.hintStep];
-    if (!this.settings.hints || !step || !isHumanTurn(this.s)) return this.hint.classList.add('hidden');
+    if (!this.settings.hints || this.hotseat || !step || !this.myTurn()) return this.hint.classList.add('hidden');
     this.hint.classList.remove('hidden');
     this.hint.innerHTML = '';
     this.hint.append(
@@ -630,7 +635,7 @@ export class GameView {
   private welcome() {
     const me = this.s.players[this.me];
     const T = TRIBES[me.tribe];
-    this.s.log.push({ turn: 0, text: 'welcome' });
+    this.s.log.push({ turn: this.s.turn, text: `welcome:${this.me}` });
     modal({
       title: 'Rise, Ruler!',
       art: unitPortrait(portraitKind(me.tribe), me.tribe, 80),
@@ -638,19 +643,64 @@ export class GameView {
         h('p', {}, `The ${T.people} people have placed their fate in your hands. Scout the land, grow your cities and stand firm against rival empires.`),
         h('p', {}, h('b', {}, 'Your gift: '), 'a treasury to start your reign.'),
       ],
-      buttons: [{ label: h('span', { class: 'gift' }, String(me.stars), iconEl('star', 'ico-star big')), primary: true, onClick: () => { sfx.unlock(); sfx.play('stars'); this.updateHint(); } }],
+      buttons: [{ label: h('span', { class: 'gift' }, String(me.stars), iconEl('star', 'ico-star big')), primary: true, onClick: () => { sfx.unlock(); sfx.play('stars'); this.updateHint(); this.checkRewards(); } }],
       cls: 'welcome',
     });
   }
 
+  /** Starts the next human turn, handing the device over first when several people share it. */
+  private startHumanTurn(initial = false) {
+    if (this.s.over || this.destroyed) return;
+    saveGame(this.s);
+    const next = this.s.current;
+    const humansAlive = this.s.players.filter((p) => p.human && p.alive).length;
+    if (this.hotseat && humansAlive > 1) return this.showPassScreen(next);
+    this.beginTurnFor(next, !initial);
+  }
+
+  private showPassScreen(pid: number) {
+    const p = this.s.players[pid];
+    const T = TRIBES[p.tribe];
+    this.select(null);
+    const layer = h('div', { class: 'pass-screen', style: { '--tc': T.color } as Record<string, string> },
+      h('div', { class: 'pass-card' },
+        h('span', { class: 'pass-portrait' }, unitPortrait(portraitKind(p.tribe), p.tribe, 110)),
+        h('div', { class: 'pass-kicker' }, `Turn ${this.s.turn}${this.s.maxTurns > 0 ? ` of ${this.s.maxTurns}` : ''}`),
+        h('h2', {}, `${T.people} turn`),
+        h('p', {}, `Pass the device to whoever leads the ${T.name}.`),
+        h('button', { class: 'pill', onclick: () => { sfx.unlock(); layer.remove(); this.beginTurnFor(pid, true); } }, 'START TURN'),
+      ));
+    $ui().append(layer);
+  }
+
+  private beginTurnFor(pid: number, chime: boolean) {
+    const switched = pid !== this.me;
+    this.me = pid;
+    this.select(null);
+    if (switched || this.hotseat) {
+      const cap = citiesOf(this.s, pid).find((c) => c.capital) ?? citiesOf(this.s, pid)[0];
+      if (cap) this.cam.centerOn(cap.x, cap.y, this.vw, this.vh * 0.95);
+    }
+    this.version++;
+    this.refresh();
+    if (chime) sfx.play('turn');
+    const welcomed = this.s.log.some((l) => l.text === `welcome:${pid}` || (l.text === 'welcome' && pid === this.s.players.findIndex((q) => q.human)));
+    if (!welcomed) this.welcome();
+    else {
+      this.advanceHints();
+      this.checkRewards();
+    }
+  }
+
   private async onEndTurn() {
-    if (this.busy || !isHumanTurn(this.s)) return;
+    if (this.busy || !this.myTurn()) return;
     this.select(null);
     sfx.play('endturn');
     endTurn(this.s);
     this.handleEvents(drain());
     this.refresh();
-    await this.runRivals();
+    if (isHumanTurn(this.s)) this.startHumanTurn();
+    else await this.runRivals();
   }
 
   private async runRivals() {
@@ -681,12 +731,7 @@ export class GameView {
     this.busy = false;
     if (this.destroyed) return;
     this.refresh();
-    if (!this.s.over) {
-      saveGame(this.s);
-      sfx.play('turn');
-      this.advanceHints();
-      this.checkRewards();
-    }
+    if (!this.s.over) this.startHumanTurn();
   }
 
   private gameOverShown = false;
@@ -694,18 +739,21 @@ export class GameView {
     if (this.gameOverShown) return;
     this.gameOverShown = true;
     const s = this.s;
-    const me = s.players[this.me];
     const ranking = s.players.map((p) => ({ p, sc: score(s, p.id) })).sort((a, b) => b.sc - a.sc);
-    const won = s.winner === this.me;
-    const myScore = score(s, this.me);
-    addScore({ score: myScore, tribe: me.tribe, won, mode: s.mode, turns: s.turn, date: new Date().toLocaleDateString() });
+    const me = this.hotseat ? ranking.find((r) => r.p.human)!.p : s.players[this.me];
+    const won = s.winner === me.id;
+    addScore({ score: score(s, me.id), tribe: me.tribe, won, mode: s.mode, turns: s.turn, date: new Date().toLocaleDateString() });
     clearSave();
+    const winner = s.winner !== null ? s.players[s.winner] : null;
+    const title = this.hotseat
+      ? winner?.human ? `${TRIBES[winner.tribe].people} win!` : 'The Age Ends'
+      : won ? 'Glorious Victory!' : me.alive ? 'The Age Ends' : 'Your Empire Has Fallen';
     modal({
-      title: won ? 'Glorious Victory!' : me.alive ? 'The Age Ends' : 'Your Empire Has Fallen',
+      title,
       art: unitPortrait(portraitKind(me.tribe), me.tribe, 80),
       body: [
         h('p', {}, won ? `The ${TRIBES[me.tribe].name} stands above all others.` : `The ${TRIBES[ranking[0].p.tribe].name} takes the crown this time.`),
-        h('ol', { class: 'rank' }, ...ranking.map((r) => h('li', { style: { color: TRIBES[r.p.tribe].color } }, `${TRIBES[r.p.tribe].people}${r.p.id === this.me ? ' (you)' : ''} — ${r.sc.toLocaleString()}${r.p.alive ? '' : ' ✝'}`))),
+        h('ol', { class: 'rank' }, ...ranking.map((r) => h('li', { style: { color: TRIBES[r.p.tribe].color } }, `${TRIBES[r.p.tribe].people}${r.p.human ? (this.hotseat ? ' (player)' : ' (you)') : ''} — ${r.sc.toLocaleString()}${r.p.alive ? '' : ' ✝'}`))),
       ],
       buttons: [
         { label: 'Main Menu', onClick: () => this.onExit('title') },
@@ -781,8 +829,9 @@ function describeTile(s: GameState, t: Tile): { title: string; desc: string } {
   return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}` };
 }
 
-function projectileFor(kind: UnitKind): Fx['projectiles'][number]['kind'] {
-  if (kind === 'catapult' || kind === 'warship') return 'stone';
+function projectileFor(kind: UnitKind, tribe: TribeId): Fx['projectiles'][number]['kind'] {
+  if (kind === 'catapult') return ({ egypt: 'bolt', aztec: 'stone', polynesia: 'nut', rome: 'stone', pirates: 'ball' } as const)[tribe];
+  if (kind === 'warship') return tribe === 'pirates' ? 'ball' : 'stone';
   if (kind === 'buccaneer') return 'shot';
   return 'arrow';
 }

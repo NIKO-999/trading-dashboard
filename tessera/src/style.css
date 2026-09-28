@@ -52,6 +52,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 .title-buttons { position: relative; margin-top: 9vh; display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .pill { min-width: 230px; padding: 12px 22px 8px; font-size: clamp(1.8rem, 8vw, 2.3rem); font-weight: 300; color: #fff; background: var(--blue); border-radius: 16px; line-height: 1.05; }
 .pill:active { background: var(--blue-dark); }
+.title-buttons.many { margin-top: 5vh; gap: 12px; }
+.title-buttons.many .pill { font-size: clamp(1.5rem, 7vw, 2rem); padding: 10px 20px 6px; }
 .pill.wide { width: 100%; margin: 22px 0 8px; }
 .title-dock { position: absolute; left: 0; right: 0; bottom: calc(22px + var(--safe-bottom)); display: flex; justify-content: center; gap: clamp(8px, 4vw, 28px); }
 
@@ -67,6 +69,15 @@ button:disabled { opacity: 0.45; cursor: default; }
 .tribe-card .portrait { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tc) 60%, #fff), var(--tc)); border: 4px solid #333; overflow: hidden; }
 .tribe-card.active .portrait { border-color: #fff; }
 .tc-name { font-weight: 600; font-style: italic; font-size: 1rem; }
+.seat { font-size: 0.78rem; font-weight: 700; padding: 4px 10px 2px; border-radius: 999px; border: 2px solid transparent; }
+.seat.human { background: var(--blue); }
+.seat.ai { background: #3a3a3a; }
+.seat.off { border-color: #444; color: #888; }
+.tribe-card.seat-human .portrait { border-color: #fff; }
+.tribe-card.seat-off .portrait { opacity: 0.35; filter: grayscale(1); }
+.setup-note { color: var(--muted); font-size: 0.98rem; font-weight: 300; line-height: 1.35; margin: 12px 0 0; text-align: center; }
+.setup-note.bad { color: #ff9a9a; font-weight: 600; }
+.pill:disabled { background: #2a2a2a; color: #888; }
 .tribe-detail { margin: 16px 0; padding: 14px 16px 12px; background: #111; border-radius: 22px; font-size: 1rem; font-weight: 300; line-height: 1.35; }
 .tribe-detail h4 { margin: 0 0 6px; font-size: 1.25rem; font-weight: 700; font-style: italic; }
 .tribe-detail p { margin: 4px 0; }
@@ -135,6 +146,14 @@ button:disabled { opacity: 0.45; cursor: default; }
 .rbtn.big { width: 130px; }
 .rbtn.big .rbtn-circle { width: 96px; height: 96px; }
 .reward-row { display: flex; justify-content: center; gap: 14px; margin-top: 8px; }
+
+/* pass & play hand-over */
+.pass-screen { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--tc) 60%, #000), #000 72%); }
+.pass-card { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 380px; text-align: center; }
+.pass-portrait { width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; border: 5px solid #fff; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tc) 60%, #fff), var(--tc)); }
+.pass-kicker { text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; font-size: 0.9rem; opacity: 0.85; margin-top: 8px; }
+.pass-card h2 { margin: 0; font-size: 2.6rem; font-style: italic; font-weight: 700; line-height: 1; text-wrap: balance; }
+.pass-card p { margin: 0 0 12px; font-size: 1.2rem; font-weight: 300; line-height: 1.3; }
 
 /* ------------------------------------------------ modal */
 .modal-layer { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,0.25); padding: 16px; z-index: 20; }
