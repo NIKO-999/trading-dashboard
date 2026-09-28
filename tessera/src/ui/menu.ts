@@ -1,7 +1,9 @@
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
+import type { MapSize } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
+import { sfx } from '../audio/sfx';
 import { loadGame, loadScores, loadSettings, saveSettings } from '../save';
 import { $ui, h, iconEl, paint } from './dom';
 
@@ -10,6 +12,7 @@ export interface NewGameChoice {
   opponents: number;
   mode: GameMode;
   difficulty: Difficulty;
+  mapSize: MapSize;
 }
 
 export interface MenuHandlers {
@@ -126,7 +129,7 @@ export function unitPortrait(kind: keyof typeof UNITS, tribe: TribeId, size = 64
 // ---------------------------------------------------------------- new game setup
 
 function showSetup(handlers: MenuHandlers) {
-  const choice: NewGameChoice = { tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal' };
+  const choice: NewGameChoice = { tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal' };
   const cards = h('div', { class: 'tribe-grid' });
   const render = () => {
     cards.innerHTML = '';
@@ -173,6 +176,7 @@ function showSetup(handlers: MenuHandlers) {
       cards,
       detail,
       seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
+      seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']], () => choice.mapSize, (v) => (choice.mapSize = v)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
       h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START'),
@@ -249,6 +253,7 @@ function showSettings(handlers: MenuHandlers) {
     b.addEventListener('click', () => {
       st[key] = !st[key];
       saveSettings(st);
+      if (key === 'sound') sfx.enabled = st.sound;
       b.className = `toggle${st[key] ? ' on' : ''}`;
       b.textContent = st[key] ? 'On' : 'Off';
     });
@@ -257,6 +262,6 @@ function showSettings(handlers: MenuHandlers) {
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi')),
+    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi')),
   );
 }

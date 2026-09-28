@@ -1,0 +1,115 @@
+// Shared low-level drawing helpers for the flat, low-poly art style.
+export type Ctx = CanvasRenderingContext2D;
+export interface Pt { x: number; y: number }
+
+let tint: { color: string; amount: number } | null = null;
+
+/** While set, every colour drawn through these helpers is blended toward `color` (hit flashes, spent units). */
+export function setTint(color: string | null, amount = 0) {
+  tint = color && amount > 0.01 ? { color, amount: Math.min(1, amount) } : null;
+}
+
+export function shade(hex: string, amt: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (v: number) => Math.max(0, Math.min(255, Math.round(amt >= 0 ? v + (255 - v) * amt : v * (1 + amt))));
+  const r = f(n >> 16), g = f((n >> 8) & 255), b = f(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+export function mix(a: string, b: string, k: number) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = (s: number) => Math.round(((pa >> s) & 255) * (1 - k) + ((pb >> s) & 255) * k);
+  return `#${((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1)}`;
+}
+
+/** Applies the active tint to a colour (non-hex colours such as shadows pass through). */
+export const ink = (c: string) => (tint && c.length === 7 && c[0] === '#' ? mix(c, tint.color, tint.amount) : c);
+
+export const rand = (seed: number, i: number) => {
+  const x = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+export function poly(ctx: Ctx, pts: number[], fill: string) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+  ctx.closePath();
+  ctx.fillStyle = ink(fill);
+  ctx.fill();
+}
+
+export function line(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, color: string, width: number) {
+  ctx.strokeStyle = ink(color);
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+}
+
+/** An isometric box standing on (cx, cy) with footprint w (world px) and height h. */
+export function box(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string, top?: string) {
+  const hw = w / 2, hh = w / 4;
+  poly(ctx, [cx - hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx - hw, cy], shade(color, 0.06));
+  poly(ctx, [cx + hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx + hw, cy], shade(color, -0.2));
+  poly(ctx, [cx, cy - hh - h, cx + hw, cy - h, cx, cy + hh - h, cx - hw, cy - h], top ?? shade(color, 0.22));
+}
+
+/**
+ * Paints part of one visible side of a box() with the same shading as that side.
+ * Face 'L' runs from the left corner (u=0) to the front edge (u=1); face 'R' from the
+ * front edge (u=0) to the right corner (u=1). v runs from the bottom (0) to the top (1).
+ */
+export function faceQuad(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number,
+  u0: number, u1: number, v0: number, v1: number, color: string) {
+  const P = (u: number, v: number) => face === 'R'
+    ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h]
+    : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, v1), ...P(u0, v1)], face === 'L' ? shade(color, 0.06) : shade(color, -0.2));
+}
+
+/** The same band on both visible sides of a box (belts, stripes, collars). */
+export function band(ctx: Ctx, cx: number, cy: number, w: number, h: number, v0: number, v1: number, color: string) {
+  faceQuad(ctx, 'L', cx, cy, w, h, 0, 1, v0, v1, color);
+  faceQuad(ctx, 'R', cx, cy, w, h, 0, 1, v0, v1, color);
+}
+
+export function roof(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string) {
+  const hw = w / 2, hh = w / 4;
+  poly(ctx, [cx - hw, cy, cx, cy + hh, cx, cy - h], shade(color, 0.1));
+  poly(ctx, [cx + hw, cy, cx, cy + hh, cx, cy - h], shade(color, -0.2));
+}
+
+export function ellipse(ctx: Ctx, x: number, y: number, rx: number, ry: number, fill: string) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), 0, 0, Math.PI * 2);
+  ctx.fillStyle = ink(fill);
+  ctx.fill();
+}
+
+export function drawStar(ctx: Ctx, x: number, y: number, r: number, fill = '#ffcf33') {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.48 : r;
+    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fillStyle = ink(fill);
+  ctx.fill();
+  ctx.strokeStyle = '#b87a00';
+  ctx.lineWidth = Math.max(0.6, r * 0.12);
+  ctx.stroke();
+}
+
+export function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}

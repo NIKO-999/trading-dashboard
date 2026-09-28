@@ -1,9 +1,13 @@
 // Transient events the rules engine emits for the UI (popups, floating numbers).
 // They are not part of the saved game state.
+import type { UnitKind } from './types';
+
 export type GameEvent =
   | { type: 'toast'; player: number; text: string }
-  | { type: 'damage'; x: number; y: number; amount: number }
-  | { type: 'death'; x: number; y: number; owner: number }
+  | { type: 'attack'; unitId: number; kind: UnitKind; player: number; from: { x: number; y: number }; to: { x: number; y: number }; ranged: boolean }
+  | { type: 'damage'; unitId: number; x: number; y: number; amount: number }
+  | { type: 'death'; x: number; y: number; owner: number; kind: UnitKind }
+  | { type: 'harvest'; player: number; x: number; y: number; pop: number }
   | { type: 'levelup'; player: number; cityId: number; level: number }
   | { type: 'ruin'; player: number; title: string; text: string }
   | { type: 'capture'; player: number; cityId: number; from: number | null }

@@ -1,27 +1,45 @@
-// All game art is drawn procedurally here in a flat, low-poly isometric style:
-// seamless terrain, faceted cloud cover, cone forests, ice-capped peaks and voxel units.
+// World rendering in a flat, low-poly isometric style. The terrain, scenery and cloud cover are
+// drawn into a cached layer that is only rebuilt when the game state or camera changes; units,
+// effects and labels are drawn on top every frame so they can animate cheaply.
 import { TRIBES, type BiomePalette } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
 import { cityById, cityIncome, maxHp, tileOwnerPlayer } from '../game/rules';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
+import { box, drawStar, ellipse, mix, poly, rand, roof, roundRect, setTint, shade, type Ctx, type Pt } from './prims';
+import { drawCritter, drawUnitSprite } from './units';
 
-type Ctx = CanvasRenderingContext2D;
+export { drawUnitSprite } from './units';
+export { drawStar } from './prims';
 
 export const FONT = '"Josefin Sans", "Avenir Next", system-ui, sans-serif';
+
+export interface Fx {
+  moves: Map<number, { fx: number; fy: number; t0: number; dur: number }>;
+  lunges: Map<number, { tx: number; ty: number; t0: number }>;
+  flashes: Map<number, number>;
+  ghosts: { kind: UnitKind; tribe: TribeId; x: number; y: number; t0: number }[];
+  projectiles: { fx: number; fy: number; tx: number; ty: number; t0: number; dur: number; kind: 'arrow' | 'stone' | 'shot' }[];
+  particles: { x: number; y: number; vx: number; vy: number; g: number; t0: number; life: number; color: string; size: number; shape: 'star' | 'square' | 'puff' }[];
+  floaters: { x: number; y: number; text: string; color: string; t0: number }[];
+  hpHold: Map<number, { hp: number; until: number }>; // health shown until a blow visibly lands
+}
+
+export const newFx = (): Fx => ({ moves: new Map(), lunges: new Map(), flashes: new Map(), ghosts: [], projectiles: [], particles: [], floaters: [], hpHold: new Map() });
 
 export interface Overlay {
   selected: { x: number; y: number } | null;
   moves: { x: number; y: number }[];
   attacks: { x: number; y: number }[];
   glow: Set<number>; // tiles (y*size+x) holding something the viewer can harvest right now
-  anims: Map<number, { fx: number; fy: number; t0: number }>;
-  floaters: { x: number; y: number; text: string; color: string; t0: number }[];
+  fx: Fx;
   now: number;
 }
 
-export const ANIM_MS = 220;
+export const LUNGE_MS = 260;
+export const FLASH_MS = 320;
+export const GHOST_MS = 650;
 export const FLOAT_MS = 1100;
 const HW = TW / 2;
 const HH = TH / 2;
@@ -29,57 +47,7 @@ const FOG_LIFT = 8;
 const FOG = ['#ffffff', '#e4e8f8', '#c9d1f2', '#a8b5ea'];
 const UNIT_SCALE = 1.3;
 
-// ---------------------------------------------------------------- colour & shape utils
-
-export function shade(hex: string, amt: number) {
-  const n = parseInt(hex.slice(1), 16);
-  const f = (v: number) => Math.max(0, Math.min(255, Math.round(amt >= 0 ? v + (255 - v) * amt : v * (1 + amt))));
-  const r = f(n >> 16), g = f((n >> 8) & 255), b = f(n & 255);
-  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
-}
-
-function mix(a: string, b: string, k: number) {
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const ch = (s: number) => Math.round(((pa >> s) & 255) * (1 - k) + ((pb >> s) & 255) * k);
-  return `#${((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1)}`;
-}
-
-const rand = (seed: number, i: number) => {
-  const x = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453;
-  return x - Math.floor(x);
-};
-
 const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain === 'ocean';
-
-function poly(ctx: Ctx, pts: number[], fill: string) {
-  ctx.beginPath();
-  ctx.moveTo(pts[0], pts[1]);
-  for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-}
-
-/** An isometric box standing on (cx, cy) with footprint w (world px), height h. */
-function box(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string, top?: string) {
-  const hw = w / 2, hh = w / 4;
-  poly(ctx, [cx - hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx - hw, cy], shade(color, 0.06));
-  poly(ctx, [cx + hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx + hw, cy], shade(color, -0.2));
-  poly(ctx, [cx, cy - hh - h, cx + hw, cy - h, cx, cy + hh - h, cx - hw, cy - h], top ?? shade(color, 0.22));
-}
-
-function roof(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string) {
-  const hw = w / 2, hh = w / 4;
-  poly(ctx, [cx - hw, cy, cx, cy + hh, cx, cy - h], shade(color, 0.1));
-  poly(ctx, [cx + hw, cy, cx, cy + hh, cx, cy - h], shade(color, -0.2));
-}
-
-function ellipse(ctx: Ctx, x: number, y: number, rx: number, ry: number, fill: string) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fillStyle = fill;
-  ctx.fill();
-}
 
 function diamond(ctx: Ctx, x: number, y: number, fill: string) {
   ctx.beginPath();
@@ -102,22 +70,7 @@ function sides(ctx: Ctx, x: number, y: number, depth: number, left: string, righ
 }
 
 /** Screen point for tile-local coords (u along +x, v along +y, both -0.5..0.5) around a tile centre. */
-const uv = (cx: number, cy: number, u: number, v: number) => ({ x: cx + (u - v) * HW, y: cy + (u + v) * HH });
-
-export function drawStar(ctx: Ctx, x: number, y: number, r: number, fill = '#ffcf33') {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    const rr = i % 2 ? r * 0.48 : r;
-    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-  }
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = '#b87a00';
-  ctx.lineWidth = 0.8;
-  ctx.stroke();
-}
+const uv = (cx: number, cy: number, u: number, v: number): Pt => ({ x: cx + (u - v) * HW, y: cy + (u + v) * HH });
 
 // ---------------------------------------------------------------- background
 
@@ -132,34 +85,58 @@ export function drawBackground(ctx: Ctx, w: number, h: number) {
   }
 }
 
-// ---------------------------------------------------------------- main render
+// ---------------------------------------------------------------- renderer
 
-export function renderWorld(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
+export class WorldRenderer {
+  private layer = document.createElement('canvas');
+  private lctx = this.layer.getContext('2d')!;
+  private key = '';
+
+  /** `version` must change whenever the state or the static overlays (selection, glow) change. */
+  render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number) {
+    const key = `${version}|${cam.x.toFixed(2)}|${cam.y.toFixed(2)}|${cam.zoom.toFixed(4)}|${vw}|${vh}|${dpr}`;
+    if (key !== this.key) {
+      this.key = key;
+      const W = Math.round(vw * dpr), H = Math.round(vh * dpr);
+      if (this.layer.width !== W || this.layer.height !== H) {
+        this.layer.width = W;
+        this.layer.height = H;
+      }
+      this.lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawStatic(this.lctx, s, viewer, cam, ov, vw, vh);
+    }
+    ctx.drawImage(this.layer, 0, 0, vw, vh);
+    ctx.save();
+    ctx.translate(cam.x, cam.y);
+    ctx.scale(cam.zoom, cam.zoom);
+    drawDynamic(ctx, s, viewer, cam, ov, vw, vh);
+    ctx.restore();
+  }
+}
+
+function visibleTiles(s: GameState, cam: Camera, vw: number, vh: number) {
+  const w0 = cam.toWorld(-TW * 2, -TH * 6);
+  const w1 = cam.toWorld(vw + TW * 2, vh + TH * 4);
+  const out: Tile[] = [];
+  for (let d = 0; d <= (s.size - 1) * 2; d++)
+    for (let x = 0; x < s.size; x++) {
+      const y = d - x;
+      if (y < 0 || y >= s.size) continue;
+      const c = tileCenter(x, y);
+      if (c.x > w0.x && c.x < w1.x && c.y > w0.y && c.y < w1.y) out.push(s.tiles[y * s.size + x]);
+    }
+  return out;
+}
+
+function drawStatic(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
   drawBackground(ctx, vw, vh);
   ctx.save();
   ctx.translate(cam.x, cam.y);
   ctx.scale(cam.zoom, cam.zoom);
-
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
-  const order: Tile[] = [];
-  for (let d = 0; d <= (s.size - 1) * 2; d++)
-    for (let x = 0; x < s.size; x++) {
-      const y = d - x;
-      if (y >= 0 && y < s.size) order.push(s.tiles[y * s.size + x]);
-    }
+  const shown = visibleTiles(s, cam, vw, vh);
 
-  // Viewport culling in world space (generous margins for tall scenery).
-  const w0 = cam.toWorld(-TW * 2, -TH * 6);
-  const w1 = cam.toWorld(vw + TW * 2, vh + TH * 4);
-  const visible = (t: Tile) => {
-    const c = tileCenter(t.x, t.y);
-    return c.x > w0.x && c.x < w1.x && c.y > w0.y && c.y < w1.y;
-  };
-  const shown = order.filter(visible);
-
-  // Pass 1: ground.
   for (const t of shown) if (explored(t.x, t.y)) drawGround(ctx, s, t);
-  // Pass 2: territory fences and ground highlights.
   for (const t of shown) if (explored(t.x, t.y)) drawBorders(ctx, s, t, explored);
   if (ov.selected) outlineTile(ctx, s, ov.selected.x, ov.selected.y, '#ffffff', 2.5);
   for (const m of ov.moves) {
@@ -167,48 +144,122 @@ export function renderWorld(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     const c = tileCenter(m.x, m.y);
     ellipse(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0), 9, 4.5, 'rgba(255,255,255,0.8)');
   }
-
-  // Pass 3: scenery, units and cloud cover in painter's order.
-  const unitsByTile = new Map<number, Unit>();
-  for (const u of s.units) unitsByTile.set(u.y * s.size + u.x, u);
   for (const t of shown) {
-    const i = t.y * s.size + t.x;
-    if (!explored(t.x, t.y)) {
-      drawFog(ctx, s, t, explored);
-      continue;
-    }
-    drawScenery(ctx, s, t, ov.glow.has(i));
-    const u = unitsByTile.get(i);
-    if (u) drawUnitAt(ctx, s, u, ov, viewer);
+    if (!explored(t.x, t.y)) drawFog(ctx, s, t, explored);
+    else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x));
+  }
+  ctx.restore();
+}
+
+function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
+  const now = ov.now;
+  const fx = ov.fx;
+  const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
+  const w0 = cam.toWorld(-80, -120), w1 = cam.toWorld(vw + 80, vh + 120);
+  const onScreen = (p: Pt) => p.x > w0.x && p.x < w1.x && p.y > w0.y && p.y < w1.y;
+
+  // Units, back to front.
+  const units = s.units
+    .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)))
+    .sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+  for (const u of units) drawUnitAt(ctx, s, u, ov, viewer);
+
+  // Units that just died fade away where they stood.
+  for (const g of fx.ghosts) {
+    const k = (now - g.t0) / GHOST_MS;
+    if (k < 0 || k > 1) continue;
+    const c = tileCenter(g.x, g.y);
+    ctx.globalAlpha = 1 - k;
+    setTint('#ffffff', Math.max(0, 0.9 - k * 2.5));
+    ctx.save();
+    ctx.translate(c.x, c.y + 5 + k * 8);
+    ctx.scale(UNIT_SCALE, UNIT_SCALE * (1 - k * 0.3));
+    drawUnitSprite(ctx, g.kind, g.tribe, 0, 0);
+    ctx.restore();
+    setTint(null);
+    ctx.globalAlpha = 1;
   }
 
-  // Pass 4: overlays that always sit on top.
+  for (const p of fx.projectiles) drawProjectile(ctx, p, now);
+
   for (const a of ov.attacks) {
     const t = tileAt(s, a.x, a.y)!;
     const c = tileCenter(a.x, a.y);
     const y = c.y + (isWaterTile(t) ? WATER_DROP : 0);
+    const pulse = 1 + Math.sin(now / 160) * 0.06;
     ctx.strokeStyle = '#ff3030';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.ellipse(c.x, y, 18, 9, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x, y, 18 * pulse, 9 * pulse, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
-  for (const c of s.cities) if (explored(c.x, c.y) && visible(tileAt(s, c.x, c.y)!)) drawCityLabel(ctx, s, c);
-  for (const f of ov.floaters) {
-    const k = (ov.now - f.t0) / FLOAT_MS;
+
+  for (const c of s.cities) if (explored(c.x, c.y) && onScreen(tileCenter(c.x, c.y))) drawCityLabel(ctx, s, c);
+
+  for (const p of fx.particles) {
+    const t = (now - p.t0) / 1000;
+    if (t < 0 || t > p.life) continue;
+    const a = 1 - t / p.life;
+    const x = p.x + p.vx * t, y = p.y + p.vy * t + 0.5 * p.g * t * t;
+    ctx.globalAlpha = Math.min(1, a * 1.4);
+    if (p.shape === 'star') drawStar(ctx, x, y, p.size);
+    else if (p.shape === 'square') {
+      ctx.fillStyle = p.color;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(t * 8 + p.vx);
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    } else ellipse(ctx, x, y, p.size * (1 + t * 2), p.size * 0.6 * (1 + t * 2), p.color);
+    ctx.globalAlpha = 1;
+  }
+
+  for (const f of fx.floaters) {
+    const k = (now - f.t0) / FLOAT_MS;
     if (k < 0 || k > 1) continue;
     const c = tileCenter(f.x, f.y);
+    const pop = k < 0.15 ? 0.6 + (k / 0.15) * 0.5 : 1.1 - Math.min(0.1, k - 0.15);
     ctx.globalAlpha = 1 - k * k;
-    ctx.font = `700 15px ${FONT}`;
+    ctx.font = `700 ${Math.round(15 * pop)}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.lineWidth = 3;
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.strokeText(f.text, c.x, c.y - 40 - k * 22);
+    ctx.strokeText(f.text, c.x, c.y - 44 - k * 22);
     ctx.fillStyle = f.color;
-    ctx.fillText(f.text, c.x, c.y - 40 - k * 22);
+    ctx.fillText(f.text, c.x, c.y - 44 - k * 22);
     ctx.globalAlpha = 1;
   }
-  ctx.restore();
+}
+
+function drawProjectile(ctx: Ctx, p: Fx['projectiles'][number], now: number) {
+  const k = (now - p.t0) / p.dur;
+  if (k < 0 || k > 1) return;
+  const a = tileCenter(p.fx, p.fy), b = tileCenter(p.tx, p.ty);
+  const dist = Math.hypot(b.x - a.x, b.y - a.y);
+  const arc = p.kind === 'shot' ? dist * 0.06 : dist * 0.38;
+  const at = (q: number) => ({ x: a.x + (b.x - a.x) * q, y: a.y - 22 + (b.y - a.y) * q - Math.sin(Math.PI * q) * arc });
+  const pt = at(k), nx = at(Math.min(1, k + 0.02));
+  const ang = Math.atan2(nx.y - pt.y, nx.x - pt.x);
+  if (p.kind === 'arrow') {
+    ctx.strokeStyle = '#5a3b1e';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(pt.x - Math.cos(ang) * 8, pt.y - Math.sin(ang) * 8);
+    ctx.lineTo(pt.x + Math.cos(ang) * 4, pt.y + Math.sin(ang) * 4);
+    ctx.stroke();
+    poly(ctx, [pt.x + Math.cos(ang) * 6, pt.y + Math.sin(ang) * 6, pt.x + Math.cos(ang + 2.5) * 3, pt.y + Math.sin(ang + 2.5) * 3, pt.x + Math.cos(ang - 2.5) * 3, pt.y + Math.sin(ang - 2.5) * 3], '#dfe5ec');
+  } else if (p.kind === 'stone') {
+    ellipse(ctx, pt.x, pt.y, 3.6, 3.2, '#77777e');
+    ellipse(ctx, pt.x - 1, pt.y - 1, 1.6, 1.3, '#a3a3aa');
+  } else {
+    ellipse(ctx, pt.x, pt.y, 2, 2, '#1a1a1a');
+    ctx.strokeStyle = 'rgba(255,220,120,0.8)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pt.x - Math.cos(ang) * 9, pt.y - Math.sin(ang) * 9);
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
+  }
 }
 
 // ---------------------------------------------------------------- ground
@@ -289,10 +340,9 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
   // tile corner (from four neighbouring tiles) are shaded as one pinwheel around that corner.
   const T = { x, y }, R = { x: x + HW, y: y + HH }, B = { x, y: y + TH }, L = { x: x - HW, y: y + HH };
   const C = { x, y: y + HH };
-  const m = (a: { x: number; y: number }, b: { x: number; y: number }) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const m = (a: Pt, b: Pt) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   const tr = m(T, R), rb = m(R, B), bl = m(B, L), lt = m(L, T);
-  // [triangle, lattice corner it touches]
-  const tris: [{ x: number; y: number }[], number, number][] = [
+  const tris: [Pt[], number, number][] = [
     [[T, tr, C], t.x, t.y], [[T, C, lt], t.x, t.y],
     [[R, C, tr], t.x + 1, t.y], [[R, rb, C], t.x + 1, t.y],
     [[B, C, rb], t.x + 1, t.y + 1], [[B, bl, C], t.x + 1, t.y + 1],
@@ -300,8 +350,8 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
   ];
   for (const [tri, cx, cy] of tris) {
     const corner = tri[0];
-    const gx = (tri[1].x + tri[2].x) / 2 - corner.x, gy = (tri[1].y + tri[2].y) / 2 - corner.y;
-    const sector = Math.floor(((Math.atan2(gy * 2, gx) + Math.PI) / (Math.PI * 2)) * 8) & 7;
+    const gx = (tri[1].x + tri[2].x) / 2 - corner.x, gyy = (tri[1].y + tri[2].y) / 2 - corner.y;
+    const sector = Math.floor(((Math.atan2(gyy * 2, gx) + Math.PI) / (Math.PI * 2)) * 8) & 7;
     const hash = (cx * 7 + cy * 13 + ((cx * cy) & 3)) & 3;
     const col = FOG[(sector + hash) & 3];
     ctx.beginPath();
@@ -327,7 +377,7 @@ function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: n
   const y = ty + (isWaterTile(t) ? WATER_DROP : 0);
   const c = { x, y: y + HH };
   const T = { x, y }, R = { x: x + HW, y: y + HH }, B = { x, y: y + TH }, L = { x: x - HW, y: y + HH };
-  const edges: [number, number, { x: number; y: number }, { x: number; y: number }][] = [
+  const edges: [number, number, Pt, Pt][] = [
     [-1, 0, T, L], // upper-left edge, shared with (x-1, y)
     [0, -1, T, R], // upper-right edge, shared with (x, y-1)
     [1, 0, R, B], // lower-right edge, shared with (x+1, y)
@@ -336,13 +386,13 @@ function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: n
   for (const [dx, dy, a, b] of edges) {
     const n = tileAt(s, t.x + dx, t.y + dy);
     if (n && tileOwnerPlayer(s, n) === owner && explored(n.x, n.y)) continue;
-    const inset = (p: { x: number; y: number }) => ({ x: p.x + (c.x - p.x) * 0.1, y: p.y + (c.y - p.y) * 0.1 });
+    const inset = (p: Pt) => ({ x: p.x + (c.x - p.x) * 0.1, y: p.y + (c.y - p.y) * 0.1 });
     fence(ctx, inset(a), inset(b), color);
   }
 }
 
 /** A row of raised, block-like fence posts along a territory edge. */
-function fence(ctx: Ctx, a: { x: number; y: number }, b: { x: number; y: number }, color: string) {
+function fence(ctx: Ctx, a: Pt, b: Pt, color: string) {
   const n = 6;
   const h = 5;
   const top = shade(color, 0.3);
@@ -428,7 +478,7 @@ function drawForest(ctx: Ctx, t: Tile, cx: number, cy: number, P: BiomePalette) 
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'egypt' || biome === 'polynesia') {
-    // palm: segmented trunk and a star of fronds
+    // palm: curved trunk and a star of fronds
     ctx.strokeStyle = P.trunk;
     ctx.lineWidth = 2.4 * k;
     ctx.lineCap = 'round';
@@ -445,10 +495,6 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
     if (biome === 'polynesia') ellipse(ctx, tx, ty + 2 * k, 1.8 * k, 1.8 * k, '#6b4a1e');
     return;
   }
-  const trunk = () => {
-    ctx.fillStyle = P.trunk;
-    ctx.fillRect(x - 1 * k, y - 4 * k, 2 * k, 4 * k);
-  };
   const cone = (bx: number, by: number, h: number, w: number, col: string) => {
     poly(ctx, [bx, by - h, bx - w / 2, by - 1, bx, by + w * 0.18], shade(col, 0.12));
     poly(ctx, [bx, by - h, bx + w / 2, by - 1, bx, by + w * 0.18], shade(col, -0.2));
@@ -464,7 +510,8 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
     poly(ctx, [x, cy - r * 0.75, x - r, cy, x - r * 0.7, cy + r * 0.5, x, cy + r * 0.2], shade(P.forest, 0.12));
     return;
   }
-  trunk();
+  ctx.fillStyle = P.trunk;
+  ctx.fillRect(x - 1 * k, y - 4 * k, 2 * k, 4 * k);
   if (biome === 'pirates') {
     for (let i = 0; i < 3; i++) cone(x, y - 3 * k - i * 6 * k, 11 * k, (11 - i * 2.5) * k, P.forest);
     return;
@@ -509,13 +556,6 @@ function peak(ctx: Ctx, x: number, y: number, h: number, w: number, P: BiomePale
 }
 
 const FRUIT: Record<TribeId, string> = { egypt: '#8e3f1c', aztec: '#f29a2e', polynesia: '#f2c53a', rome: '#e2324a', pirates: '#78c43e' };
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' }> = {
-  egypt: { body: '#d0a45e', feature: 'hump' },
-  aztec: { body: '#9c6236', feature: 'antlers' },
-  polynesia: { body: '#e99aa2', feature: 'snout' },
-  rome: { body: '#34343b', feature: 'horns' },
-  pirates: { body: '#5a4235', feature: 'tusks' },
-};
 
 function drawFruit(ctx: Ctx, x: number, y: number, col: string) {
   ellipse(ctx, x + 1, y + 0.5, 5, 2, 'rgba(0,0,0,0.18)');
@@ -529,42 +569,6 @@ function drawFruit(ctx: Ctx, x: number, y: number, col: string) {
   ctx.lineTo(x + 0.5, y - 12);
   ctx.stroke();
   poly(ctx, [x + 0.5, y - 11.5, x + 5, y - 14, x + 2, y - 10.5], '#3fae3a');
-}
-
-function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1, override?: string) {
-  const spec = CRITTER[biome];
-  const body = override ?? spec.body;
-  ellipse(ctx, x + 2 * k, y + 1, 11 * k, 3 * k, 'rgba(0,0,0,0.2)');
-  ctx.fillStyle = shade(body, -0.3);
-  for (const lx of [-6, -2.5, 3, 6.5]) ctx.fillRect(x + lx * k, y - 6 * k, 2.2 * k, 7 * k);
-  box(ctx, x, y - 5 * k, 16 * k, 7 * k, body);
-  if (!override && spec.feature === 'hump') box(ctx, x - 1 * k, y - 12 * k, 6 * k, 4 * k, shade(body, 0.05));
-  box(ctx, x + 9 * k, y - 10 * k, 7.5 * k, 7.5 * k, shade(body, 0.04));
-  ctx.fillStyle = override ? '#111' : spec.feature === 'horns' ? '#f4f0e2' : '#111';
-  ctx.fillRect(x + 10.5 * k, y - 15 * k, 1.6 * k, 1.6 * k);
-  if (override) return;
-  switch (spec.feature) {
-    case 'horns':
-      poly(ctx, [x + 7 * k, y - 20 * k, x + 6 * k, y - 25 * k, x + 9 * k, y - 20 * k], '#e8e2cf');
-      poly(ctx, [x + 10 * k, y - 20 * k, x + 11 * k, y - 25 * k, x + 12.5 * k, y - 19.5 * k], '#d2cab4');
-      break;
-    case 'antlers':
-      ctx.strokeStyle = '#e6d3ad';
-      ctx.lineWidth = 1.2 * k;
-      ctx.beginPath();
-      ctx.moveTo(x + 8 * k, y - 20 * k); ctx.lineTo(x + 6 * k, y - 26 * k); ctx.lineTo(x + 4 * k, y - 27 * k);
-      ctx.moveTo(x + 11 * k, y - 20 * k); ctx.lineTo(x + 13 * k, y - 26 * k); ctx.lineTo(x + 15 * k, y - 27 * k);
-      ctx.stroke();
-      break;
-    case 'snout':
-      box(ctx, x + 13 * k, y - 11 * k, 3.5 * k, 3 * k, shade(body, -0.1));
-      break;
-    case 'tusks':
-      poly(ctx, [x + 13 * k, y - 12 * k, x + 16 * k, y - 15 * k, x + 14 * k, y - 11 * k], '#f4f0e2');
-      break;
-    case 'hump':
-      break;
-  }
 }
 
 function drawResource(ctx: Ctx, t: Tile, x: number, y: number, biome: TribeId) {
@@ -822,16 +826,6 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City) {
   }
 }
 
-function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
 // ---------------------------------------------------------------- UI icons
 
 /** Draws a small scene for an action button / info panel, centred at (x, y). */
@@ -874,8 +868,6 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
       ctx.strokeStyle = '#c9a36b'; ctx.lineWidth = 6; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(x - 15, y + 8); ctx.lineTo(x + 15, y - 7); ctx.stroke();
       return;
-    case 'ship':
-      return drawBoat(ctx, 'ship', tribe, x, y + 13);
     case 'flag':
       ctx.fillStyle = '#3a2a1a'; ctx.fillRect(x - 6, y - 14, 2, 27);
       return poly(ctx, [x - 4, y - 14, x + 12, y - 9, x - 4, y - 4], TRIBES[tribe].color);
@@ -907,8 +899,6 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
       drawTree(ctx, 'rome', x - 8, y + 10, 0.8, P, 1);
       drawTree(ctx, 'rome', x + 8, y + 12, 0.8, P, 1);
       return ellipse(ctx, x, y + 14, 6, 2.5, '#6fd3f0');
-    case 'explorer':
-      return drawUnitSprite(ctx, 'explorer', tribe, x, y + 12);
   }
 }
 
@@ -919,253 +909,67 @@ export function drawCityIcon(ctx: Ctx, tribe: TribeId, x: number, y: number, cap
   drawBuilding(ctx, tribe, x + 4, y + 6, true, T.roof, T.color, capital);
 }
 
-// ---------------------------------------------------------------- units
+// ---------------------------------------------------------------- units on the map
 
-function drawUnitAt(ctx: Ctx, s: GameState, u: Unit, ov: Overlay, viewer: number) {
+/** Where a unit is drawn right now, including move hops, attack lunges and bobbing on water. */
+export function unitScreenPos(s: GameState, u: Unit, fx: Fx, now: number) {
   let { x, y } = tileCenter(u.x, u.y);
-  const a = ov.anims.get(u.id);
-  if (a) {
-    const k = Math.min(1, (ov.now - a.t0) / ANIM_MS);
-    const e = 1 - (1 - k) * (1 - k);
-    const f = tileCenter(a.fx, a.fy);
+  let lift = 0;
+  let onWater = isWaterTile(tileAt(s, u.x, u.y)!);
+  const mv = fx.moves.get(u.id);
+  if (mv) {
+    const k = Math.max(0, Math.min(1, (now - mv.t0) / mv.dur));
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const f = tileCenter(mv.fx, mv.fy);
     x = f.x + (x - f.x) * e;
     y = f.y + (y - f.y) * e;
+    const hops = Math.max(1, Math.max(Math.abs(u.x - mv.fx), Math.abs(u.y - mv.fy)));
+    lift = Math.abs(Math.sin(Math.PI * k * hops)) * 7;
+    if (k < 0.5) onWater = isWaterTile(tileAt(s, mv.fx, mv.fy)!);
   }
-  const t = tileAt(s, u.x, u.y)!;
-  if (isWaterTile(t)) y += WATER_DROP - 1;
+  const lg = fx.lunges.get(u.id);
+  if (lg) {
+    const k = (now - lg.t0) / LUNGE_MS;
+    if (k >= 0 && k <= 1) {
+      const target = tileCenter(lg.tx, lg.ty);
+      const amt = Math.sin(Math.PI * k) * 0.4;
+      x += (target.x - x) * amt;
+      y += (target.y - y) * amt;
+      lift += Math.sin(Math.PI * k) * 3;
+    }
+  }
+  if (onWater) y += WATER_DROP - 1 + Math.sin(now / 520 + u.id) * 1.2;
+  return { x, y: y - lift };
+}
+
+function drawUnitAt(ctx: Ctx, s: GameState, u: Unit, ov: Overlay, viewer: number) {
+  const now = ov.now;
+  const { x, y } = unitScreenPos(s, u, ov.fx, now);
   const tribe = s.players[u.owner].tribe;
   const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
-  ctx.globalAlpha = spent ? 0.6 : 1;
+  const moving = ov.fx.moves.has(u.id) || ov.fx.lunges.has(u.id);
+  // gentle idle breathing for units that can still act
+  const breathe = !moving && !spent ? Math.sin(now / 420 + u.id * 1.7) * 0.025 : 0;
+  let shake = 0;
+  const fl = ov.fx.flashes.get(u.id);
+  const flashK = fl === undefined ? -1 : (now - fl) / FLASH_MS;
+  if (flashK >= 0 && flashK <= 1) {
+    setTint('#ffffff', (1 - flashK) * 0.85);
+    shake = Math.sin(flashK * 42) * 2.2 * (1 - flashK);
+  } else if (spent) setTint('#6f6f6f', 0.45);
   ctx.save();
-  ctx.translate(x, y + 5);
-  ctx.scale(UNIT_SCALE, UNIT_SCALE);
+  ctx.translate(x + shake, y + 5);
+  ctx.scale(UNIT_SCALE, UNIT_SCALE * (1 + breathe));
   drawUnitSprite(ctx, u.kind, tribe, 0, 0);
   ctx.restore();
-  ctx.globalAlpha = 1;
-  drawHpBadge(ctx, s, u, x, y);
+  setTint(null);
+  const hold = ov.fx.hpHold.get(u.id);
+  drawHpBadge(ctx, s, u, x + shake, y, hold && now < hold.until ? hold.hp : u.hp);
 }
 
-const SKIN: Record<TribeId, string> = { egypt: '#c68a52', aztec: '#b87445', polynesia: '#a8683a', rome: '#ecc39a', pirates: '#e7b58c' };
-const CLOTHES: Partial<Record<UnitKind, string>> = { legionary: '#b3302a' };
-
-/** Draws a unit standing on (x, y). Exported for UI portraits. */
-export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
-  const T = TRIBES[tribe];
-  const naval = UNITS[kind].naval;
-  ellipse(ctx, x, y + 1, naval ? 17 : 9, naval ? 5.5 : 3.6, 'rgba(0,0,0,0.25)');
-  if (naval) return drawBoat(ctx, kind, tribe, x, y);
-  if (kind === 'catapult') return drawCatapult(ctx, T.color, x, y);
-
-  const k = kind === 'giant' ? 1.35 : 1;
-  const mounted = kind === 'rider' || kind === 'knight' || kind === 'chariot' || kind === 'jaguar';
-  let by = y;
-  if (mounted) {
-    if (kind === 'chariot') {
-      box(ctx, x - 2, y - 3, 13, 6, '#c9a14a');
-      ellipse(ctx, x - 7, y - 2, 4, 5.5, '#6b4a1e');
-      ellipse(ctx, x - 7, y - 2, 2, 3, '#c9a14a');
-      drawCritter(ctx, x + 8, y + 3, 'rome', 0.8, '#efe6d2');
-      by = y - 7;
-    } else if (kind === 'jaguar') {
-      drawCritter(ctx, x - 1, y + 3, 'rome', 0.9, '#e3a53a');
-      for (let i = 0; i < 4; i++) ellipse(ctx, x - 5 + i * 3, y - 4 + (i % 2), 1.1, 1.1, '#3a2a10');
-      by = y - 8;
-    } else {
-      drawCritter(ctx, x - 1, y + 3, 'rome', 0.9, kind === 'knight' ? '#f0f0f0' : '#8a5a33');
-      by = y - 8;
-    }
-  }
-  const clothes = CLOTHES[kind] ?? T.color;
-  if (!mounted) {
-    ctx.fillStyle = shade(T.colorDark, 0.15);
-    ctx.fillRect(x - 3.4 * k, by - 4 * k, 2.8 * k, 4.5 * k);
-    ctx.fillRect(x + 0.6 * k, by - 3 * k, 2.8 * k, 4.5 * k);
-  }
-  const bodyY = by - (mounted ? 0 : 3.5 * k);
-  box(ctx, x, bodyY, 11 * k, 8.5 * k, clothes);
-  if (tribe === 'polynesia') {
-    ctx.fillStyle = '#2a1a10';
-    for (let i = 0; i < 3; i++) ctx.fillRect(x + (1 + i * 1.6) * k, bodyY - 7 * k + i * 0.8 * k, 0.9 * k, 5 * k);
-  }
-  // Big blocky head with the face on the right-hand (viewer-facing) side.
-  const hy = bodyY - 8.5 * k;
-  const hw = 11 * k, hh = 10 * k;
-  box(ctx, x, hy, hw, hh, SKIN[tribe]);
-  ctx.fillStyle = '#141414';
-  for (const f of [0.3, 0.72]) {
-    const ex = x + f * (hw / 2);
-    const ey = hy + (hw / 4) * (1 - f) - hh * 0.55;
-    ctx.fillRect(ex - 0.8 * k, ey - 1.4 * k, 1.8 * k, 2.6 * k);
-  }
-  drawHeadgear(ctx, tribe, kind, x, hy - hh, k);
-  drawWeapon(ctx, kind, tribe, x, bodyY, k);
-}
-
-/** Headgear drawn around the top-face centre (x, top) of a head of footprint 11k. */
-function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: number, k: number) {
-  switch (tribe) {
-    case 'egypt': {
-      // striped royal headcloth
-      box(ctx, x, top + 4.5 * k, 12.5 * k, 5.5 * k, '#f0c43a', '#f6d86a');
-      ctx.fillStyle = '#2b5fb8';
-      for (let i = 0; i < 3; i++) {
-        const f = 0.2 + i * 0.3;
-        ctx.fillRect(x + f * 6.25 * k - 0.6 * k, top + 4.5 * k + 3.1 * k * (1 - f) - 5 * k, 1.3 * k, 5 * k);
-        ctx.fillRect(x - f * 6.25 * k - 0.6 * k, top + 4.5 * k + 3.1 * k * (1 - f) - 5 * k, 1.3 * k, 5 * k);
-      }
-      ellipse(ctx, x, top - 2 * k, 1.8 * k, 1.8 * k, '#2b5fb8');
-      break;
-    }
-    case 'aztec': {
-      const cols = ['#1faa6b', '#f0c43a', '#d6453b', '#3a8ee0', '#1faa6b', '#f0c43a', '#d6453b'];
-      cols.forEach((c, i) => {
-        const a = -Math.PI / 2 + (i - 3) * 0.32;
-        poly(ctx, [x - 1.4 * k, top + 1 * k, x + 1.4 * k, top + 1 * k, x + Math.cos(a) * 13 * k, top + Math.sin(a) * 12 * k], c);
-      });
-      box(ctx, x, top + 3 * k, 11.8 * k, 2.6 * k, '#f0c43a');
-      break;
-    }
-    case 'polynesia': {
-      box(ctx, x, top + 2 * k, 11.6 * k, 3 * k, '#2a1a10');
-      ellipse(ctx, x - 1 * k, top - 2.5 * k, 3.5 * k, 2.6 * k, '#2a1a10');
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2;
-        ellipse(ctx, x + 5.5 * k + Math.cos(a) * 1.8 * k, top + 1 * k + Math.sin(a) * 1.8 * k, 1.4 * k, 1.4 * k, '#ffffff');
-      }
-      ellipse(ctx, x + 5.5 * k, top + 1 * k, 1 * k, 1 * k, '#ffd54a');
-      break;
-    }
-    case 'rome': {
-      box(ctx, x, top + 3.5 * k, 12.2 * k, 4.5 * k, '#b9bfc7');
-      const plume = kind === 'legionary' || kind === 'swordsman' || kind === 'knight' ? '#d82a2a' : '#c9352c';
-      poly(ctx, [x - 5 * k, top - 0.5 * k, x - 3 * k, top - 5 * k, x + 3 * k, top - 5 * k, x + 5 * k, top - 0.5 * k, x, top + 1 * k], plume);
-      break;
-    }
-    case 'pirates': {
-      poly(ctx, [x - 8 * k, top + 2 * k, x, top - 3.5 * k, x + 8 * k, top + 2 * k, x, top + 5.5 * k], '#18181c');
-      poly(ctx, [x - 3.5 * k, top + 0.5 * k, x, top - 8 * k, x + 3.5 * k, top + 0.5 * k], '#26262b');
-      ellipse(ctx, x, top - 2 * k, 1.4 * k, 1.2 * k, '#ffffff');
-      break;
-    }
-  }
-}
-
-function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, bodyY: number, k: number) {
-  const hx = x + 6.5 * k, hy = bodyY - 4.5 * k;
-  ctx.lineCap = 'round';
-  switch (kind) {
-    case 'warrior':
-    case 'legionary':
-    case 'giant':
-      ctx.strokeStyle = '#6b4a2b';
-      ctx.lineWidth = 2.2 * k;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy + 3 * k);
-      ctx.lineTo(hx + 2 * k, hy - 10 * k);
-      ctx.stroke();
-      if (tribe === 'aztec') {
-        ctx.fillStyle = '#1a1a1a';
-        for (let i = 0; i < 3; i++) ctx.fillRect(hx + 2.2 * k, hy - (8 - i * 2.6) * k, 1.8 * k, 1.5 * k);
-      }
-      if (kind === 'legionary') box(ctx, x - 6.5 * k, bodyY + 1.5 * k, 4.5 * k, 11 * k, '#c9352c', '#f0c43a');
-      break;
-    case 'archer':
-    case 'buccaneer':
-      if (kind === 'buccaneer') {
-        ctx.strokeStyle = '#3a2a1a';
-        ctx.lineWidth = 2.2 * k;
-        ctx.beginPath();
-        ctx.moveTo(hx - 3 * k, hy);
-        ctx.lineTo(hx + 8 * k, hy - 4.5 * k);
-        ctx.stroke();
-        ellipse(ctx, hx + 8 * k, hy - 4.5 * k, 1.3 * k, 1.3 * k, '#9aa3ad');
-      } else {
-        ctx.strokeStyle = '#8a5a2b';
-        ctx.lineWidth = 1.8 * k;
-        ctx.beginPath();
-        ctx.arc(hx, hy - 2 * k, 8 * k, -1.1, 1.1);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-        ctx.lineWidth = 0.7;
-        ctx.beginPath();
-        ctx.moveTo(hx + Math.cos(-1.1) * 8 * k, hy - 2 * k + Math.sin(-1.1) * 8 * k);
-        ctx.lineTo(hx + Math.cos(1.1) * 8 * k, hy - 2 * k + Math.sin(1.1) * 8 * k);
-        ctx.stroke();
-      }
-      break;
-    case 'defender':
-      box(ctx, x + 5.5 * k, bodyY + 2.5 * k, 6 * k, 12 * k, '#8d98a5', TRIBES[tribe].color);
-      break;
-    case 'swordsman':
-    case 'knight':
-      ctx.strokeStyle = '#dfe5ec';
-      ctx.lineWidth = 2.2 * k;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy + 2 * k);
-      ctx.lineTo(hx + 4 * k, hy - 12 * k);
-      ctx.stroke();
-      ctx.strokeStyle = '#6b4a2b';
-      ctx.beginPath();
-      ctx.moveTo(hx - 2 * k, hy + 0.5 * k);
-      ctx.lineTo(hx + 2.5 * k, hy + 1.5 * k);
-      ctx.stroke();
-      break;
-    case 'rider':
-    case 'chariot':
-    case 'jaguar':
-      ctx.strokeStyle = '#6b4a2b';
-      ctx.lineWidth = 1.6 * k;
-      ctx.beginPath();
-      ctx.moveTo(hx - 2 * k, hy + 4 * k);
-      ctx.lineTo(hx + 6 * k, hy - 11 * k);
-      ctx.stroke();
-      poly(ctx, [hx + 6.5 * k, hy - 14 * k, hx + 4.8 * k, hy - 10 * k, hx + 8 * k, hy - 10 * k], '#dfe5ec');
-      break;
-  }
-}
-
-function drawCatapult(ctx: Ctx, color: string, x: number, y: number) {
-  box(ctx, x, y - 1, 17, 4, '#8a5a2b');
-  ellipse(ctx, x - 6, y, 3.2, 3.2, '#5a3b1e');
-  ellipse(ctx, x + 6, y + 2, 3.2, 3.2, '#5a3b1e');
-  ctx.strokeStyle = '#6b4a2b';
-  ctx.lineWidth = 2.8;
-  ctx.beginPath();
-  ctx.moveTo(x - 2, y - 5);
-  ctx.lineTo(x + 8, y - 21);
-  ctx.stroke();
-  ellipse(ctx, x + 8, y - 22, 3.8, 2.7, '#777');
-  poly(ctx, [x - 7, y - 5, x - 3, y - 14, x + 1, y - 5], color);
-}
-
-function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
-  const T = TRIBES[tribe];
-  const big = kind === 'warship' ? 1.3 : kind === 'ship' ? 1.12 : 1;
-  const hull = tribe === 'pirates' ? '#3b2a1e' : '#8a5a2b';
-  if (kind === 'waka') {
-    for (const oy of [-3, 4]) {
-      poly(ctx, [x - 17, y + oy - 3, x + 17, y + oy - 3, x + 13, y + oy + 1, x - 13, y + oy + 1], '#7a4a22');
-      poly(ctx, [x - 17, y + oy - 3, x + 17, y + oy - 3, x + 15, y + oy - 5, x - 15, y + oy - 5], '#a86c38');
-    }
-    poly(ctx, [x, y - 32, x - 11, y - 4, x + 6, y - 6], T.color);
-    return;
-  }
-  const w = 18 * big;
-  poly(ctx, [x - w, y - 5, x + w, y - 5, x + w * 0.7, y + 3, x - w * 0.7, y + 3], hull);
-  poly(ctx, [x - w, y - 5, x + w, y - 5, x + w * 0.9, y - 8, x - w * 0.9, y - 8], shade(hull, 0.25));
-  ctx.fillStyle = '#5a3b1e';
-  ctx.fillRect(x - 1, y - 34 * big, 2, 28 * big);
-  const sail = tribe === 'pirates' ? '#1b1b1f' : '#f4f1e6';
-  poly(ctx, [x + 1, y - 32 * big, x + 14 * big, y - 12, x + 1, y - 10], sail);
-  poly(ctx, [x - 1, y - 30 * big, x - 12 * big, y - 12, x - 1, y - 10], shade(sail, -0.1));
-  if (tribe === 'pirates') ellipse(ctx, x + 6, y - 20 * big, 2.2, 2, '#fff');
-  else poly(ctx, [x + 1, y - 34 * big, x + 9, y - 32 * big, x + 1, y - 30 * big], T.color);
-  if (kind === 'warship') for (const ox of [-10, -3, 4, 11]) ellipse(ctx, x + ox, y - 2, 1.5, 1.5, '#111');
-}
-
-function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number) {
+function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, shownHp: number) {
   const tribe = TRIBES[s.players[u.owner].tribe];
-  const bx = x - 19, by = y - 36;
+  const bx = x - 19, by = y - 38;
   ctx.fillStyle = '#fff';
   ctx.strokeStyle = tribe.color;
   ctx.lineWidth = 2.2;
@@ -1178,7 +982,7 @@ function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number) {
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  const hp = Math.ceil(u.hp);
+  const hp = Math.ceil(shownHp);
   ctx.fillStyle = hp <= maxHp(u) * 0.35 ? '#d62828' : '#1d1d1d';
   ctx.font = `700 ${hp >= 10 ? 9 : 10}px ${FONT}`;
   ctx.textAlign = 'center';

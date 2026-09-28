@@ -51,6 +51,7 @@ export function addScore(h: HighScore) {
 export interface Settings {
   hints: boolean;
   fastAi: boolean;
+  sound: boolean;
 }
-export const loadSettings = () => ({ hints: true, fastAi: false, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
+export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
 export const saveSettings = (s: Settings) => write(SETTINGS_KEY, s);

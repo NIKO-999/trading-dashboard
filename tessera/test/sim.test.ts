@@ -46,6 +46,22 @@ for (const seed of [1, 7, 42, 1234, 99999]) {
   });
 }
 
+test('huge 5-empire map runs 30 AI turns cleanly', () => {
+  const s = createGame({ seed: 77, human: null, opponents: [...TRIBE_IDS], mode: 'perfection', mapSize: 'huge' });
+  assert.equal(s.size, 26);
+  startTurn(s);
+  let guard = 0;
+  const t0 = Date.now();
+  while (!s.over && guard++ < 1000) {
+    aiTurn(s);
+    checkInvariants(s);
+    endTurn(s);
+    drain();
+  }
+  assert.ok(s.over);
+  console.log(`huge map: ${s.cities.length} cities, ${s.units.length} units, ${Date.now() - t0}ms`);
+});
+
 test('every empire gets its starting tech, unique unit and capital', () => {
   for (const tribe of TRIBE_IDS) {
     const s = createGame({ seed: 3, human: tribe, opponents: TRIBE_IDS.filter((t) => t !== tribe).slice(0, 1), mode: 'domination' });

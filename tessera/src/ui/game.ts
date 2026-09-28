@@ -9,10 +9,11 @@ import {
   moveOptions, moveUnit, previewCombat, rewardOptions, score, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
-import type { City, GameState, Tile } from '../game/types';
+import type { City, GameState, Tile, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
-import { ANIM_MS, drawIcon, FLOAT_MS, renderWorld, type Overlay } from '../render/draw';
-import { addScore, clearSave, loadSettings, saveGame } from '../save';
+import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, LUNGE_MS, newFx, WorldRenderer, type Fx, type Overlay } from '../render/draw';
+import { sfx, type SoundName } from '../audio/sfx';
+import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
 import { modal, toast } from './modal';
@@ -27,9 +28,14 @@ export class GameView {
   private canvas = document.getElementById('game') as HTMLCanvasElement;
   private ctx = this.canvas.getContext('2d')!;
   private cam = new Camera();
-  private ov: Overlay = { selected: null, moves: [], attacks: [], glow: new Set(), anims: new Map(), floaters: [], now: 0 };
+  private ov: Overlay = { selected: null, moves: [], attacks: [], glow: new Set(), fx: newFx(), now: 0 };
+  private renderer = new WorldRenderer();
+  private version = 0; // bumped whenever the cached map layer must be redrawn
+  private drawnVersion = -1;
+  private lastFrame = 0;
+  private lastTick = 0;
+  private dpr = 1;
   private sel: Selection | null = null;
-  private dirty = true;
   private busy = false;
   private raf = 0;
   private me: number;
@@ -55,7 +61,7 @@ export class GameView {
     this.cam.zoom = Math.min(2.2, Math.max(1.2, this.vw / 250));
     if (cap) this.cam.centerOn(cap.x, cap.y, this.vw, this.vh * 0.95);
     // Canvas text only picks up the web font once it has loaded.
-    document.fonts?.ready.then(() => (this.dirty = true));
+    document.fonts?.ready.then(() => this.version++);
     this.loop();
     this.refresh();
     if (import.meta.env.DEV) Object.assign(window, { __game: this });
@@ -101,6 +107,7 @@ export class GameView {
 
   private resize() {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
+    this.dpr = dpr;
     const oldW = this.vw, oldH = this.vh;
     this.vw = window.innerWidth;
     this.vh = window.innerHeight;
@@ -113,22 +120,39 @@ export class GameView {
       this.cam.x += (this.vw - oldW) / 2;
       this.cam.y += (this.vh - oldH) / 2;
     }
-    this.dirty = true;
+    this.version++;
   }
 
-  private loop = () => {
+  private loop = (now: number = performance.now()) => {
     if (this.destroyed) return;
-    const now = performance.now();
+    const dt = Math.min(50, now - (this.lastTick || now));
+    this.lastTick = now;
     this.ov.now = now;
-    for (const [id, a] of this.ov.anims) if (now - a.t0 > ANIM_MS) this.ov.anims.delete(id);
-    this.ov.floaters = this.ov.floaters.filter((f) => now - f.t0 < FLOAT_MS);
-    const animating = this.ov.anims.size > 0 || this.ov.floaters.length > 0;
-    if (this.dirty || animating) {
-      renderWorld(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh);
-      this.dirty = false;
+    const camMoving = this.cam.step(now, dt);
+    const fxActive = this.pruneFx(now);
+    // Full frame rate while anything moves; idle breathing only needs ~30 fps.
+    if (camMoving || fxActive || this.version !== this.drawnVersion || now - this.lastFrame > 33) {
+      this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version);
+      this.drawnVersion = this.version;
+      this.lastFrame = now;
     }
     this.raf = requestAnimationFrame(this.loop);
   };
+
+  /** Drops finished effects. Returns true while any effect is still playing. */
+  private pruneFx(now: number) {
+    const fx = this.ov.fx;
+    let active = false;
+    for (const [id, m] of fx.moves) if (now > m.t0 + m.dur) fx.moves.delete(id); else active = true;
+    for (const [id, l] of fx.lunges) if (now > l.t0 + LUNGE_MS) fx.lunges.delete(id); else active = true;
+    for (const [id, t] of fx.flashes) if (now > t + FLASH_MS) fx.flashes.delete(id); else active = true;
+    for (const [id, h] of fx.hpHold) if (now > h.until) fx.hpHold.delete(id);
+    fx.ghosts = fx.ghosts.filter((g) => now < g.t0 + GHOST_MS);
+    fx.projectiles = fx.projectiles.filter((p) => now < p.t0 + p.dur);
+    fx.particles = fx.particles.filter((p) => now < p.t0 + p.life * 1000);
+    fx.floaters = fx.floaters.filter((f) => now < f.t0 + FLOAT_MS);
+    return active || fx.ghosts.length + fx.projectiles.length + fx.particles.length + fx.floaters.length > 0;
+  }
 
   // ------------------------------------------------------------ input
 
@@ -137,8 +161,13 @@ export class GameView {
     let panned = false;
     let start = { x: 0, y: 0 };
     let pinch = 0;
+    let vx = 0, vy = 0, lastT = 0;
     const c = this.canvas;
     c.addEventListener('pointerdown', (e) => {
+      sfx.unlock();
+      this.cam.stop();
+      vx = vy = 0;
+      lastT = e.timeStamp;
       c.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 1) {
@@ -160,7 +189,10 @@ export class GameView {
         if (panned) {
           this.cam.x += cur.x - prev.x;
           this.cam.y += cur.y - prev.y;
-          this.dirty = true;
+          const dtm = Math.max(1, e.timeStamp - lastT);
+          vx = vx * 0.6 + ((cur.x - prev.x) / dtm) * 0.4;
+          vy = vy * 0.6 + ((cur.y - prev.y) / dtm) * 0.4;
+          lastT = e.timeStamp;
         }
       } else if (pts.size === 2) {
         pts.set(e.pointerId, cur);
@@ -168,7 +200,7 @@ export class GameView {
         const d = Math.hypot(a.x - b.x, a.y - b.y);
         if (pinch > 0) this.cam.zoomAt(d / pinch, (a.x + b.x) / 2, (a.y + b.y) / 2);
         pinch = d;
-        this.dirty = true;
+        this.version++;
       }
       pts.set(e.pointerId, cur);
     });
@@ -176,6 +208,13 @@ export class GameView {
       if (!pts.has(e.pointerId)) return;
       pts.delete(e.pointerId);
       if (pts.size === 0 && !panned && e.type === 'pointerup') this.tap(e.clientX, e.clientY);
+      // fling: keep gliding after a quick pan
+      if (pts.size === 0 && panned && pinch === 0 && e.timeStamp - lastT < 80) {
+        const sp = Math.hypot(vx, vy);
+        const max = 3;
+        this.cam.vx = sp > max ? (vx / sp) * max : vx;
+        this.cam.vy = sp > max ? (vy / sp) * max : vy;
+      }
       pinch = 0;
     };
     c.addEventListener('pointerup', up);
@@ -183,7 +222,7 @@ export class GameView {
     c.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.cam.zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
-      this.dirty = true;
+      this.version++;
     }, { passive: false });
   }
 
@@ -203,6 +242,8 @@ export class GameView {
           return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
         }
         if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
+          const toWater = t.terrain === 'shallow' || t.terrain === 'ocean';
+          sfx.play(toWater ? 'splash' : 'move');
           this.act(() => moveUnit(this.s, u, x, y));
           this.advanceHints();
           return this.select({ x: u.x, y: u.y, mode: 'unit' });
@@ -214,6 +255,7 @@ export class GameView {
       if (sel.mode === 'unit') return this.select({ x, y, mode: 'tile' });
       return this.select(null);
     }
+    sfx.play('tap');
     this.select({ x, y, mode: hasUnit ? 'unit' : 'tile' });
   }
 
@@ -229,22 +271,57 @@ export class GameView {
         this.ov.attacks = attackOptions(this.s, u).map((e) => ({ x: e.x, y: e.y }));
       }
     }
-    this.dirty = true;
+    this.version++;
     this.updatePanel();
   }
 
-  /** Runs a state-changing action with move animations and event handling. */
-  private act(fn: () => unknown) {
+  /**
+   * Runs a state-changing action, then plays its animations: attacks first, then any unit that
+   * moved hops to its new tile. Returns when (performance.now() time) the visible effects settle.
+   */
+  private act(fn: () => unknown): number {
     const before = new Map(this.s.units.map((u) => [u.id, { x: u.x, y: u.y }]));
     fn();
     const now = performance.now();
+    const { impact, end } = this.handleEvents(drain());
+    let settle = end;
     for (const u of this.s.units) {
       const b = before.get(u.id);
-      if (b && (b.x !== u.x || b.y !== u.y)) this.ov.anims.set(u.id, { fx: b.x, fy: b.y, t0: now });
+      if (!b || (b.x === u.x && b.y === u.y)) continue;
+      const d = Math.max(Math.abs(b.x - u.x), Math.abs(b.y - u.y));
+      const t0 = impact ?? now;
+      const dur = 150 + 110 * d;
+      this.ov.fx.moves.set(u.id, { fx: b.x, fy: b.y, t0, dur });
+      const visible = isExplored(this.s, this.me, u.x, u.y) || isExplored(this.s, this.me, b.x, b.y);
+      if (visible) {
+        settle = Math.max(settle, t0 + dur);
+        if (u.owner !== this.me) {
+          const t = tileAt(this.s, u.x, u.y)!;
+          this.sound(t.terrain === 'shallow' || t.terrain === 'ocean' ? 'splash' : 'move', t0 - now, u.owner);
+        }
+      }
     }
-    this.handleEvents(drain());
     this.refresh();
     if (isHumanTurn(this.s)) saveGame(this.s);
+    return settle;
+  }
+
+  private sound(name: SoundName, delayMs: number, player: number) {
+    sfx.play(name, delayMs, player === this.me ? 1 : 0.5);
+  }
+
+  /** A little burst of particles above a tile. */
+  private burst(x: number, y: number, t0: number, n: number, colors: string[], shape: Fx['particles'][number]['shape'], speed: number) {
+    const c = { x: (x - y) * 32, y: (x + y) * 16 + 16 };
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+      const sp = speed * (0.5 + Math.random() * 0.7);
+      this.ov.fx.particles.push({
+        x: c.x + (Math.random() - 0.5) * 14, y: c.y - 18 + (Math.random() - 0.5) * 8,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: shape === 'puff' ? -20 : 240,
+        t0, life: 0.6 + Math.random() * 0.4, color: colors[i % colors.length], size: shape === 'star' ? 3.4 : shape === 'puff' ? 4 : 3.2, shape,
+      });
+    }
   }
 
   // ------------------------------------------------------------ HUD & panel
@@ -261,7 +338,7 @@ export class GameView {
     this.bottom.classList.toggle('waiting', !isHumanTurn(this.s));
     this.ov.glow = this.harvestable();
     this.updateHint();
-    this.dirty = true;
+    this.version++;
     if (this.sel) this.select(this.sel);
   }
 
@@ -357,10 +434,15 @@ export class GameView {
         title: a.reason ?? a.desc,
         onclick: () => {
           if (!a.enabled) {
+            sfx.play('error');
             toast(a.reason ? `${a.label}: ${a.reason}` : a.desc);
             return;
           }
           const t = tileAt(this.s, this.sel!.x, this.sel!.y)!;
+          if (a.id.startsWith('train:')) {
+            sfx.play('train');
+            this.burst(t.x, t.y, performance.now(), 10, ['#ffffff', '#e6e1d4'], 'puff', 45);
+          } else if (a.id === 'road' || a.id.startsWith('upgrade:')) sfx.play('build');
           this.act(() => doAction(this.s, this.me, t, a.id));
           this.advanceHints();
           if (a.id.startsWith('train:')) this.select({ x: t.x, y: t.y, mode: 'tile' });
@@ -376,22 +458,89 @@ export class GameView {
 
   // ------------------------------------------------------------ events & rewards
 
-  private handleEvents(evs: GameEvent[]) {
+  /**
+   * Turns rule events into animations, floating numbers, particles and sounds. Attacks are
+   * chained: each blow (and any retaliation) lands after the previous one.
+   */
+  private handleEvents(evs: GameEvent[]): { impact: number | null; end: number } {
     const now = performance.now();
+    const fx = this.ov.fx;
+    const seen = (x: number, y: number) => isExplored(this.s, this.me, x, y);
+    const myColor = TRIBES[this.s.players[this.me].tribe].color;
+    let cursor = now;
+    let impact: number | null = null;
+    let end = now;
     for (const e of evs) {
       switch (e.type) {
-        case 'damage':
-          if (isExplored(this.s, this.me, e.x, e.y)) this.ov.floaters.push({ x: e.x, y: e.y, text: `-${e.amount}`, color: '#ff5a5a', t0: now });
+        case 'attack': {
+          if (!seen(e.from.x, e.from.y) && !seen(e.to.x, e.to.y)) {
+            impact = null;
+            break;
+          }
+          const start = cursor;
+          if (e.ranged) {
+            const d = Math.max(Math.abs(e.from.x - e.to.x), Math.abs(e.from.y - e.to.y));
+            const dur = 240 + d * 80;
+            fx.projectiles.push({ fx: e.from.x, fy: e.from.y, tx: e.to.x, ty: e.to.y, t0: start, dur, kind: projectileFor(e.kind) });
+            impact = start + dur;
+          } else {
+            fx.lunges.set(e.unitId, { tx: e.to.x, ty: e.to.y, t0: start });
+            impact = start + LUNGE_MS * 0.5;
+          }
+          cursor = impact + 260;
+          end = Math.max(end, cursor);
+          this.sound('attack', start - now, e.player);
+          break;
+        }
+        case 'damage': {
+          if (!seen(e.x, e.y)) break;
+          const at = impact ?? now;
+          fx.floaters.push({ x: e.x, y: e.y, text: `-${e.amount}`, color: '#ff5a5a', t0: at });
+          fx.flashes.set(e.unitId, at);
+          const hurt = this.s.units.find((u) => u.id === e.unitId);
+          if (hurt) fx.hpHold.set(e.unitId, { hp: hurt.hp + e.amount, until: at });
+          this.burst(e.x, e.y, at, 6, ['#ffffff', '#ffd9a0'], 'square', 70);
+          sfx.play('hit', at - now, 0.9);
+          end = Math.max(end, at + FLASH_MS);
+          break;
+        }
+        case 'death': {
+          if (!seen(e.x, e.y)) break;
+          const at = (impact ?? now) + 120;
+          fx.ghosts.push({ kind: e.kind, tribe: this.s.players[e.owner].tribe, x: e.x, y: e.y, t0: at });
+          this.burst(e.x, e.y, at, 9, ['#d9d4c8', '#bdb6a6'], 'puff', 40);
+          sfx.play('death', at - now, 0.8);
+          end = Math.max(end, at + GHOST_MS * 0.6);
+          break;
+        }
+        case 'harvest':
+          if (e.player === this.me) {
+            if (e.pop > 0) fx.floaters.push({ x: e.x, y: e.y, text: `+${e.pop}`, color: '#8cff8c', t0: now });
+            this.burst(e.x, e.y, now, 8, ['#ffcf33'], 'star', 95);
+            sfx.play(e.pop >= 2 || e.pop === 0 ? 'build' : 'harvest');
+          }
           break;
         case 'stars':
-          if (e.player === this.me) this.ov.floaters.push({ x: e.x, y: e.y, text: `+${e.amount}★`, color: '#ffd54a', t0: now });
+          if (e.player === this.me) {
+            fx.floaters.push({ x: e.x, y: e.y, text: `+${e.amount}★`, color: '#ffd54a', t0: now });
+            this.burst(e.x, e.y, now, 6, ['#ffcf33'], 'star', 80);
+            sfx.play('stars');
+          }
           break;
         case 'ruin':
-          if (e.player === this.me) modal({ title: e.title, body: [h('p', {}, e.text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30)) });
+          if (e.player === this.me) {
+            sfx.play('ruin');
+            modal({ title: e.title, body: [h('p', {}, e.text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30)) });
+          }
           break;
         case 'capture': {
           const c = cityById(this.s, e.cityId)!;
-          if (e.player === this.me) toast(e.from === null ? `${c.name} joins your empire!` : `You captured ${c.name}!`, TRIBES[this.s.players[this.me].tribe].color);
+          const color = TRIBES[this.s.players[e.player].tribe].color;
+          if (seen(c.x, c.y)) {
+            this.burst(c.x, c.y, now, 18, [color, '#ffcf33', '#ffffff'], 'square', 150);
+            this.sound('capture', 0, e.player);
+          }
+          if (e.player === this.me) toast(e.from === null ? `${c.name} joins your empire!` : `You captured ${c.name}!`, myColor);
           else if (e.from === this.me) toast(`${c.name} has fallen to the ${TRIBES[this.s.players[e.player].tribe].people}s!`, '#ff5a5a');
           break;
         }
@@ -403,12 +552,15 @@ export class GameView {
         case 'levelup':
           if (e.player === this.me) {
             const c = cityById(this.s, e.cityId)!;
-            this.ov.floaters.push({ x: c.x, y: c.y, text: `Level ${e.level}!`, color: '#7cf07c', t0: now });
+            fx.floaters.push({ x: c.x, y: c.y, text: `Level ${e.level}!`, color: '#7cf07c', t0: now + 150 });
+            this.burst(c.x, c.y, now + 150, 22, [myColor, '#ffcf33', '#ffffff', '#7cf07c'], 'square', 170);
+            sfx.play('levelup', 150);
           }
           break;
       }
     }
     if (this.s.over) this.gameOver();
+    return { impact, end };
   }
 
   private checkRewards() {
@@ -420,6 +572,7 @@ export class GameView {
     const [a, b] = rewardOptions(level);
     const tribe = this.s.players[this.me].tribe;
     const pick = (id: typeof a.id) => {
+      sfx.play('build');
       this.rewardOpen = false;
       this.act(() => applyReward(this.s, c, id));
       this.checkRewards();
@@ -485,7 +638,7 @@ export class GameView {
         h('p', {}, `The ${T.people} people have placed their fate in your hands. Scout the land, grow your cities and stand firm against rival empires.`),
         h('p', {}, h('b', {}, 'Your gift: '), 'a treasury to start your reign.'),
       ],
-      buttons: [{ label: h('span', { class: 'gift' }, String(me.stars), iconEl('star', 'ico-star big')), primary: true, onClick: () => this.updateHint() }],
+      buttons: [{ label: h('span', { class: 'gift' }, String(me.stars), iconEl('star', 'ico-star big')), primary: true, onClick: () => { sfx.unlock(); sfx.play('stars'); this.updateHint(); } }],
       cls: 'welcome',
     });
   }
@@ -493,6 +646,7 @@ export class GameView {
   private async onEndTurn() {
     if (this.busy || !isHumanTurn(this.s)) return;
     this.select(null);
+    sfx.play('endturn');
     endTurn(this.s);
     this.handleEvents(drain());
     this.refresh();
@@ -511,7 +665,7 @@ export class GameView {
       this.banner.style.setProperty('--tc', T.color);
       this.banner.textContent = `${T.people} turn…`;
       let acted = false;
-      this.act(() => (acted = aiStep(this.s)));
+      const settle = this.act(() => (acted = aiStep(this.s)));
       if (!acted) {
         endTurn(this.s);
         this.handleEvents(drain());
@@ -520,7 +674,7 @@ export class GameView {
         continue;
       }
       steps++;
-      if (!fast) await sleep(this.ov.anims.size ? ANIM_MS * 0.6 : 25);
+      if (!fast) await sleep(Math.min(900, Math.max(25, settle - performance.now())));
       else if (steps % 25 === 0) await sleep(0);
     }
     this.banner.classList.add('hidden');
@@ -529,6 +683,7 @@ export class GameView {
     this.refresh();
     if (!this.s.over) {
       saveGame(this.s);
+      sfx.play('turn');
       this.advanceHints();
       this.checkRewards();
     }
@@ -568,8 +723,9 @@ export class GameView {
       dismissable: true,
       buttons: [
         { label: 'Resume', primary: true },
-        { label: 'Hints: ' + (this.settings.hints ? 'On' : 'Off'), onClick: () => { this.settings.hints = !this.settings.hints; this.updateHint(); } },
-        { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me)[0]; if (c) { this.cam.centerOn(c.x, c.y, this.vw, this.vh * 0.92); this.dirty = true; } } },
+        { label: 'Hints: ' + (this.settings.hints ? 'On' : 'Off'), onClick: () => { this.settings.hints = !this.settings.hints; saveSettings(this.settings); this.updateHint(); } },
+        { label: 'Sound: ' + (this.settings.sound ? 'On' : 'Off'), onClick: () => { this.settings.sound = !this.settings.sound; sfx.enabled = this.settings.sound; saveSettings(this.settings); } },
+        { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },
       ],
       cls: 'menu',
@@ -595,6 +751,7 @@ export class GameView {
   private openTech() {
     if (this.busy) return;
     const tt = showTechTree(this.s, this.me, this.hud, () => {
+      sfx.play('research');
       this.refresh();
       this.advanceHints();
       saveGame(this.s);
@@ -622,4 +779,10 @@ function describeTile(s: GameState, t: Tile): { title: string; desc: string } {
   if (t.improvement) return { title: imp[t.improvement], desc: `${terrain[t.terrain]}. ${where}` };
   const extra = t.terrain === 'mountain' ? ` Needs ${TECH_BY_ID.climbing.name} to enter.` : t.terrain === 'ocean' ? ' Needs a Galley to cross.' : '';
   return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}` };
+}
+
+function projectileFor(kind: UnitKind): Fx['projectiles'][number]['kind'] {
+  if (kind === 'catapult' || kind === 'warship') return 'stone';
+  if (kind === 'buccaneer') return 'shot';
+  return 'arrow';
 }

@@ -249,6 +249,11 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   p.stars -= act.cost;
   const city = cityById(s, t.owner);
   const u = unitAt(s, t.x, t.y);
+  const grow = (n: number) => {
+    emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: n });
+    addPop(s, city!, n);
+    return true;
+  };
 
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
@@ -274,17 +279,16 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       t.resource = null;
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
-      addPop(s, city!, r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
-      return true;
+      return grow(r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
     }
-    case 'farm': t.improvement = 'farm'; addPop(s, city!, p.tribe === 'egypt' ? 3 : 2); return true;
-    case 'mine': t.improvement = 'mine'; addPop(s, city!, 2); return true;
-    case 'lumber': t.improvement = 'lumber'; addPop(s, city!, 1); return true;
-    case 'clear': t.terrain = 'field'; p.stars += 1; return true;
-    case 'port': t.improvement = 'port'; addPop(s, city!, 1); return true;
+    case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
+    case 'mine': t.improvement = 'mine'; return grow(2);
+    case 'lumber': t.improvement = 'lumber'; return grow(1);
+    case 'clear': t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); return true;
+    case 'port': t.improvement = 'port'; return grow(1);
     case 'shrine':
-    case 'temple': t.improvement = 'temple'; p.bonusScore += 100; addPop(s, city!, 1); return true;
-    case 'market': t.improvement = 'market'; return true;
+    case 'temple': t.improvement = 'temple'; p.bonusScore += 100; return grow(1);
+    case 'market': t.improvement = 'market'; emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }); return true;
   }
   return false;
 }
@@ -492,12 +496,14 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
 export function attack(s: GameState, a: Unit, d: Unit): boolean {
   if (!attackOptions(s, a).includes(d)) return false;
   const { dmg, ret, kills } = previewCombat(s, a, d);
+  const ranged = dist(a.x, a.y, d.x, d.y) > 1;
+  emit({ type: 'attack', unitId: a.id, kind: a.kind, player: a.owner, from: { x: a.x, y: a.y }, to: { x: d.x, y: d.y }, ranged });
   d.hp -= dmg;
-  emit({ type: 'damage', x: d.x, y: d.y, amount: dmg });
+  emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg });
   const pa = s.players[a.owner];
   if (kills) {
     removeUnit(s, d);
-    emit({ type: 'death', x: d.x, y: d.y, owner: d.owner });
+    emit({ type: 'death', x: d.x, y: d.y, owner: d.owner, kind: d.kind });
     pa.kills++;
     if (pa.tribe === 'pirates' || def(a).skills.includes('plunder')) {
       pa.stars += 2;
@@ -517,11 +523,12 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
       revealAround(s, a.owner);
     }
   } else if (ret > 0) {
+    emit({ type: 'attack', unitId: d.id, kind: d.kind, player: d.owner, from: { x: d.x, y: d.y }, to: { x: a.x, y: a.y }, ranged });
     a.hp -= ret;
-    emit({ type: 'damage', x: a.x, y: a.y, amount: ret });
+    emit({ type: 'damage', unitId: a.id, x: a.x, y: a.y, amount: ret });
     if (a.hp <= 0) {
       removeUnit(s, a);
-      emit({ type: 'death', x: a.x, y: a.y, owner: a.owner });
+      emit({ type: 'death', x: a.x, y: a.y, owner: a.owner, kind: a.kind });
       s.players[d.owner].kills++;
       return true;
     }

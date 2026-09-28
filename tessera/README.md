@@ -22,10 +22,13 @@ Features:
 - A 25-node radial tech tree.
 - Land and naval combat with retaliation.
 - Heuristic AI rivals.
-- Two modes: 30-turn score or conquest.
+- Two modes: 30-turn score or conquest, on Normal, Large or Huge maps.
+- Animated units: hops between tiles, attack lunges, arrows and cannon shots, hit flashes, death fades, particle bursts.
+- Synthesized sound effects (Web Audio, no audio files) with a mute toggle.
 - A local high-score table and autosave.
 
-All art is drawn procedurally in `src/render/draw.ts`, so there are no image assets apart from the app icons.
+All art is drawn procedurally (`src/render/draw.ts` for the world, `src/render/units.ts` for units),
+so there are no image assets apart from the app icons.
 
 ## Commands
 
@@ -41,5 +44,6 @@ npm run icons     # regenerate public/icons/*
 
 - `src/data/`: empires, techs, units
 - `src/game/`: map generation, rules, turn loop and AI. No DOM, so it runs in tests.
-- `src/render/`: the camera and the canvas renderer
+- `src/render/`: the camera, the canvas renderer and the unit art
+- `src/audio/`: synthesized sound effects
 - `src/ui/`: menus, HUD, action panel, tech tree and modals

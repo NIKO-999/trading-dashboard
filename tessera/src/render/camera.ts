@@ -35,6 +35,45 @@ export class Camera {
     this.y = vh / 2 - c.y * this.zoom;
   }
 
+  // Smooth glides (camera easing) and fling momentum after a pan.
+  private glide: { x0: number; y0: number; x1: number; y1: number; t0: number; dur: number } | null = null;
+  vx = 0;
+  vy = 0;
+
+  glideTo(tx: number, ty: number, vw: number, vh: number, dur = 450) {
+    const c = tileCenter(tx, ty);
+    this.glide = { x0: this.x, y0: this.y, x1: vw / 2 - c.x * this.zoom, y1: vh / 2 - c.y * this.zoom, t0: performance.now(), dur };
+    this.vx = this.vy = 0;
+  }
+
+  stop() {
+    this.glide = null;
+    this.vx = this.vy = 0;
+  }
+
+  /** Advances glides and momentum. Returns true while the camera is still moving. */
+  step(now: number, dt: number) {
+    if (this.glide) {
+      const g = this.glide;
+      const k = Math.min(1, (now - g.t0) / g.dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      this.x = g.x0 + (g.x1 - g.x0) * e;
+      this.y = g.y0 + (g.y1 - g.y0) * e;
+      if (k >= 1) this.glide = null;
+      return true;
+    }
+    if (Math.abs(this.vx) + Math.abs(this.vy) < 0.02) {
+      this.vx = this.vy = 0;
+      return false;
+    }
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    const decay = Math.pow(0.9, dt / 16);
+    this.vx *= decay;
+    this.vy *= decay;
+    return true;
+  }
+
   zoomAt(factor: number, sx: number, sy: number) {
     const before = this.toWorld(sx, sy);
     this.zoom = Math.min(3, Math.max(0.45, this.zoom * factor));

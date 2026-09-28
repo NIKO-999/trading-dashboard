@@ -3,7 +3,8 @@ import { TRIBE_IDS } from './data/tribes';
 import { createGame } from './game/mapgen';
 import { startTurn } from './game/turn';
 import type { GameState } from './game/types';
-import { clearSave, loadGame, saveGame } from './save';
+import { sfx } from './audio/sfx';
+import { clearSave, loadGame, loadSettings, saveGame } from './save';
 import { GameView } from './ui/game';
 import { showTitle, type NewGameChoice } from './ui/menu';
 import '@fontsource/josefin-sans/latin-300.css';
@@ -15,6 +16,9 @@ import '@fontsource/josefin-sans/latin-700-italic.css';
 import './style.css';
 
 registerSW({ immediate: true });
+sfx.enabled = loadSettings().sound;
+// Browsers only allow audio after a user gesture; unlock on the first touch anywhere.
+window.addEventListener('pointerdown', () => sfx.unlock());
 // The map canvas draws text itself, so make sure the faces it uses are loaded early.
 for (const f of ['400 13px', '600 13px', '700 15px']) void document.fonts?.load(`${f} "Josefin Sans"`);
 
@@ -40,7 +44,7 @@ function newGame(choice: NewGameChoice) {
     const j = Math.floor(Math.random() * (i + 1));
     [others[i], others[j]] = [others[j], others[i]];
   }
-  const state = createGame({ human: choice.tribe, opponents: others.slice(0, choice.opponents), mode: choice.mode, difficulty: choice.difficulty });
+  const state = createGame({ human: choice.tribe, opponents: others.slice(0, choice.opponents), mode: choice.mode, difficulty: choice.difficulty, mapSize: choice.mapSize });
   startTurn(state);
   saveGame(state);
   play(state);

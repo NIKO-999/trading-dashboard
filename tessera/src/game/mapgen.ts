@@ -4,6 +4,8 @@ import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, TribeId, Unit, UnitKind } from './types';
 
+export type MapSize = 'normal' | 'large' | 'huge';
+
 export interface NewGameOptions {
   seed?: number;
   human: TribeId | null; // null = all AI (used by simulations)
@@ -11,15 +13,21 @@ export interface NewGameOptions {
   mode: GameMode;
   difficulty?: Difficulty;
   maxTurns?: number;
+  mapSize?: MapSize;
 }
 
-const SIZE_FOR_PLAYERS: Record<number, number> = { 2: 11, 3: 13, 4: 15, 5: 16 };
+// Map edge length by map size and number of empires.
+const SIZES: Record<MapSize, Record<number, number>> = {
+  normal: { 2: 11, 3: 13, 4: 15, 5: 16 },
+  large: { 2: 15, 3: 17, 4: 19, 5: 20 },
+  huge: { 2: 20, 3: 22, 4: 24, 5: 26 },
+};
 
 export function createGame(opts: NewGameOptions): GameState {
   const seed = opts.seed ?? Math.floor(Math.random() * 2 ** 31);
   const rng = makeRng(seed);
   const tribes: TribeId[] = [...(opts.human ? [opts.human] : []), ...opts.opponents];
-  const size = SIZE_FOR_PLAYERS[tribes.length] ?? 16;
+  const size = SIZES[opts.mapSize ?? 'normal'][tribes.length] ?? 16;
 
   const players: Player[] = tribes.map((tribe, i) => ({
     id: i,
