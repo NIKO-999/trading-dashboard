@@ -574,11 +574,12 @@
             fill="none" stroke="#7a4515" stroke-width="1.2" opacity="0.5"/>
       <g transform="translate(-1,5) scale(0.62)">
         <path d="M50,120 Q97,102 148,120 Q160,150 164,200 L34,200 Q38,150 50,120 Z" fill="url(#${id('cloak')})" stroke="${OL}" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M64,124 Q72,118 80,124 L82,146 L64,150 Q56,136 64,124 Z" fill="url(#${id('skinl')})" stroke="${OL}" stroke-width="2.6" stroke-linejoin="round"/>
-        <path d="M114,124 Q124,114 134,122 L141,142 Q137,150 129,149 L120,134 Z" fill="url(#${id('skinl')})" stroke="${OL}" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M70,121 Q54,118 50,134 L48,170 L68,170 Z" fill="url(#${id('skinl')})" stroke="${OL}" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M126,121 Q142,118 146,134 L148,170 L128,170 Z" fill="url(#${id('skinl')})" stroke="${OL}" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M54,134 Q53,146 54,158 M140,128 Q144,136 144,146" fill="none" stroke="#fff0e0" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>
         ${torso(id)}
         <circle cx="119" cy="121" r="4.2" fill="url(#${id('bronze')})" stroke="${OL}" stroke-width="1.8"/>
-        <circle cx="75" cy="121" r="4.2" fill="url(#${id('bronze')})" stroke="${OL}" stroke-width="1.8"/>
+        <circle cx="77" cy="121" r="4.2" fill="url(#${id('bronze')})" stroke="${OL}" stroke-width="1.8"/>
         ${head(id, false)}
       </g>
     </g>
