@@ -1,3 +1,5 @@
 dist/
 node_modules/
 dist-artifact/
+# the repo root ignores every data/ folder (for the dashboard's own data); this one is game source
+!src/data/
