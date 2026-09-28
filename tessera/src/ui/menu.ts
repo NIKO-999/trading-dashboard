@@ -5,6 +5,7 @@ import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
 import { sfx } from '../audio/sfx';
 import { setSharpness } from '../render/common';
+import { showSharpnessTest } from './diag';
 import { loadGame, loadScores, loadSettings, saveSettings } from '../save';
 import { $ui, h, iconEl, paint } from './dom';
 
@@ -304,6 +305,6 @@ function showSettings(handlers: MenuHandlers) {
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow()),
+    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
   );
 }

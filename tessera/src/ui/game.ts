@@ -18,6 +18,7 @@ import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
+import { showSharpnessTest } from './diag';
 import { modal, toast } from './modal';
 import { showTechTree } from './techtree';
 
@@ -1043,6 +1044,7 @@ export class GameView {
           setSharpness(this.settings.sharp); // the game loop notices the new density and redraws
           sharpLabel.textContent = sharpText();
         } },
+        { label: 'Sharpness test', onClick: () => showSharpnessTest() },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },
       ],
