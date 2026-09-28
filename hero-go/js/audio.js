@@ -98,6 +98,8 @@
     defeat: () => { const t = ctx.currentTime; [[67, 0], [66, 0.3], [65, 0.6], [64, 0.9]].forEach(([m, d], i) => tone({ f: mtof(m), t: t + d, dur: i === 3 ? 1.2 : 0.3, type: 'pulse', vol: 0.16, vib: i === 3 ? 8 : 0 })); },
     revive: () => arp([60, 67, 72, 79, 84, 91], 0.07, { type: 'triangle', vol: 0.18 }),
     buy: () => arp([79, 84], 0.08, { type: 'square', vol: 0.12 }),
+    equip: () => { noise({ f: 5000, ft: 'highpass', dur: 0.05, vol: 0.3 }); tone({ f: 1800, to: 900, dur: 0.12, type: 'triangle', vol: 0.14 }); tone({ f: 2400, dur: 0.2, type: 'sine', vol: 0.06, t: ctx.currentTime + 0.04 }); },
+    upgrade: () => { const t = ctx.currentTime; [0, 0.06, 0.12].forEach((d, i) => tone({ f: mtof(72 + i * 4), t: t + d, dur: 0.14, type: 'square', vol: 0.1 })); noise({ f: 3500, ft: 'highpass', dur: 0.1, vol: 0.2, t: t + 0.18 }); tone({ f: mtof(88), t: t + 0.18, dur: 0.3, type: 'triangle', vol: 0.14 }); },
     error: () => tone({ f: 200, dur: 0.18, type: 'square', vol: 0.12, lp: 800 }),
   };
   function play(name) {
