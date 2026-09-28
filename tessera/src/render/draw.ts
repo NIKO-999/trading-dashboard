@@ -7,7 +7,7 @@ import { tileAt } from '../game/grid';
 import { cityById, tileOwnerPlayer } from '../game/rules';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
-import { box, drawStar, ellipse, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
+import { box, drawStar, ellipse, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
@@ -536,6 +536,46 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
     poly(ctx, [bx, by - h, bx - w / 2, by - 1, bx, by + w * 0.18], shade(col, 0.12));
     poly(ctx, [bx, by - h, bx + w / 2, by - 1, bx, by + w * 0.18], shade(col, -0.2));
   };
+  const canopy = (top: number, r: number, flat: number, col: string) => {
+    const pts: number[] = [];
+    for (let i = 0; i < 8; i++) pts.push(x + Math.cos((i / 8) * Math.PI * 2) * r, top + Math.sin((i / 8) * Math.PI * 2) * r * flat);
+    poly(ctx, pts, shade(col, -0.12));
+    poly(ctx, [x, top - r * flat, x - r, top, x - r * 0.7, top + r * flat * 0.66, x, top + r * flat * 0.27], shade(col, 0.12));
+  };
+  const trunk = (h: number, w = 2.2) => {
+    ctx.fillStyle = P.trunk;
+    ctx.fillRect(x - (w / 2) * k, y - h * k, w * k, h * k);
+  };
+  if (biome === 'japan') {
+    // cherry blossom: dark crooked trunk under a cloud of pink petals
+    trunk(10, 2);
+    line(ctx, x, y - 8 * k, x + 4 * k, y - 12 * k, P.trunk, 1.4 * k);
+    canopy(y - 14 * k, 7 * k, 0.72, P.forest);
+    for (let i = 0; i < 4; i++) ellipse(ctx, x + (rand(variant + 3, i) - 0.5) * 10 * k, y - 14 * k + (rand(variant + 5, i) - 0.5) * 7 * k, 1.3 * k, 1.1 * k, '#fff0f5');
+    return;
+  }
+  if (biome === 'zulu') {
+    // acacia: slim forked trunk and a flat, wide crown
+    line(ctx, x, y, x - 1 * k, y - 10 * k, P.trunk, 1.8 * k);
+    line(ctx, x - 1 * k, y - 8 * k, x + 4 * k, y - 13 * k, P.trunk, 1.4 * k);
+    line(ctx, x - 1 * k, y - 10 * k, x - 4 * k, y - 13 * k, P.trunk, 1.4 * k);
+    canopy(y - 15 * k, 10 * k, 0.28, P.forest);
+    return;
+  }
+  if (biome === 'greeks' || biome === 'mongols') {
+    if (biome === 'greeks' && variant % 2 === 0) {
+      // slim cypress
+      trunk(3, 1.6);
+      poly(ctx, [x, y - 26 * k, x - 3.6 * k, y - 8 * k, x, y - 1.5 * k], shade('#3f6a34', 0.1));
+      poly(ctx, [x, y - 26 * k, x + 3.6 * k, y - 8 * k, x, y - 1.5 * k], shade('#3f6a34', -0.2));
+      return;
+    }
+    // olive or steppe tree: short trunk, round crown
+    trunk(biome === 'greeks' ? 7 : 6, 2.4);
+    canopy(y - 11 * k, 6.5 * k, 0.7, P.forest);
+    if (biome === 'greeks') for (let i = 0; i < 3; i++) ellipse(ctx, x + (i - 1) * 3.4 * k, y - 10 * k + (i % 2) * 2 * k, 0.9 * k, 0.9 * k, '#3a3a2a');
+    return;
+  }
   if (biome === 'aztec' && variant % 3 === 0) {
     // broad jungle canopy on a tall trunk
     ctx.fillStyle = P.trunk;
@@ -549,8 +589,13 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   }
   ctx.fillStyle = P.trunk;
   ctx.fillRect(x - 1 * k, y - 4 * k, 2 * k, 4 * k);
-  if (biome === 'pirates') {
+  if (biome === 'pirates' || biome === 'vikings') {
     for (let i = 0; i < 3; i++) cone(x, y - 3 * k - i * 6 * k, 11 * k, (11 - i * 2.5) * k, P.forest);
+    if (biome === 'vikings') {
+      // snow resting on the upper boughs
+      poly(ctx, [x, y - 26 * k, x - 3 * k, y - 20 * k, x, y - 19 * k, x + 3 * k, y - 20.5 * k], '#ffffff');
+      poly(ctx, [x - 5 * k, y - 10 * k, x - 1 * k, y - 11.5 * k, x - 2 * k, y - 9.5 * k], '#f2f6fb');
+    }
     return;
   }
   const h = biome === 'aztec' ? 28 : 25;
@@ -592,7 +637,10 @@ function peak(ctx: Ctx, x: number, y: number, h: number, w: number, P: BiomePale
   poly(ctx, [A[0], A[1], f[0], f[1], rm[0], rm[1], r[0], r[1]], mix(P.snow, '#7fd3ea', 0.35));
 }
 
-const FRUIT: Record<TribeId, string> = { egypt: '#8e3f1c', aztec: '#f29a2e', polynesia: '#f2c53a', rome: '#e2324a', pirates: '#78c43e' };
+const FRUIT: Record<TribeId, string> = {
+  egypt: '#8e3f1c', aztec: '#f29a2e', polynesia: '#f2c53a', rome: '#e2324a', pirates: '#78c43e',
+  vikings: '#3a4fb8', japan: '#f28a2e', mongols: '#d23a3a', greeks: '#5a3a6a', zulu: '#f2b33a',
+};
 
 /** A round, softly lit fruit with a stalk and a leaf. */
 function drawFruit(ctx: Ctx, x: number, y: number, col: string) {
@@ -800,6 +848,70 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       box(ctx, x, y, w, h, '#8a6440');
       roof(ctx, x, y - h, w + 2, 6, roofC);
       break;
+    case 'vikings':
+      // timber longhouse under a steep turf-dark roof, crossed gable beams on the great hall
+      box(ctx, x, y, w + 2, h - 1, '#8a5a33');
+      for (const ox of [-0.3, 0.05, 0.4]) { ctx.fillStyle = '#5a3a1e'; ctx.fillRect(x + ox * w - 0.6, y - h + 2, 1.2, h - 2); }
+      roof(ctx, x, y - h + 1, w + 5, big ? 12 : 9, roofC);
+      if (big) {
+        line(ctx, x - 3, y - h - 14, x + 1, y - h - 9, '#5a3a1e', 1.4);
+        line(ctx, x + 5, y - h - 14, x + 1, y - h - 9, '#5a3a1e', 1.4);
+      }
+      break;
+    case 'japan':
+      box(ctx, x, y, w, h, '#f4f1ea');
+      ctx.fillStyle = '#6a4a32';
+      ctx.fillRect(x - w / 2 + 1, y - h * 0.45, w - 2, 1.2);
+      roof(ctx, x, y - h, w + 6, 5, roofC);
+      if (big) {
+        // pagoda: two more shrinking tiers
+        box(ctx, x, y - h - 3, w - 5, 5, '#f4f1ea');
+        roof(ctx, x, y - h - 8, w + 1, 4.5, roofC);
+        box(ctx, x, y - h - 11, w - 9, 4, '#f4f1ea');
+        roof(ctx, x, y - h - 15, w - 3, 4, roofC);
+        line(ctx, x, y - h - 18, x, y - h - 25, '#c9974a', 1.2);
+      }
+      break;
+    case 'mongols': {
+      // round felt yurts with a coloured band and a smoke-hole crown
+      const r = big ? 9 : 6.5;
+      ellipse(ctx, x, y, r, r * 0.5, '#d8d0bc');
+      ctx.fillStyle = '#f2ecde';
+      ctx.fillRect(x - r, y - h * 0.8, r * 2, h * 0.8);
+      ellipse(ctx, x, y, r, r * 0.5, '#f2ecde');
+      ctx.fillStyle = color;
+      ctx.fillRect(x - r, y - h * 0.5, r * 2, 1.6);
+      poly(ctx, [x - r - 0.5, y - h * 0.8, x, y - h * 0.8 - r * 0.9, x + r + 0.5, y - h * 0.8], '#e6dcc4');
+      poly(ctx, [x, y - h * 0.8 - r * 0.9, x + r + 0.5, y - h * 0.8, x, y - h * 0.8 + r * 0.3], '#cfc3a8');
+      ellipse(ctx, x, y - h * 0.8 - r * 0.85, 1.6, 0.9, '#8a5a33');
+      ctx.fillStyle = '#b3302a';
+      ctx.fillRect(x + r * 0.2, y - h * 0.45, 2.4, h * 0.45);
+      break;
+    }
+    case 'greeks':
+      box(ctx, x, y, w, h, '#fbfaf6');
+      roof(ctx, x, y - h, w + 2, big ? 7 : 5, big ? '#e9e4d8' : roofC);
+      if (big) for (const ox of [-6, -2, 2, 6]) { ctx.fillStyle = '#dcd6c8'; ctx.fillRect(x + ox - 0.7, y - h + 2, 1.4, h - 2); }
+      break;
+    case 'zulu': {
+      // woven grass beehive huts
+      const r = big ? 9 : 6.5;
+      ellipse(ctx, x, y, r, r * 0.5, shade(roofC, -0.2));
+      ctx.fillStyle = roofC;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 1, r, r * 1.05, 0, Math.PI, 0);
+      ctx.fill();
+      ellipse(ctx, x, y - 1, r, r * 0.5, roofC);
+      for (const v of [0.35, 0.65]) {
+        ctx.strokeStyle = shade(roofC, -0.15);
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.ellipse(x, y - 1 - r * v, r * Math.sqrt(1 - v * v), r * 0.35, 0, 0, Math.PI);
+        ctx.stroke();
+      }
+      ellipse(ctx, x + r * 0.3, y - 0.5, 1.7, 2.2, '#3a2412');
+      break;
+    }
   }
   if (capital) {
     ctx.strokeStyle = '#3a2a1a';

@@ -4,7 +4,7 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
 import { createGame } from '../src/game/mapgen.ts';
-import { applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, score, tileActions } from '../src/game/rules.ts';
+import { applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -26,9 +26,11 @@ function checkInvariants(s: GameState) {
   for (const c of s.cities) assert.ok(c.pop >= 0 && c.level >= 1);
 }
 
-for (const seed of [1, 7, 42, 1234, 99999]) {
-  test(`5-empire AI game, seed ${seed}, runs 30 turns cleanly`, () => {
-    const s = createGame({ seed, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
+for (const [i, seed] of [1, 7, 42, 1234, 99999].entries()) {
+  // each seed plays a different line-up of five, so every empire gets exercised
+  const five = [0, 1, 2, 3, 4].map((j) => TRIBE_IDS[(i * 3 + j * 2) % TRIBE_IDS.length]).filter((t, j, a) => a.indexOf(t) === j);
+  test(`5-empire AI game, seed ${seed} (${five.join(', ')}), runs 30 turns cleanly`, () => {
+    const s = createGame({ seed, human: null, opponents: five, mode: 'perfection' });
     startTurn(s);
     let guard = 0;
     while (!s.over && guard++ < 1000) {
@@ -41,14 +43,75 @@ for (const seed of [1, 7, 42, 1234, 99999]) {
     const grew = s.cities.some((c) => c.level >= 3);
     assert.ok(grew, 'at least one city should reach level 3');
     const totalCities = s.cities.length;
-    assert.ok(totalCities > 5, 'villages should get captured');
+    assert.ok(totalCities > five.length, 'villages should get captured');
     const summary = s.players.map((p) => `${p.tribe}:${score(s, p.id)}/${citiesOf(s, p.id).length}c/${p.techs.length}t`).join(' ');
     console.log(`seed ${seed} winner=${s.players[s.winner!].tribe} ${summary}`);
   });
 }
 
+test('a 10-empire game runs 30 AI turns cleanly', () => {
+  const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
+  assert.equal(s.players.length, 10);
+  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 10, 'every empire gets its own capital');
+  startTurn(s);
+  let guard = 0;
+  while (!s.over && guard++ < 2000) {
+    aiTurn(s);
+    checkInvariants(s);
+    endTurn(s);
+    drain();
+  }
+  assert.ok(s.over);
+});
+
+test('the new empires\' bonuses', () => {
+  // Greeks: Academy makes research 1★ cheaper
+  const g = createGame({ seed: 3, human: 'greeks', opponents: ['rome'], mode: 'domination' });
+  const r = createGame({ seed: 3, human: 'rome', opponents: ['greeks'], mode: 'domination' });
+  assert.equal(techCost(g, 0, 'hunting'), techCost(r, 0, 'hunting') - 1);
+  // Mongols: mounted units cost 1★ less
+  const m = createGame({ seed: 3, human: 'mongols', opponents: ['rome'], mode: 'domination' });
+  assert.equal(trainCost(m, 0, 'rider'), 2);
+  assert.equal(trainCost(m, 0, 'horsearcher'), 3);
+  assert.equal(trainCost(m, 0, 'warrior'), 2);
+  // Zulu: hunting grows the city by 2
+  const z = createGame({ seed: 3, human: 'zulu', opponents: ['rome'], mode: 'domination' });
+  const cap = citiesOf(z, 0)[0];
+  const game = [...z.tiles].find((t) => t.owner === cap.id && t.resource === 'animal')!;
+  assert.ok(game, 'zulu start with game nearby');
+  z.players[0].stars = 10;
+  const grown = () => cap.pop + Array.from({ length: cap.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0);
+  const before = grown();
+  assert.ok(doAction(z, 0, game, 'harvest'));
+  assert.equal(grown() - before, 2);
+  // Japanese: +1 defence inside their borders
+  const j = createGame({ seed: 3, human: 'japan', opponents: ['rome'], mode: 'domination' });
+  const jc = citiesOf(j, 0)[0];
+  const home = j.tiles.find((t) => t.owner === jc.id && isLand(t) && t.terrain === 'field' && t.cityId === null && !j.units.some((u) => u.x === t.x && u.y === t.y))!;
+  const defender = spawnUnit(j, 'warrior', 0, home.x, home.y, null);
+  const raider = spawnUnit(j, 'warrior', 1, home.x + 1, home.y, null);
+  const jr = createGame({ seed: 3, human: 'rome', opponents: ['japan'], mode: 'domination' });
+  jr.tiles = j.tiles.map((t) => ({ ...t }));
+  jr.cities = j.cities.map((c) => ({ ...c }));
+  const d2 = spawnUnit(jr, 'warrior', 0, home.x, home.y, null);
+  const r2 = spawnUnit(jr, 'warrior', 1, home.x + 1, home.y, null);
+  assert.ok(previewCombat(j, raider, defender).dmg < previewCombat(jr, r2, d2).dmg, 'home ground blunts the attack');
+  // Vikings: a winning attacker heals 3
+  const v = createGame({ seed: 3, human: 'vikings', opponents: ['rome'], mode: 'domination' });
+  const vc = citiesOf(v, 0)[0];
+  const spot = v.tiles.find((t) => isLand(t) && t.terrain === 'field' && t.cityId === null && Math.abs(t.x - vc.x) + Math.abs(t.y - vc.y) > 3 && tileAt(v, t.x + 1, t.y)?.terrain === 'field' && !v.units.some((u) => Math.abs(u.x - t.x) < 3 && Math.abs(u.y - t.y) < 3))!;
+  const axe = spawnUnit(v, 'berserker', 0, spot.x, spot.y, null);
+  const foe = spawnUnit(v, 'warrior', 1, spot.x + 1, spot.y, null);
+  v.players[0].explored.fill(true);
+  axe.hp = 8;
+  foe.hp = 1;
+  axe.moved = axe.attacked = false;
+  assert.ok(attack(v, axe, foe));
+  assert.equal(axe.hp, 11);
+});
+
 test('huge 5-empire map runs 30 AI turns cleanly', () => {
-  const s = createGame({ seed: 77, human: null, opponents: [...TRIBE_IDS], mode: 'perfection', mapSize: 'huge' });
+  const s = createGame({ seed: 77, human: null, opponents: TRIBE_IDS.slice(0, 5), mode: 'perfection', mapSize: 'huge' });
   assert.equal(s.size, 26);
   startTurn(s);
   let guard = 0;

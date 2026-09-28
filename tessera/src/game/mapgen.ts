@@ -19,9 +19,9 @@ export interface NewGameOptions {
 
 // Map edge length by map size and number of empires.
 const SIZES: Record<MapSize, Record<number, number>> = {
-  normal: { 2: 11, 3: 13, 4: 15, 5: 16 },
-  large: { 2: 15, 3: 17, 4: 19, 5: 20 },
-  huge: { 2: 20, 3: 22, 4: 24, 5: 26 },
+  normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22 },
+  large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26 },
+  huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30 },
 };
 
 export function createGame(opts: NewGameOptions): GameState {
@@ -180,6 +180,11 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
     polynesia: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
     rome: [{ terrain: 'field', res: 'fruit' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
     pirates: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'mountain', res: 'ore' }],
+    vikings: [{ terrain: 'forest', res: 'animal' }, { terrain: 'mountain', res: 'ore' }, { terrain: 'shallow', res: 'fish' }],
+    japan: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
+    mongols: [{ terrain: 'field', res: 'fruit' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
+    greeks: [{ terrain: 'field', res: 'fruit' }, { terrain: 'field', res: 'fruit' }, { terrain: 'field', res: 'crop' }],
+    zulu: [{ terrain: 'forest', res: 'animal' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
   };
   const free = rng.shuffle(ring.filter((t) => !t.resource));
   for (const w of want[tribe]) {

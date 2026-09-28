@@ -17,7 +17,10 @@ export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) =
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
 export const isExplored = (s: GameState, pid: number, x: number, y: number) => s.players[pid].explored[y * s.size + x];
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
-const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight'];
+const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher'];
+
+/** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
+export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0);
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
 export const seaBonus = (s: GameState, u: Unit) => (def(u).naval && s.players[u.owner].tribe === 'pirates' ? 1 : 0);
@@ -52,7 +55,8 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const t = TECH_BY_ID[tech];
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
-  return hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base;
+  const cost = hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base;
+  return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
 export function researchStatus(s: GameState, pid: number, tech: string): 'owned' | 'available' | 'locked' {
@@ -215,7 +219,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
     const full = city.units >= unitCap(city);
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
-      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, d.cost, d.tech, k,
+      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
         u ? 'City tile is occupied' : full ? `City supports ${unitCap(city)} units` : undefined);
     }
     return acts;
@@ -234,7 +238,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   // a resource can be developed once: a farm or mine keeps its crop or ore but can't be rebuilt
   if (!t.improvement) switch (t.resource) {
     case 'fruit': add('harvest', 'Harvest Fruit', '+1 population.', 2, 'gathering', 'fruit'); break;
-    case 'animal': add('harvest', 'Hunt', `+1 population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
+    case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1} population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
     case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;
     case 'whale': add('harvest', 'Whaling', 'Gain 10★.', 2, 'whaling', 'whale'); break;
     case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' ? 3 : 2} population.`, 5, 'farming', 'farm'); break;
@@ -302,6 +306,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       t.resource = null;
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
+      if (r === 'animal' && p.tribe === 'zulu') return grow(2); // Great Hunt
       return grow(r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
     }
     case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
@@ -541,7 +546,9 @@ export function defenseBonus(s: GameState, u: Unit) {
   return 1;
 }
 
-const unitDef = (s: GameState, u: Unit) => def(u).def + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0);
+const unitDef = (s: GameState, u: Unit) => def(u).def
+  + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0)
+  + (s.players[u.owner].tribe === 'japan' && tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) === u.owner ? 1 : 0); // Home Ground
 
 export function attackOptions(s: GameState, u: Unit): Unit[] {
   const d = def(u);
@@ -583,6 +590,11 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     if (a.veteranKills >= 3 && !a.veteran) {
       a.veteran = true;
       a.hp = maxHp(a);
+    } else if (pa.tribe === 'vikings' && a.hp < maxHp(a)) {
+      // Victory Feast
+      const before = a.hp;
+      a.hp = Math.min(maxHp(a), a.hp + 3);
+      emit({ type: 'heal', unitId: a.id, x: a.x, y: a.y, amount: a.hp - before });
     }
     // Melee attackers advance into the tile they cleared.
     const t = tileAt(s, d.x, d.y)!;

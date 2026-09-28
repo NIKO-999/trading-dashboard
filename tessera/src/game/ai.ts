@@ -2,7 +2,7 @@ import { UNITS } from '../data/units';
 import { dist, isLand, neighbors, tileAt } from './grid';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
-  previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, unitCap, unitAt,
+  previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
 
@@ -143,7 +143,7 @@ function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
     if (c.units >= unitCap(c) || unitAt(s, c.x, c.y)) continue;
     const t = tileAt(s, c.x, c.y)!;
     const kinds = trainableKinds(s, pid)
-      .filter((k) => UNITS[k].cost <= p.stars && (UNITS[k].tech === null || p.techs.includes(UNITS[k].tech!)))
+      .filter((k) => trainCost(s, pid, k) <= p.stars && (UNITS[k].tech === null || p.techs.includes(UNITS[k].tech!)))
       .sort((a, b) => {
         const va = defensive ? UNITS[a].def * 2 + UNITS[a].atk : UNITS[a].atk * 2 + UNITS[a].move;
         const vb = defensive ? UNITS[b].def * 2 + UNITS[b].atk : UNITS[b].atk * 2 + UNITS[b].move;

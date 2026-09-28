@@ -12,6 +12,11 @@ const LOOK: Record<TribeId, Look> = {
   polynesia: { skin: '#a5673a', hair: '#1b130d' },
   rome: { skin: '#e8bf93', hair: '#4a3222' },
   pirates: { skin: '#e5b387', hair: '#3b2616' },
+  vikings: { skin: '#f0c8a0', hair: '#d9a441' },
+  japan: { skin: '#e9c49a', hair: '#16161a' },
+  mongols: { skin: '#d6a676', hair: '#1a1612' },
+  greeks: { skin: '#dcae80', hair: '#3a2616' },
+  zulu: { skin: '#7a4a2a', hair: '#1a120c' },
 };
 
 const GOLD = '#f0c43a';
@@ -28,6 +33,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
     case 'rider':
+    case 'horsearcher':
     case 'knight': return drawRider(ctx, kind, tribe, x, y);
     case 'chariot': return drawChariot(ctx, tribe, x, y);
     default: return drawFootUnit(ctx, kind, tribe, x, y, kind === 'giant' ? 1.4 : 1);
@@ -53,6 +59,11 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'polynesia': torso = L.skin; legs = L.skin; break;
     case 'rome': torso = '#b3302a'; legs = L.skin; break;
     case 'pirates': torso = '#f1efe6'; legs = '#3b3b46'; sleeves = '#f1efe6'; break;
+    case 'vikings': torso = T.color; legs = '#6a5238'; sleeves = T.color; break;
+    case 'japan': torso = kind === 'samurai' || armoured ? '#2a2a34' : T.color; legs = '#3a3040'; sleeves = torso; break;
+    case 'mongols': torso = T.color; legs = '#4a3a2a'; sleeves = T.color; break;
+    case 'greeks': torso = '#f4f1ea'; legs = L.skin; break;
+    case 'zulu': torso = L.skin; legs = L.skin; break;
   }
 
   // Legs (hidden when riding).
@@ -60,10 +71,12 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (!seated) {
     box(ctx, x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, legs);
     box(ctx, x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, legs);
-    const shoe = tribe === 'pirates' ? DARK : '#6b4424';
-    faceQuad(ctx, 'L', x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, 0, 1, 0, tribe === 'pirates' ? 0.45 : 0.2, shoe);
-    faceQuad(ctx, 'R', x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, 0, 1, 0, tribe === 'pirates' ? 0.45 : 0.2, shoe);
-    faceQuad(ctx, 'L', x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, 0, 1, 0, tribe === 'pirates' ? 0.45 : 0.2, shoe);
+    const boots = tribe === 'pirates' || tribe === 'mongols' || tribe === 'vikings';
+    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'zulu' ? L.skin : '#6b4424';
+    const sv = boots ? 0.45 : 0.2;
+    faceQuad(ctx, 'L', x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, 0, 1, 0, sv, shoe);
+    faceQuad(ctx, 'R', x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, 0, 1, 0, sv, shoe);
+    faceQuad(ctx, 'L', x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, 0, 1, 0, sv, shoe);
   }
 
   // Back arm, torso, front arm.
@@ -76,7 +89,8 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   box(ctx, x + 6 * k, hip + 2.5 * k, 2.4 * k, 2 * k, L.skin);
   if (tribe === 'polynesia') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.55, 0.75, '#2a1a10');
   if (tribe === 'egypt') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.78, GOLD);
-  if (tribe === 'rome' || armoured) box(ctx, x + 6 * k, hip - 5 * k, 3.4 * k, 2.2 * k, tribe === 'egypt' ? BRONZE : STEEL);
+  if (tribe === 'zulu') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.66, '#f4efe0'); // cow-tail armband
+  if (tribe === 'rome' || armoured) box(ctx, x + 6 * k, hip - 5 * k, 3.4 * k, 2.2 * k, tribe === 'egypt' || tribe === 'greeks' ? BRONZE : tribe === 'japan' ? '#2a2a34' : STEEL);
 
   // Head.
   const hy = hip - th;
@@ -135,6 +149,44 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       faceQuad(ctx, 'R', x, y, w, h, 0.45, 0.6, 0.26, 0.36, GOLD);
       if (armoured) faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0.5, 1, '#6b2a2a'); // captain's coat
       break;
+    case 'vikings':
+      band(ctx, x, y, w, h, 0, 0.3, shade(TRIBES.vikings.color, -0.15)); // tunic skirt
+      band(ctx, x, y, w, h, 0.3, 0.4, '#4a3322'); // belt
+      faceQuad(ctx, 'R', x, y, w, h, 0.42, 0.58, 0.3, 0.4, STEEL);
+      if (armoured) for (const v of [0.44, 0.58, 0.72]) band(ctx, x, y, w, h, v, v + 0.1, '#9aa3ad'); // mail
+      if (kind === 'berserker' || kind === 'giant') band(ctx, x, y, w, h, 0.74, 1, '#8a6a4a'); // wolf-fur mantle
+      break;
+    case 'japan':
+      if (kind === 'samurai' || armoured) {
+        for (const v of [0.46, 0.62, 0.78]) band(ctx, x, y, w, h, v, v + 0.05, TRIBES.japan.color); // laced plates
+        band(ctx, x, y, w, h, 0, 0.3, '#3a3040');
+      } else {
+        faceQuad(ctx, 'R', x, y, w, h, 0.3, 0.55, 0.5, 1, '#f4f1ea'); // crossed collar
+      }
+      band(ctx, x, y, w, h, 0.3, 0.42, kind === 'samurai' ? '#c8372d' : '#2a2a34'); // obi sash
+      break;
+    case 'mongols':
+      faceQuad(ctx, 'R', x, y, w, h, 0.55, 0.72, 0.3, 1, '#c9974a'); // robe closure
+      band(ctx, x, y, w, h, 0.3, 0.4, '#2b5fb8'); // sash
+      band(ctx, x, y, w, h, 0.9, 1, '#6a4a2a'); // fur collar
+      if (armoured) for (const v of [0.44, 0.6]) band(ctx, x, y, w, h, v, v + 0.12, '#8a5a33'); // leather scales
+      break;
+    case 'greeks':
+      band(ctx, x, y, w, h, 0, 0.08, '#2b5fb8'); // hem
+      band(ctx, x, y, w, h, 0.34, 0.42, '#c9974a'); // belt
+      if (armoured || kind === 'hoplite' || kind === 'defender') {
+        band(ctx, x, y, w, h, 0.42, 1, BRONZE); // cuirass
+        faceQuad(ctx, 'R', x, y, w, h, 0.3, 0.7, 0.6, 0.66, shade(BRONZE, -0.2));
+      }
+      break;
+    case 'zulu':
+      band(ctx, x, y, w, h, 0, 0.36, '#5a3a22'); // hide kilt
+      for (const [u, v] of [[0.15, 0.08], [0.55, 0.2], [0.8, 0.04]]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.16, v, v + 0.12, '#f4efe0');
+      faceQuad(ctx, 'L', x, y, w, h, 0.3, 0.5, 0.1, 0.22, '#f4efe0');
+      band(ctx, x, y, w, h, 0.84, 0.9, '#f4efe0'); // bead necklace
+      band(ctx, x, y, w, h, 0.78, 0.84, '#c8372d');
+      if (armoured) band(ctx, x, y, w, h, 0.5, 0.74, '#6a4a2a');
+      break;
   }
 }
 
@@ -161,6 +213,26 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
       faceQuad(ctx, 'R', x, y, w, h, 0.58, 0.86, 0.4, 0.66, '#101010');
       faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0, 0.3, '#5a3a22'); // beard
       faceQuad(ctx, 'L', x, y, w, h, 0.5, 1, 0, 0.3, '#5a3a22');
+      break;
+    case 'vikings':
+      faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0, 0.32, LOOK.vikings.hair); // braided beard
+      faceQuad(ctx, 'L', x, y, w, h, 0.5, 1, 0, 0.32, LOOK.vikings.hair);
+      faceQuad(ctx, 'R', x, y, w, h, 0.42, 0.58, -0.12, 0.05, shade(LOOK.vikings.hair, -0.2));
+      break;
+    case 'japan':
+      if (kind === 'samurai' || kind === 'giant') faceQuad(ctx, 'R', x, y, w, h, 0.26, 0.74, 0.3, 0.35, '#16161a'); // moustache
+      break;
+    case 'mongols':
+      faceQuad(ctx, 'R', x, y, w, h, 0.25, 0.75, 0.3, 0.35, LOOK.mongols.hair); // drooping moustache
+      faceQuad(ctx, 'R', x, y, w, h, 0.22, 0.3, 0.14, 0.33, LOOK.mongols.hair);
+      faceQuad(ctx, 'R', x, y, w, h, 0.7, 0.78, 0.14, 0.33, LOOK.mongols.hair);
+      break;
+    case 'greeks':
+      faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0, 0.24, LOOK.greeks.hair); // trimmed beard
+      faceQuad(ctx, 'L', x, y, w, h, 0.6, 1, 0, 0.24, LOOK.greeks.hair);
+      break;
+    case 'zulu':
+      for (const u of [0.1, 0.84]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, 0.34, 0.4, '#f4efe0'); // white dots
       break;
   }
 }
@@ -240,14 +312,87 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       }
       break;
     }
+    case 'vikings': {
+      if (kind === 'archer' || kind === 'explorer') {
+        box(ctx, x, top + 2.4 * k, hw + 0.4 * k, 1.8 * k, '#6a5238'); // leather band
+        break;
+      }
+      // rounded iron cap with a nose guard, braids down the back
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw, 10.5 * k, 0, 0.25, 0.1, 0.7, LOOK.vikings.hair);
+      box(ctx, x, top + 3.8 * k, hw + 1.2 * k, 4 * k, STEEL);
+      ellipse(ctx, x, top - 0.2 * k, 5.6 * k, 3.4 * k, shade(STEEL, 0.1));
+      line(ctx, x - 5.2 * k, top + 0.6 * k, x + 5.2 * k, top - 0.4 * k, shade(STEEL, -0.25), 1 * k);
+      faceQuad(ctx, 'R', x, top + 10.5 * k, hw, 10.5 * k, 0.44, 0.56, 0.4, 0.8, STEEL);
+      if (kind === 'berserker' || kind === 'giant') {
+        // wolf pelt over the helmet
+        ellipse(ctx, x - 1 * k, top - 0.6 * k, 5.8 * k, 3.2 * k, '#8a6a4a');
+        box(ctx, x - 3.6 * k, top - 2.2 * k, 2.2 * k, 2.6 * k, '#8a6a4a');
+        box(ctx, x + 2.6 * k, top - 1.4 * k, 2.2 * k, 2.6 * k, '#8a6a4a');
+      }
+      break;
+    }
+    case 'japan': {
+      if (kind === 'samurai' || kind === 'swordsman' || kind === 'knight' || kind === 'giant') {
+        // lacquered helmet with neck flaps and a golden crest
+        box(ctx, x, top + 3.8 * k, hw + 1.6 * k, 4.4 * k, '#2a2a34');
+        faceQuad(ctx, 'L', x, top + 10.5 * k, hw + 1.6 * k, 10 * k, 0, 1, 0.45, 0.7, '#2a2a34');
+        ellipse(ctx, x, top - 0.3 * k, 5.2 * k, 2.8 * k, '#34343f');
+        poly(ctx, [x - 1 * k, top, x - 6 * k, top - 8 * k, x - 3.6 * k, top - 1 * k, x + 3.6 * k, top - 0.4 * k, x + 6 * k, top - 7.6 * k, x + 1 * k, top + 0.4 * k], GOLD);
+        break;
+      }
+      if (kind === 'archer' || kind === 'catapult' || kind === 'explorer') {
+        // wide straw hat
+        poly(ctx, [x - 8.5 * k, top + 3.5 * k, x, top - 4 * k, x + 8.5 * k, top + 3.5 * k, x, top + 6.5 * k], '#d8b86a');
+        poly(ctx, [x, top - 4 * k, x + 8.5 * k, top + 3.5 * k, x, top + 6.5 * k], '#b8984a');
+        break;
+      }
+      box(ctx, x + 1 * k, top + 0.8 * k, 2.4 * k, 3.4 * k, LOOK.japan.hair); // topknot
+      box(ctx, x, top + 3.2 * k, hw + 0.4 * k, 1.8 * k, '#f4f1ea'); // headband
+      faceQuad(ctx, 'R', x, top + 3.2 * k, hw + 0.4 * k, 1.8 * k, 0.4, 0.6, 0, 1, '#c8372d');
+      break;
+    }
+    case 'mongols': {
+      const helm = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender';
+      box(ctx, x, top + 3 * k, hw + 1.6 * k, 3 * k, '#6a4a2a'); // fur brim
+      poly(ctx, [x - 5 * k, top + 0.5 * k, x, top - 8 * k, x + 5 * k, top + 0.5 * k, x, top + 2.4 * k], helm ? STEEL : TRIBES.mongols.color);
+      poly(ctx, [x, top - 8 * k, x + 5 * k, top + 0.5 * k, x, top + 2.4 * k], shade(helm ? STEEL : TRIBES.mongols.color, -0.2));
+      if (helm) line(ctx, x, top - 8 * k, x, top - 12 * k, STEEL, 1 * k);
+      else ellipse(ctx, x, top - 8.2 * k, 1.3 * k, 1.3 * k, '#c8372d'); // tassel
+      break;
+    }
+    case 'greeks': {
+      if (kind === 'archer' || kind === 'catapult' || kind === 'explorer') {
+        // olive wreath
+        box(ctx, x, top + 2.4 * k, hw + 0.6 * k, 1.6 * k, '#6a8a3a');
+        for (const u of [0.2, 0.5, 0.8]) faceQuad(ctx, 'R', x, top + 2.4 * k, hw + 0.6 * k, 1.6 * k, u, u + 0.12, -0.4, 1.4, '#8aaa4a');
+        break;
+      }
+      // bronze helmet with cheek pieces and a tall front-to-back crest
+      box(ctx, x, top + 4.4 * k, hw + 1.2 * k, 5 * k, BRONZE);
+      faceQuad(ctx, 'R', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.04, 0.3, 0.12, 0.72, BRONZE);
+      faceQuad(ctx, 'R', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.72, 0.96, 0.12, 0.72, BRONZE);
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0, 1, 0.3, 0.72, BRONZE);
+      const c = kind === 'giant' ? GOLD : TRIBES.greeks.color;
+      poly(ctx, [x + 4.5 * k, top + 1.5 * k, x + 4 * k, top - 6 * k, x - 1 * k, top - 8 * k, x - 6 * k, top - 5 * k, x - 7 * k, top + 3 * k, x - 3 * k, top - 1 * k, x + 1 * k, top - 1 * k], c);
+      poly(ctx, [x + 4 * k, top - 6 * k, x - 1 * k, top - 8 * k, x - 6 * k, top - 5 * k, x - 1 * k, top - 6 * k], shade(c, 0.25));
+      break;
+    }
+    case 'zulu': {
+      box(ctx, x, top + 2.8 * k, hw + 1 * k, 2.4 * k, '#6a4a2a'); // fur headband
+      faceQuad(ctx, 'R', x, top + 2.8 * k, hw + 1 * k, 2.4 * k, 0.3, 0.45, 0, 1, '#c9a45a');
+      const tall = kind === 'impi' || kind === 'giant' || kind === 'swordsman' || kind === 'knight';
+      poly(ctx, [x - 2 * k, top + 1 * k, x - 3.6 * k, top - (tall ? 11 : 7) * k, x - 0.6 * k, top + 0.6 * k], '#f4efe0'); // feathers
+      if (tall) poly(ctx, [x + 1 * k, top + 1 * k, x + 2.6 * k, top - 10 * k, x + 2.4 * k, top + 0.6 * k], '#1a1a1a');
+      break;
+    }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'greeks' || tribe === 'zulu' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
   // Things carried on the back go first.
   if (kind === 'archer' || kind === 'explorer') box(ctx, x - 4.5 * k, y - 8 * k, 4 * k, 8 * k, kind === 'explorer' ? '#8a5a2b' : '#6b4424');
-  const shieldFirst = kind === 'defender' || kind === 'legionary' || kind === 'jaguar';
+  const shieldFirst = kind === 'defender' || kind === 'legionary' || kind === 'jaguar' || kind === 'hoplite' || kind === 'impi' || (kind === 'warrior' && tribe === 'vikings');
   const b = figure(ctx, kind, tribe, x, y, k);
   drawWeapon(ctx, kind, tribe, b, k);
   if (shieldFirst) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
@@ -260,7 +405,25 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
     case 'jaguar':
     case 'giant':
     case 'legionary':
+    case 'impi':
       meleeWeapon(ctx, tribe, kind, x, y, k);
+      break;
+    case 'berserker':
+      // long-hafted bearded axe held high
+      line(ctx, x - 1 * k, y + 3 * k, x + 3 * k, y - 16 * k, WOOD, 2 * k);
+      poly(ctx, [x + 2.6 * k, y - 11 * k, x + 9 * k, y - 16 * k, x + 9.5 * k, y - 8 * k, x + 3.4 * k, y - 8.6 * k], STEEL);
+      poly(ctx, [x + 9 * k, y - 16 * k, x + 9.5 * k, y - 8 * k, x + 8 * k, y - 11 * k], shade(STEEL, -0.25));
+      break;
+    case 'samurai':
+      // katana: dark wrapped grip, gold guard, long curved blade
+      line(ctx, x - 1 * k, y + 2 * k, x + 0.4 * k, y - 2.5 * k, '#2a2a34', 2 * k);
+      ellipse(ctx, x + 0.5 * k, y - 2.8 * k, 1.8 * k, 0.9 * k, GOLD);
+      ctx.strokeStyle = STEEL;
+      ctx.lineWidth = 1.8 * k;
+      ctx.beginPath();
+      ctx.moveTo(x + 0.6 * k, y - 3.2 * k);
+      ctx.quadraticCurveTo(x + 1 * k, y - 12 * k, x + 5 * k, y - 17 * k);
+      ctx.stroke();
       break;
     case 'swordsman':
       line(ctx, x, y + 1 * k, x + 3 * k, y - 14 * k, tribe === 'egypt' ? BRONZE : STEEL, 2.4 * k);
@@ -283,8 +446,9 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
       ellipse(ctx, x + 13 * k, y - 7 * k, 1.1 * k, 1.1 * k, '#1a1a1a');
       break;
     case 'defender':
+    case 'hoplite':
       line(ctx, x + 1 * k, y + 5 * k, x + 2 * k, y - 18 * k, WOOD, 1.7 * k);
-      poly(ctx, [x + 2 * k, y - 22 * k, x + 0.4 * k, y - 17 * k, x + 3.6 * k, y - 17 * k], tribe === 'egypt' ? BRONZE : STEEL);
+      poly(ctx, [x + 2 * k, y - 22 * k, x + 0.4 * k, y - 17 * k, x + 3.6 * k, y - 17 * k], tribe === 'egypt' || tribe === 'greeks' ? BRONZE : STEEL);
       break;
     case 'explorer':
       line(ctx, x + 1 * k, y + 6 * k, x + 2.5 * k, y - 12 * k, '#8a5a2b', 1.6 * k);
@@ -335,6 +499,38 @@ function meleeWeapon(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: num
       ctx.stroke();
       break;
     }
+    case 'vikings':
+      // hand axe
+      line(ctx, x, y + 2 * k, x + 1.6 * k, y - 10 * k, WOOD, 1.8 * k);
+      poly(ctx, [x + 1.2 * k, y - 7 * k, x + 6 * k, y - 10.5 * k, x + 6.4 * k, y - 5 * k, x + 1.6 * k, y - 5.4 * k], STEEL);
+      break;
+    case 'japan':
+      // spear with a straight blade
+      line(ctx, x - 0.5 * k, y + 5 * k, x + 2.5 * k, y - 16 * k, '#4a3322', 1.6 * k);
+      poly(ctx, [x + 3 * k, y - 21 * k, x + 1.7 * k, y - 16 * k, x + 3.5 * k, y - 15.6 * k], STEEL);
+      break;
+    case 'mongols': {
+      // curved sabre
+      line(ctx, x - 1.5 * k, y, x + 1.8 * k, y + 1 * k, GOLD, 1.6 * k);
+      ctx.strokeStyle = STEEL;
+      ctx.lineWidth = 2 * k;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x - 1 * k, y - 9 * k, x + 5 * k, y - 14 * k);
+      ctx.stroke();
+      break;
+    }
+    case 'greeks':
+      // short leaf-bladed sword
+      line(ctx, x, y + 1 * k, x + 1.6 * k, y - 3 * k, WOOD, 1.8 * k);
+      poly(ctx, [x + 0.4 * k, y - 3 * k, x + 3 * k, y - 3 * k, x + 3.8 * k, y - 8 * k, x + 2.6 * k, y - 12 * k, x + 1 * k, y - 8 * k], BRONZE);
+      line(ctx, x - 1.4 * k, y - 2.6 * k, x + 4.4 * k, y - 3.4 * k, BRONZE, 1.2 * k);
+      break;
+    case 'zulu':
+      // short stabbing spear with a broad blade
+      line(ctx, x - 0.5 * k, y + 3 * k, x + 2 * k, y - 8 * k, WOOD, 1.7 * k);
+      poly(ctx, [x + 2 * k, y - 7 * k, x + 4 * k, y - 11 * k, x + 3.4 * k, y - 16 * k, x + 1 * k, y - 11 * k], STEEL);
+      break;
   }
   void kind;
 }
@@ -371,6 +567,44 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       ellipse(ctx, x - 1 * k, y - 5 * k, 4.8 * k, 5.4 * k, '#5a4a3a');
       ellipse(ctx, x - 1 * k, y - 5 * k, 1.4 * k, 1.4 * k, STEEL);
       break;
+    case 'vikings': {
+      // round painted board shield with an iron boss
+      const cx = x - 1 * k, cy = y - 5 * k, rx = 5 * k, ry = 5.6 * k;
+      ellipse(ctx, cx, cy, rx + 0.7 * k, ry + 0.7 * k, '#6b4424');
+      ellipse(ctx, cx, cy, rx, ry, T.color);
+      poly(ctx, [cx, cy, cx, cy - ry, cx - rx * 0.72, cy - ry * 0.7], '#f4efe0');
+      poly(ctx, [cx, cy, cx, cy + ry, cx + rx * 0.72, cy + ry * 0.7], '#f4efe0');
+      ellipse(ctx, cx, cy, 1.5 * k, 1.5 * k, STEEL);
+      break;
+    }
+    case 'japan':
+      poly(ctx, [x - 4 * k, y + 2 * k, x - 4 * k, y - 11 * k, x + 2.5 * k, y - 12.5 * k, x + 2.5 * k, y + 1 * k], '#8a6a44');
+      ellipse(ctx, x - 0.8 * k, y - 5.6 * k, 2 * k, 2.2 * k, T.color);
+      ellipse(ctx, x - 0.8 * k, y - 5.6 * k, 0.9 * k, 1 * k, '#f4f1ea');
+      break;
+    case 'mongols':
+      ellipse(ctx, x - 1 * k, y - 5 * k, 4.4 * k, 4.8 * k, '#c9a45a');
+      for (const r of [3, 1.6]) {
+        ctx.strokeStyle = '#8a6a3a';
+        ctx.lineWidth = 0.8 * k;
+        ctx.beginPath();
+        ctx.ellipse(x - 1 * k, y - 5 * k, r * k, r * 1.1 * k, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      break;
+    case 'greeks':
+      // big round bronze shield with a painted emblem
+      ellipse(ctx, x - 1 * k, y - 5 * k, 6.2 * k, 6.8 * k, shade(BRONZE, -0.15));
+      ellipse(ctx, x - 1 * k, y - 5 * k, 5.2 * k, 5.8 * k, T.color);
+      poly(ctx, [x - 4 * k, y - 2 * k, x - 1 * k, y - 9 * k, x + 2 * k, y - 2 * k, x + 0.6 * k, y - 2 * k, x - 1 * k, y - 6 * k, x - 2.6 * k, y - 2 * k], '#f4efe0');
+      break;
+    case 'zulu':
+      // tall oval cowhide shield on a stick
+      line(ctx, x - 1 * k, y + 4 * k, x - 1 * k, y - 18 * k, WOOD, 1 * k);
+      ellipse(ctx, x - 1 * k, y - 7 * k, 4.2 * k, 8.4 * k, '#f4efe0');
+      for (const [ox, oy, r] of [[-2, -11, 1.8], [1, -5, 2.2], [-2.2, -2, 1.4]]) ellipse(ctx, x + ox * k, y + oy * k, r * k, r * 1.2 * k, '#2a1a10');
+      line(ctx, x - 1 * k, y - 14 * k, x - 1 * k, y, '#8a5a33', 0.8 * k);
+      break;
   }
   void kind;
 }
@@ -398,8 +632,10 @@ export function drawHorse(ctx: Ctx, x: number, y: number, k: number, coat: strin
 function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
   const knight = kind === 'knight';
   const T = TRIBES[tribe];
-  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, knight ? '#eeeeee' : tribe === 'pirates' ? '#3a2a22' : '#8a5a33', knight ? '#9aa3ad' : '#2a1a10', knight ? T.color : undefined);
+  const coat = knight ? '#eeeeee' : tribe === 'pirates' ? '#3a2a22' : tribe === 'mongols' ? '#a07845' : '#8a5a33';
+  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, coat, knight ? '#9aa3ad' : '#2a1a10', knight ? T.color : undefined);
   const b = figure(ctx, kind, tribe, saddle.x, saddle.y, 0.9, true);
+  if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, b, 0.9);
   // lance with a pennant
   const { x: hx, y: hy } = b.hand;
   line(ctx, hx - 3, hy + 6, hx + 8, hy - 20, WOOD, knight ? 2 : 1.6);
@@ -502,8 +738,9 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
       box(ctx, x, y - 2, 18, 4, '#8a5a2b');
       faceQuadLine(ctx, x - 9, y - 4, x + 9, y - 4);
       wheels(BRONZE);
-      box(ctx, x - 3, y - 6, 3, 8, '#b3302a');
-      box(ctx, x + 3, y - 4.5, 3, 8, '#b3302a');
+      const paint = tribe === 'rome' ? '#b3302a' : T.color;
+      box(ctx, x - 3, y - 6, 3, 8, paint);
+      box(ctx, x + 3, y - 4.5, 3, 8, paint);
       line(ctx, x - 2, y - 11, x + 11, y - 26, '#6b4424', 3);
       ellipse(ctx, x + 11.5, y - 27, 4.2, 3, '#8a5a2b');
       ellipse(ctx, x + 11.5, y - 29, 2.8, 2.6, '#8a8a90');
@@ -536,7 +773,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
     figure(ctx, 'warrior', tribe, x + 8, y - 5, 0.55, true);
     return;
   }
-  const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : '#8a5a2b';
+  const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
     // papyrus boat with curled ends
@@ -546,7 +783,14 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
     poly(ctx, [x - w, y - 5, x + w + 3, y - 6, x + w * 0.72, y + 3, x - w * 0.7, y + 3], hull);
     poly(ctx, [x - w, y - 5, x + w + 3, y - 6, x + w * 0.9, y - 8.5, x - w * 0.9, y - 8], shade(hull, 0.25));
   }
-  if (tier >= 1 || tribe === 'rome') for (let i = 0; i < 4 + tier * 2; i++) line(ctx, x - w * 0.6 + i * 5, y - 1, x - w * 0.6 + i * 5 - 3, y + 6, '#6b4424', 1.1); // oars
+  if (tribe === 'vikings') {
+    // carved dragon prow and a row of shields
+    line(ctx, x + w + 1, y - 6, x + w + 4, y - 15, hull, 2.6);
+    ellipse(ctx, x + w + 5.5, y - 16, 3, 2, hull);
+    ellipse(ctx, x + w + 6, y - 16.6, 0.7, 0.7, GOLD);
+    if (tier < 2) for (let i = 0; i < 4; i++) ellipse(ctx, x - w * 0.5 + i * 7, y - 7, 2.2, 2.2, i % 2 ? T.color : '#f4efe0');
+  }
+  if (tier >= 1 || tribe === 'rome' || tribe === 'vikings') for (let i = 0; i < 4 + tier * 2; i++) line(ctx, x - w * 0.6 + i * 5, y - 1, x - w * 0.6 + i * 5 - 3, y + 6, '#6b4424', 1.1); // oars
   if (tier === 2) for (let i = 0; i < 5; i++) ellipse(ctx, x - w * 0.55 + i * 7, y - 7.5, 2.2, 2.2, i % 2 ? T.color : GOLD); // shields on the rail
   // mast and sail
   line(ctx, x, y - 6, x, y - (34 + tier * 6), '#5a3b1e', 2);
@@ -567,12 +811,17 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
 
 // ---------------------------------------------------------------- wildlife (map resources)
 
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' }> = {
+const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' }> = {
   egypt: { body: '#d0a45e', feature: 'hump' },
   aztec: { body: '#9c6236', feature: 'antlers' },
   polynesia: { body: '#e99aa2', feature: 'snout' },
   rome: { body: '#34343b', feature: 'horns' },
   pirates: { body: '#5a4235', feature: 'tusks' },
+  vikings: { body: '#8a7a66', feature: 'antlers' },
+  japan: { body: '#6a5040', feature: 'tusks' },
+  mongols: { body: '#4a3628', feature: 'horns' },
+  greeks: { body: '#e6e0d0', feature: 'horns' },
+  zulu: { body: '#f4f1ea', feature: 'stripes' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {
@@ -600,6 +849,14 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
       break;
     case 'tusks':
       poly(ctx, [x + 13 * k, y - 12 * k, x + 16 * k, y - 15 * k, x + 14 * k, y - 11 * k], '#f4f0e2');
+      break;
+    case 'stripes':
+      for (const u of [0.1, 0.35, 0.6, 0.85]) {
+        faceQuad(ctx, 'R', x, y - 5 * k, 16 * k, 7 * k, u, u + 0.1, 0.1, 1, '#1a1a1a');
+        faceQuad(ctx, 'L', x, y - 5 * k, 16 * k, 7 * k, u, u + 0.1, 0.1, 1, '#1a1a1a');
+      }
+      faceQuad(ctx, 'R', x + 9 * k, y - 10 * k, 7.5 * k, 7.5 * k, 0.65, 0.8, 0.2, 1, '#1a1a1a');
+      box(ctx, x + 7 * k, y - 17 * k, 2 * k, 3 * k, '#1a1a1a'); // mane
       break;
     case 'hump':
       break;

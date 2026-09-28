@@ -140,7 +140,7 @@ const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
     tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', hotseat,
-    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'ai' },
+    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
   const seg = <T extends string | number>(label: string, opts: [T, string][], get: () => T, set: (v: T) => void) => {
@@ -236,7 +236,7 @@ function showScores(handlers: MenuHandlers) {
 function showEmpires(handlers: MenuHandlers) {
   screen(
     'empires',
-    backBar('The Five Empires', () => showTitle(handlers)),
+    backBar('The Ten Empires', () => showTitle(handlers)),
     h('div', { class: 'scroll' },
       ...TRIBE_IDS.map((id) => {
         const t = TRIBES[id];
@@ -260,7 +260,7 @@ function showAbout(handlers: MenuHandlers) {
     'about',
     backBar('About', () => showTitle(handlers)),
     h('div', { class: 'scroll prose' },
-      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of five empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
+      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of ten empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
       h('h3', {}, 'How to play'),
       h('ul', {},
         h('li', {}, 'Stars (★) are your currency. Every city pays out each turn.'),
