@@ -6,9 +6,17 @@ import type { GameState } from './game/types';
 import { clearSave, loadGame, saveGame } from './save';
 import { GameView } from './ui/game';
 import { showTitle, type NewGameChoice } from './ui/menu';
+import '@fontsource/josefin-sans/latin-300.css';
+import '@fontsource/josefin-sans/latin-400.css';
+import '@fontsource/josefin-sans/latin-600.css';
+import '@fontsource/josefin-sans/latin-700.css';
+import '@fontsource/josefin-sans/latin-600-italic.css';
+import '@fontsource/josefin-sans/latin-700-italic.css';
 import './style.css';
 
 registerSW({ immediate: true });
+// The map canvas draws text itself, so make sure the faces it uses are loaded early.
+for (const f of ['400 13px', '600 13px', '700 15px']) void document.fonts?.load(`${f} "Josefin Sans"`);
 
 let view: GameView | null = null;
 let lastChoice: NewGameChoice | null = null;

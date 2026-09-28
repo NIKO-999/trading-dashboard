@@ -1,5 +1,5 @@
 import { TECH_BY_ID } from '../data/techs';
-import { TRIBES } from '../data/tribes';
+import { portraitKind, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
@@ -11,7 +11,7 @@ import {
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile } from '../game/types';
 import { Camera } from '../render/camera';
-import { ANIM_MS, drawCityIcon, drawIcon, FLOAT_MS, renderWorld, type Overlay } from '../render/draw';
+import { ANIM_MS, drawIcon, FLOAT_MS, renderWorld, type Overlay } from '../render/draw';
 import { addScore, clearSave, loadSettings, saveGame } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
@@ -27,7 +27,7 @@ export class GameView {
   private canvas = document.getElementById('game') as HTMLCanvasElement;
   private ctx = this.canvas.getContext('2d')!;
   private cam = new Camera();
-  private ov: Overlay = { selected: null, moves: [], attacks: [], anims: new Map(), floaters: [], now: 0 };
+  private ov: Overlay = { selected: null, moves: [], attacks: [], glow: new Set(), anims: new Map(), floaters: [], now: 0 };
   private sel: Selection | null = null;
   private dirty = true;
   private busy = false;
@@ -52,8 +52,10 @@ export class GameView {
     window.addEventListener('resize', this.ro);
     this.bindInput();
     const cap = citiesOf(s, this.me).find((c) => c.capital) ?? citiesOf(s, this.me)[0];
-    this.cam.zoom = Math.min(1.6, Math.max(0.9, this.vw / 330));
-    if (cap) this.cam.centerOn(cap.x, cap.y, this.vw, this.vh * 0.92);
+    this.cam.zoom = Math.min(2.2, Math.max(1.2, this.vw / 250));
+    if (cap) this.cam.centerOn(cap.x, cap.y, this.vw, this.vh * 0.95);
+    // Canvas text only picks up the web font once it has loaded.
+    document.fonts?.ready.then(() => (this.dirty = true));
     this.loop();
     this.refresh();
     if (import.meta.env.DEV) Object.assign(window, { __game: this });
@@ -84,7 +86,7 @@ export class GameView {
     this.hud = h('div', { class: 'hud' });
     this.hint = h('div', { class: 'hint hidden' });
     this.banner = h('div', { class: 'turn-banner hidden' });
-    this.panel = h('div', { class: 'panel hidden' });
+    this.panel = h('div', { class: 'sheet hidden' });
     this.bottom = h('div', { class: 'bottom-bar' });
     root.append(h('div', { class: 'game-ui' }, this.hud, this.hint, this.banner, this.panel, this.bottom));
     const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
@@ -257,22 +259,38 @@ export class GameView {
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
     );
     this.bottom.classList.toggle('waiting', !isHumanTurn(this.s));
+    this.ov.glow = this.harvestable();
     this.updateHint();
     this.dirty = true;
     if (this.sel) this.select(this.sel);
   }
 
+  /** Tiles in my territory where a harvest, farm or mine can be bought right now. */
+  private harvestable() {
+    const out = new Set<number>();
+    if (!isHumanTurn(this.s)) return out;
+    for (const t of this.s.tiles) {
+      if (!t.resource || tileOwnerPlayer(this.s, t) !== this.me) continue;
+      if (tileActions(this.s, this.me, t).some((a) => a.enabled && (a.id === 'harvest' || a.id === 'farm' || a.id === 'mine'))) out.add(t.y * this.s.size + t.x);
+    }
+    return out;
+  }
+
+  /** Bottom sheet for the selection: a title, a description and a row of round action buttons. */
   private updatePanel() {
     const sel = this.sel;
     this.panel.innerHTML = '';
-    if (!sel) return this.panel.classList.add('hidden');
-    this.panel.classList.remove('hidden');
+    this.panel.classList.toggle('hidden', !sel);
+    this.bottom.classList.toggle('hidden', !!sel);
+    if (!sel) return;
     const t = tileAt(this.s, sel.x, sel.y)!;
     const p = this.s.players[this.me];
-    const close = h('button', { class: 'panel-close', onclick: () => this.select(null), 'aria-label': 'Close' }, iconEl('close'));
+    const close = h('button', { class: 'sheet-close', onclick: () => this.select(null), 'aria-label': 'Close' }, iconEl('close'));
+    const head = (title: string, ...desc: (Node | string | null)[]) =>
+      h('div', { class: 'sheet-head' }, h('div', { class: 'sheet-title' }, title), h('div', { class: 'sheet-desc' }, ...desc));
 
     if (!isExplored(this.s, this.me, t.x, t.y)) {
-      this.panel.append(close, h('div', { class: 'panel-head' }, h('div', {}, h('h3', {}, 'Unexplored'), h('p', {}, 'Send a unit to lift the clouds.'))));
+      this.panel.append(close, head('Unexplored', 'Send a unit to lift the clouds.'));
       return;
     }
     const u = unitAt(this.s, t.x, t.y);
@@ -282,27 +300,28 @@ export class GameView {
     if (sel.mode === 'unit' && u) {
       const d = def(u);
       const owner = this.s.players[u.owner];
-      const art = unitPortrait(u.kind, owner.tribe, 64);
-      const stats = `⚔ ${d.atk}  🛡 ${d.def}  ❤ ${Math.ceil(u.hp)}/${maxHp(u)}  ➜ ${d.move}${d.range > 1 ? `  ◎ ${d.range}` : ''}`;
       const status = u.owner === this.me
         ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? 'Ready to move.' : 'Can still attack.'
         : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
-      this.panel.append(close, h('div', { class: 'panel-head' }, art, h('div', {},
-        h('h3', {}, `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
-        h('p', { class: 'stats' }, stats),
-        h('p', { class: 'muted' }, status, preview ? h('br') : null, preview ?? ''),
-      )));
+      const stats = h('span', { class: 'stat-line' },
+        h('span', {}, 'Attack ', h('b', {}, String(d.atk))),
+        h('span', {}, 'Defence ', h('b', {}, String(d.def))),
+        h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
+        h('span', {}, 'Move ', h('b', {}, String(d.move))),
+        d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range))) : null,
+      );
+      this.panel.append(close, head(`${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`,
+        stats, h('br'), status, preview ? ` ${preview}` : null));
       this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id)), p.tribe);
       return;
     }
 
     const city = t.cityId !== null ? cityById(this.s, t.cityId) : undefined;
-    if (city) return this.cityPanel(city, close, allActs.filter((a) => !UNIT_ACTIONS(a.id)));
+    if (city) return this.cityPanel(city, close, head, allActs.filter((a) => !UNIT_ACTIONS(a.id)));
 
     const { title, desc } = describeTile(this.s, t);
-    const art = paint(64, 56, (ctx) => drawIcon(ctx, t.resource ?? (t.village ? 'flag' : t.terrain === 'forest' ? 'axe' : t.improvement ?? 'road'), t.biome, 32, 30));
-    this.panel.append(close, h('div', { class: 'panel-head' }, art, h('div', {}, h('h3', {}, title), h('p', {}, desc))));
+    this.panel.append(close, head(title, desc));
     this.renderActions(allActs.filter((a) => !UNIT_ACTIONS(a.id)), p.tribe);
   }
 
@@ -316,33 +335,29 @@ export class GameView {
     return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}, taking ${best.ret}.`;
   }
 
-  private cityPanel(city: City, close: Node, acts: Action[]) {
+  private cityPanel(city: City, close: Node, head: (title: string, ...desc: (Node | string | null)[]) => HTMLElement, acts: Action[]) {
     const owner = this.s.players[city.owner];
     const T = TRIBES[owner.tribe];
-    const art = paint(64, 56, (ctx) => drawCityIcon(ctx, owner.tribe, 30, 36, city.capital));
     const mine = city.owner === this.me;
     const info = mine
-      ? `Level ${city.level} · pop ${city.pop}/${city.level + 1} · +${cityIncome(this.s, city)}★ · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}`
+      ? `Level ${city.level} · population ${city.pop}/${city.level + 1} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}`
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
-    this.panel.append(close, h('div', { class: 'panel-head' }, art, h('div', {},
-      h('h3', {}, `${city.capital ? '♛ ' : ''}${city.name}`),
-      h('p', {}, info),
-      mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null,
-    )));
-    if (mine) this.renderActions(acts, owner.tribe, true);
+    this.panel.append(close, head(city.name, info,
+      mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
+    if (mine) this.renderActions(acts, owner.tribe);
   }
 
-  private renderActions(acts: Action[], tribe: GameState['players'][number]['tribe'], units = false) {
+  private renderActions(acts: Action[], tribe: GameState['players'][number]['tribe']) {
     if (!acts.length) return;
-    const list = h('div', { class: `actions${units ? ' units' : ''}` });
+    const row = h('div', { class: 'sheet-actions' });
     for (const a of acts) {
-      const icon = paint(48, 44, (ctx) => drawIcon(ctx, a.icon, tribe, 24, 22));
-      const b = h('button', {
-        class: `action${a.enabled ? '' : ' disabled'}`,
-        title: a.desc,
+      const icon = paint(54, 54, (ctx) => drawIcon(ctx, a.icon, tribe, 27, 26));
+      row.append(h('button', {
+        class: `rbtn${a.enabled ? '' : ' off'}`,
+        title: a.reason ?? a.desc,
         onclick: () => {
           if (!a.enabled) {
-            if (a.reason) toast(a.reason);
+            toast(a.reason ? `${a.label}: ${a.reason}` : a.desc);
             return;
           }
           const t = tileAt(this.s, this.sel!.x, this.sel!.y)!;
@@ -352,16 +367,11 @@ export class GameView {
           this.checkRewards();
         },
       },
-        icon,
-        h('span', { class: 'a-label' }, a.label),
-        a.cost > 0 ? h('span', { class: 'a-cost' }, starSpan(a.cost)) : null,
-        !a.enabled && a.reason ? h('span', { class: 'a-reason' }, a.reason) : null,
-      );
-      list.append(b);
+        h('span', { class: 'rbtn-circle' }, icon, a.cost > 0 ? h('span', { class: 'rbtn-cost' }, starSpan(a.cost)) : null),
+        h('span', { class: 'rbtn-label' }, a.label),
+      ));
     }
-    this.panel.append(list);
-    const desc = acts.length === 1 ? acts[0].desc : null;
-    if (desc) this.panel.append(h('p', { class: 'muted small' }, desc));
+    this.panel.append(row);
   }
 
   // ------------------------------------------------------------ events & rewards
@@ -414,15 +424,16 @@ export class GameView {
       this.act(() => applyReward(this.s, c, id));
       this.checkRewards();
     };
-    const opt = (o: typeof a) => ({
-      label: h('span', { class: 'reward-opt' }, h('b', {}, o.name), h('small', {}, o.desc)),
-      onClick: () => pick(o.id),
-    });
-    modal({
-      title: `${c.name} reached level ${level}!`,
-      art: paint(72, 64, (ctx) => drawCityIcon(ctx, tribe, 34, 44, c.capital)),
-      body: [h('p', {}, 'The people celebrate. Choose a reward:')],
-      buttons: [opt(a), opt(b)],
+    let close = () => {};
+    const opt = (o: typeof a) => h('button', { class: 'rbtn big', onclick: () => { close(); pick(o.id); } },
+      h('span', { class: 'rbtn-circle' }, paint(66, 66, (ctx) => drawIcon(ctx, o.id === 'giant' ? 'giant' : o.id, tribe, 33, 32))),
+      h('span', { class: 'rbtn-label' }, o.name),
+      h('span', { class: 'rbtn-sub' }, o.desc),
+    );
+    close = modal({
+      title: `${c.name} grew!`,
+      body: [h('p', {}, `Level ${level}. The people are thriving; choose a reward:`), h('div', { class: 'reward-row' }, opt(a), opt(b))],
+      buttons: [],
       cls: 'reward',
     });
   }
@@ -469,7 +480,7 @@ export class GameView {
     this.s.log.push({ turn: 0, text: 'welcome' });
     modal({
       title: 'Rise, Ruler!',
-      art: unitPortrait(T.unique, me.tribe, 80),
+      art: unitPortrait(portraitKind(me.tribe), me.tribe, 80),
       body: [
         h('p', {}, `The ${T.people} people have placed their fate in your hands. Scout the land, grow your cities and stand firm against rival empires.`),
         h('p', {}, h('b', {}, 'Your gift: '), 'a treasury to start your reign.'),
@@ -536,7 +547,7 @@ export class GameView {
     clearSave();
     modal({
       title: won ? 'Glorious Victory!' : me.alive ? 'The Age Ends' : 'Your Empire Has Fallen',
-      art: unitPortrait(TRIBES[me.tribe].unique, me.tribe, 80),
+      art: unitPortrait(portraitKind(me.tribe), me.tribe, 80),
       body: [
         h('p', {}, won ? `The ${TRIBES[me.tribe].name} stands above all others.` : `The ${TRIBES[ranking[0].p.tribe].name} takes the crown this time.`),
         h('ol', { class: 'rank' }, ...ranking.map((r) => h('li', { style: { color: TRIBES[r.p.tribe].color } }, `${TRIBES[r.p.tribe].people}${r.p.id === this.me ? ' (you)' : ''} — ${r.sc.toLocaleString()}${r.p.alive ? '' : ' ✝'}`))),
@@ -571,7 +582,7 @@ export class GameView {
       const known = p.id === this.me || s.cities.some((c) => c.owner === p.id && isExplored(s, this.me, c.x, c.y));
       const T = TRIBES[p.tribe];
       return h('div', { class: 'stat-row', style: { '--tc': T.color } as Record<string, string> },
-        unitPortrait(T.unique, p.tribe, 44),
+        unitPortrait(portraitKind(p.tribe), p.tribe, 44),
         h('div', {},
           h('b', {}, known ? `${T.people}${p.id === this.me ? ' (you)' : ''}` : 'Unknown empire'),
           h('div', { class: 'muted small' }, !p.alive ? 'Destroyed' : known ? `${score(s, p.id).toLocaleString()} pts · ${citiesOf(s, p.id).length} cities · ${p.techs.length} techs` : 'Not yet met'),

@@ -1,4 +1,4 @@
-import { TRIBE_IDS, TRIBES } from '../data/tribes';
+import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
@@ -45,31 +45,31 @@ function landscapeSvg() {
     const x = r() * 1000;
     const y = 1395 + r() * 110;
     const s = 0.7 + ((y - 1395) / 110) * 0.8;
-    trees += `<polygon points="${x},${y - 46 * s} ${x - 12 * s},${y} ${x},${y - 4 * s}" fill="#2f8f3e"/><polygon points="${x},${y - 46 * s} ${x + 12 * s},${y} ${x},${y - 4 * s}" fill="#1f6b2e"/>`;
+    trees += `<polygon points="${x},${y - 52 * s} ${x - 11 * s},${y} ${x},${y + 3 * s}" fill="#2c9a3c"/><polygon points="${x},${y - 52 * s} ${x + 11 * s},${y} ${x},${y + 3 * s}" fill="#1c6d2b"/>`;
   }
   let stars = '';
   for (let i = 0; i < 40; i++) stars += `<rect x="${r() * 1000}" y="${r() * 900}" width="4" height="4" fill="#fff" opacity="${0.4 + r() * 0.6}"/>`;
   return `<svg class="landscape" viewBox="0 0 1000 2000" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2b1b5e"/><stop offset="0.35" stop-color="#7b3fa0"/>
-      <stop offset="0.6" stop-color="#f06a7a"/><stop offset="0.75" stop-color="#ffc07a"/>
+      <stop offset="0" stop-color="#f45ca8"/><stop offset="0.42" stop-color="#f46ea6"/>
+      <stop offset="0.6" stop-color="#f4959a"/><stop offset="0.72" stop-color="#f6c27f"/>
     </linearGradient>
     <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5fd6e0"/><stop offset="1" stop-color="#1d6fa8"/>
+      <stop offset="0" stop-color="#3fe0e6"/><stop offset="1" stop-color="#1f7fc2"/>
     </linearGradient>
   </defs>
   <rect width="1000" height="2000" fill="url(#sky)"/>
   ${stars}
-  <circle cx="720" cy="1080" r="70" fill="#ffe3a3" opacity="0.9"/>
-  ${peaks(1330, 5, 180, 330, '#8b7ab8', '#6b5a98', '#f1e9ff')}
-  ${peaks(1400, 7, 120, 230, '#a9a2b0', '#7d7684', '#ffffff')}
-  <polygon points="0,1400 1000,1380 1000,1560 0,1560" fill="#4fae3a"/>
-  <polygon points="0,1420 380,1440 700,1400 1000,1430 1000,1560 0,1560" fill="#63c347"/>
+  ${peaks(1330, 5, 200, 340, '#c9ccd6', '#9c9fab', '#ffffff')}
+  ${peaks(1400, 7, 130, 240, '#a4a7b1', '#7b7e89', '#f4f6fb')}
+  <polygon points="0,1400 1000,1380 1000,1560 0,1560" fill="#5cc23a"/>
+  <polygon points="0,1420 380,1440 700,1400 1000,1430 1000,1560 0,1560" fill="#7fd63f"/>
   ${trees}
   <polygon points="0,1540 1000,1510 1000,2000 0,2000" fill="url(#lake)"/>
   <polygon points="0,1540 1000,1510 1000,1530 0,1565" fill="#b7f2f2" opacity="0.6"/>
-  <polygon points="-20,1780 300,1640 520,1700 700,1650 1020,1760 1020,2000 -20,2000" fill="#2f6f9e" opacity="0.55"/>
+  <polygon points="-20,1780 300,1640 520,1700 700,1650 1020,1760 1020,2000 -20,2000" fill="#1c6fb0" opacity="0.5"/>
+  <polygon points="-20,1900 1020,1860 1020,2000 -20,2000" fill="#b88a55"/>
   <polygon points="230,1600 330,1560 420,1600 360,1625" fill="#8f8a95"/><polygon points="330,1560 420,1600 360,1625" fill="#6c6772"/>
 </svg>`;
 }
@@ -94,7 +94,7 @@ export function showTitle(handlers: MenuHandlers) {
       h('div', { class: 'logo-main' }, 'TESSERA'),
     ),
     h('div', { class: 'title-buttons' },
-      hasSave ? h('button', { class: 'pill primary', onclick: handlers.onContinue }, 'CONTINUE') : null,
+      hasSave ? h('button', { class: 'pill', onclick: handlers.onContinue }, 'CONTINUE') : null,
       h('button', { class: 'pill', onclick: () => showSetup(handlers) }, 'NEW GAME'),
     ),
     h('div', { class: 'title-dock' },
@@ -138,18 +138,15 @@ function showSetup(handlers: MenuHandlers) {
           style: { '--tc': t.color } as Record<string, string>,
           onclick: () => { choice.tribe = id; render(); },
         },
-          unitPortrait(t.unique, id, 60),
-          h('div', { class: 'tc-body' },
-            h('div', { class: 'tc-name' }, t.people),
-            h('div', { class: 'tc-empire' }, t.name),
-            h('div', { class: 'tc-line' }, `Unique: ${UNITS[t.unique].name}`),
-          ),
+          h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
+          h('span', { class: 'tc-name' }, t.people),
         ),
       );
     }
     detail.innerHTML = '';
     const t = TRIBES[choice.tribe];
     detail.append(
+      h('h4', {}, t.name),
       h('p', {}, t.blurb),
       h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
       h('p', {}, h('b', {}, `${UNITS[t.unique].name}: `), UNITS[t.unique].blurb),
@@ -178,7 +175,7 @@ function showSetup(handlers: MenuHandlers) {
       seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
-      h('button', { class: 'pill primary wide', onclick: () => handlers.onNewGame(choice) }, 'START'),
+      h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START'),
     ),
   );
 }
