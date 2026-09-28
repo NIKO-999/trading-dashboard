@@ -97,24 +97,26 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     const ready = u.owner === viewer && s.current === viewer && !u.moved;
     motion.set(u.id, unitMotion(s, u, fx, now, ready));
   }
+  // Zoomed far out, units are drawn a little larger than the map so they don't shrink to specks.
+  const us = unitScale(cam.zoom);
   // ground shadows first so no unit's shadow lands on another unit
   for (const u of units) {
     const m = motion.get(u.id)!;
     const naval = UNITS[u.kind].naval;
     const shrink = 1 - Math.min(0.45, m.lift / 22);
-    softShadow(ctx, m.x, m.y + 6, (naval ? 21 : 12) * UNIT_SCALE * 0.78 * shrink, (naval ? 6.5 : 4.6) * UNIT_SCALE * 0.78 * shrink, naval ? 0.22 : 0.34);
+    softShadow(ctx, m.x, m.y + 6, (naval ? 21 : 12) * us * 0.78 * shrink, (naval ? 6.5 : 4.6) * us * 0.78 * shrink, naval ? 0.22 : 0.34);
   }
-  const pxScale = UNIT_SCALE * cam.zoom * dpr;
-  for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact);
+  const pxScale = us * cam.zoom * dpr;
+  for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact, us);
 
   for (const g of fx.ghosts) {
     const k = (now - g.t0) / GHOST_MS;
     if (k < 0 || k > 1) continue;
     const c = tileCenter(g.x, g.y);
     const y = c.y + 5 + k * 8;
-    drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'base', exact), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
+    drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'base', exact), c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
     const white = Math.max(0, 0.9 - k * 2.5);
-    if (white > 0) drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'white', exact), c.x, y, UNIT_SCALE, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
+    if (white > 0) drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'white', exact), c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
   }
 
   for (const p of fx.projectiles) drawProjectile(ctx, p, now);
@@ -146,7 +148,10 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
 
 // ---------------------------------------------------------------- units
 
-function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number, exact: boolean) {
+/** World units per unit-art unit: the normal size, growing a little (up to 22%) when zoomed far out. */
+export const unitScale = (zoom: number) => UNIT_SCALE * (zoom < 1 ? Math.min(1.22, Math.pow(1 / zoom, 0.28)) : 1);
+
+function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number, exact: boolean, us: number) {
   const now = ov.now;
   const tribe = s.players[u.owner].tribe;
   const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
@@ -155,8 +160,8 @@ function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewe
   const flashing = flashK >= 0 && flashK <= 1;
   const shake = flashing ? Math.sin(flashK * 42) * 2.2 * (1 - flashK) : 0;
   const x = m.x + shake, y = m.y - m.lift + 5;
-  drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0);
-  if (flashing) drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, 'white', exact), x, y, UNIT_SCALE, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
+  drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, us, m.sx, m.sy, m.facing < 0);
+  if (flashing) drawSprite(ctx, unitSprite(u.kind, tribe, pxScale, 'white', exact), x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
 }
 
 // ---------------------------------------------------------------- water life
@@ -527,26 +532,29 @@ function drawParticle(ctx: Ctx, p: Fx['particles'][number], now: number) {
 function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number,
   units: Unit[], motion: Map<number, Motion>, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
   const snap = (v: number) => Math.round(v * dpr) / dpr;
-  const k = Math.max(0.78, Math.min(1.25, cam.zoom));
-
-  // gentle vignette for depth
-  const g = ctx.createRadialGradient(vw / 2, vh * 0.45, Math.min(vw, vh) * 0.35, vw / 2, vh * 0.45, Math.max(vw, vh) * 0.8);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, 'rgba(0,0,0,0.32)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, vw, vh);
+  // Labels and badges shrink with the map (more slowly, so they stay legible) and show less
+  // the further out you zoom: the full label close up, name and population in the middle
+  // distance, just the name far out, where only wounded units keep their health badge.
+  const z = cam.zoom;
+  const k = Math.max(0.58, Math.min(1.25, 0.2 + 0.8 * z));
+  const kh = Math.max(0.52, Math.min(1.25, 0.15 + 0.85 * z));
+  const detail: LabelDetail = z >= 0.8 ? 'full' : z >= 0.6 ? 'mid' : 'name';
+  const us = unitScale(z);
 
   for (const c of s.cities) {
     const p = tileCenter(c.x, c.y);
     if (!explored(c.x, c.y) || !onScreen(p)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
-    drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap);
+    drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
   }
   for (const u of units) {
     const m = motion.get(u.id)!;
-    const sp = cam.toScreen(m.x - 18 * UNIT_SCALE / 1.3, m.y - m.lift - 36 * UNIT_SCALE / 1.3);
     const hold = ov.fx.hpHold.get(u.id);
-    drawHpBadge(ctx, s, u, snap(sp.x), snap(sp.y), k, hold && ov.now < hold.until ? hold.hp : u.hp);
+    const hp = hold && ov.now < hold.until ? hold.hp : u.hp;
+    const selected = ov.selected?.x === u.x && ov.selected?.y === u.y;
+    if (detail === 'name' && hp >= maxHp(u) && !selected) continue;
+    const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
+    drawHpBadge(ctx, s, u, snap(sp.x), snap(sp.y), kh, hp);
   }
   for (const f of ov.fx.floaters) {
     const q = (ov.now - f.t0) / FLOAT_MS;
@@ -570,15 +578,18 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
   }
 }
 
-function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number) {
+type LabelDetail = 'full' | 'mid' | 'name';
+
+function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail) {
   const T = TRIBES[s.players[c.owner].tribe];
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
   const nw = ctx.measureText(c.name).width;
+  const showIncome = detail === 'full';
   const inc = String(cityIncome(s, c));
-  const iw = ctx.measureText(inc).width;
+  const iw = showIncome ? ctx.measureText(inc).width : 0;
   const pad = 8 * k, h = 21 * k, badge = c.capital ? 18 * k : 0;
-  const w = pad + badge + (badge ? 5 * k : 0) + nw + 8 * k + 12 * k + iw + pad;
+  const w = pad + badge + (badge ? 5 * k : 0) + nw + (showIncome ? 8 * k + 12 * k + iw : 0) + pad;
   const x0 = snap(x - w / 2), y0 = y;
   // drop shadow, body with a soft top highlight, darker rim
   ctx.fillStyle = 'rgba(0,0,0,0.28)';
@@ -615,16 +626,32 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
   ctx.shadowColor = 'transparent';
   ctx.shadowOffsetY = 0;
   if (c.capital) ctx.fillRect(snap(cx), snap(mid + fs * 0.52), nw, Math.max(1, 1.2 * k));
-  cx += nw + 8 * k;
-  drawStar(ctx, cx + 6 * k, mid, 6.5 * k);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(inc, snap(cx + 13 * k), snap(mid + 1.2 * k));
+  if (showIncome) {
+    cx += nw + 8 * k;
+    drawStar(ctx, cx + 6 * k, mid, 6.5 * k);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(inc, snap(cx + 13 * k), snap(mid + 1.2 * k));
+  }
   ctx.textBaseline = 'alphabetic';
+  if (detail !== 'name') drawPopulation(ctx, c, x, y0 + h + 4 * k, k, snap, T.color);
+  if (c.pendingRewards.length && s.players[c.owner].human) {
+    const px = x0 + w + 9 * k, py = mid;
+    ellipse(ctx, px, py + 1.5, 8 * k, 8 * k, 'rgba(0,0,0,0.3)');
+    ellipse(ctx, px, py, 8 * k, 8 * k, '#ffcf33');
+    ctx.fillStyle = '#3a2a00';
+    ctx.font = `700 ${Math.round(12 * k)}px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('!', px, py + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
 
-  // population: one pip per population needed for the next level
+/** The bar under a city's name: one pip per population needed for the next level. */
+function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, snap: (v: number) => number, color: string) {
   const segs = c.level + 1;
   const bw = Math.max(40 * k, segs * 11 * k), bh = 9 * k;
-  const bx = snap(x - bw / 2), by = y0 + h + 4 * k;
+  const bx = snap(x - bw / 2);
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   roundRect(ctx, bx, by + 1.5, bw, bh, bh / 2);
   ctx.fill();
@@ -636,8 +663,8 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     const sx = bx + sw * i;
     if (i < c.pop) {
       const pg = ctx.createLinearGradient(0, by, 0, by + bh);
-      pg.addColorStop(0, shade(T.color, 0.25));
-      pg.addColorStop(1, shade(T.color, -0.1));
+      pg.addColorStop(0, shade(color, 0.25));
+      pg.addColorStop(1, shade(color, -0.1));
       ctx.fillStyle = pg;
       roundRect(ctx, sx + 1.5, by + 1.5, sw - 3, bh - 3, (bh - 3) / 2);
       ctx.fill();
@@ -646,17 +673,6 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fillRect(snap(sx) - 0.5, by + 2, 1, bh - 4);
     }
-  }
-  if (c.pendingRewards.length && s.players[c.owner].human) {
-    const px = x0 + w + 9 * k, py = mid;
-    ellipse(ctx, px, py + 1.5, 8 * k, 8 * k, 'rgba(0,0,0,0.3)');
-    ellipse(ctx, px, py, 8 * k, 8 * k, '#ffcf33');
-    ctx.fillStyle = '#3a2a00';
-    ctx.font = `700 ${Math.round(12 * k)}px ${FONT}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('!', px, py + 1);
-    ctx.textBaseline = 'alphabetic';
   }
 }
 

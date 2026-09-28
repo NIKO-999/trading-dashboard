@@ -116,6 +116,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 /* ------------------------------------------------ in-game HUD */
 #ui > .game-ui { position: absolute; inset: 0; pointer-events: none; }
 .game-ui > * { pointer-events: auto; }
+.game-ui > .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 80% at 50% 45%, transparent 45%, rgba(0,0,0,0.3) 100%); }
 .game-ui::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(110px + var(--safe-top)); background: linear-gradient(rgba(4,6,16,0.55), rgba(4,6,16,0.18) 60%, transparent); pointer-events: none; }
 .hud { position: absolute; top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: clamp(20px, 8vw, 48px); pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
 .hud-cell { text-align: center; }

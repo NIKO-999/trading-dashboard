@@ -74,9 +74,12 @@ export class Camera {
     return true;
   }
 
+  /** Furthest zoom-out allowed (set per map and screen so the map never shrinks to a speck). */
+  minZoom = 0.45;
+
   zoomAt(factor: number, sx: number, sy: number) {
     const before = this.toWorld(sx, sy);
-    this.zoom = Math.min(3, Math.max(0.45, this.zoom * factor));
+    this.zoom = Math.min(3, Math.max(this.minZoom, this.zoom * factor));
     this.x = sx - before.x * this.zoom;
     this.y = sy - before.y * this.zoom;
   }

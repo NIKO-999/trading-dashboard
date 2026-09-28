@@ -148,7 +148,9 @@ export class WorldRenderer {
     } else {
       blit = (layer) => ctx.drawImage(layer, tx, ty, lw, lh);
     }
-    ctx.imageSmoothingQuality = 'high';
+    // Only a pinch stretches the cached layers (by 0.7-1.4x): plain bilinear looks the same there and
+    // is several times cheaper than 'high' on a full-screen bitmap. Everything else is copied 1:1.
+    ctx.imageSmoothingQuality = 'low';
     drawSky(ctx, cam, vw, vh, ov.now);
     blit(this.ground);
     drawWaterLife(ctx, s, viewer, cam, ov, vw, vh);

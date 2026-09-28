@@ -104,7 +104,8 @@ export class GameView {
     this.banner = h('div', { class: 'turn-banner hidden' });
     this.panel = h('div', { class: 'sheet hidden' });
     this.bottom = h('div', { class: 'bottom-bar' });
-    root.append(h('div', { class: 'game-ui' }, this.hud, this.hint, this.banner, this.panel, this.bottom));
+    // the vignette is a CSS layer (composited for free) rather than a full-screen gradient painted every frame
+    root.append(h('div', { class: 'game-ui' }, h('div', { class: 'vignette' }), this.hud, this.hint, this.banner, this.panel, this.bottom));
     const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
       h('button', { class: `dock-btn ${cls}`, onclick }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
     this.bottom.append(
@@ -127,6 +128,9 @@ export class GameView {
     this.canvas.style.width = `${this.vw}px`;
     this.canvas.style.height = `${this.vh}px`;
     this.ctx.setTransform(this.canvas.width / this.vw, 0, 0, this.canvas.height / this.vh, 0, 0);
+    // zooming out stops once the whole map fits, so small maps can't shrink to an island in the dark
+    const fit = Math.min(this.vw / (this.s.size * 64), this.vh / (this.s.size * 32 + 40));
+    this.cam.minZoom = Math.min(1, Math.max(0.45, fit * 0.92));
     if (oldW) {
       this.cam.x += (this.vw - oldW) / 2;
       this.cam.y += (this.vh - oldH) / 2;
@@ -215,9 +219,9 @@ export class GameView {
         pts.set(e.pointerId, cur);
         const [a, b] = [...pts.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
+        // the renderer stretches its cached map while fingers are down and redraws it sharp on release
         if (pinch > 0) this.cam.zoomAt(d / pinch, (a.x + b.x) / 2, (a.y + b.y) / 2);
         pinch = d;
-        this.version++;
       }
       pts.set(e.pointerId, cur);
     });
@@ -240,7 +244,6 @@ export class GameView {
     c.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.cam.zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
-      this.version++;
     }, { passive: false });
   }
 
