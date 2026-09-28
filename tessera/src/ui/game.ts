@@ -39,6 +39,8 @@ export class GameView {
   private dpr = 1;
   private wantedDpr = 0; // what renderDpr asked for, before the canvas-size cap
   private touching = 0; // fingers currently on the map
+  private inputAbort = new AbortController(); // ends every input listener when this game closes
+  private lastPointerAt = 0; // when a finger last touched or moved on the map
   private wasTouching = false;
   private sel: Selection | null = null;
   private busy = false;
@@ -89,6 +91,7 @@ export class GameView {
 
   destroy() {
     this.destroyed = true;
+    this.inputAbort.abort();
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.ro);
     window.visualViewport?.removeEventListener('resize', this.ro);
@@ -159,8 +162,12 @@ export class GameView {
     // Full frame rate while anything moves; idle breathing only needs ~30 fps.
     const gestureEnded = this.touching === 0 && this.wasTouching;
     this.wasTouching = this.touching > 0;
+    // The cached map is only stretched while a finger is actually moving. A phone can lose a
+    // finger-up (a system gesture, an app switch), and a stuck "touching" must never leave the map
+    // as a stretched, blurry copy: once the fingers rest for a moment it is redrawn sharp.
+    const interacting = this.touching > 0 && now - this.lastPointerAt < 200;
     if (camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion || now - this.lastFrame > 33) {
-      this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, this.touching > 0);
+      this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, interacting);
       this.drawnVersion = this.version;
       this.lastFrame = now;
     }
@@ -191,6 +198,7 @@ export class GameView {
     let pinch = 0;
     let vx = 0, vy = 0, lastT = 0;
     const c = this.canvas;
+    const signal = this.inputAbort.signal;
     c.addEventListener('pointerdown', (e) => {
       sfx.unlock();
       this.cam.stop();
@@ -199,6 +207,7 @@ export class GameView {
       c.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       this.touching = pts.size;
+      this.lastPointerAt = e.timeStamp;
       if (pts.size === 1) {
         panned = false;
         start = { x: e.clientX, y: e.clientY };
@@ -208,10 +217,11 @@ export class GameView {
         pinch = Math.hypot(a.x - b.x, a.y - b.y);
         panned = true;
       }
-    });
+    }, { signal });
     c.addEventListener('pointermove', (e) => {
       const prev = pts.get(e.pointerId);
       if (!prev) return;
+      this.lastPointerAt = e.timeStamp;
       const cur = { x: e.clientX, y: e.clientY };
       if (pts.size === 1) {
         if (!panned && Math.hypot(cur.x - start.x, cur.y - start.y) > 8) panned = true;
@@ -232,7 +242,7 @@ export class GameView {
         pinch = d;
       }
       pts.set(e.pointerId, cur);
-    });
+    }, { signal });
     const up = (e: PointerEvent) => {
       if (!pts.has(e.pointerId)) return;
       pts.delete(e.pointerId);
@@ -247,12 +257,25 @@ export class GameView {
       }
       pinch = 0;
     };
-    c.addEventListener('pointerup', up);
-    c.addEventListener('pointercancel', up);
+    c.addEventListener('pointerup', up, { signal });
+    c.addEventListener('pointercancel', up, { signal });
+    c.addEventListener('lostpointercapture', up, { signal });
+    // Clear fingers the canvas never heard leave (system gestures, app switches, a hidden page).
+    const release = (e: Event) => {
+      if (e.type === 'touchend' && (e as TouchEvent).touches.length > 0) return;
+      pts.clear();
+      this.touching = 0;
+      pinch = 0;
+    };
+    const stale = () => { if (document.visibilityState !== 'visible') release(new Event('visibility')); };
+    window.addEventListener('touchend', release, { passive: true, signal });
+    window.addEventListener('touchcancel', release, { passive: true, signal });
+    window.addEventListener('blur', release, { signal });
+    document.addEventListener('visibilitychange', stale, { signal });
     c.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.cam.zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
-    }, { passive: false });
+    }, { passive: false, signal });
   }
 
   private tap(sx: number, sy: number) {
