@@ -49,11 +49,14 @@
   const DEFAULT_SAVE = () => ({
     gold: 800, gems: 600, energy: 30, energyTs: Date.now(), speed: 1,
     hero: HERO_KEYS[0] || 'samurai', heroLv: {}, talents: {}, unlocked: 1, best: {},
-    pets: {}, team: [], freeEggs: 3, eggDay: today(), hatches: 0, giftDay: '', runs: 0,
+    pets: {}, team: [], freeEggs: 3, eggDay: today(), hatches: 0, giftDay: '', runs: 0, music: true, sfx: true,
   });
   let save = DEFAULT_SAVE();
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) save = Object.assign(DEFAULT_SAVE(), s); } catch (e) { /* storage unavailable */ }
   if (!HEROES[save.hero]) save.hero = HERO_KEYS[0];
+  const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {} };
+  SND.setMusic(save.music); SND.setSfx(save.sfx);
+  const snd = n => { if (!(R && R.skip)) SND.play(n); };
   function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
   const ENERGY_MAX = 30, ENERGY_MS = 5 * 60 * 1000, RUN_COST = 5;
   function tickEnergy() {
@@ -105,6 +108,7 @@
   function show(name) {
     tab = name;
     app.innerHTML = '';
+    SND.music('home');
     ({ battle: renderHome, heroes: renderHeroes, pets: renderPets, talents: renderTalents, shop: renderShop })[name]();
   }
   function tabbar() {
@@ -123,8 +127,32 @@
       <div class="sub stroke-sm">Four legends. One endless road.</div>
       <button class="btn big tap">Play</button></div>`);
     app.append(s);
-    $('.tap', s).onclick = () => { s.style.transition = 'opacity .35s'; s.style.opacity = 0; setTimeout(() => s.remove(), 350); };
+    $('.tap', s).onclick = () => { SND.init(); SND.music('home'); SND.play('select'); s.style.transition = 'opacity .35s'; s.style.opacity = 0; setTimeout(() => s.remove(), 350); };
   }
+
+  // ---------------------------------------------------------------- sound settings
+  const SPEAKER = on => `<svg viewBox="0 0 64 64"><path d="M8 24 H20 L34 10 V54 L20 40 H8 Z" fill="#fff" stroke="#2b1d14" stroke-width="4" stroke-linejoin="round"/>${on ? '<path d="M42 22 Q50 32 42 42 M48 14 Q62 32 48 50" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' : '<path d="M42 24 L58 40 M58 24 L42 40" stroke="#ff4d4d" stroke-width="6" stroke-linecap="round"/>'}</svg>`;
+  function soundToggles() {
+    return `<div class="toggles"><button class="btn small ${save.music ? '' : 'grey'}" data-snd="music">Music: ${save.music ? 'On' : 'Off'}</button><button class="btn small ${save.sfx ? '' : 'grey'}" data-snd="sfx">Sound: ${save.sfx ? 'On' : 'Off'}</button></div>`;
+  }
+  function bindToggles(root, after) {
+    $$('[data-snd]', root).forEach(b => b.onclick = () => {
+      const k = b.dataset.snd; save[k] = !save[k]; persist();
+      SND.init(); k === 'music' ? SND.setMusic(save.music) : SND.setSfx(save.sfx);
+      const wrap = b.parentElement; wrap.outerHTML = soundToggles();
+      bindToggles(root, after); if (after) after();
+    });
+  }
+  function settingsModal() {
+    const m = modal(`<div class="ribbon stroke">Settings</div><div class="panel">${soundToggles()}<div class="actions"><button class="btn" id="cl">Close</button></div></div>`);
+    bindToggles(m, () => show(tab));
+    $('#cl', m).onclick = () => m.remove();
+  }
+  // first tap anywhere unlocks audio; buttons click
+  app.addEventListener('pointerdown', e => {
+    SND.init();
+    if (e.target.closest('.btn:not([disabled]),.tab,.hcard,.egg-slot,.pcard,.ch-nav,.gear,.show-pets,.platform')) snd('click');
+  });
 
   // ---------------------------------------------------------------- home
   let viewCh = null;
@@ -133,7 +161,7 @@
     if (viewCh === null) viewCh = save.unlocked;
     const ch = CHAPTERS[viewCh - 1], locked = viewCh > save.unlocked, best = save.best[ch.id] || 0;
     const scr = el(`<div class="screen home">
-      <div class="home-top"><div class="player"><div class="avatar">${art.portrait(save.hero)}</div></div>${resChips()}</div>
+      <div class="home-top"><div class="player"><div class="avatar">${art.portrait(save.hero)}</div><button class="gear snd-btn">${SPEAKER(save.music || save.sfx)}</button></div>${resChips()}</div>
       <div class="home-body">
         <div class="chapter-card">
           <div class="scene">${art.scene(ch.scene)}</div>
@@ -151,11 +179,12 @@
       </div></div>`);
     scr.append(tabbar());
     app.append(scr);
+    $('.snd-btn', scr).onclick = settingsModal;
     $('.ch-nav.l', scr).onclick = () => { viewCh--; show('battle'); };
     $('.ch-nav.r', scr).onclick = () => { viewCh++; show('battle'); };
     $('#start', scr).onclick = () => {
       tickEnergy();
-      if (save.energy < RUN_COST) return toast('Not enough energy! Visit the Shop.');
+      if (save.energy < RUN_COST) { SND.play('error'); return toast('Not enough energy! Visit the Shop.'); }
       save.energy -= RUN_COST; if (save.energy < ENERGY_MAX && save.energy + RUN_COST >= ENERGY_MAX) save.energyTs = Date.now();
       persist(); startRun(ch);
     };
@@ -188,7 +217,7 @@
     app.append(scr);
     $$('.hcard', scr).forEach(b => b.onclick = () => { heroView = b.dataset.h; show('heroes'); });
     $('#use', scr).onclick = () => { save.hero = k; persist(); toast(`${H.name} will lead the journey!`); show('heroes'); };
-    $('#up', scr).onclick = () => { if (save.gold < cost) return; save.gold -= cost; save.heroLv[k] = lv + 1; persist(); toast(`${H.name} reached Lv.${lv + 1}!`); show('heroes'); };
+    $('#up', scr).onclick = () => { if (save.gold < cost) return; save.gold -= cost; save.heroLv[k] = lv + 1; persist(); SND.play('levelup'); toast(`${H.name} reached Lv.${lv + 1}!`); show('heroes'); };
   }
 
   // ---------------------------------------------------------------- pets screen
@@ -249,7 +278,10 @@
       if (i >= results.length) { m.remove(); show('pets'); return; }
       const r = results[i++], P = PETS[r.k];
       box.innerHTML = `<div class="hatch-egg">${art.egg(r.egg)}</div><div class="stroke" style="font-size:22px;margin-top:10px">Hatching…</div>`;
+      [0, 250, 500, 750].forEach(d => setTimeout(() => SND.play('wobble'), d));
+      setTimeout(() => SND.play('crack'), 950);
       setTimeout(() => {
+        SND.play('reveal');
         box.innerHTML = `<div class="hatch-pet">${art.pet(r.k)}</div>
           <div class="stroke" style="font-size:30px">${P ? P.name : r.k}</div>
           <div class="stroke-sm" style="font-size:16px;margin:4px 0;color:${{ common: '#cfd8e3', rare: '#6bb0ff', epic: '#c38bff', legendary: '#ffc14a' }[P && P.rarity]}">${(P && P.rarity || '').toUpperCase()} ${r.isNew ? '· NEW!' : `· Lv.${save.pets[r.k].lv}`}</div>
@@ -281,7 +313,7 @@
     const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Talents</div>${chip('coin', fmt(save.gold))}</div>
       <div class="list">${TALENTS.map(t => { const lv = talentLv(t.id), c = talentCost(t.id); return `<div class="row"><div class="ri" style="background:linear-gradient(#fff5,${t.color})">${ICONS[t.icon]}</div><div class="rb"><div class="rn">${t.name} <span style="font-size:14px;color:#8a6a4a">Lv.${lv}</span></div><div class="rd">${t.desc(lv)} → ${t.desc(lv + 1)}</div></div><button class="btn small yellow" data-t="${t.id}" ${save.gold < c ? 'disabled' : ''}>${fmt(c)}</button></div>`; }).join('')}</div></div>`);
     scr.append(tabbar()); app.append(scr);
-    $$('[data-t]', $('.list', scr)).forEach(b => b.onclick = () => { const id = b.dataset.t, c = talentCost(id); if (save.gold < c) return; save.gold -= c; save.talents[id] = talentLv(id) + 1; persist(); show('talents'); });
+    $$('[data-t]', $('.list', scr)).forEach(b => b.onclick = () => { const id = b.dataset.t, c = talentCost(id); if (save.gold < c) return; save.gold -= c; save.talents[id] = talentLv(id) + 1; persist(); SND.play('buy'); show('talents'); });
   }
 
   // ---------------------------------------------------------------- shop
@@ -328,6 +360,7 @@
     recalc();
     R.hp = R.maxHp;
     save.runs++; persist();
+    SND.music('adventure');
     buildRunScreen();
     runLoop();
   }
@@ -354,7 +387,7 @@
     const ch = R.ch;
     const scr = el(`<div class="screen run">
       <div class="stage">
-        <div class="scene">${art.scene(ch.scene)}</div>
+        <div class="scene"><div class="track"><div class="tile">${art.scene(ch.scene)}</div><div class="tile m">${art.scene(ch.scene)}</div><div class="tile">${art.scene(ch.scene)}</div></div></div>
         <div class="run-top">
           <button class="gear">${ICONS.gear}</button>
           <div class="progress"><div class="track"><div class="fill"></div></div></div>
@@ -388,7 +421,8 @@
     S.actors.append(S.hero);
     if (R.pet) { S.pet = el(`<div class="actor pet"><div class="art">${art.pet(R.pet, 'runpet')}</div></div>`); S.actors.append(S.pet); }
     S.speed.classList.toggle('x1', save.speed === 1);
-    S.speed.onclick = () => { save.speed = save.speed === 1 ? 2 : 1; S.speed.textContent = 'x' + save.speed; S.speed.classList.toggle('x1', save.speed === 1); persist(); };
+    S.speed.onclick = () => { save.speed = save.speed === 1 ? 2 : 1; S.speed.textContent = 'x' + save.speed; S.speed.classList.toggle('x1', save.speed === 1); persist(); setWalkSpeed(); };
+    setWalkSpeed();
     S.skip.onclick = () => { R.skip = true; };
     $('.gear', scr).onclick = pauseMenu;
     updateStats();
@@ -441,16 +475,38 @@
   const wait = ms => (R && R.skip) ? Promise.resolve() : new Promise(r => setTimeout(r, ms / (save.speed || 1)));
   const realWait = ms => new Promise(r => setTimeout(r, ms));
 
+  // ---------------------------------------------------------------- walking
+  let stepTimer = null;
+  function setWalkSpeed() {
+    if (!S.stage) return;
+    const sp = save.speed || 1;
+    S.stage.style.setProperty('--scroll', (9 / sp) + 's');
+    S.stage.style.setProperty('--stride', (0.52 / sp) + 's');
+    if (stepTimer) { setWalking(false); setWalking(true); }
+  }
+  function setWalking(on) {
+    if (!S.stage) return;
+    S.stage.classList.toggle('walking', on);
+    clearInterval(stepTimer); stepTimer = null;
+    if (!on) return;
+    let n = 0;
+    stepTimer = setInterval(() => {
+      if (!S.stage || !document.body.contains(S.stage)) { clearInterval(stepTimer); stepTimer = null; return; }
+      n++;
+      if (n % 2) SND.play('step');
+      const f = pos(S.hero, 0.96);
+      fxEl('<div class="dust"></div>', f.x - f.w * 0.12 + (n % 2 ? 10 : -4), f.y, 700);
+    }, 260 / (save.speed || 1));
+  }
+
   // ---------------------------------------------------------------- main loop
   async function runLoop() {
     while (!R.over) {
       R.day++;
       updateProgress();
       logDay(R.day);
-      S.stage.classList.remove('walking'); void S.stage.offsetWidth; S.stage.classList.add('walking');
-      S.hero.classList.add('walk');
-      await wait(700);
-      S.hero.classList.remove('walk');
+      setWalking(true);
+      await wait(1300);
       await dayEvent();
       if (R.over) return;
       await checkLevelUp();
@@ -497,17 +553,20 @@
       const g = addCoins(rand(40, 80) * (1 + R.day * 0.08));
       const tags = [{ icon: 'coin', text: `+${fmt(g)}`, cls: 'gold' }];
       if (chance(0.5)) { const st = pick(['atk', 'hp', 'def']); const p = randi(5, 10); R[st + 'Pct'] += p; recalc(); tags.push({ icon: { atk: 'sword', hp: 'heart', def: 'shield' }[st], text: `${st === 'hp' ? 'Max HP' : st.toUpperCase()}+${p}%` }); }
+      snd('chest');
       log('You found a <em>treasure chest</em> half-buried in the dirt!', tags);
       updateStats();
       await wait(300);
     },
     async campfire() {
       const v = heal(R.maxHp * 0.4);
+      snd('heal');
       log('You rest by a crackling campfire and roast some marshmallows.', [{ icon: 'heal', text: `HP+${fmt(v)}` }]);
       updateStats();
     },
     async angel() {
       log('A gentle light descends — an <b>Angel</b> smiles upon you.');
+      snd('angel');
       const choice = await choiceModal('Angel\'s Blessing', ICONS.angel, [
         { icon: 'heal', rarity: 'common', name: 'Healing Light', desc: 'Restore <b>60%</b> of Max HP.', fn: () => heal(R.maxHp * 0.6) },
         { icon: 'heart', rarity: 'rare', name: 'Blessed Body', desc: '<b>Max HP +25%</b>.', fn: () => { R.hpPct += 25; recalc(); } },
@@ -518,6 +577,7 @@
     },
     async devil() {
       log('A grinning <em>Devil</em> steps out of the shadows. "Care to make a deal?"');
+      snd('devil');
       const cost = Math.round(R.hp * 0.3);
       const choice = await choiceModal('Devil\'s Deal', ICONS.devil, [
         { icon: 'rage', rarity: 'epic', name: 'Blood Pact', desc: `Lose <em>${fmt(cost)} HP</em>. Gain <b>ATK +30%</b>.`, fn: () => { R.hp -= cost; R.atkPct += 30; recalc(); } },
@@ -531,7 +591,7 @@
       log('A travelling <b>merchant</b> waves you over. "Finest skills, cheap cheap!"');
       const price = Math.round(60 + R.day * 8);
       const offers = skillPool(3).map(id => ({ id, price: SKILLS[id].rarity === 'legendary' ? price * 2 : SKILLS[id].rarity === 'epic' ? Math.round(price * 1.5) : price }));
-      const opts = offers.map(o => ({ ...skillCard(o.id), name: `${SKILLS[o.id].name} · ${o.price}🪙`, disabled: R.coins < o.price, fn: () => { R.coins -= o.price; learn(o.id); } }));
+      const opts = offers.map(o => ({ ...skillCard(o.id), name: `${SKILLS[o.id].name} · ${o.price}🪙`, disabled: R.coins < o.price, fn: () => { R.coins -= o.price; SND.play('buy'); learn(o.id); } }));
       opts.push({ icon: 'wind', rarity: 'common', name: 'No thanks', desc: 'Keep your coins.', fn: () => { } });
       const c = await choiceModal('Merchant', ICONS.chest, opts);
       log(c.name === 'No thanks' ? 'You politely decline.' : `You bought <b>${c.name.split(' · ')[0]}</b>.`);
@@ -549,27 +609,29 @@
       ];
       const n = segs.length, idx = randi(0, n - 1), a = 360 / n;
       const wsvg = `<svg class="wheel" viewBox="-110 -110 220 220">${segs.map((s, i) => { const a0 = (i * a - 90 - a / 2) * Math.PI / 180, a1 = ((i + 1) * a - 90 - a / 2) * Math.PI / 180, mid = (i * a - 90) * Math.PI / 180; return `<path d="M0 0 L${100 * Math.cos(a0)} ${100 * Math.sin(a0)} A100 100 0 0 1 ${100 * Math.cos(a1)} ${100 * Math.sin(a1)} Z" fill="${s.c}" stroke="#2b1d14" stroke-width="3"/><text x="${62 * Math.cos(mid)}" y="${62 * Math.sin(mid) + 5}" text-anchor="middle" font-size="14" font-family="Lilita One,sans-serif" fill="#fff" stroke="#2b1d14" stroke-width="3" paint-order="stroke" transform="rotate(${i * a} ${62 * Math.cos(mid)} ${62 * Math.sin(mid)})">${s.t}</text>`; }).join('')}<circle r="104" fill="none" stroke="#2b1d14" stroke-width="6"/><circle r="14" fill="#ffd24a" stroke="#2b1d14" stroke-width="4"/></svg>`;
+      setWalking(false);
       const m = modal(`<div class="ribbon stroke">Wheel of Fortune</div><div class="panel"><div class="wheel-wrap">${wsvg}<div class="ptr"></div></div><div class="actions"><button class="btn yellow" id="spin">Spin!</button></div></div>`);
       await new Promise(res => $('#spin', m).onclick = res);
       $('#spin', m).disabled = true;
       const turn = 360 * 5 - idx * a;
       $('.wheel', m).style.transform = `rotate(${turn}deg)`;
+      if (!R.skip) { let t = 0; for (let i = 0; i < 26; i++) { t += 30 + i * i * 0.35; setTimeout(() => SND.play('tick'), t); } }
       await realWait(R.skip ? 300 : 3200);
-      segs[idx].fn(); m.remove();
+      segs[idx].fn(); m.remove(); SND.play('ding');
       log('The wheel clicks to a stop…', [segs[idx].tag]);
       updateStats();
     },
   };
 
   // ---------------------------------------------------------------- economy
-  function addCoins(v) { v = Math.round(v * (1 + talentLv('gold') * 0.06)); R.coins += v; updateStats(); return v; }
+  function addCoins(v) { v = Math.round(v * (1 + talentLv('gold') * 0.06)); R.coins += v; snd('coin'); updateStats(); return v; }
   function addXp(v) { v = Math.round(v * (1 + talentLv('xp') * 0.06)); R.xp += v; updateStats(); return v; }
   function heal(v) { v = Math.round(Math.min(v, R.maxHp - R.hp)); R.hp += v; updateStats(); return v; }
   async function checkLevelUp() {
     while (R.xp >= xpNeed(R.lv) && !R.over) {
       R.xp -= xpNeed(R.lv); R.lv++; recalc(); R.hp = Math.min(R.maxHp, R.hp + Math.round(R.maxHp * 0.1));
       updateStats();
-      popBanner('LEVEL UP!');
+      popBanner('LEVEL UP!'); snd('levelup');
       await wait(600);
       await skillSelect('Level ' + R.lv + '!');
     }
@@ -608,11 +670,12 @@
     log(`You learned <b>${SKILLS[c.id].name}</b>${sk(c.id) > 1 ? ` (Lv.${sk(c.id)})` : ''}.`);
   }
   function choiceModal(title, iconSvg, options, sub) {
+    setWalking(false);
     return new Promise(resolve => {
       const top = iconSvg ? `<div class="bigicon">${iconSvg}</div>` : `<div class="modal-hero">${art.hero(R.heroKey, uid())}</div>`;
       const m = modal(`${top}<div class="ribbon stroke">${title}</div>${sub && sub !== title ? `<div class="stroke-sm" style="margin-top:12px;font-size:16px">${sub}</div>` : ''}
         <div class="cards">${options.map((o, i) => `<button class="card r-${o.rarity}" data-i="${i}" ${o.disabled ? 'disabled style="filter:grayscale(.8);opacity:.7"' : ''}>${o.isNew && !iconSvg ? '<span class="newtag">NEW</span>' : ''}<div class="ci">${ICONS[o.icon] || ''}${o.lv ? `<span class="lv">${o.lv}</span>` : ''}</div><div class="cb"><div class="cn">${o.name}</div><div class="cd">${o.desc}</div></div></button>`).join('')}</div>`);
-      $$('.card', m).forEach(b => b.onclick = () => { if (b.disabled) return; const o = options[+b.dataset.i]; o.fn(); m.remove(); updateStats(); resolve(o); });
+      $$('.card', m).forEach(b => b.onclick = () => { if (b.disabled) return; const o = options[+b.dataset.i]; SND.play('select'); o.fn(); m.remove(); updateStats(); resolve(o); });
     });
   }
 
@@ -696,6 +759,7 @@
     amount = Math.max(1, Math.round(amount));
     e.hp -= amount;
     num(e.el, fmt(amount), cls);
+    if (cls !== 'dot') snd('hit');
     flashHit(e.el);
     setBar(e.el, e.hp, e.maxHp, 0);
     updateBossBar();
@@ -704,7 +768,7 @@
     if (ls && cls !== 'dot') { const h = heal(amount * ls); if (h > 0 && chance(0.35)) num(S.hero, '+' + fmt(h), 'heal'); }
     if (e.hp <= 0) {
       e.alive = false; e.hp = 0; R.kills++;
-      e.el.classList.add('dead');
+      e.el.classList.add('dead'); snd('poof');
       setBar(e.el, 0, e.maxHp, 0);
     }
     return amount;
@@ -725,8 +789,8 @@
   async function heroStrike(target, mult = 1) {
     if (!target || !target.alive) return;
     const H = HEROES[R.heroKey];
-    if (!R.skip) { restart(S.hero, 'lunge', 'attack'); await wait(150); slashAt(target.el, H ? H.fx.slash : '#fff', H ? H.fx.glow : '#fff'); }
     const cm = critRoll();
+    if (!R.skip) { restart(S.hero, 'lunge', 'attack'); await wait(150); slashAt(target.el, H ? H.fx.slash : '#fff', H ? H.fx.glow : '#fff'); snd(cm ? 'crit' : 'slash'); }
     const dmg = dmgCalc(effAtk() * mult, target.def) * (cm || 1);
     damageEnemy(target, dmg, cm ? 'crit' : '');
     onHitEffects(target);
@@ -736,14 +800,14 @@
     const H = HEROES[R.heroKey];
     // Spirit swords open the fight
     if (round === 1 && sk('spirit')) {
-      for (let i = 0; i < sk('spirit') + 1; i++) { const t = pick(alive()); if (!t) break; await projectile(S.hero, t.el, ICONS.sword, '', 220); damageEnemy(t, dmgCalc(effAtk() * 0.8, t.def)); }
+      for (let i = 0; i < sk('spirit') + 1; i++) { const t = pick(alive()); if (!t) break; snd('throw'); await projectile(S.hero, t.el, ICONS.sword, '', 220); damageEnemy(t, dmgCalc(effAtk() * 0.8, t.def)); }
     }
     // Meteor & fire burst
     if (sk('meteor') && round % 5 === 0 && alive().length) {
-      screenFlash(); alive().forEach(e => { boomAt(e.el, 140); damageEnemy(e, dmgCalc(effAtk() * (3.2 + 1.5 * (sk('meteor') - 1)), e.def)); }); await wait(400);
+      screenFlash(); snd('boom'); alive().forEach(e => { boomAt(e.el, 140); damageEnemy(e, dmgCalc(effAtk() * (3.2 + 1.5 * (sk('meteor') - 1)), e.def)); }); await wait(400);
     }
     if (sk('fireball') && round % 3 === 0 && alive().length) {
-      for (const e of alive()) { await projectile(S.hero, e.el, ICONS.fire, 'spin', 220); boomAt(e.el); damageEnemy(e, dmgCalc(effAtk() * (1.6 + 0.6 * (sk('fireball') - 1)), e.def)); }
+      for (const e of alive()) { snd('fire'); await projectile(S.hero, e.el, ICONS.fire, 'spin', 220); boomAt(e.el); damageEnemy(e, dmgCalc(effAtk() * (1.6 + 0.6 * (sk('fireball') - 1)), e.def)); }
     }
     // main attack
     await heroStrike(front());
@@ -751,18 +815,19 @@
     // daggers
     for (let i = 0; i < sk('dagger'); i++) {
       const t = front(); if (!t) break;
+      snd('throw');
       await projectile(S.hero, t.el, DAGGER, '', 200);
       damageEnemy(t, dmgCalc(effAtk() * 0.6, t.def));
     }
     // lightning
     if (sk('lightning') && alive().length && chance(0.25 + 0.15 * (sk('lightning') - 1))) {
-      const t = pick(alive()); lightningAt(t.el); damageEnemy(t, dmgCalc(effAtk() * 1.5, t.def)); await wait(250);
-      if (sk('storm') && chance(0.4)) { screenFlash(); for (const e of alive()) { lightningAt(e.el); damageEnemy(e, dmgCalc(effAtk() * 0.8, e.def)); } await wait(300); }
+      const t = pick(alive()); snd('zap'); lightningAt(t.el); damageEnemy(t, dmgCalc(effAtk() * 1.5, t.def)); await wait(250);
+      if (sk('storm') && chance(0.4)) { screenFlash(); snd('storm'); for (const e of alive()) { lightningAt(e.el); damageEnemy(e, dmgCalc(effAtk() * 0.8, e.def)); } await wait(300); }
     }
     // pet
     if (R.pet && S.pet && alive().length) {
       const t = front();
-      if (!R.skip) { restart(S.pet, 'hit'); }
+      if (!R.skip) { restart(S.pet, 'hit'); snd('pew'); }
       await projectile(S.pet, t.el, `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="#ffe7a0" stroke="#2b1d14" stroke-width="3"/><circle cx="20" cy="20" r="5" fill="#fff"/></svg>`, 'spin', 220);
       damageEnemy(t, dmgCalc(effAtk() * 0.3, t.def));
       if (H) void H;
@@ -773,11 +838,11 @@
     if (e.frozen) { e.frozen = false; e.el.classList.remove('frozen'); statusIcons(e); return; }
     if (!R.skip) { restart(e.el, 'lunge'); await wait(170); }
     const dodge = sk('dodge') ? 0.08 + 0.05 * (sk('dodge') - 1) : 0;
-    if (chance(dodge)) { num(S.hero, 'Miss', 'miss'); }
+    if (chance(dodge)) { num(S.hero, 'Miss', 'miss'); snd('miss'); }
     else {
       let d = dmgCalc(e.atk, R.def);
-      if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) num(S.hero, fmt(a), 'blk'); }
-      if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), 'hero'); flashHit(S.hero); }
+      if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) { num(S.hero, fmt(a), 'blk'); snd('block'); } }
+      if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), 'hero'); snd('hurt'); flashHit(S.hero); }
       updateStats();
       if (R.hp > 0 && sk('counter') && chance(0.2 + 0.1 * (sk('counter') - 1))) { e.el.classList.remove('lunge'); num(S.hero, 'Counter!', 'blk'); await heroStrike(e, 0.8); }
     }
@@ -808,6 +873,9 @@
     else if (tier === 'elite') keys = [pick(ch.elites)];
     else { const n = R.day < 4 ? 1 : pick([1, 1, 2, 2, 3]); const k = pick(ch.mobs); keys = Array(n).fill(0).map((_, i) => i === 0 ? k : pick(ch.mobs)); }
     const lead = keys[0];
+    setWalking(false);
+    if (tier === 'boss') SND.music('boss');
+    if (tier !== 'mob') SND.play('alarm');
     log((TEXT.battle[lead] ? pick(TEXT.battle[lead]) : `A wild ${enemyName(lead)} appears!`) + (tier === 'boss' ? ' <em>BOSS BATTLE!</em>' : tier === 'elite' ? ' <em>An elite foe!</em>' : ''));
     spawnEnemies(keys.map((k, i) => makeEnemy(k, tier, keys.length > 1 ? i + 1 : 0)));
     if (tier !== 'mob') popBanner(tier === 'boss' ? 'BOSS!' : 'ELITE!');
@@ -824,14 +892,14 @@
     if (sk('wall')) R.shield += R.maxHp * (0.15 + 0.1 * (sk('wall') - 1));
     if (R.sig === 'shield') R.shield += R.maxHp * 0.3;
     R.shield = Math.round(R.shield);
-    if (R.shield) { auraAt(S.hero, '#9ad7ffcc'); }
+    if (R.shield) { auraAt(S.hero, '#9ad7ffcc'); snd('shield'); }
     let angel = sk('angel') ? 6 : 0;
     updateStats();
 
     let result = 'timeout';
     for (let round = 1; round <= maxRounds; round++) {
       $('.round-pill', S.bossBar).textContent = `Round : ${round}/${maxRounds}`;
-      if (angel > 0) { angel--; const h = heal(R.maxHp * 0.06); if (h) { num(S.hero, '+' + fmt(h), 'heal'); auraAt(S.hero, '#fff8c0cc'); } }
+      if (angel > 0) { angel--; const h = heal(R.maxHp * 0.06); if (h) { num(S.hero, '+' + fmt(h), 'heal'); auraAt(S.hero, '#fff8c0cc'); snd('heal'); } }
       if (sk('regen')) { const h = heal(R.maxHp * (0.03 + 0.02 * (sk('regen') - 1))); if (h) num(S.hero, '+' + fmt(h), 'heal'); }
       tickDots();
       if (!alive().length) { result = 'win'; break; }
@@ -865,6 +933,7 @@
   function clearEnemies() { R.enemies.forEach(e => e.el && e.el.remove()); R.enemies = []; R.shield = 0; updateStats(); }
 
   async function defeat(timeout) {
+    SND.play('defeat'); R.sadPlayed = true;
     const canRevive = !R.revived && save.gems >= 50;
     const choice = await new Promise(res => {
       const m = modal(`<div class="bigicon">${ICONS.skull}</div><div class="ribbon stroke">${timeout ? 'Out of Time' : 'Defeated'}</div>
@@ -875,7 +944,7 @@
     });
     if (choice) {
       save.gems -= 50; R.revived = true; persist();
-      R.hp = R.maxHp; updateStats(); auraAt(S.hero, '#fff8c0'); popBanner('REVIVED!');
+      R.hp = R.maxHp; updateStats(); auraAt(S.hero, '#fff8c0'); popBanner('REVIVED!'); SND.play('revive');
       await wait(700);
       return true;
     }
@@ -887,6 +956,9 @@
   function finishRun(cleared) {
     if (R.over) return;
     R.over = true;
+    setWalking(false);
+    SND.music(null);
+    if (cleared) SND.play('victory'); else if (!R.sadPlayed) SND.play('defeat');
     const ch = R.ch, day = cleared ? ch.days : R.day;
     const prevBest = save.best[ch.id] || 0;
     save.best[ch.id] = Math.max(prevBest, day);
@@ -918,8 +990,10 @@
     const m = modal(`<div class="ribbon stroke">Paused</div><div class="panel">
       <p>Chapter ${R.ch.id} · Day ${R.day}</p>
       <div style="text-align:left;font-size:13px;margin:8px 0">${Object.keys(R.skills).map(id => `<span class="tag" style="margin:2px">${ICONS[SKILLS[id].icon]}${SKILLS[id].name} Lv${R.skills[id]}</span>`).join('') || 'No skills yet.'}</div>
+      ${soundToggles()}
       <p style="font-size:13px;color:#7a6a5a">The journey continues in the background while this is open.</p>
       <div class="actions"><button class="btn" id="res">Resume</button><button class="btn red" id="quit">Retreat</button></div></div>`);
+    bindToggles(m);
     $('#res', m).onclick = () => m.remove();
     $('#quit', m).onclick = () => { m.remove(); $$('.modal').forEach(x => x.remove()); finishRun(false); };
   }

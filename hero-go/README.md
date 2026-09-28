@@ -19,6 +19,8 @@ All four are hand-drawn, animated SVG. Each file was built by its own agent, fol
 - **Battles:** auto turn-based with a round limit, x1/x2 speed and Skip.
 - **Leveling:** each level-up lets you pick one of 3 skills. There are 22 stackable skills (daggers, lightning and thunderstorm, fire, meteor, angel, vampire, frost and others).
 - **Meta progression:** hero levels, talents, a shop, energy, and pet eggs. Pets give team bonuses and fight beside you.
+- **Walking:** between events the road scrolls endlessly (the scene plus a mirrored copy loop seamlessly), with a bouncing walk cycle, dust puffs and footsteps.
+- **Audio:** chiptune music and sound effects are synthesized live with Web Audio in `js/audio.js`, so there are no audio files. There are three tracks: home, adventure and boss. Music and sound can be toggled with the speaker button on the home screen or in the pause menu.
 - **Saving:** progress is kept in `localStorage`.
 
 ## Files
