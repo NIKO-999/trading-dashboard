@@ -20,10 +20,17 @@ const TECH_ICON: Record<string, string> = {
 };
 
 /** Full-screen radial tech tree. `onChange` runs after a successful research. */
-export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () => void, onClose: () => void) {
+/**
+ * The research screen. With `focus` (e.g. from a locked "Build Farm" button) that tech is
+ * highlighted and its card opened; if its parent isn't known yet the card offers to go there,
+ * and once the missing parents are researched the card for the original goal comes back up.
+ */
+export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () => void, onClose: () => void, focus?: string) {
   const p = s.players[pid];
   const tribe = TRIBES[p.tribe];
   const layer = h('div', { class: 'techtree' });
+  const goal = focus && TECH_BY_ID[focus] ? focus : null;
+  let focused = goal;
   const close = () => {
     layer.remove();
     onClose();
@@ -62,7 +69,7 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
       const cost = techCost(s, pid, t.id);
       const affordable = st === 'available' && p.stars >= cost;
       const node = h('button', {
-        class: `tt-node ${st}${affordable ? ' affordable' : ''}`,
+        class: `tt-node ${st}${affordable ? ' affordable' : ''}${focused === t.id ? ' focus' : ''}`,
         style: { left: `${x}px`, top: `${y}px`, width: `${nodeSize}px`, height: `${nodeSize}px`, '--tc': tribe.color } as Record<string, string>,
         onclick: () => openTech(t.id),
       },
@@ -91,6 +98,11 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
     const body: (Node | string)[] = [h('p', {}, t.unlocks)];
     if (st === 'locked') body.push(h('p', { class: 'muted' }, `Research ${TECH_BY_ID[t.parent!].name} first.`));
     if (st === 'owned') body.push(h('p', { class: 'muted' }, 'Already known.'));
+    const goTo = (next: string) => {
+      focused = next;
+      render();
+      openTech(next);
+    };
     modal({
       title: t.name,
       art: unit ? unitPortrait(unit.kind, p.tribe, 72) : undefined,
@@ -105,12 +117,16 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
             onClick: () => {
               if (research(s, pid, id)) {
                 onChange();
-                render();
+                // researched a missing step on the way to the goal: bring the goal's card back
+                if (goal && goal !== id && researchStatus(s, pid, goal) === 'available') goTo(goal);
+                else render();
               }
             },
           },
         ]
-        : [{ label: 'OK', primary: true }],
+        : st === 'locked'
+          ? [{ label: 'Close' }, { label: `Go to ${TECH_BY_ID[t.parent!].name}`, primary: true, onClick: () => goTo(t.parent!) }]
+          : [{ label: 'OK', primary: true }],
     });
     if (st === 'available' && p.stars < cost) {
       const btn = document.querySelector<HTMLButtonElement>('.modal-layer:last-child .mbtn.primary');
@@ -120,5 +136,6 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
 
   render();
   document.getElementById('ui')!.append(layer);
+  if (focused) openTech(focused);
   return { close, refresh: render };
 }

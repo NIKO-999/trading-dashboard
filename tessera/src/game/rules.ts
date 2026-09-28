@@ -169,6 +169,8 @@ export interface Action {
   enabled: boolean;
   reason?: string;
   icon: string;
+  /** The tech this action is waiting for, when that's what is holding it back. */
+  needs?: string;
 }
 
 const TRAIN_BASE: UnitKind[] = ['warrior', 'rider', 'archer', 'defender', 'swordsman', 'catapult', 'knight'];
@@ -189,6 +191,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
       id, label, desc, cost, icon,
       enabled: hasT && p.stars >= cost && !extra,
       reason: !hasT ? `Needs ${TECH_BY_ID[tech!].name}` : extra ?? (p.stars < cost ? 'Not enough stars' : undefined),
+      needs: hasT ? undefined : tech!,
     });
   };
 

@@ -116,6 +116,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 /* ------------------------------------------------ in-game HUD */
 #ui > .game-ui { position: absolute; inset: 0; pointer-events: none; }
 .game-ui > * { pointer-events: auto; }
+.game-ui > .build-tag { position: absolute; top: calc(6px + var(--safe-top)); left: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; color: rgba(255,255,255,0.42); pointer-events: none; font-variant-numeric: tabular-nums; }
 .game-ui > .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 80% at 50% 45%, transparent 45%, rgba(0,0,0,0.3) 100%); }
 .game-ui::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(110px + var(--safe-top)); background: linear-gradient(rgba(4,6,16,0.55), rgba(4,6,16,0.18) 60%, transparent); pointer-events: none; }
 .hud { position: absolute; top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: clamp(20px, 8vw, 48px); pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
@@ -170,6 +171,10 @@ button:disabled { opacity: 0.45; cursor: default; }
 .rbtn-cost { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 9px 0; border-radius: 999px; font-size: 0.9rem; white-space: nowrap;
   background: linear-gradient(180deg, #2a2c36, #0b0c10); border: 2px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
 .rbtn.off .rbtn-cost { border-color: #666; color: #aaa; }
+.rbtn-lock { position: absolute; right: -5px; bottom: -3px; width: 25px; height: 25px; border-radius: 50%; display: grid; place-items: center; color: #3a2a00;
+  background: radial-gradient(circle at 38% 30%, #ffe27a, #f2b711); border: 2px solid #16171d; box-shadow: 0 2px 5px rgba(0,0,0,0.45); }
+.rbtn-lock .ico { width: 13px; height: 13px; }
+.rbtn-need { margin-top: -3px; font-size: 0.74rem; font-weight: 600; color: #ffd24a; letter-spacing: 0.02em; }
 .rbtn-label { font-size: 0.92rem; font-weight: 600; font-style: italic; line-height: 1.05; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 .rbtn.off .rbtn-label { color: #aaa; }
 .rbtn-sub { font-size: 0.85rem; font-weight: 300; line-height: 1.15; color: #ddd; }
@@ -238,6 +243,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 .tt-node { box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 .tt-node.owned { background: radial-gradient(circle at 38% 28%, #7ff08a 0%, #25c43b 50%, #138a26 100%); border: 0; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.35), inset 0 -5px 10px rgba(0,50,10,0.35); }
 .tt-node.available { border: 3px solid #fff; color: #fff; }
+.tt-node.focus { z-index: 2; }
+.tt-node.focus::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 3px solid #ffd24a; pointer-events: none; animation: tt-focus 1.3s ease-in-out infinite; }
+@keyframes tt-focus { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.55; } }
 .tt-node.affordable { background: radial-gradient(circle at 38% 28%, #8fd2ff 0%, #2b9cff 45%, #0f6fd6 100%); animation: tt-glow 2s ease-in-out infinite; }
 @keyframes tt-glow { 0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 0 rgba(77,179,255,0.5); } 50% { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 9px rgba(77,179,255,0); } }
 .tt-name { font-size: 0.64rem; font-style: italic; line-height: 1; text-align: center; white-space: nowrap; }

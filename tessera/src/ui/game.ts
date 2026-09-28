@@ -46,6 +46,7 @@ export class GameView {
   private vw = 0;
   private vh = 0;
   private hud!: HTMLElement;
+  private buildTag!: HTMLElement;
   private panel!: HTMLElement;
   private bottom!: HTMLElement;
   private hint!: HTMLElement;
@@ -100,12 +101,14 @@ export class GameView {
     const root = $ui();
     root.innerHTML = '';
     this.hud = h('div', { class: 'hud' });
+    // tiny and faint: any screenshot then says which build it is and how sharply the map is drawn
+    this.buildTag = h('div', { class: 'build-tag' });
     this.hint = h('div', { class: 'hint hidden' });
     this.banner = h('div', { class: 'turn-banner hidden' });
     this.panel = h('div', { class: 'sheet hidden' });
     this.bottom = h('div', { class: 'bottom-bar' });
     // the vignette is a CSS layer (composited for free) rather than a full-screen gradient painted every frame
-    root.append(h('div', { class: 'game-ui' }, h('div', { class: 'vignette' }), this.hud, this.hint, this.banner, this.panel, this.bottom));
+    root.append(h('div', { class: 'game-ui' }, h('div', { class: 'vignette' }), this.buildTag, this.hud, this.hint, this.banner, this.panel, this.bottom));
     const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
       h('button', { class: `dock-btn ${cls}`, onclick }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
     this.bottom.append(
@@ -120,6 +123,7 @@ export class GameView {
     // Render at the screen's real pixel density (see renderDpr) so the map stays sharp.
     const dpr = renderDpr();
     this.dpr = dpr;
+    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+dpr.toFixed(2)}×`;
     const oldW = this.vw, oldH = this.vh;
     this.vw = window.innerWidth;
     this.vh = window.innerHeight;
@@ -515,9 +519,15 @@ export class GameView {
     for (const a of acts) {
       const icon = paint(54, 54, (ctx) => drawIcon(ctx, a.icon, tribe, 27, 26), `icon:${a.icon}:${tribe}:54`);
       row.append(h('button', {
-        class: `rbtn${a.enabled ? '' : ' off'}`,
+        class: `rbtn${a.enabled ? '' : ' off'}${a.needs ? ' locked' : ''}`,
         title: a.reason ?? a.desc,
         onclick: () => {
+          // like Polytopia: an action waiting on a tech takes you to that tech in the tree
+          if (a.needs) {
+            sfx.play('tap');
+            this.openTech(a.needs);
+            return;
+          }
           if (!a.enabled) {
             sfx.play('error');
             toast(a.reason ? `${a.label}: ${a.reason}` : a.desc);
@@ -534,8 +544,10 @@ export class GameView {
           this.checkRewards();
         },
       },
-        h('span', { class: 'rbtn-circle' }, icon, a.cost > 0 ? h('span', { class: 'rbtn-cost' }, starSpan(a.cost)) : null),
+        h('span', { class: 'rbtn-circle' }, icon, a.cost > 0 ? h('span', { class: 'rbtn-cost' }, starSpan(a.cost)) : null,
+          a.needs ? h('span', { class: 'rbtn-lock' }, iconEl('lock')) : null),
         h('span', { class: 'rbtn-label' }, a.label),
+        a.needs ? h('span', { class: 'rbtn-need' }, TECH_BY_ID[a.needs].name) : null,
       ));
     }
     this.panel.append(row);
@@ -909,15 +921,15 @@ export class GameView {
     modal({ title: 'Empires', body: rows, dismissable: true, cls: 'stats' });
   }
 
-  private openTech() {
+  /** Opens the tech tree; with `focus`, that tech is highlighted and its research card opened. */
+  private openTech(focus?: string) {
     if (this.busy) return;
-    const tt = showTechTree(this.s, this.me, this.hud, () => {
+    showTechTree(this.s, this.me, this.hud, () => {
       sfx.play('research');
       this.refresh();
       this.advanceHints();
       saveGame(this.s);
-    }, () => this.refresh());
-    void tt;
+    }, () => this.refresh(), focus);
   }
 }
 
