@@ -30,7 +30,7 @@
   }
   let uidN = 0;
   const uid = () => 'u' + (++uidN);
-  const today = () => new Date().toISOString().slice(0, 10);
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 
   // ---------------------------------------------------------------- art (with graceful fallbacks)
   const blob = (c, label) => `<svg viewBox="0 0 200 200"><ellipse cx="100" cy="190" rx="50" ry="8" fill="#0003"/><g class="part-body"><path d="M40 180 C30 110 70 70 100 70 C130 70 170 110 160 180 Z" fill="${c}" stroke="#2b1d14" stroke-width="5"/><g class="part-eyes"><circle cx="80" cy="130" r="7" fill="#2b1d14"/><circle cx="120" cy="130" r="7" fill="#2b1d14"/></g></g><text x="100" y="60" font-size="18" text-anchor="middle" fill="#fff">${label || ''}</text></svg>`;
@@ -54,6 +54,7 @@
   let save = DEFAULT_SAVE();
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) save = Object.assign(DEFAULT_SAVE(), s); } catch (e) { /* storage unavailable */ }
   if (!HEROES[save.hero]) save.hero = HERO_KEYS[0];
+  if (save.freeEggs > 3) { save.bonusEggs += save.freeEggs - 3; save.freeEggs = 3; }
   const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {} };
   SND.setMusic(save.music); SND.setSfx(save.sfx);
   const snd = n => { if (!(R && R.skip)) SND.play(n); };
@@ -330,10 +331,11 @@
 
   // ---------------------------------------------------------------- shop
   function renderShop() {
+    tickEnergy();
     const gift = save.giftDay !== today();
     const items = [
       { id: 'gift', name: 'Daily Gift', icon: 'chest', desc: '120 Gems + 300 Coins, free once a day', btn: gift ? 'Claim' : 'Claimed', ok: gift },
-      { id: 'energy', name: 'Energy Refill', icon: 'energy', desc: `Refill energy to ${ENERGY_MAX}`, btn: '💎 60', ok: save.gems >= 60 },
+      { id: 'energy', name: 'Energy Refill', icon: 'energy', desc: `Refill energy to ${ENERGY_MAX}`, btn: '💎 60', ok: save.gems >= 60 && save.energy < ENERGY_MAX },
       { id: 'gold', name: 'Bag of Coins', icon: 'coin', desc: '2,000 Coins', btn: '💎 100', ok: save.gems >= 100 },
       { id: 'gold2', name: 'Chest of Coins', icon: 'chest', desc: '12,000 Coins', btn: '💎 500', ok: save.gems >= 500 },
     ];
@@ -912,7 +914,29 @@
     R.skip = false;
     await wait(500);
 
-    // battle-start effects
+    let result;
+    for (;;) {
+      result = await fightRounds(maxRounds);
+      if (result === 'win' || (result === 'timeout' && tier === 'mob')) break;
+      const revived = await defeat(result === 'timeout');
+      if (!revived) { S.bossBar.classList.remove('show'); clearEnemies(); return; }
+      if (tier === 'mob') { S.bossBar.classList.remove('show'); clearEnemies(); log('Rising again, you drive the enemy off!'); return; }
+      // elites and bosses must actually be beaten: the fight resumes, enemy HP carries over
+      log('Rising again, you charge back into the fight!');
+      S.skip.classList.add('show');
+      await wait(400);
+    }
+    S.bossBar.classList.remove('show');
+    clearEnemies();
+    if (result === 'timeout') { log('The enemy grows bored and wanders off. <em>No reward.</em>'); return; }
+    const tm = { mob: 1, elite: 3.5, boss: 8 }[tier];
+    const g = addCoins((10 + R.day * 1.5) * keys.length * tm * ch.mult ** 0.5);
+    const x = addXp((16 + R.day * 1.4) * (tier === 'mob' ? 0.9 + keys.length * 0.4 : tm));
+    log(pick(TEXT.win).replace('{g}', fmt(g)), [{ icon: 'coin', text: `+${fmt(g)}`, cls: 'gold' }, { icon: 'talent', text: `EXP+${fmt(x)}` }]);
+    if (tier === 'elite') { popBanner('VICTORY!'); await wait(700); await skillSelect('Elite defeated!'); }
+  }
+  async function fightRounds(maxRounds) {
+    // battle-start effects (also re-applied after a revive)
     R.shield = 0;
     if (sk('wall')) R.shield += R.maxHp * (0.15 + 0.1 * (sk('wall') - 1));
     if (R.sig === 'shield') R.shield += R.maxHp * 0.3;
@@ -920,7 +944,6 @@
     if (R.shield) { auraAt(S.hero, '#9ad7ffcc'); snd('shield'); }
     let angel = sk('angel') ? 6 : 0;
     updateStats();
-
     let result = 'timeout';
     for (let round = 1; round <= maxRounds; round++) {
       $('.round-pill', S.bossBar).textContent = `Round : ${round}/${maxRounds}`;
@@ -937,23 +960,7 @@
     R.skip = false;
     S.skip.classList.remove('show');
     await wait(450);
-
-    if (result === 'lose' || (result === 'timeout' && tier !== 'mob')) {
-      S.bossBar.classList.remove('show');
-      const revived = await defeat(result === 'timeout');
-      clearEnemies();
-      if (!revived) return;
-      log('Rising again, you drive the enemy off!');
-      return;
-    }
-    S.bossBar.classList.remove('show');
-    clearEnemies();
-    if (result === 'timeout') { log('The enemy grows bored and wanders off. <em>No reward.</em>'); return; }
-    const tm = { mob: 1, elite: 3.5, boss: 8 }[tier];
-    const g = addCoins((10 + R.day * 1.5) * keys.length * tm * ch.mult ** 0.5);
-    const x = addXp((16 + R.day * 1.4) * (tier === 'mob' ? 0.9 + keys.length * 0.4 : tm));
-    log(pick(TEXT.win).replace('{g}', fmt(g)), [{ icon: 'coin', text: `+${fmt(g)}`, cls: 'gold' }, { icon: 'talent', text: `EXP+${fmt(x)}` }]);
-    if (tier === 'elite') { popBanner('VICTORY!'); await wait(700); await skillSelect('Elite defeated!'); }
+    return result;
   }
   function clearEnemies() { R.enemies.forEach(e => e.el && e.el.remove()); R.enemies = []; R.shield = 0; updateStats(); }
 
@@ -984,7 +991,8 @@
     setWalking(false);
     SND.music(null);
     if (cleared) SND.play('victory'); else if (!R.sadPlayed) SND.play('defeat');
-    const ch = R.ch, day = cleared ? ch.days : R.day;
+    // a loss counts the days fully survived, so dying to the boss never reads as a clear
+    const ch = R.ch, day = cleared ? ch.days : Math.max(0, R.day - 1);
     const prevBest = save.best[ch.id] || 0;
     save.best[ch.id] = Math.max(prevBest, day);
     const gems = Math.round(day * 1.5 + (cleared ? 80 * ch.id : 0));

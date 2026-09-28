@@ -166,6 +166,8 @@
     timer = setInterval(() => {
       if (!ctx || ctx.state !== 'running') return;
       const sixteenth = 60 / tr.bpm / 4;
+      // after a stall, skip the missed steps instead of firing them all at once
+      if (nextT < ctx.currentTime) { const miss = Math.ceil((ctx.currentTime - nextT) / sixteenth); step += miss; nextT += miss * sixteenth; }
       while (nextT < ctx.currentTime + 0.15) {
         if (musicOn) scheduleWithTime(tr, step, nextT);
         nextT += sixteenth; step++;
