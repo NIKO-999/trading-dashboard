@@ -141,6 +141,10 @@
     polynesian: { name: "Ocean's Bounty", desc: 'Max HP +20%. All healing is 40% stronger.', fx: { hpPct: 20, healBoost: 0.4 } },
     viking:     { name: 'Plunder', desc: '+30% coins from every source. Start each journey with Power Up.', fx: { coinPct: 30, startSkill: 'atk' } },
     zulu:       { name: 'Impi Swiftness', desc: '+30% EXP. Open every battle with a free spear throw (100% ATK).', fx: { xpPct: 30, openingThrow: 1 } },
+    spartan:    { name: 'Molon Labe', desc: 'Max HP +15%. Once per journey, survive a fatal blow with 30% HP.', fx: { hpPct: 15, lastStand: 0.3 } },
+    mongol:     { name: 'Eagle Eye', desc: '+15% Crit chance and +50% Crit damage.', fx: { critChance: 0.15, critDmg: 0.5 } },
+    egyptian:   { name: 'Sands of Renewal', desc: 'DEF +10%. Heal 20% of Max HP at the start of every battle.', fx: { defPct: 10, battleHeal: 0.2 } },
+    celtic:     { name: 'Wild Hunt', desc: 'ATK +10%. Your pets strike twice as hard.', fx: { atkPct: 10, petMult: 2 } },
   };
 
   window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT, HERO_BONUS };

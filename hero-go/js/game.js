@@ -7,8 +7,8 @@
   const PETS = window.PETS || {};
   const SCENES = window.SCENES || {};
   const EGGS = window.EGGS || {};
-  const HERO_KEYS = ['samurai', 'knight', 'aztec', 'polynesian', 'viking', 'zulu'].filter(k => HEROES[k]);
-  const HERO_SCENE = { samurai: 'forest', knight: 'desert', aztec: 'swamp', polynesian: 'volcano', viking: 'snow', zulu: 'desert' };
+  const HERO_KEYS = ['samurai', 'knight', 'aztec', 'polynesian', 'viking', 'zulu', 'spartan', 'mongol', 'egyptian', 'celtic'].filter(k => HEROES[k]);
+  const HERO_SCENE = { samurai: 'forest', knight: 'desert', aztec: 'swamp', polynesian: 'volcano', viking: 'snow', zulu: 'desert', spartan: 'desert', mongol: 'snow', egyptian: 'desert', celtic: 'forest' };
   const bonusOf = k => (HERO_BONUS[k] || { name: '', desc: '', fx: {} });
 
   // ---------------------------------------------------------------- utils
@@ -125,7 +125,7 @@
   function splash() {
     const s = el(`<div class="splash">
       <div class="scene">${art.scene('forest')}</div><div class="dim"></div>
-      <div class="lineup">${['zulu', 'aztec', 'samurai', 'knight', 'polynesian', 'viking'].filter(k => HEROES[k]).map(k => `<div>${art.hero(k)}</div>`).join('')}</div>
+      <div class="lineup">${shuffle(HERO_KEYS).slice(0, 6).map(k => `<div>${art.hero(k)}</div>`).join('')}</div>
       <div class="logo title-gold">HERO<br>GO!</div>
       <div class="sub stroke-sm">${HERO_KEYS.length} legends. One endless road.</div>
       <button class="btn big tap">Play</button></div>`);
@@ -400,6 +400,7 @@
     let a = R.atk;
     if (sk('rage') && R.hp < R.maxHp / 2) a *= 1 + 0.4 + 0.3 * (sk('rage') - 1);
     if (R.sig === 'rage') a *= 1 + 0.6 * (1 - R.hp / R.maxHp); // Berserkergang
+    if (R.sig === 'stack') a *= 1 + 0.05 * (R.cry || 0); // Battle Cry
     return a;
   }
 
@@ -781,6 +782,7 @@
   function screenFlash() { fxEl(`<div class="flash"></div>`, 0, 0, 400); if (!R.skip) { S.stage.classList.remove('shake'); void S.stage.offsetWidth; S.stage.classList.add('shake'); } }
   function restart(elm, ...cls) { elm.classList.remove(...cls); void elm.offsetWidth; elm.classList.add(...cls); }
   const DAGGER = ICONS.dagger;
+  const ARROW = '<svg viewBox="0 0 64 64"><path d="M8 56 L50 14" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round"/><path d="M56 8 L40 14 L50 24 Z" fill="#dfe7ef" stroke="#2b1d14" stroke-width="3" stroke-linejoin="round"/><path d="M8 56 L4 46 M8 56 L18 60 M14 50 L10 40 M14 50 L24 54" stroke="#e85d5d" stroke-width="4" stroke-linecap="round"/></svg>';
 
   // ---------------------------------------------------------------- combat math
   const dmgCalc = (atk, def) => Math.max(1, Math.round(atk * atk / (atk + def) * rand(0.92, 1.08)));
@@ -788,6 +790,7 @@
     let c = R.sig === 'crit' ? 0.25 : 0.05, m = R.sig === 'crit' ? 2.5 : 1.5;
     if (sk('keen')) c += 0.12 + 0.06 * (sk('keen') - 1);
     if (sk('deadly')) m += 0.5 + 0.3 * (sk('deadly') - 1);
+    c += R.bonus.critChance || 0; m += R.bonus.critDmg || 0;
     return chance(c) ? m : 0;
   }
   function damageEnemy(e, amount, cls = '') {
@@ -833,6 +836,7 @@
     const dmg = dmgCalc(effAtk() * mult, target.def) * (cm || 1);
     damageEnemy(target, dmg, cm ? 'crit' : '');
     onHitEffects(target);
+    if (R.sig === 'stack' && (R.cry || 0) < 10) { R.cry = (R.cry || 0) + 1; if (R.cry % 3 === 0) num(S.hero, `Battle Cry x${R.cry}`, 'blk'); }
     if (!R.skip) { await wait(200); S.hero.classList.remove('lunge'); await wait(120); S.hero.classList.remove('attack'); }
   }
   async function heroTurn(round) {
@@ -856,6 +860,13 @@
     // main attack
     await heroStrike(front());
     if (R.sig === 'multi' && chance(0.3) && front()) { num(S.hero, 'Flurry!', 'blk'); await heroStrike(front()); }
+    if (R.sig === 'volley') {
+      for (let i = 0; i < 2; i++) {
+        const t = pick(alive()); if (!t) break;
+        snd('throw'); await projectile(S.hero, t.el, ARROW, '', 180);
+        damageEnemy(t, dmgCalc(effAtk() * 0.5, t.def));
+      }
+    }
     if (sk('double') && chance(0.2 + 0.12 * (sk('double') - 1)) && front()) { num(S.hero, 'Double!', 'blk'); await heroStrike(front()); }
     // daggers
     for (let i = 0; i < sk('dagger'); i++) {
@@ -874,7 +885,7 @@
       const t = front();
       if (!R.skip) { restart(S.pet, 'hit'); snd('pew'); }
       await projectile(S.pet, t.el, `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="#ffe7a0" stroke="#2b1d14" stroke-width="3"/><circle cx="20" cy="20" r="5" fill="#fff"/></svg>`, 'spin', 220);
-      damageEnemy(t, dmgCalc(effAtk() * 0.3, t.def));
+      damageEnemy(t, dmgCalc(effAtk() * 0.3 * (R.bonus.petMult || 1), t.def));
       if (H) void H;
     }
   }
@@ -889,6 +900,11 @@
       if (e.tier !== 'mob' && R.bonus.bigFoeGuard) d = Math.round(d * (1 - R.bonus.bigFoeGuard));
       if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) { num(S.hero, fmt(a), 'blk'); snd('block'); } }
       if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), 'hero'); snd('hurt'); flashHit(S.hero); }
+      if (R.hp <= 0 && R.bonus.lastStand && !R.lastStandUsed) {
+        R.lastStandUsed = true; R.hp = Math.round(R.maxHp * R.bonus.lastStand);
+        popBanner('LAST STAND!'); auraAt(S.hero, '#ffd27acc'); snd('revive');
+      }
+      if (d > 0 && R.sig === 'thorns' && e.alive) damageEnemy(e, d * 0.3, 'dot'); // Phalanx
       updateStats();
       if (R.hp > 0 && sk('counter') && chance(0.2 + 0.1 * (sk('counter') - 1))) { e.el.classList.remove('lunge'); num(S.hero, 'Counter!', 'blk'); await heroStrike(e, 0.8); }
     }
@@ -934,7 +950,9 @@
     await wait(500);
 
     let result;
-    R.struckThisBattle = false;
+    R.struckThisBattle = false; R.cry = 0;
+    if (R.sig === 'curse') { R.enemies.forEach(e => { e.atk = Math.round(e.atk * 0.75); num(e.el, 'Cursed', 'dot'); }); }
+    if (R.bonus.battleHeal) { const h = heal(R.maxHp * R.bonus.battleHeal); if (h) { num(S.hero, '+' + fmt(h), 'heal'); snd('heal'); } }
     for (;;) {
       result = await fightRounds(maxRounds);
       if (result === 'win' || (result === 'timeout' && tier === 'mob')) break;
