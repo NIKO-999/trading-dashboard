@@ -19,6 +19,8 @@ registerSW({ immediate: true });
 sfx.enabled = loadSettings().sound;
 // Browsers only allow audio after a user gesture; unlock on the first touch anywhere.
 window.addEventListener('pointerdown', () => sfx.unlock());
+// iOS Safari ignores user-scalable=no; block its page-zoom gestures so a pinch only zooms the map.
+for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 // The map canvas draws text itself, so make sure the faces it uses are loaded early.
 for (const f of ['400 13px', '600 13px', '700 15px']) void document.fonts?.load(`${f} "Josefin Sans"`);
 

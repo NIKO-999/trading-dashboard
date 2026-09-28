@@ -178,7 +178,7 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
     aztec: [{ terrain: 'forest', res: 'animal' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
     polynesia: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
     rome: [{ terrain: 'field', res: 'fruit' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
-    pirates: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
+    pirates: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'mountain', res: 'ore' }],
   };
   const free = rng.shuffle(ring.filter((t) => !t.resource));
   for (const w of want[tribe]) {

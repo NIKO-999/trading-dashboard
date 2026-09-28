@@ -11,7 +11,7 @@ Lead one of five empires, each with its own biome, starting tech, unique unit an
 | Aztec | jungle | Hunting | Jaguar Warrior (replaces Rider) | Hunting refunds 1★ |
 | Polynesian | islands | Fishing | Waka (replaces Canoe) | Board boats from any coast |
 | Roman | hills | Riding | Legionary (replaces Warrior) | Roads cost 1★ less |
-| Pirate | rocky coast | Climbing | Buccaneer (replaces Archer) | +2★ plunder per kill |
+| Pirate | rocky coast | Fishing | Buccaneer (replaces Archer) | Boats and ships move +1 and attack +1; ports cost 4★ and earn +1★ a turn |
 
 Features:
 - A seeded isometric map with fog of war.

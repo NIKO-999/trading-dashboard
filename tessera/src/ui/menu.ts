@@ -128,7 +128,7 @@ export function unitPortrait(kind: keyof typeof UNITS, tribe: TribeId, size = 64
     ctx.translate(size / 2, size * 0.86);
     ctx.scale(k, k);
     drawUnitSprite(ctx, kind, tribe, 0, -2);
-  });
+  }, `unit:${kind}:${tribe}:${size}`);
 }
 
 // ---------------------------------------------------------------- new game setup

@@ -14,7 +14,10 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--font); }
+img.pic { display: block; pointer-events: none; -webkit-touch-callout: none; -webkit-user-drag: none; }
+button { touch-action: manipulation; }
 body { overscroll-behavior: none; touch-action: none; user-select: none; -webkit-user-select: none; }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; padding: 0; }
 button:disabled { opacity: 0.45; cursor: default; }
@@ -137,7 +140,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .rbtn { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .rbtn-circle { position: relative; width: 70px; height: 70px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #4db3ff, #1580e8); border: 4px solid #fff; }
 .rbtn.off .rbtn-circle { background: #000; border-color: #666; }
-.rbtn.off canvas { opacity: 0.45; }
+.rbtn.off :is(canvas, img) { opacity: 0.45; }
 .rbtn-cost { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 8px 0; border-radius: 999px; background: #000; border: 2px solid #fff; font-size: 0.9rem; white-space: nowrap; }
 .rbtn.off .rbtn-cost { border-color: #666; color: #aaa; }
 .rbtn-label { font-size: 0.92rem; font-weight: 600; font-style: italic; line-height: 1.05; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
@@ -192,7 +195,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .tt-lines { position: absolute; inset: 0; }
 .tt-center { position: absolute; transform: translate(-50%, -50%); width: 64px; height: 64px; display: grid; place-items: center; }
 .tt-node { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #555; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; color: #aaa; }
-.tt-node canvas { margin-bottom: -2px; }
+.tt-node :is(canvas, img) { margin-bottom: -2px; }
 .tt-node.owned { background: var(--green); border: 0; color: #fff; }
 .tt-node.available { border: 3px solid #fff; color: #fff; }
 .tt-node.affordable { background: var(--blue); }

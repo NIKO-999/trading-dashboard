@@ -46,6 +46,7 @@ const HH = TH / 2;
 const FOG_LIFT = 8;
 const FOG = ['#ffffff', '#e4e8f8', '#c9d1f2', '#a8b5ea'];
 const UNIT_SCALE = 1.3;
+const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain === 'ocean';
 
@@ -87,25 +88,58 @@ export function drawBackground(ctx: Ctx, w: number, h: number) {
 
 // ---------------------------------------------------------------- renderer
 
+/** Keeps the map layer within this many device pixels (iOS caps canvas size and memory). */
+const LAYER_PIXEL_BUDGET = 12_000_000;
+/** Extra map rendered beyond each screen edge, so short pans only shift the cached layer. */
+const LAYER_MARGIN = 0.25;
+
 export class WorldRenderer {
   private layer = document.createElement('canvas');
   private lctx = this.layer.getContext('2d')!;
-  private key = '';
+  private version = -1;
+  private cam = { x: 0, y: 0, zoom: 1 };
+  private size = { vw: 0, vh: 0, mx: 0, my: 0, dpr: 0 };
 
-  /** `version` must change whenever the state or the static overlays (selection, glow) change. */
-  render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number) {
-    const key = `${version}|${cam.x.toFixed(2)}|${cam.y.toFixed(2)}|${cam.zoom.toFixed(4)}|${vw}|${vh}|${dpr}`;
-    if (key !== this.key) {
-      this.key = key;
-      const W = Math.round(vw * dpr), H = Math.round(vh * dpr);
-      if (this.layer.width !== W || this.layer.height !== H) {
-        this.layer.width = W;
-        this.layer.height = H;
+  /**
+   * `version` must change whenever the state or the static overlays (selection, glow) change.
+   * While `interacting` (a finger is down) a zoomed layer may be stretched briefly instead of
+   * redrawn; it is redrawn crisply as soon as the gesture ends.
+   */
+  render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number, interacting = false) {
+    const mx = Math.round(vw * LAYER_MARGIN), my = Math.round(vh * LAYER_MARGIN);
+    const W = vw + mx * 2, H = vh + my * 2;
+    const L = this.cam;
+    const scale = cam.zoom / L.zoom;
+    const tx = cam.x - (L.x + this.size.mx) * scale;
+    const ty = cam.y - (L.y + this.size.my) * scale;
+    const covers = tx <= 0.5 && ty <= 0.5 && tx + (this.size.vw + this.size.mx * 2) * scale >= vw - 0.5 && ty + (this.size.vh + this.size.my * 2) * scale >= vh - 0.5;
+    const fresh = version === this.version && this.size.vw === vw && this.size.vh === vh && this.size.dpr === dpr;
+    const zoomSame = Math.abs(scale - 1) < 1e-6;
+    const reuse = fresh && covers && (zoomSame || (interacting && Math.abs(Math.log(scale)) < 0.35));
+
+    if (!reuse) {
+      const layerDpr = Math.min(dpr, Math.sqrt(LAYER_PIXEL_BUDGET / (W * H)));
+      const PW = Math.round(W * layerDpr), PH = Math.round(H * layerDpr);
+      if (this.layer.width !== PW || this.layer.height !== PH) {
+        this.layer.width = PW;
+        this.layer.height = PH;
       }
-      this.lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawStatic(this.lctx, s, viewer, cam, ov, vw, vh);
+      this.lctx.setTransform(PW / W, 0, 0, PH / H, 0, 0);
+      const lc = new Camera();
+      lc.x = cam.x + mx;
+      lc.y = cam.y + my;
+      lc.zoom = cam.zoom;
+      drawStatic(this.lctx, s, viewer, lc, ov, W, H);
+      this.version = version;
+      this.cam = { x: cam.x, y: cam.y, zoom: cam.zoom };
+      this.size = { vw, vh, mx, my, dpr };
+      ctx.drawImage(this.layer, -mx, -my, W, H);
+    } else if (zoomSame) {
+      // Shift by whole device pixels so the cached layer stays pin-sharp while panning.
+      ctx.drawImage(this.layer, Math.round(tx * dpr) / dpr, Math.round(ty * dpr) / dpr, W, H);
+    } else {
+      ctx.drawImage(this.layer, tx, ty, (this.size.vw + this.size.mx * 2) * scale, (this.size.vh + this.size.my * 2) * scale);
     }
-    ctx.drawImage(this.layer, 0, 0, vw, vh);
     ctx.save();
     ctx.translate(cam.x, cam.y);
     ctx.scale(cam.zoom, cam.zoom);
@@ -949,7 +983,7 @@ export function unitScreenPos(s: GameState, u: Unit, fx: Fx, now: number) {
       lift += Math.sin(Math.PI * k) * 3;
     }
   }
-  if (onWater) y += WATER_DROP - 1 + Math.sin(now / 520 + u.id) * 1.2;
+  if (onWater) y += WATER_DROP - 1 + (REDUCED_MOTION ? 0 : Math.sin(now / 520 + u.id) * 1.2);
   return { x, y: y - lift };
 }
 
@@ -959,8 +993,9 @@ function drawUnitAt(ctx: Ctx, s: GameState, u: Unit, ov: Overlay, viewer: number
   const tribe = s.players[u.owner].tribe;
   const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
   const moving = ov.fx.moves.has(u.id) || ov.fx.lunges.has(u.id);
-  // gentle idle breathing for units that can still act
-  const breathe = !moving && !spent ? Math.sin(now / 420 + u.id * 1.7) * 0.025 : 0;
+  // units that can still act this turn bob gently so they stand out
+  const ready = u.owner === viewer && s.current === viewer && !u.moved;
+  const bob = !moving && ready && !REDUCED_MOTION ? (Math.sin(now / 380 + u.id * 1.7) + 1) * 0.9 : 0;
   let shake = 0;
   const fl = ov.fx.flashes.get(u.id);
   const flashK = fl === undefined ? -1 : (now - fl) / FLASH_MS;
@@ -969,8 +1004,8 @@ function drawUnitAt(ctx: Ctx, s: GameState, u: Unit, ov: Overlay, viewer: number
     shake = Math.sin(flashK * 42) * 2.2 * (1 - flashK);
   } else if (spent) setTint('#6f6f6f', 0.45);
   ctx.save();
-  ctx.translate(x + shake, y + 5);
-  ctx.scale(UNIT_SCALE, UNIT_SCALE * (1 + breathe));
+  ctx.translate(x + shake, y + 5 - bob);
+  ctx.scale(UNIT_SCALE, UNIT_SCALE);
   drawUnitSprite(ctx, u.kind, tribe, 0, 0);
   ctx.restore();
   setTint(null);

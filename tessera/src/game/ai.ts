@@ -70,7 +70,8 @@ function economyStep(s: GameState, pid: number): boolean {
       if (!a.enabled || !HARVEST_IDS.includes(a.id)) continue;
       if (a.id === 'market' && p.stars < 14) continue;
       if ((a.id === 'temple' || a.id === 'shrine') && p.stars < 16) continue;
-      if (a.id === 'port' && s.tiles.some((x) => x.improvement === 'port' && tileOwnerPlayer(s, x) === pid)) continue;
+      // one port is enough for most empires; pirates' ports also pay income, so they build more
+      if (a.id === 'port' && p.tribe !== 'pirates' && s.tiles.some((x) => x.improvement === 'port' && tileOwnerPlayer(s, x) === pid)) continue;
       const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' ? 4 : 2;
       harvests.push({ t, id: a.id, cost: a.cost, value: value / Math.max(1, a.cost) });
     }

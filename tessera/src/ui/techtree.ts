@@ -67,7 +67,7 @@ export function showTechTree(s: GameState, pid: number, hud: Node, onChange: () 
         onclick: () => openTech(t.id),
       },
         st === 'available' ? h('span', { class: 'tt-cost' }, starSpan(cost)) : null,
-        st !== 'locked' ? paint(28, 19, (ctx) => { ctx.translate(14, 10); ctx.scale(0.42, 0.42); drawIcon(ctx, TECH_ICON[t.id], p.tribe, 0, 0); }) : null,
+        st !== 'locked' ? paint(28, 19, (ctx) => { ctx.translate(14, 10); ctx.scale(0.42, 0.42); drawIcon(ctx, TECH_ICON[t.id], p.tribe, 0, 0); }, `tech:${t.id}:${p.tribe}`) : null,
         h('span', { class: 'tt-name', style: { fontSize: `${Math.min(10.5, (nodeSize - (st === 'available' ? 15 : 9)) / (t.name.length * 0.5)).toFixed(1)}px` } }, t.name),
       );
       board.append(node);

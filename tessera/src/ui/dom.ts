@@ -26,18 +26,45 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 
 export const $ui = () => document.getElementById('ui')!;
 
-/** A small canvas with something drawn in it (unit portraits, action icons). */
-export function paint(w: number, hgt: number, draw: (ctx: CanvasRenderingContext2D) => void, scale = 1) {
+const pictures = new Map<string, string>();
+
+/**
+ * Draws a small picture (unit portrait, action icon). With a `key` the drawing is rendered once,
+ * cached as an image and reused: iOS limits total canvas memory, so the UI shouldn't keep
+ * dozens of live canvases around.
+ */
+export function paint(w: number, hgt: number, draw: (ctx: CanvasRenderingContext2D) => void, key?: string): HTMLElement {
+  const picture = (src: string) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.width = w;
+    img.height = hgt;
+    img.alt = '';
+    img.draggable = false;
+    img.className = 'pic';
+    return img;
+  };
+  const cached = key ? pictures.get(key) : undefined;
+  if (cached) return picture(cached);
   const c = document.createElement('canvas');
-  const dpr = Math.min(3, window.devicePixelRatio || 1);
-  c.width = w * dpr;
-  c.height = hgt * dpr;
+  const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+  c.width = Math.round(w * dpr);
+  c.height = Math.round(hgt * dpr);
   c.style.width = `${w}px`;
   c.style.height = `${hgt}px`;
   const ctx = c.getContext('2d')!;
-  ctx.scale(dpr * scale, dpr * scale);
+  ctx.scale(dpr, dpr);
   draw(ctx);
-  return c;
+  if (!key) return c;
+  let url = '';
+  try {
+    url = c.toDataURL('image/png');
+  } catch {
+    return c;
+  }
+  pictures.set(key, url);
+  c.width = c.height = 0; // hand the canvas memory back straight away
+  return picture(url);
 }
 
 export const ICONS = {

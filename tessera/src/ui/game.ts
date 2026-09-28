@@ -6,7 +6,7 @@ import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, doAction, income, isExplored, maxHp,
-  moveOptions, moveUnit, previewCombat, rewardOptions, score, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
+  moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
@@ -35,6 +35,8 @@ export class GameView {
   private lastFrame = 0;
   private lastTick = 0;
   private dpr = 1;
+  private touching = 0; // fingers currently on the map
+  private wasTouching = false;
   private sel: Selection | null = null;
   private busy = false;
   private raf = 0;
@@ -58,6 +60,7 @@ export class GameView {
     this.buildUi();
     this.resize();
     window.addEventListener('resize', this.ro);
+    window.visualViewport?.addEventListener('resize', this.ro);
     this.bindInput();
     const cap = citiesOf(s, this.me).find((c) => c.capital) ?? citiesOf(s, this.me)[0];
     this.cam.zoom = Math.min(2.2, Math.max(1.2, this.vw / 250));
@@ -84,6 +87,7 @@ export class GameView {
     this.destroyed = true;
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.ro);
+    window.visualViewport?.removeEventListener('resize', this.ro);
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -111,16 +115,19 @@ export class GameView {
   }
 
   private resize() {
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    // Render at the screen's real pixel density (and never below 2x), times any page zoom, so the
+    // map stays sharp on high-density phone screens and in scaled-up app views.
+    const zoom = window.visualViewport?.scale ?? 1;
+    const dpr = Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * zoom));
     this.dpr = dpr;
     const oldW = this.vw, oldH = this.vh;
     this.vw = window.innerWidth;
     this.vh = window.innerHeight;
-    this.canvas.width = this.vw * dpr;
-    this.canvas.height = this.vh * dpr;
+    this.canvas.width = Math.round(this.vw * dpr);
+    this.canvas.height = Math.round(this.vh * dpr);
     this.canvas.style.width = `${this.vw}px`;
     this.canvas.style.height = `${this.vh}px`;
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx.setTransform(this.canvas.width / this.vw, 0, 0, this.canvas.height / this.vh, 0, 0);
     if (oldW) {
       this.cam.x += (this.vw - oldW) / 2;
       this.cam.y += (this.vh - oldH) / 2;
@@ -136,8 +143,10 @@ export class GameView {
     const camMoving = this.cam.step(now, dt);
     const fxActive = this.pruneFx(now);
     // Full frame rate while anything moves; idle breathing only needs ~30 fps.
-    if (camMoving || fxActive || this.version !== this.drawnVersion || now - this.lastFrame > 33) {
-      this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version);
+    const gestureEnded = this.touching === 0 && this.wasTouching;
+    this.wasTouching = this.touching > 0;
+    if (camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion || now - this.lastFrame > 33) {
+      this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, this.touching > 0);
       this.drawnVersion = this.version;
       this.lastFrame = now;
     }
@@ -175,6 +184,7 @@ export class GameView {
       lastT = e.timeStamp;
       c.setPointerCapture(e.pointerId);
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      this.touching = pts.size;
       if (pts.size === 1) {
         panned = false;
         start = { x: e.clientX, y: e.clientY };
@@ -212,6 +222,7 @@ export class GameView {
     const up = (e: PointerEvent) => {
       if (!pts.has(e.pointerId)) return;
       pts.delete(e.pointerId);
+      this.touching = pts.size;
       if (pts.size === 0 && !panned && e.type === 'pointerup') this.tap(e.clientX, e.clientY);
       // fling: keep gliding after a quick pan
       if (pts.size === 0 && panned && pinch === 0 && e.timeStamp - lastT < 80) {
@@ -387,10 +398,10 @@ export class GameView {
         : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
       const stats = h('span', { class: 'stat-line' },
-        h('span', {}, 'Attack ', h('b', {}, String(d.atk))),
+        h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u)))),
         h('span', {}, 'Defence ', h('b', {}, String(d.def))),
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
-        h('span', {}, 'Move ', h('b', {}, String(d.move))),
+        h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range))) : null,
       );
       this.panel.append(close, head(`${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`,
@@ -433,7 +444,7 @@ export class GameView {
     if (!acts.length) return;
     const row = h('div', { class: 'sheet-actions' });
     for (const a of acts) {
-      const icon = paint(54, 54, (ctx) => drawIcon(ctx, a.icon, tribe, 27, 26));
+      const icon = paint(54, 54, (ctx) => drawIcon(ctx, a.icon, tribe, 27, 26), `icon:${a.icon}:${tribe}:54`);
       row.append(h('button', {
         class: `rbtn${a.enabled ? '' : ' off'}`,
         title: a.reason ?? a.desc,
@@ -535,7 +546,7 @@ export class GameView {
         case 'ruin':
           if (e.player === this.me) {
             sfx.play('ruin');
-            modal({ title: e.title, body: [h('p', {}, e.text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30)) });
+            modal({ title: e.title, body: [h('p', {}, e.text)], art: paint(64, 56, (ctx) => drawIcon(ctx, 'flag', this.s.players[this.me].tribe, 32, 30), `icon:flag:${this.s.players[this.me].tribe}:64`) });
           }
           break;
         case 'capture': {
@@ -584,7 +595,7 @@ export class GameView {
     };
     let close = () => {};
     const opt = (o: typeof a) => h('button', { class: 'rbtn big', onclick: () => { close(); pick(o.id); } },
-      h('span', { class: 'rbtn-circle' }, paint(66, 66, (ctx) => drawIcon(ctx, o.id === 'giant' ? 'giant' : o.id, tribe, 33, 32))),
+      h('span', { class: 'rbtn-circle' }, paint(66, 66, (ctx) => drawIcon(ctx, o.id === 'giant' ? 'giant' : o.id, tribe, 33, 32), `reward:${o.id}:${tribe}`)),
       h('span', { class: 'rbtn-label' }, o.name),
       h('span', { class: 'rbtn-sub' }, o.desc),
     );

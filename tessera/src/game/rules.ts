@@ -18,11 +18,16 @@ export const isExplored = (s: GameState, pid: number, x: number, y: number) => s
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
 const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight'];
 
+/** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
+export const seaBonus = (s: GameState, u: Unit) => (def(u).naval && s.players[u.owner].tribe === 'pirates' ? 1 : 0);
+const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pirates' ? 4 : 7);
+
 // ---------------------------------------------------------------- economy
 
 export function cityIncome(s: GameState, c: City) {
   let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0);
   inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length;
+  if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
   return inc;
 }
@@ -229,7 +234,10 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
       add('clear', 'Clear Forest', 'Turn forest into a field and gain 1★.', 0, 'forestry', 'axe');
       add('shrine', 'Grove Shrine', '+1 population, +100 score.', 8, 'spiritualism', 'temple');
     }
-    if (t.terrain === 'shallow') add('port', 'Port', '+1 population. Units can board boats here.', 7, 'fishing', 'port');
+    if (t.terrain === 'shallow') {
+      const desc = p.tribe === 'pirates' ? '+1 population and +1★ income. Units can board boats here.' : '+1 population. Units can board boats here.';
+      add('port', 'Port', desc, PORT_COST(s, pid), 'fishing', 'port');
+    }
     if (t.terrain === 'mountain') add('shrine', 'Mountain Shrine', '+1 population, +100 score.', 8, 'meditation', 'temple');
     if (t.terrain === 'field' && !t.village && !t.ruin) {
       add('temple', 'Temple', '+1 population, +100 score.', 10, 'masonry', 'temple');
@@ -353,8 +361,9 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const queue: { t: Tile; left: number }[] = [{ t: start, left: d.move }];
-  best[start.y * size + start.x] = d.move;
+  const range = d.move + seaBonus(s, u);
+  const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
+  best[start.y * size + start.x] = range;
   while (queue.length) {
     queue.sort((a, b) => b.left - a.left);
     const { t: from, left } = queue.shift()!;
@@ -481,7 +490,7 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
-  const atk = def(a).atk;
+  const atk = def(a).atk + seaBonus(s, a);
   const dd = unitDef(s, d);
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
@@ -505,7 +514,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     removeUnit(s, d);
     emit({ type: 'death', x: d.x, y: d.y, owner: d.owner, kind: d.kind });
     pa.kills++;
-    if (pa.tribe === 'pirates' || def(a).skills.includes('plunder')) {
+    if (def(a).skills.includes('plunder')) {
       pa.stars += 2;
       emit({ type: 'stars', player: a.owner, x: d.x, y: d.y, amount: 2 });
     }

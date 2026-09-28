@@ -4,7 +4,8 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
 import { createGame } from '../src/game/mapgen.ts';
-import { citiesOf, def, score } from '../src/game/rules.ts';
+import { cityIncome, citiesOf, def, doAction, moveOptions, score, tileActions } from '../src/game/rules.ts';
+import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
 import type { GameState } from '../src/game/types.ts';
@@ -79,6 +80,34 @@ test('pass & play seats several humans and ends when every human is gone', () =>
   }
   endTurn(s);
   assert.ok(s.over, 'game should end once every human empire is gone');
+});
+
+test('pirates get their Sea Raiders bonus on the water', () => {
+  const s = createGame({ seed: 11, human: 'pirates', opponents: ['rome'], mode: 'domination' });
+  const cap = citiesOf(s, 0)[0];
+  const ring = s.tiles.filter((t) => Math.max(Math.abs(t.x - cap.x), Math.abs(t.y - cap.y)) === 1);
+  // use a bare shallow tile next to the capital (the starting fish sit on the others)
+  const shore = ring.find((t) => t.terrain === 'shallow' && !t.resource) ?? ring.find((t) => t.cityId === null && !t.village)!;
+  shore.terrain = 'shallow';
+  shore.resource = null;
+  shore.improvement = null;
+  s.players[0].stars = 50;
+  const port = tileActions(s, 0, shore).find((a) => a.id === 'port')!;
+  assert.equal(port.cost, 4, 'pirate ports are cheaper');
+  const before = cityIncome(s, cap);
+  assert.ok(doAction(s, 0, shore, 'port'));
+  assert.equal(cityIncome(s, cap), before + 1, 'each pirate port pays +1 star');
+  // a pirate canoe moves 3 tiles; a Roman one would move 2
+  for (const t of s.tiles) { t.terrain = 'shallow'; t.cityId = null; t.village = false; t.ruin = false; }
+  s.players[0].explored.fill(true);
+  s.players[1].explored.fill(true);
+  s.units = [];
+  const mine = spawnUnit(s, 'boat', 0, 5, 5, null);
+  const theirs = spawnUnit(s, 'boat', 1, 5, 9, null);
+  mine.moved = theirs.moved = false;
+  const reach = (u: typeof mine) => Math.max(...moveOptions(s, u).map((o) => Math.max(Math.abs(o.x - u.x), Math.abs(o.y - u.y))));
+  assert.equal(reach(mine), 3);
+  assert.equal(reach(theirs), 2);
 });
 
 test('every empire gets its starting tech, unique unit and capital', () => {
