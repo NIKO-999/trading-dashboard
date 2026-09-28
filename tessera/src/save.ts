@@ -1,3 +1,4 @@
+import { maxHp } from './game/rules';
 import type { GameState, TribeId } from './game/types';
 
 // Per-device conveniences only: the in-progress game, settings and local high scores.
@@ -24,7 +25,10 @@ function write(key: string, value: unknown) {
 export const saveGame = (s: GameState) => write(SAVE_KEY, s);
 export const loadGame = (): GameState | null => {
   const s = read<GameState | null>(SAVE_KEY, null);
-  return s && s.version === 1 && !s.over ? s : null;
+  if (!s || s.version !== 1 || s.over) return null;
+  // older saves could hold units above full health (boats used to inflate it)
+  for (const u of s.units) u.hp = Math.min(u.hp, maxHp(u));
+  return s;
 };
 export const clearSave = () => {
   try {

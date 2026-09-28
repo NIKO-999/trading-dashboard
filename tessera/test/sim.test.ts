@@ -240,6 +240,31 @@ test('capturing the last rival city ends the game at once, and the captor joins 
   assert.equal(s.winner, 0);
 });
 
+test('a Buccaneer boards a boat at its own port', () => {
+  const { s, cap, ring } = sandbox();
+  s.players[0].tribe = 'pirates';
+  const land = ring.find((t) => t.x === cap.x || t.y === cap.y)!;
+  const port = ring.find((t) => t !== land && Math.max(Math.abs(t.x - land.x), Math.abs(t.y - land.y)) === 1)!;
+  Object.assign(port, { terrain: 'shallow', improvement: 'port' });
+  const b = spawnUnit(s, 'buccaneer', 0, land.x, land.y, null);
+  b.moved = b.attacked = false;
+  const opt = moveOptions(s, b).find((o) => o.x === port.x && o.y === port.y);
+  assert.ok(opt?.embark, 'stepping onto the port boards a boat');
+});
+
+test('the AI plays its first turn after a new game at the same turn and seat', () => {
+  const play = () => {
+    const s = createGame({ seed: 3, human: 'egypt', opponents: ['rome'], mode: 'domination' });
+    endTurn(s); // the AI's turn 0
+    const before = s.units.filter((u) => u.owner === 1).map((u) => `${u.x},${u.y}`).join();
+    aiTurn(s);
+    drain();
+    return before !== s.units.filter((u) => u.owner === 1).map((u) => `${u.x},${u.y}`).join() || s.units.filter((u) => u.owner === 1).length > 1;
+  };
+  assert.ok(play(), 'first game: the AI acts');
+  assert.ok(play(), 'second game: the AI still acts');
+});
+
 test('every empire gets its starting tech, unique unit and capital', () => {
   for (const tribe of TRIBE_IDS) {
     const s = createGame({ seed: 3, human: tribe, opponents: TRIBE_IDS.filter((t) => t !== tribe).slice(0, 1), mode: 'domination' });

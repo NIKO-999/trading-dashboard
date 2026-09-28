@@ -12,10 +12,10 @@ export function startTurn(s: GameState) {
     p.stars += inc;
   }
   for (const u of s.units) {
+    u.hp = Math.min(u.hp, maxHp(u)); // saves from before boats kept their passenger's health
     if (u.owner !== p.id) continue;
     u.moved = false;
     u.attacked = false;
-    u.hp = Math.min(u.hp, maxHp(u)); // saves from before boats kept their passenger's health
   }
   revealAround(s, p.id);
 }

@@ -432,7 +432,8 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
         } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship') continue;
       } else {
         if (isWater(to)) {
-          if (d.skills.includes('amphibious') && to.terrain === 'shallow') {
+          // amphibious units wade through shallows, but still board a boat at a port
+          if (d.skills.includes('amphibious') && to.terrain === 'shallow' && !(to.improvement === 'port' && canEmbarkAt(s, u, from, to))) {
             stop = to.improvement !== 'port';
           } else if (canEmbarkAt(s, u, from, to)) {
             opt = { ...opt, embark: true };

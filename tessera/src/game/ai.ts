@@ -8,6 +8,7 @@ import type { GameState, Tile, Unit } from './types';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
+let memoState: GameState | null = null; // a new or loaded game starts a fresh memory
 const done = new Set<number>();
 let economyDone = false;
 
@@ -17,8 +18,9 @@ const HARVEST_IDS = ['harvest', 'farm', 'mine', 'lumber', 'port', 'shrine', 'tem
 export function aiStep(s: GameState): boolean {
   const pid = s.current;
   const key = `${s.turn}:${pid}`;
-  if (key !== memoKey) {
+  if (key !== memoKey || s !== memoState) {
     memoKey = key;
+    memoState = s;
     done.clear();
     economyDone = false;
   }
@@ -130,6 +132,8 @@ function economyStep(s: GameState, pid: number): boolean {
     const cheapest = options.sort((a, b) => techCost(s, pid, a.id) - techCost(s, pid, b.id))[0];
     if (research(s, pid, cheapest.id)) return true;
   }
+  // Rich with nothing left to research: put the treasury into troops rather than hoard it.
+  if (p.stars >= 25 && !options.length && trainBest(s, pid, false)) return true;
   return false;
 }
 
@@ -161,7 +165,8 @@ function unitStep(s: GameState, u: Unit): boolean {
   // Attack the juiciest target in range.
   const targets = attackOptions(s, u)
     .map((e) => ({ e, ...previewCombat(s, u, e) }))
-    .filter((o) => o.kills || o.dmg >= o.ret || u.hp - o.ret > maxHp(u) * 0.5)
+    // besieging a city: keep hitting as long as the blow back won't kill us
+    .filter((o) => o.kills || o.dmg >= o.ret || u.hp - o.ret > maxHp(u) * 0.5 || (u.hp > o.ret && tileAt(s, o.e.x, o.e.y)!.cityId !== null))
     .sort((a, b) => (b.kills ? 100 : 0) + b.dmg - b.ret - ((a.kills ? 100 : 0) + a.dmg - a.ret));
   if (targets.length) return attack(s, u, targets[0].e);
 
@@ -183,10 +188,15 @@ function unitStep(s: GameState, u: Unit): boolean {
     if (up && s.players[pid].stars >= up.cost + 5) return doAction(s, pid, t, up.id);
   }
 
+  // with nothing better to do, a wounded unit heals instead of standing idle
+  const idle = () => {
+    const rec = u.hp < maxHp(u) && !u.attacked && tileActions(s, pid, t).find((a) => a.id === 'recover' && a.enabled);
+    return rec ? doAction(s, pid, t, 'recover') : false;
+  };
   const opts = moveOptions(s, u);
-  if (!opts.length) return false;
+  if (!opts.length) return idle();
   const goals = findGoals(s, u);
-  if (!goals.length) return false;
+  if (!goals.length) return idle();
   const mass = landmasses(s);
   const massAt = (x: number, y: number) => mass[y * s.size + x];
   let aims = goals;
@@ -228,8 +238,8 @@ function unitStep(s: GameState, u: Unit): boolean {
     .map((o) => ({ o, v: score(o.x, o.y) + (o.embark ? 0.5 : 0) }))
     .sort((a, b) => a.v - b.v);
   if (!ranked.length || ranked[0].v >= here) {
-    // Guard duty: fortify cities that have enemies nearby, otherwise stay.
-    return false;
+    // Nothing better to do here: heal while waiting.
+    return idle();
   }
   return moveUnit(s, u, ranked[0].o.x, ranked[0].o.y);
 }
