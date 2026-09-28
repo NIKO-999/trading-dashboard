@@ -4,51 +4,23 @@
 import { TRIBES, type BiomePalette } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
-import { cityById, cityIncome, maxHp, tileOwnerPlayer } from '../game/rules';
-import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
+import { cityById, tileOwnerPlayer } from '../game/rules';
+import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
-import { box, drawStar, ellipse, mix, poly, rand, roof, roundRect, setTint, shade, type Ctx, type Pt } from './prims';
+import { box, drawStar, ellipse, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
+import { HH, HW, isWaterTile, uv, type Overlay } from './common';
+import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
+
+const FISH_ICON = FISH;
 
 export { drawUnitSprite } from './units';
 export { drawStar } from './prims';
 
-export const FONT = '"Josefin Sans", "Avenir Next", system-ui, sans-serif';
+export { FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, SAIL_MS, newFx, type Fx, type Overlay } from './common';
 
-export interface Fx {
-  moves: Map<number, { fx: number; fy: number; t0: number; dur: number }>;
-  lunges: Map<number, { tx: number; ty: number; t0: number }>;
-  flashes: Map<number, number>;
-  ghosts: { kind: UnitKind; tribe: TribeId; x: number; y: number; t0: number }[];
-  projectiles: { fx: number; fy: number; tx: number; ty: number; t0: number; dur: number; kind: 'arrow' | 'bolt' | 'stone' | 'nut' | 'ball' | 'shot' }[];
-  particles: { x: number; y: number; vx: number; vy: number; g: number; t0: number; life: number; color: string; size: number; shape: 'star' | 'square' | 'puff' }[];
-  floaters: { x: number; y: number; text: string; color: string; t0: number }[];
-  hpHold: Map<number, { hp: number; until: number }>; // health shown until a blow visibly lands
-}
-
-export const newFx = (): Fx => ({ moves: new Map(), lunges: new Map(), flashes: new Map(), ghosts: [], projectiles: [], particles: [], floaters: [], hpHold: new Map() });
-
-export interface Overlay {
-  selected: { x: number; y: number } | null;
-  moves: { x: number; y: number }[];
-  attacks: { x: number; y: number }[];
-  glow: Set<number>; // tiles (y*size+x) holding something the viewer can harvest right now
-  fx: Fx;
-  now: number;
-}
-
-export const LUNGE_MS = 260;
-export const FLASH_MS = 320;
-export const GHOST_MS = 650;
-export const FLOAT_MS = 1100;
-const HW = TW / 2;
-const HH = TH / 2;
 const FOG_LIFT = 8;
 const FOG = ['#ffffff', '#e4e8f8', '#c9d1f2', '#a8b5ea'];
-const UNIT_SCALE = 1.3;
-const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain === 'ocean';
 
 function diamond(ctx: Ctx, x: number, y: number, fill: string) {
   ctx.beginPath();
@@ -65,13 +37,7 @@ function diamond(ctx: Ctx, x: number, y: number, fill: string) {
   ctx.stroke();
 }
 
-function sides(ctx: Ctx, x: number, y: number, depth: number, left: string, right: string) {
-  poly(ctx, [x - HW, y + HH, x, y + TH, x, y + TH + depth, x - HW, y + HH + depth], left);
-  poly(ctx, [x + HW, y + HH, x, y + TH, x, y + TH + depth, x + HW, y + HH + depth], right);
-}
 
-/** Screen point for tile-local coords (u along +x, v along +y, both -0.5..0.5) around a tile centre. */
-const uv = (cx: number, cy: number, u: number, v: number): Pt => ({ x: cx + (u - v) * HW, y: cy + (u + v) * HH });
 
 // ---------------------------------------------------------------- background
 
@@ -88,23 +54,23 @@ export function drawBackground(ctx: Ctx, w: number, h: number) {
 
 // ---------------------------------------------------------------- renderer
 
-/** Keeps the map layer within this many device pixels (iOS caps canvas size and memory). */
-const LAYER_PIXEL_BUDGET = 12_000_000;
-/** Extra map rendered beyond each screen edge, so short pans only shift the cached layer. */
-const LAYER_MARGIN = 0.25;
+/** Keeps each map layer within this many device pixels (iOS caps canvas size and memory). */
+const LAYER_PIXEL_BUDGET = 8_000_000;
+/** Extra map rendered beyond each screen edge, so short pans only shift the cached layers. */
+const LAYER_MARGIN = 0.22;
 
+/**
+ * Two cached layers: the ground (terrain, water, borders) and everything standing on it
+ * (scenery, cities, cloud cover). Swimming fish are drawn between them, so they stay in the
+ * water and never paint over a mountain in front; units and effects go on top every frame.
+ */
 export class WorldRenderer {
-  private layer = document.createElement('canvas');
-  private lctx = this.layer.getContext('2d')!;
+  private ground = document.createElement('canvas');
+  private top = document.createElement('canvas');
   private version = -1;
   private cam = { x: 0, y: 0, zoom: 1 };
   private size = { vw: 0, vh: 0, mx: 0, my: 0, dpr: 0 };
 
-  /**
-   * `version` must change whenever the state or the static overlays (selection, glow) change.
-   * While `interacting` (a finger is down) a zoomed layer may be stretched briefly instead of
-   * redrawn; it is redrawn crisply as soon as the gesture ends.
-   */
   render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number, interacting = false) {
     const mx = Math.round(vw * LAYER_MARGIN), my = Math.round(vh * LAYER_MARGIN);
     const W = vw + mx * 2, H = vh + my * 2;
@@ -112,39 +78,47 @@ export class WorldRenderer {
     const scale = cam.zoom / L.zoom;
     const tx = cam.x - (L.x + this.size.mx) * scale;
     const ty = cam.y - (L.y + this.size.my) * scale;
-    const covers = tx <= 0.5 && ty <= 0.5 && tx + (this.size.vw + this.size.mx * 2) * scale >= vw - 0.5 && ty + (this.size.vh + this.size.my * 2) * scale >= vh - 0.5;
+    const lw = (this.size.vw + this.size.mx * 2) * scale, lh = (this.size.vh + this.size.my * 2) * scale;
+    const covers = tx <= 0.5 && ty <= 0.5 && tx + lw >= vw - 0.5 && ty + lh >= vh - 0.5;
     const fresh = version === this.version && this.size.vw === vw && this.size.vh === vh && this.size.dpr === dpr;
     const zoomSame = Math.abs(scale - 1) < 1e-6;
     const reuse = fresh && covers && (zoomSame || (interacting && Math.abs(Math.log(scale)) < 0.35));
 
+    let blit: (layer: HTMLCanvasElement) => void;
     if (!reuse) {
       const layerDpr = Math.min(dpr, Math.sqrt(LAYER_PIXEL_BUDGET / (W * H)));
       const PW = Math.round(W * layerDpr), PH = Math.round(H * layerDpr);
-      if (this.layer.width !== PW || this.layer.height !== PH) {
-        this.layer.width = PW;
-        this.layer.height = PH;
-      }
-      this.lctx.setTransform(PW / W, 0, 0, PH / H, 0, 0);
       const lc = new Camera();
       lc.x = cam.x + mx;
       lc.y = cam.y + my;
       lc.zoom = cam.zoom;
-      drawStatic(this.lctx, s, viewer, lc, ov, W, H);
+      for (const [layer, draw] of [[this.ground, drawStaticGround], [this.top, drawStaticTop]] as const) {
+        if (layer.width !== PW || layer.height !== PH) {
+          layer.width = PW;
+          layer.height = PH;
+        }
+        const lctx = layer.getContext('2d')!;
+        lctx.setTransform(1, 0, 0, 1, 0, 0);
+        lctx.clearRect(0, 0, PW, PH);
+        lctx.setTransform(PW / W, 0, 0, PH / H, 0, 0);
+        draw(lctx, s, viewer, lc, ov, W, H);
+      }
       this.version = version;
       this.cam = { x: cam.x, y: cam.y, zoom: cam.zoom };
       this.size = { vw, vh, mx, my, dpr };
-      ctx.drawImage(this.layer, -mx, -my, W, H);
+      blit = (layer) => ctx.drawImage(layer, -mx, -my, W, H);
     } else if (zoomSame) {
-      // Shift by whole device pixels so the cached layer stays pin-sharp while panning.
-      ctx.drawImage(this.layer, Math.round(tx * dpr) / dpr, Math.round(ty * dpr) / dpr, W, H);
+      // shift by whole device pixels so the cached layers stay pin-sharp while panning
+      const sx = Math.round(tx * dpr) / dpr, sy = Math.round(ty * dpr) / dpr;
+      blit = (layer) => ctx.drawImage(layer, sx, sy, W, H);
     } else {
-      ctx.drawImage(this.layer, tx, ty, (this.size.vw + this.size.mx * 2) * scale, (this.size.vh + this.size.my * 2) * scale);
+      blit = (layer) => ctx.drawImage(layer, tx, ty, lw, lh);
     }
-    ctx.save();
-    ctx.translate(cam.x, cam.y);
-    ctx.scale(cam.zoom, cam.zoom);
-    drawDynamic(ctx, s, viewer, cam, ov, vw, vh);
-    ctx.restore();
+    ctx.imageSmoothingQuality = 'high';
+    blit(this.ground);
+    drawWaterLife(ctx, s, viewer, cam, ov, vw, vh);
+    blit(this.top);
+    drawDynamic(ctx, s, viewer, cam, ov, vw, vh, dpr);
   }
 }
 
@@ -162,171 +136,103 @@ function visibleTiles(s: GameState, cam: Camera, vw: number, vh: number) {
   return out;
 }
 
-function drawStatic(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
+function drawStaticGround(ctx: Ctx, s: GameState, viewer: number, cam: Camera, _ov: Overlay, vw: number, vh: number) {
   drawBackground(ctx, vw, vh);
   ctx.save();
   ctx.translate(cam.x, cam.y);
   ctx.scale(cam.zoom, cam.zoom);
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
   const shown = visibleTiles(s, cam, vw, vh);
-
-  for (const t of shown) if (explored(t.x, t.y)) drawGround(ctx, s, t);
+  for (const t of shown) if (explored(t.x, t.y)) drawGround(ctx, s, t, explored);
   for (const t of shown) if (explored(t.x, t.y)) drawBorders(ctx, s, t, explored);
-  if (ov.selected) outlineTile(ctx, s, ov.selected.x, ov.selected.y, '#ffffff', 2.5);
-  for (const m of ov.moves) {
-    const t = tileAt(s, m.x, m.y)!;
-    const c = tileCenter(m.x, m.y);
-    ellipse(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0), 9, 4.5, 'rgba(255,255,255,0.8)');
-  }
-  for (const t of shown) {
+  ctx.restore();
+}
+
+function drawStaticTop(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
+  ctx.save();
+  ctx.translate(cam.x, cam.y);
+  ctx.scale(cam.zoom, cam.zoom);
+  const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
+  for (const t of visibleTiles(s, cam, vw, vh)) {
     if (!explored(t.x, t.y)) drawFog(ctx, s, t, explored);
     else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x));
   }
   ctx.restore();
 }
 
-function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number) {
-  const now = ov.now;
-  const fx = ov.fx;
-  const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
-  const w0 = cam.toWorld(-80, -120), w1 = cam.toWorld(vw + 80, vh + 120);
-  const onScreen = (p: Pt) => p.x > w0.x && p.x < w1.x && p.y > w0.y && p.y < w1.y;
-
-  // Units, back to front.
-  const units = s.units
-    .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)))
-    .sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
-  for (const u of units) drawUnitAt(ctx, s, u, ov, viewer);
-
-  // Units that just died fade away where they stood.
-  for (const g of fx.ghosts) {
-    const k = (now - g.t0) / GHOST_MS;
-    if (k < 0 || k > 1) continue;
-    const c = tileCenter(g.x, g.y);
-    ctx.globalAlpha = 1 - k;
-    setTint('#ffffff', Math.max(0, 0.9 - k * 2.5));
-    ctx.save();
-    ctx.translate(c.x, c.y + 5 + k * 8);
-    ctx.scale(UNIT_SCALE, UNIT_SCALE * (1 - k * 0.3));
-    drawUnitSprite(ctx, g.kind, g.tribe, 0, 0);
-    ctx.restore();
-    setTint(null);
-    ctx.globalAlpha = 1;
-  }
-
-  for (const p of fx.projectiles) drawProjectile(ctx, p, now);
-
-  for (const a of ov.attacks) {
-    const t = tileAt(s, a.x, a.y)!;
-    const c = tileCenter(a.x, a.y);
-    const y = c.y + (isWaterTile(t) ? WATER_DROP : 0);
-    const pulse = 1 + Math.sin(now / 160) * 0.06;
-    ctx.strokeStyle = '#ff3030';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.ellipse(c.x, y, 18 * pulse, 9 * pulse, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  for (const c of s.cities) if (explored(c.x, c.y) && onScreen(tileCenter(c.x, c.y))) drawCityLabel(ctx, s, c);
-
-  for (const p of fx.particles) {
-    const t = (now - p.t0) / 1000;
-    if (t < 0 || t > p.life) continue;
-    const a = 1 - t / p.life;
-    const x = p.x + p.vx * t, y = p.y + p.vy * t + 0.5 * p.g * t * t;
-    ctx.globalAlpha = Math.min(1, a * 1.4);
-    if (p.shape === 'star') drawStar(ctx, x, y, p.size);
-    else if (p.shape === 'square') {
-      ctx.fillStyle = p.color;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(t * 8 + p.vx);
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-      ctx.restore();
-    } else ellipse(ctx, x, y, p.size * (1 + t * 2), p.size * 0.6 * (1 + t * 2), p.color);
-    ctx.globalAlpha = 1;
-  }
-
-  for (const f of fx.floaters) {
-    const k = (now - f.t0) / FLOAT_MS;
-    if (k < 0 || k > 1) continue;
-    const c = tileCenter(f.x, f.y);
-    const pop = k < 0.15 ? 0.6 + (k / 0.15) * 0.5 : 1.1 - Math.min(0.1, k - 0.15);
-    ctx.globalAlpha = 1 - k * k;
-    ctx.font = `700 ${Math.round(15 * pop)}px ${FONT}`;
-    ctx.textAlign = 'center';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.strokeText(f.text, c.x, c.y - 44 - k * 22);
-    ctx.fillStyle = f.color;
-    ctx.fillText(f.text, c.x, c.y - 44 - k * 22);
-    ctx.globalAlpha = 1;
-  }
-}
-
-function drawProjectile(ctx: Ctx, p: Fx['projectiles'][number], now: number) {
-  const k = (now - p.t0) / p.dur;
-  if (k < 0 || k > 1) return;
-  const a = tileCenter(p.fx, p.fy), b = tileCenter(p.tx, p.ty);
-  const dist = Math.hypot(b.x - a.x, b.y - a.y);
-  const arc = p.kind === 'shot' ? dist * 0.06 : dist * 0.38;
-  const at = (q: number) => ({ x: a.x + (b.x - a.x) * q, y: a.y - 22 + (b.y - a.y) * q - Math.sin(Math.PI * q) * arc });
-  const pt = at(k), nx = at(Math.min(1, k + 0.02));
-  const ang = Math.atan2(nx.y - pt.y, nx.x - pt.x);
-  if (p.kind === 'arrow' || p.kind === 'bolt') {
-    const L = p.kind === 'bolt' ? 1.8 : 1;
-    ctx.strokeStyle = '#5a3b1e';
-    ctx.lineWidth = 1.6 * L;
-    ctx.beginPath();
-    ctx.moveTo(pt.x - Math.cos(ang) * 8 * L, pt.y - Math.sin(ang) * 8 * L);
-    ctx.lineTo(pt.x + Math.cos(ang) * 4 * L, pt.y + Math.sin(ang) * 4 * L);
-    ctx.stroke();
-    const tip = { x: pt.x + Math.cos(ang) * 4 * L, y: pt.y + Math.sin(ang) * 4 * L };
-    poly(ctx, [tip.x + Math.cos(ang) * 3 * L, tip.y + Math.sin(ang) * 3 * L, tip.x + Math.cos(ang + 2.3) * 2.6 * L, tip.y + Math.sin(ang + 2.3) * 2.6 * L, tip.x + Math.cos(ang - 2.3) * 2.6 * L, tip.y + Math.sin(ang - 2.3) * 2.6 * L], p.kind === 'bolt' ? '#c9974a' : '#dfe5ec');
-  } else if (p.kind === 'stone') {
-    ellipse(ctx, pt.x, pt.y, 3.6, 3.2, '#77777e');
-    ellipse(ctx, pt.x - 1, pt.y - 1, 1.6, 1.3, '#a3a3aa');
-  } else if (p.kind === 'nut') {
-    ellipse(ctx, pt.x, pt.y, 3.4, 3.1, '#6b4424');
-    ellipse(ctx, pt.x - 0.8, pt.y - 0.8, 0.9, 0.9, '#2a1a10');
-  } else if (p.kind === 'ball') {
-    for (let i = 1; i <= 3; i++) {
-      const q = at(Math.max(0, k - i * 0.05));
-      ellipse(ctx, q.x, q.y, 2 + i, 1.6 + i, `rgba(220,220,220,${0.35 - i * 0.08})`);
-    }
-    ellipse(ctx, pt.x, pt.y, 3.2, 3.2, '#16161a');
-  } else {
-    ellipse(ctx, pt.x, pt.y, 2, 2, '#1a1a1a');
-    ctx.strokeStyle = 'rgba(255,220,120,0.8)';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(pt.x - Math.cos(ang) * 9, pt.y - Math.sin(ang) * 9);
-    ctx.lineTo(pt.x, pt.y);
-    ctx.stroke();
-  }
-}
-
 // ---------------------------------------------------------------- ground
 
-function drawGround(ctx: Ctx, s: GameState, t: Tile) {
+function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean) {
   const P = TRIBES[t.biome].palette;
   const { x, y } = tileTop(t.x, t.y);
-  if (isWaterTile(t)) {
+  const water = isWaterTile(t);
+  const top = y + (water ? WATER_DROP : 0);
+  if (water) {
     const col = t.terrain === 'shallow' ? P.shallow : P.ocean;
-    const yy = y + WATER_DROP;
-    sides(ctx, x, yy, LAND_DEPTH - WATER_DROP + 2, shade(col, -0.2), shade(col, -0.35));
-    diamond(ctx, x, yy, col);
+    sidesGrad(ctx, x, top, LAND_DEPTH - WATER_DROP + 2, shade(col, -0.2), shade(col, -0.35));
+    diamond(ctx, x, top, col);
     if (t.terrain === 'ocean' && rand(t.seed, 1) < 0.5) {
-      const c = uv(x, yy + HH, rand(t.seed, 2) * 0.5 - 0.25, rand(t.seed, 3) * 0.5 - 0.25);
+      const c = uv(x, top + HH, rand(t.seed, 2) * 0.5 - 0.25, rand(t.seed, 3) * 0.5 - 0.25);
       poly(ctx, [c.x - 7, c.y, c.x, c.y - 1.6, c.x + 7, c.y, c.x, c.y + 1.6], shade(col, 0.14));
     }
-    return;
+    // surf where the water meets land behind it
+    const T = { x, y: top }, R = { x: x + HW, y: top + HH }, L = { x: x - HW, y: top + HH };
+    for (const [dx, dy, a, b] of [[-1, 0, T, L], [0, -1, T, R]] as const) {
+      const n = tileAt(s, t.x + dx, t.y + dy);
+      if (!n || isWaterTile(n)) continue;
+      surf(ctx, a, b, x, top + HH, t.seed + dx * 7 + dy * 13);
+    }
+  } else {
+    sidesGrad(ctx, x, y, LAND_DEPTH, P.fieldSide, shade(P.fieldSide, -0.25));
+    diamond(ctx, x, y, P.field);
+    if (t.improvement === 'farm') drawFarm(ctx, x, y + HH);
+    if (t.road || t.cityId !== null) drawRoads(ctx, s, t);
   }
-  sides(ctx, x, y, LAND_DEPTH, P.fieldSide, shade(P.fieldSide, -0.25));
-  diamond(ctx, x, y, P.field);
-  if (t.improvement === 'farm') drawFarm(ctx, x, y + HH);
-  if (t.road || t.cityId !== null) drawRoads(ctx, s, t);
+  // the cloud layer behind this tile casts a soft shadow onto it
+  const T = { x, y: top }, R = { x: x + HW, y: top + HH }, L = { x: x - HW, y: top + HH }, C = { x, y: top + HH };
+  for (const [dx, dy, a, b] of [[-1, 0, T, L], [0, -1, T, R]] as const) {
+    const n = tileAt(s, t.x + dx, t.y + dy);
+    if (!n || explored(n.x, n.y)) continue;
+    const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const k = 0.55;
+    const g = ctx.createLinearGradient(m.x, m.y, m.x + (C.x - m.x) * k * 2, m.y + (C.y - m.y) * k * 2);
+    g.addColorStop(0, 'rgba(40,52,110,0.38)');
+    g.addColorStop(1, 'rgba(40,52,110,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineTo(b.x + (C.x - b.x) * k, b.y + (C.y - b.y) * k);
+    ctx.lineTo(a.x + (C.x - a.x) * k, a.y + (C.y - a.y) * k);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+/** Tile sides that darken toward the base. */
+function sidesGrad(ctx: Ctx, x: number, y: number, depth: number, left: string, right: string) {
+  polyGrad(ctx, [x - HW, y + HH, x, y + TH, x, y + TH + depth, x - HW, y + HH + depth], shade(left, 0.08), shade(left, -0.25), y + HH, y + TH + depth);
+  polyGrad(ctx, [x + HW, y + HH, x, y + TH, x, y + TH + depth, x + HW, y + HH + depth], shade(right, 0.05), shade(right, -0.25), y + HH, y + TH + depth);
+}
+
+/** A band of white surf along a shoreline edge, slightly broken up so it looks natural. */
+function surf(ctx: Ctx, a: Pt, b: Pt, cx: number, cy: number, seed: number) {
+  const inward = (p: Pt, k: number) => ({ x: p.x + (cx - p.x) * k, y: p.y + (cy - p.y) * k });
+  ctx.lineCap = 'round';
+  for (const [k, alpha, width] of [[0.05, 0.85, 1.8], [0.2, 0.35, 1.2]] as const) {
+    const p = inward(a, k), q = inward(b, k);
+    ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+    ctx.lineWidth = width;
+    const n = 4;
+    for (let i = 0; i < n; i++) {
+      const f0 = (i + 0.08 + rand(seed, i + k * 10) * 0.12) / n;
+      const f1 = (i + 0.72 + rand(seed, i + 20 + k * 10) * 0.2) / n;
+      ctx.beginPath();
+      ctx.moveTo(p.x + (q.x - p.x) * f0, p.y + (q.y - p.y) * f0);
+      ctx.lineTo(p.x + (q.x - p.x) * f1, p.y + (q.y - p.y) * f1);
+      ctx.stroke();
+    }
+  }
 }
 
 function drawFarm(ctx: Ctx, cx: number, cy: number) {
@@ -481,7 +387,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
   if (t.terrain === 'forest' && t.improvement !== 'lumber') drawForest(ctx, t, c.x, c.y, P);
   if (t.terrain === 'mountain') drawMountains(ctx, t, c.x, c.y, P);
-  if (t.resource) drawResource(ctx, t, c.x, c.y, t.biome);
+  if (t.resource && t.resource !== 'fish' && t.resource !== 'whale') drawResource(ctx, t, c.x, c.y, t.biome);
   if (t.improvement && t.improvement !== 'farm') drawImprovement(ctx, s, t, c.x, c.y);
   if (t.village) drawVillage(ctx, c.x, c.y);
   if (t.ruin) drawRuin(ctx, t, c.x, c.y);
@@ -602,18 +508,28 @@ function peak(ctx: Ctx, x: number, y: number, h: number, w: number, P: BiomePale
 
 const FRUIT: Record<TribeId, string> = { egypt: '#8e3f1c', aztec: '#f29a2e', polynesia: '#f2c53a', rome: '#e2324a', pirates: '#78c43e' };
 
+/** A round, softly lit fruit with a stalk and a leaf. */
 function drawFruit(ctx: Ctx, x: number, y: number, col: string) {
-  ellipse(ctx, x + 1, y + 0.5, 5, 2, 'rgba(0,0,0,0.18)');
-  poly(ctx, [x, y - 10, x - 5, y - 7, x - 5, y - 2.5, x, y], shade(col, 0.1));
-  poly(ctx, [x, y - 10, x + 5, y - 7, x + 5, y - 2.5, x, y], shade(col, -0.18));
-  poly(ctx, [x, y - 10, x - 5, y - 7, x, y - 5.5, x + 5, y - 7], shade(col, 0.28));
+  softShadow(ctx, x + 1, y + 0.5, 6, 2.4, 0.28);
+  const r = 5;
+  const cy = y - r;
+  const g = ctx.createRadialGradient(x - r * 0.35, cy - r * 0.4, r * 0.15, x, cy, r * 1.05);
+  g.addColorStop(0, shade(col, 0.45));
+  g.addColorStop(0.55, col);
+  g.addColorStop(1, shade(col, -0.3));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ellipse(ctx, x - 1.8, cy - 2.2, 1.4, 0.9, 'rgba(255,255,255,0.55)');
   ctx.strokeStyle = '#5a3b1e';
   ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(x, y - 9);
-  ctx.lineTo(x + 0.5, y - 12);
+  ctx.moveTo(x, cy - r + 0.5);
+  ctx.lineTo(x + 0.6, cy - r - 2.5);
   ctx.stroke();
-  poly(ctx, [x + 0.5, y - 11.5, x + 5, y - 14, x + 2, y - 10.5], '#3fae3a');
+  poly(ctx, [x + 0.6, cy - r - 2, x + 5.5, cy - r - 4.5, x + 2.4, cy - r - 0.6], '#3fae3a');
 }
 
 function drawResource(ctx: Ctx, t: Tile, x: number, y: number, biome: TribeId) {
@@ -811,66 +727,6 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
   }
 }
 
-function drawCityLabel(ctx: Ctx, s: GameState, c: City) {
-  const T = TRIBES[s.players[c.owner].tribe];
-  const p = tileCenter(c.x, c.y);
-  const y = p.y + 13;
-  const nameFont = `600 13px ${FONT}`;
-  ctx.font = nameFont;
-  const nw = ctx.measureText(c.name).width;
-  const inc = String(cityIncome(s, c));
-  ctx.font = `400 13px ${FONT}`;
-  const iw = ctx.measureText(inc).width;
-  const crownW = c.capital ? 20 : 0;
-  const w = 8 + crownW + nw + 8 + 12 + iw + 8;
-  const x0 = p.x - w / 2;
-  ctx.globalAlpha = 0.9;
-  ctx.fillStyle = T.color;
-  ctx.fillRect(x0, y, w, 19);
-  ctx.globalAlpha = 1;
-  let cx = x0 + 8;
-  if (c.capital) {
-    ellipse(ctx, cx + 7, y + 9.5, 8, 8, shade(T.color, -0.35));
-    poly(ctx, [cx + 2.5, y + 13, cx + 2.5, y + 7, cx + 5, y + 9.5, cx + 7, y + 5.5, cx + 9, y + 9.5, cx + 11.5, y + 7, cx + 11.5, y + 13], '#ffcf33');
-    cx += crownW;
-  }
-  ctx.fillStyle = '#fff';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.font = nameFont;
-  ctx.fillText(c.name, cx, y + 11);
-  if (c.capital) ctx.fillRect(cx, y + 16, nw, 1.2);
-  cx += nw + 8;
-  drawStar(ctx, cx + 5, y + 9.5, 6);
-  ctx.font = `400 13px ${FONT}`;
-  ctx.fillStyle = '#fff';
-  ctx.fillText(inc, cx + 12, y + 11);
-  ctx.textBaseline = 'alphabetic';
-
-  // Population capsule: one segment per population needed for the next level.
-  const segs = c.level + 1;
-  const bw = Math.max(36, segs * 10);
-  const bx = p.x - bw / 2, by = y + 22;
-  ctx.fillStyle = '#f4f4f4';
-  roundRect(ctx, bx, by, bw, 8, 4);
-  ctx.fill();
-  for (let i = 0; i < segs; i++) {
-    const sx = bx + (bw / segs) * i;
-    if (i > 0) {
-      ctx.fillStyle = '#b9b9b9';
-      ctx.fillRect(sx - 0.5, by + 1, 1, 6);
-    }
-    if (i < c.pop) ellipse(ctx, sx + bw / segs / 2, by + 4, 2, 2, '#1d1d1d');
-  }
-  if (c.pendingRewards.length && s.players[c.owner].human) {
-    ellipse(ctx, p.x + w / 2 + 8, y + 9.5, 7, 7, '#ffcf33');
-    ctx.fillStyle = '#3a2a00';
-    ctx.font = `700 11px ${FONT}`;
-    ctx.textAlign = 'center';
-    ctx.fillText('!', p.x + w / 2 + 8, y + 13.5);
-  }
-}
-
 // ---------------------------------------------------------------- UI icons
 
 /** Draws a small scene for an action button / info panel, centred at (x, y). */
@@ -893,6 +749,10 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
     case 'mountain':
       return drawMountains(ctx, fake({ terrain: 'mountain', seed: 3 }), x, y + 4, P);
     case 'fish':
+      ellipse(ctx, x, y + 4, 21, 10, P.shallow);
+      ellipse(ctx, x, y + 4, 15, 6.5, shade(P.shallow, 0.12));
+      drawFish(ctx, x - 5, y + 1, -0.5, ...FISH_ICON[tribe], 0.6, 1.35);
+      return drawFish(ctx, x + 7, y + 7, 2.5, ...FISH_ICON[tribe], 2.1, 1.15);
     case 'whale':
       ellipse(ctx, x, y + 4, 21, 10, P.shallow);
       return drawResource(ctx, fake({ resource: icon }), x, y - 4, tribe);
@@ -952,86 +812,4 @@ export function drawCityIcon(ctx: Ctx, tribe: TribeId, x: number, y: number, cap
   const T = TRIBES[tribe];
   drawBuilding(ctx, tribe, x - 8, y + 2, false, T.roof, T.color, false);
   drawBuilding(ctx, tribe, x + 4, y + 6, true, T.roof, T.color, capital);
-}
-
-// ---------------------------------------------------------------- units on the map
-
-/** Where a unit is drawn right now, including move hops, attack lunges and bobbing on water. */
-export function unitScreenPos(s: GameState, u: Unit, fx: Fx, now: number) {
-  let { x, y } = tileCenter(u.x, u.y);
-  let lift = 0;
-  let onWater = isWaterTile(tileAt(s, u.x, u.y)!);
-  const mv = fx.moves.get(u.id);
-  if (mv) {
-    const k = Math.max(0, Math.min(1, (now - mv.t0) / mv.dur));
-    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-    const f = tileCenter(mv.fx, mv.fy);
-    x = f.x + (x - f.x) * e;
-    y = f.y + (y - f.y) * e;
-    const hops = Math.max(1, Math.max(Math.abs(u.x - mv.fx), Math.abs(u.y - mv.fy)));
-    lift = Math.abs(Math.sin(Math.PI * k * hops)) * 7;
-    if (k < 0.5) onWater = isWaterTile(tileAt(s, mv.fx, mv.fy)!);
-  }
-  const lg = fx.lunges.get(u.id);
-  if (lg) {
-    const k = (now - lg.t0) / LUNGE_MS;
-    if (k >= 0 && k <= 1) {
-      const target = tileCenter(lg.tx, lg.ty);
-      const amt = Math.sin(Math.PI * k) * 0.4;
-      x += (target.x - x) * amt;
-      y += (target.y - y) * amt;
-      lift += Math.sin(Math.PI * k) * 3;
-    }
-  }
-  if (onWater) y += WATER_DROP - 1 + (REDUCED_MOTION ? 0 : Math.sin(now / 520 + u.id) * 1.2);
-  return { x, y: y - lift };
-}
-
-function drawUnitAt(ctx: Ctx, s: GameState, u: Unit, ov: Overlay, viewer: number) {
-  const now = ov.now;
-  const { x, y } = unitScreenPos(s, u, ov.fx, now);
-  const tribe = s.players[u.owner].tribe;
-  const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
-  const moving = ov.fx.moves.has(u.id) || ov.fx.lunges.has(u.id);
-  // units that can still act this turn bob gently so they stand out
-  const ready = u.owner === viewer && s.current === viewer && !u.moved;
-  const bob = !moving && ready && !REDUCED_MOTION ? (Math.sin(now / 380 + u.id * 1.7) + 1) * 0.9 : 0;
-  let shake = 0;
-  const fl = ov.fx.flashes.get(u.id);
-  const flashK = fl === undefined ? -1 : (now - fl) / FLASH_MS;
-  if (flashK >= 0 && flashK <= 1) {
-    setTint('#ffffff', (1 - flashK) * 0.85);
-    shake = Math.sin(flashK * 42) * 2.2 * (1 - flashK);
-  } else if (spent) setTint('#6f6f6f', 0.45);
-  ctx.save();
-  ctx.translate(x + shake, y + 5 - bob);
-  ctx.scale(UNIT_SCALE, UNIT_SCALE);
-  drawUnitSprite(ctx, u.kind, tribe, 0, 0);
-  ctx.restore();
-  setTint(null);
-  const hold = ov.fx.hpHold.get(u.id);
-  drawHpBadge(ctx, s, u, x + shake, y, hold && now < hold.until ? hold.hp : u.hp);
-}
-
-function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, shownHp: number) {
-  const tribe = TRIBES[s.players[u.owner].tribe];
-  const bx = x - 19, by = y - 38;
-  ctx.fillStyle = '#fff';
-  ctx.strokeStyle = tribe.color;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.moveTo(bx - 7, by - 7);
-  ctx.lineTo(bx + 7, by - 7);
-  ctx.lineTo(bx + 7, by + 3);
-  ctx.lineTo(bx, by + 8);
-  ctx.lineTo(bx - 7, by + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  const hp = Math.ceil(shownHp);
-  ctx.fillStyle = hp <= maxHp(u) * 0.35 ? '#d62828' : '#1d1d1d';
-  ctx.font = `700 ${hp >= 10 ? 9 : 10}px ${FONT}`;
-  ctx.textAlign = 'center';
-  ctx.fillText(String(hp), bx, by + 2.5);
-  if (u.veteran) drawStar(ctx, bx, by - 11, 4.5);
 }

@@ -3,7 +3,7 @@
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { TribeId, UnitKind } from '../game/types';
-import { band, box, drawStar, ellipse, faceQuad, line, poly, shade, type Ctx } from './prims';
+import { band, box, drawStar, ellipse, faceQuad, line, poly, shade, softShadow, type Ctx } from './prims';
 
 interface Look { skin: string; hair: string }
 const LOOK: Record<TribeId, Look> = {
@@ -20,10 +20,10 @@ const STEEL = '#bcc3cc';
 const WOOD = '#7a5230';
 const DARK = '#1b1b1f';
 
-/** Draws a unit standing on (x, y). */
-export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
+/** Draws a unit standing on (x, y). Map units draw their shadow separately (`shadow: false`). */
+export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, opts: { shadow?: boolean } = {}) {
   const d = UNITS[kind];
-  ellipse(ctx, x, y + 1, d.naval ? 18 : 9.5, d.naval ? 5.5 : 3.8, 'rgba(0,0,0,0.25)');
+  if (opts.shadow !== false) softShadow(ctx, x, y + 1, d.naval ? 20 : 11, d.naval ? 6.5 : 4.4, 0.32);
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
@@ -69,9 +69,11 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   // Back arm, torso, front arm.
   const tw = 10 * k, th = 8.5 * k;
   box(ctx, x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, sleeves);
+  box(ctx, x - 5.9 * k, hip + 0.9 * k, 2.4 * k, 2 * k, L.skin);
   box(ctx, x, hip, tw, th, torso);
   dressTorso(ctx, tribe, kind, x, hip, tw, th, armoured);
   box(ctx, x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, sleeves);
+  box(ctx, x + 6 * k, hip + 2.5 * k, 2.4 * k, 2 * k, L.skin);
   if (tribe === 'polynesia') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.55, 0.75, '#2a1a10');
   if (tribe === 'egypt') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.78, GOLD);
   if (tribe === 'rome' || armoured) box(ctx, x + 6 * k, hip - 5 * k, 3.4 * k, 2.2 * k, tribe === 'egypt' ? BRONZE : STEEL);
@@ -141,6 +143,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
   for (const u of [0.22, 0.62]) {
     faceQuad(ctx, 'R', x, y, w, h, u, u + 0.2, 0.42, 0.64, '#ffffff');
     faceQuad(ctx, 'R', x, y, w, h, u + 0.07, u + 0.17, 0.44, 0.6, '#101010');
+    faceQuad(ctx, 'R', x, y, w, h, u + 0.08, u + 0.11, 0.54, 0.59, '#ffffff');
   }
   switch (tribe) {
     case 'egypt':

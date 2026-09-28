@@ -339,6 +339,7 @@ export interface MoveOption {
   y: number;
   embark?: boolean;
   disembark?: boolean;
+  path?: { x: number; y: number }[]; // tiles walked through, ending at (x, y)
 }
 
 function canEmbarkAt(s: GameState, u: Unit, from: Tile, to: Tile) {
@@ -355,6 +356,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const pid = u.owner;
   const size = s.size;
   const best = new Float32Array(size * size).fill(-1); // remaining points when arriving
+  const parent = new Int32Array(size * size).fill(-1); // where each reachable tile was entered from
   const out = new Map<number, MoveOption>();
   const enemyNear = (x: number, y: number) =>
     s.units.some((e) => e.owner !== pid && dist(e.x, e.y, x, y) === 1 && isExplored(s, pid, e.x, e.y));
@@ -402,21 +404,32 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       if (enemyNear(to.x, to.y)) stop = true;
       if (cost > left) continue;
       const remaining = stop ? 0 : left - cost;
+      const fromI = from.y * size + from.x;
       if (remaining <= best[i]) {
-        if (!out.has(i)) out.set(i, opt);
+        if (!out.has(i)) {
+          out.set(i, opt);
+          parent[i] = fromI;
+        }
         continue;
       }
       best[i] = remaining;
+      parent[i] = fromI;
       out.set(i, opt);
       if (remaining > 0) queue.push({ t: to, left: remaining });
     }
   }
-  return [...out.values()];
+  const startI = start.y * size + start.x;
+  return [...out.entries()].map(([i, opt]) => {
+    const path: { x: number; y: number }[] = [];
+    for (let j = i, guard = 0; j !== startI && j >= 0 && guard < 64; j = parent[j], guard++) path.unshift({ x: j % size, y: Math.floor(j / size) });
+    return { ...opt, path };
+  });
 }
 
 export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   const opt = moveOptions(s, u).find((o) => o.x === x && o.y === y);
   if (!opt) return false;
+  emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark });
   u.x = x;
   u.y = y;
   u.moved = true;
@@ -512,7 +525,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   const pa = s.players[a.owner];
   if (kills) {
     removeUnit(s, d);
-    emit({ type: 'death', x: d.x, y: d.y, owner: d.owner, kind: d.kind });
+    emit({ type: 'death', unitId: d.id, x: d.x, y: d.y, owner: d.owner, kind: d.kind });
     pa.kills++;
     if (def(a).skills.includes('plunder')) {
       pa.stars += 2;
@@ -526,6 +539,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     // Melee attackers advance into the tile they cleared.
     const t = tileAt(s, d.x, d.y)!;
     if (def(a).range === 1 && isWater(t) === def(a).naval && (t.terrain !== 'mountain' || hasTech(s, a.owner, 'climbing'))) {
+      emit({ type: 'move', unitId: a.id, owner: a.owner, path: [{ x: a.x, y: a.y }, { x: d.x, y: d.y }], embark: false, disembark: false });
       a.x = d.x;
       a.y = d.y;
       if (t.ruin) openRuin(s, a, t);
@@ -537,7 +551,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     emit({ type: 'damage', unitId: a.id, x: a.x, y: a.y, amount: ret });
     if (a.hp <= 0) {
       removeUnit(s, a);
-      emit({ type: 'death', x: a.x, y: a.y, owner: a.owner, kind: a.kind });
+      emit({ type: 'death', unitId: a.id, x: a.x, y: a.y, owner: a.owner, kind: a.kind });
       s.players[d.owner].kills++;
       return true;
     }

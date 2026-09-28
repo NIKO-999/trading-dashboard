@@ -49,12 +49,61 @@ export function line(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, c
   ctx.stroke();
 }
 
-/** An isometric box standing on (cx, cy) with footprint w (world px) and height h. */
+/** Fills a polygon with a vertical gradient from `a` (at y0) to `b` (at y1). */
+export function polyGrad(ctx: Ctx, pts: number[], a: string, b: string, y0: number, y1: number) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+  ctx.closePath();
+  if (Math.abs(y1 - y0) < 0.5) {
+    ctx.fillStyle = ink(a);
+  } else {
+    const g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, ink(a));
+    g.addColorStop(1, ink(b));
+    ctx.fillStyle = g;
+  }
+  ctx.fill();
+}
+
+/**
+ * An isometric box standing on (cx, cy) with footprint w (world px) and height h. Side faces
+ * darken slightly toward the ground and the top's front edges catch a thin highlight, which
+ * gives blocks a finished, bevelled look.
+ */
 export function box(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string, top?: string) {
   const hw = w / 2, hh = w / 4;
-  poly(ctx, [cx - hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx - hw, cy], shade(color, 0.06));
-  poly(ctx, [cx + hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx + hw, cy], shade(color, -0.2));
-  poly(ctx, [cx, cy - hh - h, cx + hw, cy - h, cx, cy + hh - h, cx - hw, cy - h], top ?? shade(color, 0.22));
+  const left = shade(color, 0.06), right = shade(color, -0.2), lid = top ?? shade(color, 0.22);
+  polyGrad(ctx, [cx - hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx - hw, cy], shade(left, 0.05), shade(left, -0.12), cy - h, cy + hh);
+  polyGrad(ctx, [cx + hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx + hw, cy], shade(right, 0.04), shade(right, -0.14), cy - h, cy + hh);
+  poly(ctx, [cx, cy - hh - h, cx + hw, cy - h, cx, cy + hh - h, cx - hw, cy - h], lid);
+  if (w > 2.5 && h > 1) {
+    ctx.strokeStyle = ink(shade(lid, 0.4));
+    ctx.lineWidth = Math.min(0.9, w * 0.07);
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - hw, cy - h);
+    ctx.lineTo(cx, cy + hh - h);
+    ctx.lineTo(cx + hw, cy - h);
+    ctx.stroke();
+  }
+}
+
+/** A soft round contact shadow (darkest in the middle, fading out). */
+export function softShadow(ctx: Ctx, x: number, y: number, rx: number, ry: number, alpha = 0.3) {
+  if (rx <= 0 || ry <= 0) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, ry / rx);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, `rgba(0,0,0,${alpha})`);
+  g.addColorStop(0.6, `rgba(0,0,0,${alpha * 0.55})`);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 /**

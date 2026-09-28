@@ -1,7 +1,7 @@
 // Tiny synthesized sound effects (Web Audio, no audio files), so they work offline too.
 export type SoundName =
   | 'tap' | 'move' | 'harvest' | 'build' | 'train' | 'attack' | 'hit' | 'death' | 'levelup'
-  | 'research' | 'endturn' | 'turn' | 'capture' | 'error' | 'stars' | 'ruin' | 'splash';
+  | 'research' | 'endturn' | 'turn' | 'capture' | 'error' | 'stars' | 'ruin' | 'splash' | 'step';
 
 type Wave = OscillatorType;
 
@@ -79,6 +79,10 @@ class Sound {
         this.tone(520, 0.07, 'triangle', 0.12 * v, at + 0.07, 440);
         break;
       case 'splash': this.noise(0.25, 0.18 * v, at, 900, 'lowpass', 300); break;
+      case 'step':
+        this.tone(150 + Math.random() * 30, 0.07, 'sine', 0.16 * v, at, 90);
+        this.noise(0.05, 0.07 * v, at, 700, 'lowpass');
+        break;
       case 'harvest': arp([784, 1175, 1568], 0.07, 'sine', 0.2); break;
       case 'build':
         this.noise(0.07, 0.3 * v, at, 1200, 'bandpass');

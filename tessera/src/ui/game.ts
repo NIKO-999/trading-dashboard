@@ -11,7 +11,7 @@ import {
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
-import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, LUNGE_MS, newFx, WorldRenderer, type Fx, type Overlay } from '../render/draw';
+import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
@@ -258,9 +258,9 @@ export class GameView {
           return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
         }
         if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
-          const toWater = t.terrain === 'shallow' || t.terrain === 'ocean';
-          sfx.play(toWater ? 'splash' : 'move');
           this.act(() => moveUnit(this.s, u, x, y));
+          const sp = this.tileScreen(x, y);
+          if (sp.x < this.vw * 0.15 || sp.x > this.vw * 0.85 || sp.y < this.vh * 0.22 || sp.y > this.vh * 0.7) this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 550);
           this.advanceHints();
           return this.select({ x: u.x, y: u.y, mode: 'unit' });
         }
@@ -297,25 +297,19 @@ export class GameView {
    */
   private act(fn: () => unknown): number {
     const before = new Map(this.s.units.map((u) => [u.id, { x: u.x, y: u.y }]));
+    const moved = new Set<number>();
     fn();
     const now = performance.now();
-    const { impact, end } = this.handleEvents(drain());
+    const evs = drain();
+    for (const e of evs) if (e.type === 'move') moved.add(e.unitId);
+    const { end } = this.handleEvents(evs);
     let settle = end;
+    // anything that changed tiles without walking (rare) just hops straight there
     for (const u of this.s.units) {
       const b = before.get(u.id);
-      if (!b || (b.x === u.x && b.y === u.y)) continue;
-      const d = Math.max(Math.abs(b.x - u.x), Math.abs(b.y - u.y));
-      const t0 = impact ?? now;
-      const dur = 150 + 110 * d;
-      this.ov.fx.moves.set(u.id, { fx: b.x, fy: b.y, t0, dur });
-      const visible = isExplored(this.s, this.me, u.x, u.y) || isExplored(this.s, this.me, b.x, b.y);
-      if (visible) {
-        settle = Math.max(settle, t0 + dur);
-        if (u.owner !== this.me) {
-          const t = tileAt(this.s, u.x, u.y)!;
-          this.sound(t.terrain === 'shallow' || t.terrain === 'ocean' ? 'splash' : 'move', t0 - now, u.owner);
-        }
-      }
+      if (!b || (b.x === u.x && b.y === u.y) || moved.has(u.id)) continue;
+      this.ov.fx.moves.set(u.id, { path: [b, { x: u.x, y: u.y }], t0: now, dur: HOP_MS * 1.3 });
+      settle = Math.max(settle, now + HOP_MS * 1.3);
     }
     this.refresh();
     if (isHumanTurn(this.s)) saveGame(this.s);
@@ -324,6 +318,38 @@ export class GameView {
 
   private sound(name: SoundName, delayMs: number, player: number) {
     sfx.play(name, delayMs, player === this.me ? 1 : 0.5);
+  }
+
+  private tileGround(x: number, y: number) {
+    const t = tileAt(this.s, x, y);
+    const water = !!t && (t.terrain === 'shallow' || t.terrain === 'ocean');
+    return { x: (x - y) * 32, y: (x + y) * 16 + 16 + (water ? 5 : 0), water };
+  }
+
+  /** Dust kicked up where a unit lands. */
+  private dust(x: number, y: number, t0: number) {
+    const g = this.tileGround(x, y);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+      this.ov.fx.particles.push({ x: g.x + Math.cos(a) * 5, y: g.y + 5 + Math.sin(a) * 2, vx: Math.cos(a) * 22, vy: Math.sin(a) * 8 - 10, g: 20, t0, life: 0.42, color: '#e7dcc4', size: 2.3, shape: 'puff' });
+    }
+  }
+
+  /** Spray and a ring where a unit enters the water. */
+  private splash(x: number, y: number, t0: number) {
+    const g = this.tileGround(x, y);
+    this.ov.fx.particles.push({ x: g.x, y: g.y + 3, vx: 0, vy: 0, g: 0, t0, life: 0.6, color: 'rgba(255,255,255,0.85)', size: 3, shape: 'ring' });
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
+      const sp = 45 + Math.random() * 45;
+      this.ov.fx.particles.push({ x: g.x + (Math.random() - 0.5) * 8, y: g.y, vx: Math.cos(a) * sp * 0.6, vy: Math.sin(a) * sp, g: 300, t0, life: 0.5, color: '#e9fbff', size: 1.6, shape: 'drop' });
+    }
+  }
+
+  /** A soft wake ring behind a boat. */
+  private wake(x: number, y: number, t0: number) {
+    const g = this.tileGround(x, y);
+    this.ov.fx.particles.push({ x: g.x, y: g.y + 3, vx: 0, vy: 0, g: 0, t0, life: 0.7, color: 'rgba(255,255,255,0.6)', size: 4, shape: 'ring' });
   }
 
   /** A little burst of particles above a tile. */
@@ -345,12 +371,24 @@ export class GameView {
   private refresh() {
     const p = this.s.players[this.me];
     const turnText = this.s.maxTurns > 0 ? `${Math.min(this.s.turn, this.s.maxTurns)}/${this.s.maxTurns}` : String(this.s.turn);
-    this.hud.innerHTML = '';
-    this.hud.append(
-      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Score'), h('div', { class: 'hud-val' }, score(this.s, this.me).toLocaleString())),
-      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
-      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
-    );
+    const sc = score(this.s, this.me);
+    if (!this.hudEls) {
+      const val = () => h('span', {});
+      this.hudEls = { score: val(), starsLabel: h('div', { class: 'hud-label' }), stars: val(), turn: val(), scoreBox: h('div', { class: 'hud-val' }), starsBox: h('div', { class: 'hud-val' }) };
+      const e = this.hudEls;
+      e.scoreBox.append(e.score);
+      e.starsBox.append(iconEl('star', 'ico-star big'), e.stars);
+      this.hud.append(
+        h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Score'), e.scoreBox),
+        h('div', { class: 'hud-cell' }, e.starsLabel, e.starsBox),
+        h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, e.turn)),
+      );
+    }
+    const e = this.hudEls;
+    e.starsLabel.textContent = `Stars (+${income(this.s, this.me)})`;
+    e.turn.textContent = turnText;
+    this.countTo(e.score, e.scoreBox, sc, (v) => v.toLocaleString());
+    this.countTo(e.stars, e.starsBox, p.stars, String);
     this.bottom.classList.toggle('waiting', !this.myTurn());
     this.ov.glow = this.harvestable();
     this.updateHint();
@@ -359,6 +397,32 @@ export class GameView {
   }
 
   /** Tiles in my territory where a harvest, farm or mine can be bought right now. */
+  private hudEls: { score: HTMLElement; starsLabel: HTMLElement; stars: HTMLElement; turn: HTMLElement; scoreBox: HTMLElement; starsBox: HTMLElement } | null = null;
+  private counters = new WeakMap<HTMLElement, { value: number; raf: number }>();
+
+  /** Animates a HUD number toward `target` and gives it a little pop. */
+  private countTo(el: HTMLElement, box: HTMLElement, target: number, fmt: (v: number) => string) {
+    const cur = this.counters.get(el);
+    const from = cur?.value ?? target;
+    if (cur?.raf) cancelAnimationFrame(cur.raf);
+    if (from === target) {
+      el.textContent = fmt(target);
+      this.counters.set(el, { value: target, raf: 0 });
+      return;
+    }
+    box.classList.remove('bump');
+    void box.offsetWidth;
+    box.classList.add('bump');
+    const t0 = performance.now();
+    const step = () => {
+      const k = Math.min(1, (performance.now() - t0) / 450);
+      const v = Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3)));
+      el.textContent = fmt(v);
+      this.counters.set(el, { value: v, raf: k < 1 ? requestAnimationFrame(step) : 0 });
+    };
+    step();
+  }
+
   private harvestable() {
     const out = new Set<number>();
     if (!this.myTurn()) return out;
@@ -488,7 +552,37 @@ export class GameView {
     let end = now;
     for (const e of evs) {
       switch (e.type) {
+        case 'move': {
+          const isWater = (p: { x: number; y: number }) => this.tileGround(p.x, p.y).water;
+          const segs = e.path.length - 1;
+          if (segs < 1) break;
+          const seg = isWater(e.path[0]) && isWater(e.path[segs]) ? SAIL_MS : HOP_MS;
+          const start = Math.max(impact ?? now, now);
+          fx.moves.set(e.unitId, { path: e.path, t0: start, dur: seg * segs });
+          const a = e.path[segs - 1], b = e.path[segs];
+          const sdx = b.x - b.y - (a.x - a.y);
+          if (sdx !== 0) fx.facing.set(e.unitId, sdx > 0 ? 1 : -1);
+          if (!e.path.some((p) => seen(p.x, p.y))) break;
+          for (let i = 1; i <= segs; i++) {
+            const p = e.path[i];
+            if (!seen(p.x, p.y)) continue;
+            const at = start + seg * i;
+            if (isWater(p)) {
+              if (!isWater(e.path[i - 1])) {
+                this.splash(p.x, p.y, at);
+                this.sound('splash', at - now, e.owner);
+              } else this.wake(p.x, p.y, at - seg * 0.5);
+            } else {
+              this.dust(p.x, p.y, at);
+              this.sound('step', at - now, e.owner);
+            }
+          }
+          end = Math.max(end, start + seg * segs);
+          break;
+        }
         case 'attack': {
+          const sdx = e.to.x - e.to.y - (e.from.x - e.from.y);
+          if (sdx !== 0) fx.facing.set(e.unitId, sdx > 0 ? 1 : -1);
           if (!seen(e.from.x, e.from.y) && !seen(e.to.x, e.to.y)) {
             impact = null;
             break;
@@ -523,7 +617,7 @@ export class GameView {
         case 'death': {
           if (!seen(e.x, e.y)) break;
           const at = (impact ?? now) + 120;
-          fx.ghosts.push({ kind: e.kind, tribe: this.s.players[e.owner].tribe, x: e.x, y: e.y, t0: at });
+          fx.ghosts.push({ kind: e.kind, tribe: this.s.players[e.owner].tribe, x: e.x, y: e.y, t0: at, facing: fx.facing.get(e.unitId) ?? 1 });
           this.burst(e.x, e.y, at, 9, ['#d9d4c8', '#bdb6a6'], 'puff', 40);
           sfx.play('death', at - now, 0.8);
           end = Math.max(end, at + GHOST_MS * 0.6);
