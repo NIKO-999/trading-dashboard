@@ -27,8 +27,17 @@ const coarsePointer = typeof matchMedia === 'function' ? matchMedia('(pointer: c
 export function renderDpr() {
   const phone = !!coarsePointer?.matches && Math.min(screen.width, screen.height) <= 540;
   const raw = (window.devicePixelRatio || 1) * (window.visualViewport?.scale ?? 1);
-  return Math.min(3, Math.max(phone ? 3 : 2, raw));
+  const base = Math.min(3, Math.max(phone ? 3 : 2, raw));
+  return sharpness > 1 ? Math.max(base, sharpness) : base;
 }
+
+/**
+ * Sharpness setting: draw at least this many pixels per CSS pixel (1 = follow the screen). A host
+ * app that scales the page up (which a page can't detect) makes the picture soft; drawing denser
+ * offsets it.
+ */
+let sharpness = 1;
+export const setSharpness = (v: number) => { sharpness = v >= 1 && v <= 5 ? v : 1; };
 
 export const isWaterTile = (t: Tile) => t.terrain === 'shallow' || t.terrain === 'ocean';
 

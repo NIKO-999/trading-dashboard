@@ -4,6 +4,7 @@ import type { MapSize } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
 import { sfx } from '../audio/sfx';
+import { setSharpness } from '../render/common';
 import { loadGame, loadScores, loadSettings, saveSettings } from '../save';
 import { $ui, h, iconEl, paint } from './dom';
 
@@ -277,7 +278,7 @@ function showAbout(handlers: MenuHandlers) {
 
 function showSettings(handlers: MenuHandlers) {
   const st = loadSettings();
-  const toggle = (label: string, key: keyof typeof st) => {
+  const toggle = (label: string, key: 'sound' | 'hints' | 'fastAi') => {
     const b = h('button', { class: `toggle${st[key] ? ' on' : ''}` }, st[key] ? 'On' : 'Off');
     b.addEventListener('click', () => {
       st[key] = !st[key];
@@ -288,9 +289,21 @@ function showSettings(handlers: MenuHandlers) {
     });
     return h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, label), b);
   };
+  const sharpRow = () => {
+    const opts: [1 | 4 | 5, string][] = [[1, 'Auto'], [4, 'High'], [5, 'Max']];
+    const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Map sharpness'));
+    const group = h('div', { class: 'seg' });
+    const draw = () => {
+      group.innerHTML = '';
+      for (const [v, text] of opts) group.append(h('button', { class: st.sharp === v ? 'on' : '', onclick: () => { st.sharp = v; saveSettings(st); setSharpness(v); draw(); } }, text));
+    };
+    draw();
+    row.append(group);
+    return row;
+  };
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi')),
+    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow()),
   );
 }

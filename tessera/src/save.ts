@@ -56,6 +56,7 @@ export interface Settings {
   hints: boolean;
   fastAi: boolean;
   sound: boolean;
+  sharp: 1 | 4 | 5; // minimum pixels per CSS pixel for drawing (1 = follow the screen; see renderDpr)
 }
-export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
+export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, sharp: 1, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
 export const saveSettings = (s: Settings) => write(SETTINGS_KEY, s);

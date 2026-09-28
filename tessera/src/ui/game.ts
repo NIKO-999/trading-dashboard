@@ -11,7 +11,7 @@ import {
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
-import { renderDpr } from '../render/common';
+import { renderDpr, setSharpness } from '../render/common';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { cityLabelAt, unitAtScreen } from '../render/dynamic';
 import { sfx, type SoundName } from '../audio/sfx';
@@ -995,6 +995,9 @@ export class GameView {
     const onOff = (name: string, on: boolean) => `${name}: ${on ? 'On' : 'Off'}`;
     const hintsLabel = h('span', {}, onOff('Hints', this.settings.hints));
     const soundLabel = h('span', {}, onOff('Sound', this.settings.sound));
+    const SHARP = [[1, 'Auto'], [4, 'High'], [5, 'Max']] as const;
+    const sharpText = () => `Sharpness: ${SHARP.find(([v]) => v === this.settings.sharp)?.[1] ?? 'Auto'}`;
+    const sharpLabel = h('span', {}, sharpText());
     modal({
       title: 'Menu',
       body: [
@@ -1007,6 +1010,13 @@ export class GameView {
         // toggles flip in place and keep the menu open
         { label: hintsLabel, keepOpen: true, onClick: () => { this.settings.hints = !this.settings.hints; saveSettings(this.settings); this.updateHint(); hintsLabel.textContent = onOff('Hints', this.settings.hints); } },
         { label: soundLabel, keepOpen: true, onClick: () => { this.settings.sound = !this.settings.sound; sfx.enabled = this.settings.sound; saveSettings(this.settings); soundLabel.textContent = onOff('Sound', this.settings.sound); } },
+        { label: sharpLabel, keepOpen: true, onClick: () => {
+          const i = SHARP.findIndex(([v]) => v === this.settings.sharp);
+          this.settings.sharp = SHARP[(i + 1) % SHARP.length][0];
+          saveSettings(this.settings);
+          setSharpness(this.settings.sharp); // the game loop notices the new density and redraws
+          sharpLabel.textContent = sharpText();
+        } },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },
       ],
