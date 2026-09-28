@@ -170,9 +170,9 @@
           <div class="ch-label"><div class="n stroke-sm">Chapter ${ch.id}</div><div class="t stroke">${ch.name}</div></div>
           <div class="best">${best >= ch.days ? '★ Cleared!' : `Best: Day ${best} / ${ch.days}`}</div>
           ${locked ? `<div class="lock stroke">🔒 Clear Chapter ${ch.id - 1}</div>` : ''}
+          <button class="ch-nav l" ${viewCh <= 1 ? 'disabled' : ''}>‹</button>
+          <button class="ch-nav r" ${viewCh >= CHAPTERS.length ? 'disabled' : ''}>›</button>
         </div>
-        <button class="ch-nav l" ${viewCh <= 1 ? 'disabled' : ''}>‹</button>
-        <button class="ch-nav r" ${viewCh >= CHAPTERS.length ? 'disabled' : ''}>›</button>
         <div class="home-start">
           <button class="btn big" id="start" ${locked ? 'disabled' : ''}>Start</button>
           <div class="cost stroke-sm">${ICONS.energy} ${RUN_COST}</div>
@@ -404,7 +404,7 @@
         <div class="scene"><div class="track"><div class="tile">${art.scene(ch.scene)}</div><div class="tile m">${art.scene(ch.scene)}</div><div class="tile">${art.scene(ch.scene)}</div></div></div>
         <div class="run-top">
           <button class="gear">${ICONS.gear}</button>
-          <div class="progress"><div class="track"><div class="fill"></div></div></div>
+          <div class="progress"><div class="ptrack"><div class="fill"></div></div></div>
           ${chip('coin', '0', 'coins')}
         </div>
         <div class="boss-bar"><div class="bar"><i></i><span></span></div><div class="round-pill">Round : 1/15</div></div>
@@ -427,7 +427,7 @@
       skip: $('.skip', scr), speed: $('.speed', scr),
     };
     // progress milestones
-    const track = $('.track', S.progress);
+    const track = $('.ptrack', S.progress);
     milestones().forEach(m => track.append(el(`<div class="ms ${m.boss ? 'boss' : ''}" data-d="${m.d}" style="left:${m.d / ch.days * 100}%">${m.boss ? ICONS.devil : ICONS.swords}<span class="d">${m.d}</span></div>`)));
     track.append(el(`<div class="cur" style="left:0%">0</div>`));
     // hero + pet actors
@@ -618,10 +618,10 @@
       log('A travelling <b>merchant</b> waves you over. "Finest skills, cheap cheap!"');
       const price = Math.round(60 + R.day * 8);
       const offers = skillPool(3).map(id => ({ id, price: SKILLS[id].rarity === 'legendary' ? price * 2 : SKILLS[id].rarity === 'epic' ? Math.round(price * 1.5) : price }));
-      const opts = offers.map(o => ({ ...skillCard(o.id), name: `${SKILLS[o.id].name} · ${o.price}🪙`, disabled: R.coins < o.price, fn: () => { R.coins -= o.price; SND.play('buy'); learn(o.id); } }));
+      const opts = offers.map(o => ({ ...skillCard(o.id), desc: `<b>Price: ${fmt(o.price)} coins</b><br>` + skillCard(o.id).desc, disabled: R.coins < o.price, fn: () => { R.coins -= o.price; SND.play('buy'); learn(o.id); } }));
       opts.push({ icon: 'wind', rarity: 'common', name: 'No thanks', desc: 'Keep your coins.', fn: () => { } });
       const c = await choiceModal('Merchant', ICONS.chest, opts);
-      log(c.name === 'No thanks' ? 'You politely decline.' : `You bought <b>${c.name.split(' · ')[0]}</b>.`);
+      log(c.name === 'No thanks' ? 'You politely decline.' : `You bought <b>${c.name}</b>.`);
       updateStats();
     },
     async wheel() {
@@ -718,13 +718,13 @@
       def: Math.round(8 * ch.mult * g * s.def), burn: null, bleed: null, poison: 0, frozen: false,
     };
   }
-  const ENEMY_POS = [{ l: 50, b: 9, z: 3 }, { l: 66, b: 17, z: 2 }, { l: 74, b: 3, z: 4 }];
+  const ENEMY_POS = [{ l: 47, b: 8, z: 3 }, { l: 62, b: 19, z: 2, back: true }, { l: 76, b: 3, z: 4 }];
   function spawnEnemies(list) {
     R.enemies = list;
     list.forEach((e, i) => {
       const big = e.tier !== 'mob';
       const p = big ? { l: 52, b: 7, z: 3 } : ENEMY_POS[i];
-      e.el = el(`<div class="actor enemy enter ${big ? 'boss' : ''}" style="left:${p.l}%;bottom:${p.b}%;z-index:${p.z}"><div class="art">${art.enemy(e.key, uid())}</div><div class="status"></div><div class="hpbar"><i></i><span></span></div></div>`);
+      e.el = el(`<div class="actor enemy enter ${big ? 'boss' : ''} ${!big && list.length === 3 ? 'trio' : ''} ${p.back ? 'back' : ''}" style="left:${p.l}%;bottom:${p.b}%;z-index:${p.z}"><div class="art">${art.enemy(e.key, uid())}</div><div class="status"></div><div class="hpbar"><i></i><span></span></div></div>`);
       if (e.tier === 'elite') e.el.classList.replace('boss', 'elite');
       S.actors.append(e.el);
       setBar(e.el, e.hp, e.maxHp, 0);
@@ -752,7 +752,7 @@
     const p = pos(actorEl, 0.45);
     fxEl(`<svg class="slash" viewBox="0 0 130 100" style="width:${p.w * 1.3}px"><defs><linearGradient id="sg${uidN}" x1="0" x2="1"><stop offset="0" stop-color="${color}" stop-opacity="0"/><stop offset=".6" stop-color="${color}"/><stop offset="1" stop-color="${glow}"/></linearGradient></defs><path d="M10 85 Q40 5 125 15 Q55 25 22 90 Z" fill="url(#sg${uidN++})"/><path d="M30 70 Q55 25 110 18" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/></svg>`, p.x, p.y, 400);
   }
-  function popBanner(text) { if (R.skip) return; fxEl(`<div class="banner-pop title-gold">${text}</div>`, 0, 0, 1200); }
+  function popBanner(text) { if (R.skip) return; const d = fxEl(`<div class="banner-pop title-gold">${text}</div>`, 0, 0, 1200); d.style.left = ''; d.style.top = ''; }
   async function projectile(from, to, svg, cls = '', t = 260) {
     if (R.skip) return;
     const a = pos(from, 0.45), b = pos(to, 0.45);
