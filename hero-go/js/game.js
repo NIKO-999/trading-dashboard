@@ -198,6 +198,7 @@
     const st = heroStats(k), lv = heroLv(k), cost = heroUpCost(k);
     const scr = el(`<div class="screen">
       <div class="page-h"><div class="t stroke">Heroes</div>${chip('coin', fmt(save.gold))}</div>
+      <div class="hero-scroll">
       <div class="hero-show"><div class="scene">${art.scene(['forest', 'desert', 'swamp', 'snow'][HERO_KEYS.indexOf(k) % 4])}</div><div class="ped"></div><div class="big">${art.hero(k)}</div></div>
       <div class="hero-row">${HERO_KEYS.map(h => `<button class="hcard ${h === k ? 'on' : ''}" data-h="${h}"><span class="lv">Lv.${heroLv(h)}</span>${art.portrait(h)}<div class="n">${HEROES[h].name}</div></button>`).join('')}</div>
       <div class="hero-info">
@@ -208,6 +209,7 @@
           <div class="hstat">${ICONS.heart}${fmt(st.hp)}</div><div class="hstat">${ICONS.sword}${fmt(st.atk)}</div><div class="hstat">${ICONS.shield}${fmt(st.def)}</div>
         </div>
         <div class="sig"><div class="badge" style="background:${H.color}">★</div><div><div class="st">${H.signature.name}</div><div class="sd">${H.signature.desc}</div></div></div>
+      </div>
       </div>
       <div class="hero-actions">
         <button class="btn blue small" id="up" ${save.gold < cost || lv >= 30 ? 'disabled' : ''}>Upgrade ${ICONS.coin.replace('<svg', '<svg class="ico"')} ${fmt(cost)}</button>
@@ -698,7 +700,7 @@
       const big = e.tier !== 'mob';
       const p = big ? { l: 52, b: 7, z: 3 } : ENEMY_POS[i];
       e.el = el(`<div class="actor enemy enter ${big ? 'boss' : ''}" style="left:${p.l}%;bottom:${p.b}%;z-index:${p.z}"><div class="art">${art.enemy(e.key, uid())}</div><div class="status"></div><div class="hpbar"><i></i><span></span></div></div>`);
-      if (e.tier === 'elite') e.el.style.width = '36%';
+      if (e.tier === 'elite') e.el.classList.replace('boss', 'elite');
       S.actors.append(e.el);
       setBar(e.el, e.hp, e.maxHp, 0);
     });
