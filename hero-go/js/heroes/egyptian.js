@@ -35,11 +35,11 @@
   var LEGR = 'M99 198 L 111 198 L 110.5 222 L 99.5 222 Z';
   var ARMS = 'M83 123 C 72 121, 64 129, 62 140 C 60 149, 60 156, 61 163 L 71 164 C 71 157, 72 151, 75 145 C 80 138, 90 128, 83 123 Z';
   var ARMW = 'M109 123 C 120 121, 128 129, 132 141 C 135 149, 139 156, 139 163 L 128 167 C 125 160, 119 154, 113 148 C 106 141, 102 128, 109 123 Z';
-  var BO = 'M-2.8 -30 C -10 -40, -12 -58, -4 -72 C 4 -84, 22 -88, 32 -78 C 38 -72, 38 -62, 33 -54 L 31 -49';
-  var BI = 'M31 -49 C 29 -58, 26 -66, 20 -69 C 12 -72, 5 -66, 4 -57 C 3 -48, 3.5 -40, 2.8 -30 L 2.8 -9';
-  var BLADE = 'M-2.8 -9 L -2.8 -30 C -10 -40, -12 -58, -4 -72 C 4 -84, 22 -88, 32 -78 C 38 -72, 38 -62, 33 -54 L 31 -49 C 29 -58, 26 -66, 20 -69 C 12 -72, 5 -66, 4 -57 C 3 -48, 3.5 -40, 2.8 -30 L 2.8 -9 Z';
-  var LAPL = 'M62 108 L 75 108 L 76 147 C 72 150, 66 150, 62.5 147 Z';
-  var LAPR = 'M117 108 L 130 108 L 129.5 147 C 126 150, 120 150, 116 147 Z';
+  var BO = 'M-2.8 -26 C -6 -38, -7 -52, -2 -64 C 5 -78, 22 -84, 34 -78 C 40 -75, 44 -70, 46 -64';
+  var BI = 'M46 -64 C 38 -68, 30 -69, 22 -66 C 13 -62, 8.5 -55, 7 -46 C 5.5 -38, 3.5 -31, 2.8 -26 L 2.8 -9';
+  var BLADE = 'M-2.8 -9 L ' + BO.slice(1) + ' ' + BI.slice(BI.indexOf('C')) + ' Z';
+  var LAPL = 'M63 108 L 75 108 L 77 147 C 72.5 150.5, 65.5 150.5, 61 147 Z';
+  var LAPR = 'M117 108 L 129 108 L 131 147 C 126.5 150.5, 119.5 150.5, 115 147 Z';
 
   function defs(u) {
     var id = mk(u);
@@ -267,8 +267,8 @@
     var id = mk(u), s = '';
     s += '<path d="' + LAPL + ' ' + LAPR + '" fill="' + C.gold + '" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round"/>';
     var st = '';
-    for (var y = 110; y < 150; y += 6) {
-      st += '<path d="M60 ' + y + ' L 130 ' + (y + 1.5) + ' L 130 ' + (y + 3.2) + ' L 60 ' + (y + 1.7) + ' Z" fill="' + C.blue + '"/>';
+    for (var y = 106; y < 144; y += 7) {
+      st += '<path d="M60 ' + y + ' L 132 ' + (y + 1.5) + ' L 132 ' + (y + 5) + ' L 60 ' + (y + 3.5) + ' Z" fill="' + C.blue + '"/>';
     }
     s += '<g clip-path="url(#' + id('lap-c') + ')">' + st +
       '<rect x="62" y="106" width="3.5" height="50" fill="#000" opacity="0.14"/><rect x="116" y="106" width="3" height="50" fill="#000" opacity="0.14"/>' +
@@ -302,7 +302,7 @@
   }
 
   function head(u, anim) {
-    var id = mk(u), s = '<g' + (anim ? ' class="part-head" style="transform-origin: 100px 110px"' : '') + '>';
+    var id = mk(u), s = '<g' + (anim ? ' class="part-head" style="transform-origin: 100px 112px"' : '') + '><g transform="translate(104 113) scale(1.12) translate(-104 -113)">';
     // nemes headcloth mass
     s += '<path d="' + NEMES + '" fill="' + C.gold + '" stroke="' + O + '" stroke-width="3.2" stroke-linejoin="round"/>';
     var st = '';
@@ -311,7 +311,7 @@
     }
     s += '<g clip-path="url(#' + id('nemes') + ')">' + st +
       // cel shade on back half + dome highlight
-      '<path d="M40 30 C 60 30, 70 60, 68 90 C 67 104, 72 114, 80 124 L 40 124 Z" fill="#000" opacity="0.16"/>' +
+      '<path d="M40 30 C 60 30, 70 60, 68 90 C 67 104, 72 114, 80 124 L 40 124 Z" fill="#000" opacity="0.1"/>' +
       '<path d="M142 60 C 150 80, 154 100, 152 124 L 160 124 L 160 50 Z" fill="#000" opacity="0.1"/>' +
       '<path d="M84 34 C 94 27, 112 25, 126 31" stroke="#fff" stroke-width="3.2" fill="none" opacity="0.35" stroke-linecap="round"/>' +
       // inner shadow where the cloth wraps behind the face
@@ -360,7 +360,7 @@
     s += '<path d="M108 55.6 L 108 62 M106.4 58 L 109.6 58" stroke="' + C.carn + '" stroke-width="0.9"/>';
     s += '<ellipse cx="108" cy="49.6" rx="2.6" ry="2.2" fill="url(#' + id('gold') + ')" stroke="' + O + '" stroke-width="1.3"/>';
     s += '<circle cx="109" cy="49.2" r="0.6" fill="' + O + '"/>';
-    s += '</g>';
+    s += '</g></g>';
     return s;
   }
 
@@ -422,16 +422,16 @@
       '<path d="' + BO + '" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.5" transform="translate(1.4 0.8)"/>' +
       '<path d="' + BI + '" stroke="' + C.brzS + '" stroke-width="4" fill="none" opacity="0.75"/>' +
       // engraved central line + hieroglyphs
-      '<path d="M0 -12 L 0 -30 C -5 -40, -6 -56, -1 -66 C 5 -76, 18 -80, 26 -74 C 31 -70, 32 -64, 31 -58" stroke="' + C.brzD + '" stroke-width="0.7" fill="none" opacity="0.8"/>' +
-      glyph('ankh', 0, -19, 0.9) + glyph('eye', 0, -25.5, 0.9) + glyph('water', -3.4, -40, 0.9) + glyph('sun', -4.4, -48, 0.9) +
-      glyph('ankh', -3.6, -57, 0.9) + glyph('eye', 1.6, -69, 0.9) + glyph('water', 9, -75.4, 0.9) + glyph('hut', 17.4, -76.2, 0.8) + glyph('sun', 25, -72.4, 0.9) + glyph('water', 29.4, -65, 0.9) +
+      '<path d="M0 -12 L 0 -26 C -2 -38, -2 -50, 2 -60 C 8 -72, 22 -77, 34 -73 C 38 -71.5, 41 -69, 43 -66" stroke="' + C.brzD + '" stroke-width="0.7" fill="none" opacity="0.8"/>' +
+      glyph('ankh', 0, -17, 0.9) + glyph('eye', 0, -22.5, 0.85) + glyph('water', 1.4, -34, 0.9) + glyph('sun', 1.2, -42, 0.9) +
+      glyph('ankh', 2, -51, 0.9) + glyph('eye', 5.4, -61, 0.9) + glyph('water', 11, -68.4, 0.9) + glyph('hut', 17.6, -72.4, 0.8) + glyph('sun', 25, -74, 0.9) + glyph('water', 32, -73.4, 0.9) + glyph('ankh', 38.4, -70.2, 0.8) +
       // shine highlights
-      '<path d="M-8 -46 C -9 -58, -5 -69, 2 -77" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.95"/>' +
-      '<path d="M10 -83.5 C 17 -85, 24 -84, 29 -80" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.85"/>' +
-      '<path d="M-1.4 -12 L -1.4 -28" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity="0.6"/>' +
+      '<path d="M-4.4 -40 C -4.8 -52, -2 -62, 3 -70" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.95"/>' +
+      '<path d="M12 -79.4 C 19 -82, 27 -82, 33 -79.2" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.85"/>' +
+      '<path d="M-1.4 -12 L -1.4 -26" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity="0.6"/>' +
       '</g>';
     s += '<path d="' + BLADE + '" fill="none" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round"/>';
-    s += sparkle(-7.5, -62, 3.2, '#fff');
+    s += sparkle(-4.6, -60, 3.2, '#fff');
     // guard
     s += '<path d="M-5.5 -11 L 5.5 -11 L 4.4 -6.4 L -4.4 -6.4 Z" fill="url(#' + id('gold') + ')" stroke="' + O + '" stroke-width="1.8" stroke-linejoin="round"/>';
     s += '<circle cx="0" cy="-8.7" r="1.2" fill="' + C.lapis + '"/>';
@@ -449,7 +449,7 @@
 
   function weaponArm(u, anim) {
     var id = mk(u), s = '<g' + (anim ? ' class="part-weapon" style="transform-origin: 114px 128px"' : '') + '>';
-    s += '<g transform="translate(135.5 166.5) rotate(12)">' + khopesh(u) + '</g>';
+    s += '<g transform="translate(135.5 166.5) rotate(5) scale(1.1)">' + khopesh(u) + '</g>';
     s += '<path d="' + ARMW + '" fill="url(#' + id('skin') + ')" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>';
     s += '<g clip-path="url(#' + id('armw-c') + ')"><path d="M103 138 C 108 148, 118 158, 130 170 L 124 174 Z" fill="' + C.skinS + '" opacity="0.5"/>' +
       '<path d="M114 126 C 120 127, 125 132, 128 138" stroke="' + C.skinL + '" stroke-width="2" fill="none" opacity="0.7" stroke-linecap="round"/></g>';
@@ -491,7 +491,7 @@
       '<path d="M-4 104 L 22 78 L 22 104 Z M70 104 L 102 70 L 102 104 Z" fill="#c9a054" opacity="0.5"/>' +
       '<rect x="0" y="100" width="120" height="20" fill="#e2bd72" opacity="0.7"/>' +
       sparkle(16, 22, 3, '#fff3c4') + sparkle(104, 18, 2.4, '#fff3c4') +
-      '<g transform="translate(-15 -1) scale(0.72)">' + backArm(u) + torso(u) + collar(u) + scarab(u) + head(u, false) + lappets(u) + '</g>' +
+      '<g transform="translate(-15 2) scale(0.72)">' + backArm(u) + torso(u) + collar(u) + scarab(u) + head(u, false) + lappets(u) + '</g>' +
       '</g>' +
       '<rect x="1.5" y="1.5" width="117" height="117" rx="13" fill="none" stroke="' + O + '" stroke-width="3"/>' +
       '</svg>';
