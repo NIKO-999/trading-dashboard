@@ -124,7 +124,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   const L = LOOK[tribe];
   const T = TRIBES[tribe];
   const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'immortal' || kind === 'shotelai';
-  const heavy = isHeavy(kind) && !isAbo(tribe) && !isLk(tribe) && !(isSw(tribe) && (kind === 'giant' || kind === 'swordsman')); // no metal here: rank is shown in paint, feathers and cloaks
+  const heavy = isHeavy(kind) && !isAbo(tribe) && !isLk(tribe) && !(isSw(tribe) && (kind === 'giant' || kind === 'swordsman')) && !isMy(tribe); // no metal here: rank is shown in paint, feathers and cloaks
   const metal = metalOf(tribe);
   let torso = T.color, legs = shade(T.colorDark, 0.1), sleeves = L.skin;
   switch (tribe) {
@@ -148,6 +148,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'china': torso = kind === 'explorer' ? '#dcd3b8' : armoured || kind === 'defender' ? '#2b3266' : T.color; legs = kind === 'explorer' ? '#33418f' : '#d9d1ba'; sleeves = torso; break; // indigo hanfu over pale trousers
     case 'ottoman': torso = kind === 'janissary' ? OT_NAVY : T.color; legs = kind === 'janissary' ? OT_NAVYD : '#8c1836'; sleeves = torso; break; // crimson entari (navy cafan for the janissary) over baggy şalvar
     case 'lakota': torso = kind === 'swordsman' ? L.skin : T.color; legs = '#cdbb94'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'swordsman' || kind === 'buffalorider' ? L.skin : T.color; break; // fringed buckskin
+    case 'maya': torso = kind === 'archer' || kind === 'explorer' ? MY_COT : kind === 'defender' ? MY_QUILT : kind === 'swordsman' ? MY_JAG : kind === 'giant' ? MY_JADED : kind === 'knight' || kind === 'rider' ? T.color : L.skin; legs = L.skin; sleeves = kind === 'defender' ? MY_QUILT : L.skin; break; // bare painted skin, quilted cotton or a jaguar pelt
     case 'india': torso = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; legs = IND_CREAM; sleeves = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; break; // white cotton dhoti; bare-chested but for gold, or quilted and mailed
     case 'tibet': torso = TB_MAG_BODY; legs = '#3e3038'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'khampa' ? '#efe6d0' : kind === 'explorer' ? TB_MAG_BODY : TB_MAGD; break; // a wrap-front chuba over dark wool trousers, the tied-off sleeve showing a white shirt
     case 'celts': torso = kind === 'explorer' ? '#e6e0cc' : '#b07a3a'; legs = kind === 'explorer' ? '#d8d2b8' : '#3f6a34'; sleeves = torso; break;
@@ -186,6 +187,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     if (isAbo(tribe)) aboCloak(ctx, x, top, hip, k); // a possum-skin cloak, stitched and incised
     if (isLk(tribe)) lkRobe(ctx, x, top, hip, k, kind); // a shaggy buffalo robe
     if (isTb(tribe)) tbCloak(ctx, x, top, hip, k, kind); // fleece-edged
+    if (isMy(tribe)) myCloak(ctx, x, top, hip, k, kind); // a turquoise mantle, a jaguar pelt or a quetzal-feather cloak
     if (tribe === 'aztec') for (let i = 0; i < 3; i++) poly(ctx, [x - 9.3 * k + i * 2.4 * k, hip + 6.6 * k - i * 0.5 * k, x - 8.3 * k + i * 2.4 * k, hip + 10 * k - i * 0.5 * k, x - 7 * k + i * 2.4 * k, hip + 6.3 * k - i * 0.5 * k], ['#1faa6b', '#d6453b', '#1faa9b'][i]); // feather fringe
   }
 
@@ -253,6 +255,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
       if (tribe === 'aboriginal') aboLeg(ctx, f, x + dx * k, y + dy * k, k, kind);
       if (tribe === 'lakota') lkLeg(ctx, f, x + dx * k, y + dy * k, k, dx);
       if (tribe === 'tibet') tbLeg(ctx, f, x + dx * k, y + dy * k, k, kind, heavy);
+      if (isMy(tribe)) myLeg(ctx, f, x + dx * k, y + dy * k, k, kind);
       if (tribe === 'zulu') {
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.27, 0.4, '#f4efe0'); // cow-tail anklet
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.22, 0.27, '#2a1a10');
@@ -311,6 +314,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (tribe === 'swahili') swSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
   if (tribe === 'lakota') lkArm(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
   if (tribe === 'tibet') tbArm(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
+  if (isMy(tribe)) myArm(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
   if (tribe === 'india') indArm(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, false);
   if (tribe === 'mongols') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a'); // fur cuff
   if (tribe === 'zulu') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.64, '#d9a441'); // brass arm ring
@@ -342,6 +346,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (tribe === 'swahili') swSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
   if (tribe === 'lakota') lkArm(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
   if (tribe === 'tibet') tbArm(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
+  if (isMy(tribe)) myArm(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
   if (tribe === 'india') indArm(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, true);
   if (tribe === 'mongols') { // fur cuff and a gold armband
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a');
@@ -445,6 +450,7 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
     case 'swahili': swTorso(ctx, kind, x, y, w, h); break;
     case 'lakota': lkTorso(ctx, kind, x, y, w, h); break;
     case 'tibet': tbTorso(ctx, kind, x, y, w, h); break;
+    case 'maya': myTorso(ctx, kind, x, y, w, h); break;
     case 'india': indTorso(ctx, kind, x, y, w, h); break;
     case 'egypt':
       band(ctx, x, y, w, h, 0, 0.42, '#f4efe0'); // linen kilt
@@ -769,6 +775,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
     case 'swahili': swFace(ctx, kind, x, y, w, h); break;
     case 'lakota': lkFace(ctx, kind, x, y, w, h); break;
     case 'tibet': tbFace(ctx, kind, x, y, w, h); break;
+    case 'maya': myFace(ctx, kind, x, y, w, h); break;
     case 'egypt':
       faceQuad(ctx, 'R', x, y, w, h, 0.18, 0.86, 0.62, 0.67, '#101010'); // kohl line
       faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.98, 0.52, 0.58, '#101010'); // the kohl wing at the outer corner
@@ -940,6 +947,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
     case 'swahili': swHead(ctx, kind, x, top, k, hw); break;
     case 'lakota': lkHead(ctx, kind, x, top, k, hw); break;
     case 'tibet': tbHead(ctx, kind, x, top, k, hw); break;
+    case 'maya': myHead(ctx, kind, x, top, k, hw); break;
     case 'india': indHeadgear(ctx, kind, x, top, k, hw); break;
     case 'egypt': {
       if (kind === 'giant') {
@@ -1373,7 +1381,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       break;
     }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'china' ? 7 : tribe === 'india' ? 28 : tribe === 'mali' ? 17 : tribe === 'swahili' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'maya' ? 22 : tribe === 'china' ? 7 : tribe === 'india' ? 28 : tribe === 'mali' ? 17 : tribe === 'swahili' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
@@ -1392,6 +1400,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
   else if (isLk(tribe) && (kind === 'archer' || kind === 'explorer')) lkBack(ctx, kind, x, y, k);
   else if (isSw(tribe) && (kind === 'archer' || kind === 'explorer')) swBack(ctx, kind, x, y, k);
   else if (isTb(tribe) && (kind === 'archer' || kind === 'explorer')) tbBack(ctx, kind, x, y, k);
+  else if (isMy(tribe) && (kind === 'archer' || kind === 'explorer')) myBack(ctx, kind, x, y, k);
   else if (kind === 'archer' || kind === 'explorer') {
     box(ctx, x - (kind === 'archer' ? 7 : 4.5) * k, y - 8 * k, 4 * k, 8 * k, kind === 'explorer' ? '#8a5a2b' : '#6b4424');
     if (kind === 'archer' && tribe === 'polynesia') {
@@ -1591,6 +1600,7 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
   if (tribe === 'swahili' && swWeapon(ctx, kind, b, k)) return;
   if (tribe === 'lakota' && lkWeapon(ctx, kind, b, k)) return;
   if (tribe === 'tibet' && tbWeapon(ctx, kind, b, k)) return;
+  if (isMy(tribe) && myWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
   if (tribe === 'inuit') {
     if (kind === 'harpooner') return inuitHarpoon(ctx, x, y, k);
@@ -2023,6 +2033,7 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   if (tribe === 'swahili') return swShield(ctx, kind, x, y, k);
   if (tribe === 'lakota') return lkShield(ctx, kind, x, y, k);
   if (tribe === 'tibet') return tbShield(ctx, kind, x, y, k);
+  if (isMy(tribe)) return myShield(ctx, kind, x, y, k);
   const T = TRIBES[tribe];
   const rivets = (cx: number, cy: number, rx: number, ry: number, n: number, color: string) => {
     for (let i = 0; i < n; i++) {
@@ -4358,6 +4369,7 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   if (tribe === 'inca') return drawIncaRider(ctx, kind, x, y);
   if (tribe === 'lakota') return lkRider(ctx, kind, x, y);
   if (tribe === 'tibet') return tbRider(ctx, kind, x, y);
+  if (isMy(tribe)) return myRider(ctx, kind, x, y);
   if (tribe === 'india' && (kind === 'knight' || kind === 'elephant')) return drawIndianElephant(ctx, kind, x, y);
   const knight = kind === 'knight';
   if (tribe === 'inuit') {
@@ -4614,6 +4626,7 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   if (tribe === 'swahili') return swCatapult(ctx, x, y);
   if (tribe === 'lakota') return lkCatapult(ctx, x, y);
   if (tribe === 'tibet') return tbCatapult(ctx, x, y);
+  if (isMy(tribe)) return myCatapult(ctx, x, y);
   const T = TRIBES[tribe];
   const wheels = (hub: string) => {
     for (const [wx, wy] of [[-7, 1], [6, 3]]) {
@@ -5231,6 +5244,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   if (tribe === 'swahili') return drawSwahiliBoat(ctx, kind, x, y);
   if (tribe === 'lakota') return lkBoat(ctx, kind, x, y);
   if (tribe === 'tibet') return tbBoat(ctx, kind, x, y);
+  if (isMy(tribe)) return myBoat(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
@@ -12763,7 +12777,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   mali: { body: '#c9a06a', feature: 'zebu' }, // a long-horned Sahelian zebu
   lakota: { body: '#4a3428', feature: 'bison' },
   ottoman: { body: '#d8b884', feature: 'kangal' }, // an Anatolian shepherd dog
-  maya: { body: '#a06a3a', feature: 'stripes' },
+  maya: { body: '#dba43a', feature: 'jaguar' }, // a jaguar, rosettes on tawny fur
   korea: { body: '#c9903a', feature: 'stripes' },
   khmer: { body: '#7a7a80', feature: 'tusks' },
   swahili: { body: '#d8a648', feature: 'giraffe' }, // a reticulated giraffe of the coastal savannah
@@ -12802,6 +12816,7 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   if (spec.feature === 'kangaroo') return aboKangaroo(ctx, x, y, 0.9 * k, body);
   if (spec.feature === 'bison') return lkBison(ctx, x, y, 0.95 * k, body);
   if (spec.feature === 'yak') return tbYak(ctx, x, y, 0.95 * k, body);
+  if (spec.feature === 'jaguar') return myJaguar(ctx, x, y, k, body);
   if (spec.feature === 'ibex') {
     // a walia ibex of the Simien highlands: a stocky chestnut body, pale belly, a shaggy neck and great ridged scimitar horns
     const dk = '#3a2418';
@@ -12878,4 +12893,901 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
     case 'hump':
       break;
   }
+}
+
+// ---------------------------------------------------------------- Maya (Classic-period city-states)
+// Cotton and jade, quetzal plumes, painted skin, jaguar pelts, obsidian and flint. No metal anywhere.
+
+const MY_TQ = '#00b8c4', MY_TQD = '#007a86', MY_JADE = '#3fbf8f', MY_JADED = '#1f7a5a', MY_BLUE = '#3ea3d0', MY_RED = '#c0392b', MY_REDD = '#7a1f18';
+const MY_OCH = '#e0a52e', MY_COT = '#f0e8d2', MY_BLK = '#1c1614', MY_QZ = '#1fae62', MY_QZD = '#0b6a44', MY_QZL = '#3fe0a0', MY_QRED = '#d8352a';
+const MY_JAG = '#dba43a', MY_JAGD = '#2a1a10', MY_WOOD = '#8a5a34', MY_WOODD = '#4f2f18', MY_OBS = '#26262e', MY_QUILT = '#dcc8a0';
+const isMy = (t: TribeId) => t === 'maya';
+
+/** A point on one visible side of a box, in the (u, v) coordinates of faceQuad. */
+function myPt(face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u: number, v: number): [number, number] {
+  return face === 'R' ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h] : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+}
+
+/** A jade bead: dark rim, bright body, a pale glint. */
+function myJade(ctx: Ctx, x: number, y: number, r: number) {
+  ellipse(ctx, x, y, r, r, MY_JADED);
+  ellipse(ctx, x - r * 0.12, y - r * 0.16, r * 0.72, r * 0.72, MY_JADE);
+  ellipse(ctx, x - r * 0.34, y - r * 0.4, r * 0.28, r * 0.26, '#c8f5df');
+}
+
+/** A string of jade beads along a line. */
+function myBeads(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, n: number, r: number) {
+  for (let i = 0; i < n; i++) { const t = n === 1 ? 0.5 : i / (n - 1); myJade(ctx, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r); }
+}
+
+/** A fan of long quetzal tail plumes rising from (x, y): leaf-shaped, emerald, with a light shaft and a blue-green sheen. */
+function myPlume(ctx: Ctx, x: number, y: number, n: number, spread: number, len: number, lean = 0, w = 1.5) {
+  const idx = Array.from({ length: n }, (_, i) => i).sort((a, b) => Math.abs(b - (n - 1) / 2) - Math.abs(a - (n - 1) / 2));
+  for (const i of idx) {
+    const t = n === 1 ? 0.5 : i / (n - 1), a = -Math.PI / 2 + (t - 0.5) * spread + lean;
+    const L = len * (0.82 + 0.18 * Math.cos((t - 0.5) * 2.2));
+    const tx = x + Math.cos(a) * L, ty = y + Math.sin(a) * L * 0.95;
+    const cx = x + Math.cos(a) * L * 0.5 + (t - 0.5) * L * 0.34, cy = y + Math.sin(a) * L * 0.5;
+    const pts: [number, number, number][] = [];
+    for (let j = 0; j <= 8; j++) {
+      const u = j / 8, v = 1 - u;
+      const px = v * v * x + 2 * v * u * cx + u * u * tx, py = v * v * y + 2 * v * u * cy + u * u * ty;
+      const dx = 2 * v * (cx - x) + 2 * u * (tx - cx), dy = 2 * v * (cy - y) + 2 * u * (ty - cy), d = Math.hypot(dx, dy) || 1;
+      pts.push([px, py, Math.atan2(dy, dx) + Math.PI / 2 + 0 * d]);
+    }
+    const prof = (u: number) => w * (0.35 + 1.5 * Math.sin(Math.PI * Math.pow(u, 0.7)));
+    const side = (sg: number, sc: number) => pts.map(([px, py, an], j) => [px + Math.cos(an) * prof(j / 8) * sg * sc, py + Math.sin(an) * prof(j / 8) * sg * sc] as const);
+    const outline = (sc: number) => [...side(1, sc), ...side(-1, sc).reverse()].flatMap(([px, py]) => [px, py]);
+    poly(ctx, outline(1), MY_QZD);
+    poly(ctx, outline(0.7), i % 2 ? MY_QZ : '#22c470');
+    poly(ctx, [...side(1, 0.7).slice(0, 5), ...pts.slice(0, 5).reverse().map(([px, py]) => [px, py] as const)].flatMap(([px, py]) => [px, py]), MY_QZL);
+    line(ctx, x, y, pts[7][0], pts[7][1], shade(MY_QZL, 0.3), Math.max(0.3, w * 0.22));
+    ellipse(ctx, tx, ty, w * 0.75, w * 0.6, i % 3 === 1 ? MY_TQ : MY_QZL);
+  }
+}
+
+/** A stepped-pyramid motif repeated along a strip of a box face. */
+function myFret(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u0: number, u1: number, v0: number, v1: number, color: string, n: number) {
+  const du = (u1 - u0) / n, dv = v1 - v0;
+  for (let i = 0; i < n; i++) {
+    const a = u0 + i * du;
+    facePoly(ctx, face, cx, cy, w, h, [[a, v0], [a + du, v0], [a + du, v0 + dv * 0.34], [a + du * 0.78, v0 + dv * 0.34], [a + du * 0.78, v0 + dv * 0.67], [a + du * 0.56, v0 + dv * 0.67], [a + du * 0.56, v1], [a + du * 0.44, v1], [a + du * 0.44, v0 + dv * 0.67], [a + du * 0.22, v0 + dv * 0.67], [a + du * 0.22, v0 + dv * 0.34], [a, v0 + dv * 0.34]], color);
+  }
+}
+
+/** A woven strip: a ground colour and a row of teeth (zigzag) in a second. */
+function myWeave(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u0: number, u1: number, v0: number, v1: number, c1: string, c2: string, n: number) {
+  faceQuad(ctx, face, cx, cy, w, h, u0, u1, v0, v1, c1);
+  const du = (u1 - u0) / n;
+  for (let i = 0; i < n; i++) facePoly(ctx, face, cx, cy, w, h, [[u0 + i * du, v0], [u0 + (i + 1) * du, v0], [u0 + (i + 0.5) * du, v1]], c2);
+}
+
+/** A jaguar rosette: a dark broken ring round a tawny centre. */
+function myRosette(ctx: Ctx, x: number, y: number, r: number, base = MY_JAG) {
+  ellipse(ctx, x, y, r, r * 0.85, MY_JAGD);
+  ellipse(ctx, x, y + r * 0.05, r * 0.5, r * 0.4, shade(base, 0.1));
+}
+
+/** A Maya numeral cartouche: bars and dots. */
+function myNum(ctx: Ctx, x: number, y: number, s: number, bars: number, dots: number, color: string) {
+  for (let i = 0; i < bars; i++) line(ctx, x - 1.4 * s, y + (i - (bars - 1) / 2) * 1.1 * s + 0.9 * s, x + 1.4 * s, y + (i - (bars - 1) / 2) * 1.1 * s + 0.9 * s, color, 0.6 * s);
+  for (let i = 0; i < dots; i++) ellipse(ctx, x + (i - (dots - 1) / 2) * 1 * s, y - (bars ? 0.9 : 0) * s - 0.4 * s, 0.38 * s, 0.38 * s, color);
+}
+
+/** Dyes, pelts and woven cloth on the torso: what each rank wears above the woven loincloth. */
+function myTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const k = w / 10;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  const Lf = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, y, w, h, u0, u1, v0, v1, c);
+  const B = (v0: number, v1: number, c: string) => band(ctx, x, y, w, h, v0, v1, c);
+  const jade = kind === 'giant' || kind === 'knight' || kind === 'rider';
+  // the loincloth (ex): a long woven panel down the front, bordered in red and turquoise teeth
+  const clothC = kind === 'giant' ? MY_JADE : kind === 'defender' ? MY_QUILT : MY_COT;
+  R(0.28, 0.72, -0.5, 0.24, clothC);
+  myWeave(ctx, 'R', x, y, w, h, 0.28, 0.72, -0.5, -0.32, MY_RED, MY_TQ, 5);
+  R(0.28, 0.72, -0.32, -0.28, MY_BLK);
+  if (kind === 'giant') { // an apron carved from a jade mask, hung from the belt
+    R(0.33, 0.67, -0.46, 0.2, MY_JADED);
+    R(0.36, 0.64, -0.42, 0.16, MY_JADE);
+    R(0.4, 0.47, -0.02, 0.06, MY_BLK); R(0.53, 0.6, -0.02, 0.06, MY_BLK); // eye slits
+    R(0.44, 0.56, -0.2, -0.1, MY_BLK); // mouth
+  }
+  B(0.2, 0.3, MY_REDD); // a wide woven belt with a jade bead at the knot
+  R(0.06, 0.94, 0.24, 0.27, MY_OCH);
+  R(0.42, 0.58, 0.19, 0.31, MY_JADED);
+  R(0.45, 0.55, 0.22, 0.28, MY_JADE);
+  // a collar of jade beads on every rank, wider for the great
+  const cb = jade ? 0.78 : 0.86;
+  B(cb, 0.98, MY_JADED);
+  for (let i = 0; i < 5; i++) { R(0.06 + i * 0.19, 0.16 + i * 0.19, cb + 0.02, 0.96, MY_JADE); Lf(0.02 + i * 0.19, 0.12 + i * 0.19, cb + 0.02, 0.96, MY_JADE); }
+  R(0.4, 0.6, cb - 0.1, cb + 0.02, MY_JADE); R(0.45, 0.55, cb - 0.16, cb - 0.08, MY_JADE); // a pendant
+  switch (kind) {
+    case 'warrior': {
+      // painted skin: black stripes down the chest, and a woven mantle tied over one shoulder
+      for (let i = 0; i < 4; i++) { R(0.1 + i * 0.22, 0.17 + i * 0.22, 0.34, 0.78, MY_BLK); }
+      for (let i = 0; i < 3; i++) { Lf(0.1 + i * 0.3, 0.17 + i * 0.3, 0.34, 0.78, MY_BLK); }
+      facePoly(ctx, 'R', x, y, w, h, [[0.0, 0.98], [0.3, 0.98], [0.98, 0.3], [0.98, 0.0], [0.7, 0.0], [0.0, 0.62]], MY_TQ);
+      facePoly(ctx, 'R', x, y, w, h, [[0.06, 0.8], [0.14, 0.9], [0.22, 0.8], [0.42, 0.66], [0.52, 0.72], [0.6, 0.6]], MY_COT);
+      facePoly(ctx, 'R', x, y, w, h, [[0.0, 0.62], [0.7, 0.0], [0.98, 0.0], [0.98, 0.1], [0.74, 0.12], [0.0, 0.72]], MY_RED);
+      break;
+    }
+    case 'holcan': {
+      // blue-and-black painted torso under a jaguar-pelt sash, a spotted tail hanging at the hip
+      R(0.02, 0.98, 0.3, 0.52, MY_BLUE);
+      for (let i = 0; i < 5; i++) Lf(0.04 + i * 0.19, 0.12 + i * 0.19, 0.3, 0.86, i % 2 ? MY_BLUE : MY_BLK);
+      facePoly(ctx, 'R', x, y, w, h, [[0.0, 0.98], [0.34, 0.98], [0.98, 0.32], [0.98, 0.0], [0.72, 0.0], [0.0, 0.64]], MY_JAG);
+      for (const [u, v] of [[0.12, 0.84], [0.34, 0.72], [0.56, 0.5], [0.78, 0.3], [0.9, 0.12]] as const) { const p = myPt('R', x, y, w, h, u, v); myRosette(ctx, p[0], p[1], 0.9 * k); }
+      break;
+    }
+    case 'archer': {
+      // a cotton tunic with turquoise side panels and a woven zigzag band
+      R(0, 0.14, 0.3, 0.86, MY_TQ); R(0.86, 1, 0.3, 0.86, MY_TQ); Lf(0, 0.14, 0.3, 0.86, MY_TQ); Lf(0.86, 1, 0.3, 0.86, MY_TQ);
+      myWeave(ctx, 'R', x, y, w, h, 0.14, 0.86, 0.46, 0.62, MY_TQD, MY_COT, 6);
+      myWeave(ctx, 'L', x, y, w, h, 0.14, 0.86, 0.46, 0.62, MY_TQD, MY_COT, 6);
+      R(0.14, 0.86, 0.34, 0.4, MY_RED);
+      break;
+    }
+    case 'defender': {
+      // quilted cotton armour (ichcahuipilli): rows of stitching, a turquoise hem and a jade mask plaque
+      for (let i = 1; i < 5; i++) { R(i * 0.2, i * 0.2 + 0.03, 0.3, 0.86, shade(MY_QUILT, -0.36)); Lf(i * 0.2, i * 0.2 + 0.03, 0.3, 0.86, shade(MY_QUILT, -0.36)); }
+      for (const v of [0.46, 0.62]) B(v, v + 0.03, shade(MY_QUILT, -0.36));
+      B(0.3, 0.38, MY_TQ);
+      R(0.36, 0.64, 0.44, 0.74, MY_JADED); R(0.39, 0.61, 0.47, 0.71, MY_JADE);
+      R(0.42, 0.48, 0.6, 0.66, MY_BLK); R(0.52, 0.58, 0.6, 0.66, MY_BLK); R(0.44, 0.56, 0.5, 0.55, MY_BLK);
+      break;
+    }
+    case 'swordsman': {
+      // a whole jaguar pelt, rosettes on every face, a pale belly at the waist
+      B(0.3, 0.42, '#f0dca8');
+      for (const [u, v] of [[0.1, 0.8], [0.34, 0.66], [0.6, 0.78], [0.84, 0.62], [0.24, 0.52], [0.7, 0.5], [0.5, 0.9]] as const) { const p = myPt('R', x, y, w, h, u, v); myRosette(ctx, p[0], p[1], 0.85 * k); }
+      for (const [u, v] of [[0.2, 0.72], [0.55, 0.58], [0.8, 0.84], [0.4, 0.86]] as const) { const p = myPt('L', x, y, w, h, u, v); myRosette(ctx, p[0], p[1], 0.85 * k); }
+      break;
+    }
+    case 'knight':
+    case 'rider': {
+      // a turquoise cotton mantle with a stepped border and cream zigzag
+      myWeave(ctx, 'R', x, y, w, h, 0.02, 0.98, 0.5, 0.66, MY_TQD, MY_COT, 6);
+      myWeave(ctx, 'L', x, y, w, h, 0.02, 0.98, 0.5, 0.66, MY_TQD, MY_COT, 6);
+      myFret(ctx, 'R', x, y, w, h, 0.02, 0.98, 0.34, 0.46, MY_COT, 5);
+      myFret(ctx, 'L', x, y, w, h, 0.02, 0.98, 0.34, 0.46, MY_COT, 5);
+      break;
+    }
+    case 'giant': {
+      // a jade mosaic tunic: a checker of small tiles, a red and gold border
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
+        if ((i + j) % 2) { R(i / 6 + 0.01, (i + 1) / 6 - 0.01, 0.34 + j * 0.13, 0.46 + j * 0.13, MY_JADED); Lf(i / 6 + 0.01, (i + 1) / 6 - 0.01, 0.34 + j * 0.13, 0.46 + j * 0.13, MY_JADED); }
+        else { R(i / 6 + 0.01, (i + 1) / 6 - 0.01, 0.34 + j * 0.13, 0.46 + j * 0.13, MY_TQ); Lf(i / 6 + 0.01, (i + 1) / 6 - 0.01, 0.34 + j * 0.13, 0.46 + j * 0.13, MY_TQ); }
+      }
+      B(0.31, 0.34, MY_OCH);
+      break;
+    }
+    case 'explorer': {
+      // a cotton mantle knotted at the shoulder with a jade bead, and a strap across the chest
+      myWeave(ctx, 'R', x, y, w, h, 0.02, 0.98, 0.4, 0.5, MY_RED, MY_COT, 5);
+      facePoly(ctx, 'R', x, y, w, h, [[0.04, 0.9], [0.24, 0.9], [0.98, 0.14], [0.78, 0.12]], '#8a6a3a');
+      const p = myPt('R', x, y, w, h, 0.14, 0.74); myJade(ctx, p[0], p[1], 0.9 * k);
+      break;
+    }
+  }
+}
+
+/** The cape of the tall ranks, redrawn in Maya cloth: a turquoise mantle, a jaguar pelt, or a cloak of quetzal feathers. */
+function myCloak(ctx: Ctx, x: number, top: number, hip: number, k: number, kind: UnitKind) {
+  const c = kind === 'giant' ? MY_QZ : kind === 'swordsman' ? MY_JAG : MY_TQ;
+  poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(c, -0.26));
+  poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(c, 0.02));
+  line(ctx, x - 4 * k, top + 0.5 * k, x - 8.6 * k, hip + 6.2 * k, shade(c, -0.4), 0.7 * k);
+  if (kind === 'giant') {
+    // rows of overlapping feathers, red-tipped, hanging below a jade clasp
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 3; i++) {
+      const fx = x - 5.6 * k - i * 1.5 * k + r * 0.4 * k, fy = top + 2.4 * k + r * 2.5 * k + i * 0.9 * k;
+      poly(ctx, [fx, fy, fx - 1 * k, fy + 2.6 * k, fx + 0.9 * k, fy + 2.6 * k], r % 2 ? MY_QZL : MY_QZ);
+    }
+    for (const t of [0.3, 0.7]) ellipse(ctx, x - 9.2 * k + 7 * k * t, hip + 6.9 * k + 1.6 * k * t, 0.7 * k, 1.2 * k, MY_QRED);
+    myJade(ctx, x - 4 * k, top + 0.5 * k, 1 * k);
+  } else if (kind === 'swordsman') {
+    for (const [dx, dy] of [[-6.6, 1.4], [-5, 4.4], [-7.6, 5.2], [-4.6, 7.4], [-8, 8]] as const) myRosette(ctx, x + dx * k, top + dy * k, 0.7 * k);
+  } else {
+    for (let i = 0; i < 4; i++) poly(ctx, [x - 9.4 * k + i * 1.9 * k, hip + 6.5 * k - i * 0.4 * k, x - 8.5 * k + i * 1.9 * k, hip + 9.4 * k - i * 0.4 * k, x - 7.6 * k + i * 1.9 * k, hip + 6.3 * k - i * 0.4 * k], i % 2 ? MY_COT : MY_RED);
+    myJade(ctx, x - 4 * k, top + 0.5 * k, 0.9 * k);
+  }
+}
+
+/** Bracelets, cuffs and pelt bracers on an arm. */
+function myArm(ctx: Ctx, ax: number, ay: number, k: number, kind: UnitKind, front: boolean) {
+  const A = (v0: number, v1: number, c: string, u0 = 0, u1 = 1) => faceQuad(ctx, 'R', ax, ay, 2.8 * k, 7 * k, u0, u1, v0, v1, c);
+  const pelt = kind === 'holcan' || kind === 'swordsman';
+  if (pelt) {
+    A(0.26, 0.58, MY_JAG);
+    A(0.3, 0.38, MY_JAGD, 0.1, 0.4); A(0.46, 0.54, MY_JAGD, 0.55, 0.85); A(0.32, 0.4, MY_JAGD, 0.6, 0.9);
+  } else if (kind === 'defender') { A(0.16, 0.9, MY_QUILT); A(0.5, 0.53, shade(MY_QUILT, -0.36)); A(0.7, 0.73, shade(MY_QUILT, -0.36)); A(0.16, 0.3, MY_TQ); }
+  else if (kind === 'giant') { A(0.56, 0.86, MY_JADE); A(0.6, 0.66, MY_TQ, 0.2, 0.8); A(0.76, 0.82, MY_TQ, 0.2, 0.8); }
+  else if (kind === 'knight' || kind === 'rider') A(0.62, 0.84, MY_TQD);
+  else { A(0.7, 0.84, MY_TQ); A(0.7, 0.72, MY_COT); }
+  // a bracelet of jade beads at the wrist
+  A(0.06, 0.2, MY_JADED);
+  for (const u of [0.1, 0.4, 0.7]) A(0.08, 0.18, MY_JADE, u, u + 0.2);
+  if (front && kind !== 'defender') A(0.42, 0.5, MY_OCH, 0, 1);
+}
+
+/** Sandals, a jade anklet, and cotton wraps below the knee. */
+function myLeg(ctx: Ctx, f: 'L' | 'R', cx: number, cy: number, k: number, kind: UnitKind) {
+  const Q = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, cx, cy, 3.6 * k, 5.2 * k, u0, u1, v0, v1, c);
+  const rich = kind === 'giant' || kind === 'knight';
+  Q(0.08, 0.92, 0.1, 0.15, MY_COT); // sandal cords up the ankle
+  Q(0.08, 0.92, 0.2, 0.25, MY_COT);
+  Q(0, 1, 0.3, 0.42, MY_JADED); // jade anklet
+  for (const u of [0.05, 0.4, 0.72]) Q(u, u + 0.22, 0.32, 0.4, MY_JADE);
+  if (kind === 'warrior' || kind === 'holcan') { Q(0, 1, 0.56, 0.64, MY_BLK); Q(0, 1, 0.72, 0.8, MY_BLK); } // painted bands on the shin
+  else if (kind === 'defender' || kind === 'swordsman') { Q(0, 1, 0.5, 0.94, MY_QUILT); Q(0, 1, 0.66, 0.7, shade(MY_QUILT, -0.36)); Q(0, 1, 0.5, 0.58, MY_TQ); } // padded cotton shin wraps
+  else Q(0, 1, 0.58, 0.72, rich ? MY_TQ : MY_RED);
+  if (rich) Q(0.1, 0.9, 0.8, 0.9, MY_OCH);
+}
+
+/** Painted faces, a strong nose bridge, and the round jade ear flares. */
+function myFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const k = w / 11, skin = LOOK.maya.skin;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  R(0.44, 0.56, 0.44, 0.74, shade(skin, 0.2)); // a long, straight bridge running up into the brow
+  R(0.02, 0.98, 0.9, 1, shade(skin, -0.24)); // a sloping forehead, in shadow
+  switch (kind) {
+    case 'warrior':
+      R(0.02, 0.98, 0, 0.1, MY_BLK); R(0.06, 0.13, 0.2, 0.44, MY_RED); R(0.87, 0.94, 0.2, 0.44, MY_RED);
+      break;
+    case 'holcan':
+      R(0.02, 0.98, 0.02, 0.24, MY_BLUE); R(0.02, 0.98, 0.24, 0.27, MY_BLK); R(0.3, 0.72, 0.13, 0.17, MY_BLK); // blue below, a black rule and the mouth again
+      R(0.06, 0.1, 0.3, 0.36, '#ffffff'); R(0.9, 0.94, 0.3, 0.36, '#ffffff');
+      break;
+    case 'archer':
+      R(0.02, 0.98, 0.32, 0.38, MY_RED); R(0.42, 0.6, 0.3, 0.4, MY_RED); // a red band across the cheeks and nose
+      break;
+    case 'defender':
+      R(0.02, 0.98, 0.66, 0.7, MY_BLK); R(0.02, 0.98, 0.37, 0.41, MY_BLK); R(0.06, 0.94, 0.02, 0.1, MY_RED);
+      break;
+    case 'swordsman':
+      for (const u of [0.1, 0.22, 0.16]) R(u, u + 0.05, u === 0.16 ? 0.26 : 0.32, u === 0.16 ? 0.31 : 0.37, MY_BLK); // jaguar freckles on the cheeks
+      for (const u of [0.78, 0.9, 0.84]) R(u, u + 0.05, u === 0.84 ? 0.26 : 0.32, u === 0.84 ? 0.31 : 0.37, MY_BLK);
+      R(0.44, 0.56, 0.3, 0.36, MY_BLK);
+      break;
+    case 'knight': case 'rider':
+      R(0.02, 0.98, 0.76, 0.84, MY_TQ); R(0.02, 0.98, 0.74, 0.76, MY_BLK); R(0.02, 0.98, 0.84, 0.86, MY_BLK);
+      break;
+    case 'giant':
+      R(0.02, 0.98, 0.78, 0.98, MY_JADED); R(0.06, 0.94, 0.82, 0.94, MY_JADE); // a jade-mosaic brow
+      for (const u of [0.14, 0.34, 0.54, 0.74]) R(u, u + 0.12, 0.84, 0.92, MY_TQ);
+      R(0.46, 0.54, 0.02, 0.14, MY_RED);
+      break;
+    case 'explorer':
+      R(0.02, 0.98, 0.78, 0.86, MY_COT); R(0.02, 0.98, 0.76, 0.78, MY_RED); // the tumpline across the forehead
+      R(0.08, 0.13, 0.3, 0.36, MY_BLK); R(0.87, 0.92, 0.3, 0.36, MY_BLK);
+      break;
+  }
+  // the round jade ear flare, with a hanging bead for the great
+  const [ex, ey] = myPt('L', x, y, w, h, 0.77, 0.47);
+  myJade(ctx, ex, ey, 1.4 * k);
+  ellipse(ctx, ex, ey, 0.5 * k, 0.5 * k, MY_JADED);
+  if (kind === 'giant' || kind === 'knight' || kind === 'rider') { line(ctx, ex, ey + 1.2 * k, ex, ey + 3 * k, MY_JADE, 0.6 * k); myJade(ctx, ex, ey + 3.4 * k, 0.8 * k); }
+}
+
+/** Hair tied up with cloth, and the headdress each rank wears. */
+function myHead(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  const hair = LOOK.maya.hair, hy = top + 10.5 * k, hh = 10.5 * k;
+  const tail = (bx: number, by: number, n: number, c1: string, c2: string) => { // a long tail of hair wrapped with woven cloth
+    for (let i = 0; i < n; i++) ellipse(ctx, bx - i * 0.12 * k, by + i * 1.7 * k, 1.2 * k, 1.5 * k, i % 2 ? shade(hair, 0.3) : shade(hair, 0.1));
+    for (const i of [0.6, n * 0.5, n - 1]) ellipse(ctx, bx - i * 0.12 * k, by + i * 1.7 * k, 1.4 * k, 0.8 * k, i > n * 0.4 ? c2 : c1);
+    line(ctx, bx - n * 0.12 * k, by + n * 1.7 * k - 1 * k, bx - n * 0.12 * k - 0.5 * k, by + n * 1.7 * k + 1.8 * k, c2, 0.9 * k);
+  };
+  const hband = (c: string, v0 = 0.8, v1 = 0.95) => { // a cloth band round the brow
+    faceQuad(ctx, 'L', x, hy, hw, hh, 0, 1, v0, v1, c);
+    faceQuad(ctx, 'R', x, hy, hw, hh, 0, 1, v0, v1, c);
+  };
+  const topknot = (c: string) => { ellipse(ctx, x - 0.8 * k, top - 0.6 * k, 2.8 * k, 2.4 * k, hair); ellipse(ctx, x - 1.4 * k, top - 1.4 * k, 1.6 * k, 1.1 * k, shade(hair, 0.3)); ellipse(ctx, x - 0.8 * k, top + 0.6 * k, 3 * k, 1.1 * k, c); };
+  if (kind !== 'giant') tail(x - 5.3 * k, hy - 5.4 * k, 6, MY_TQ, MY_RED);
+  switch (kind) {
+    case 'warrior': {
+      hband(MY_TQ); faceQuad(ctx, 'R', x, hy, hw, hh, 0.4, 0.6, 0.8, 0.95, MY_JADE);
+      topknot(MY_RED);
+      feather(ctx, x - 1.2 * k, top - 1.6 * k, x - 5.4 * k, top - 10.4 * k, 1.1 * k, MY_QRED, MY_BLK);
+      feather(ctx, x - 0.4 * k, top - 1.6 * k, x - 2.4 * k, top - 11 * k, 1 * k, MY_QZ);
+      break;
+    }
+    case 'holcan': {
+      hband(MY_JAG); // a jaguar-fur band with spots, a jade plaque and three quetzal plumes
+      for (const u of [0.15, 0.55, 0.85]) faceQuad(ctx, 'R', x, hy, hw, hh, u, u + 0.1, 0.83, 0.92, MY_JAGD);
+      for (const u of [0.1, 0.5]) faceQuad(ctx, 'L', x, hy, hw, hh, u, u + 0.12, 0.83, 0.92, MY_JAGD);
+      const [px, py] = myPt('R', x, hy, hw, hh, 0.5, 0.88); myJade(ctx, px, py, 1.5 * k);
+      topknot(MY_TQ);
+      myPlume(ctx, x - 1 * k, top - 0.8 * k, 5, 1.3, 12 * k, -0.25, 1 * k);
+      break;
+    }
+    case 'archer': {
+      // a puffed turban of cream cotton, striped in turquoise, with a red tail feather
+      ellipse(ctx, x, top - 0.2 * k, 6.2 * k, 3.3 * k, shade(MY_COT, -0.3));
+      ellipse(ctx, x, top - 1 * k, 6 * k, 3.1 * k, MY_COT);
+      ellipse(ctx, x - 1.6 * k, top - 1.8 * k, 3.2 * k, 1.5 * k, shade(MY_COT, 0.16));
+      for (const t of [-0.5, 0, 0.5]) ellipse(ctx, x + t * 5 * k, top - 0.4 * k + Math.abs(t) * 0.8 * k, 1.2 * k, 2 * k, MY_TQ);
+      hband(MY_TQD, 0.86, 0.98);
+      feather(ctx, x - 2.6 * k, top - 2 * k, x - 6.6 * k, top - 9.4 * k, 1 * k, MY_QRED, MY_BLK);
+      break;
+    }
+    case 'defender': {
+      // a carved wooden helmet: jade mosaic front, a fringe of cotton neck-cloth and a crest of white and red feathers
+      box(ctx, x, top + 3.6 * k, hw + 1.8 * k, 4.4 * k, MY_WOOD, shade(MY_WOOD, 0.28));
+      for (let i = 0; i < 5; i++) { faceQuad(ctx, 'R', x, top + 3.6 * k, hw + 1.8 * k, 4.4 * k, 0.08 + i * 0.19, 0.2 + i * 0.19, 0.2, 0.78, i % 2 ? MY_JADE : MY_TQ); }
+      faceQuad(ctx, 'L', x, top + 3.6 * k, hw + 1.8 * k, 4.4 * k, 0.08, 0.92, 0.7, 0.9, MY_REDD);
+      band(ctx, x, top + 3.6 * k, hw + 1.8 * k, 4.4 * k, 0.9, 1, MY_OCH);
+      poly(ctx, [x - hw / 2 - 1.4 * k, top + 3 * k, x - hw / 2 - 1.2 * k, top + 11 * k, x - hw / 2 + 1.6 * k, top + 9.6 * k, x - hw / 2 + 1.4 * k, top + 3.2 * k], MY_COT);
+      for (const t of [0.15, 0.55, 0.85]) line(ctx, x - hw / 2 - 1.2 * k + t * 2.6 * k, top + 4 * k, x - hw / 2 - 1.2 * k + t * 2.6 * k, top + 10 * k, MY_TQ, 0.6 * k);
+      for (let i = 0; i < 6; i++) feather(ctx, x - 3 * k + i * 1.3 * k, top + 0.4 * k - (i % 2) * 0.6 * k, x - 4.6 * k + i * 1.9 * k, top - 6.4 * k - (i % 3) * 1.4 * k, 0.9 * k, i % 2 ? MY_COT : MY_QRED, i % 2 ? '#c8c0a8' : MY_REDD);
+      break;
+    }
+    case 'swordsman': {
+      // a jaguar-head helmet: tawny fur over the crown, pricked ears, fangs above the brow
+      box(ctx, x, top + 4.4 * k, hw + 1.8 * k, 5 * k, MY_JAG, shade(MY_JAG, 0.2));
+      for (const [u, v] of [[0.2, 0.7], [0.5, 0.42], [0.78, 0.74], [0.6, 0.88]] as const) { const p = myPt('R', x, top + 4.4 * k, hw + 1.8 * k, 5 * k, u, v); myRosette(ctx, p[0], p[1], 0.7 * k); }
+      for (const [u, v] of [[0.3, 0.6], [0.65, 0.8]] as const) { const p = myPt('L', x, top + 4.4 * k, hw + 1.8 * k, 5 * k, u, v); myRosette(ctx, p[0], p[1], 0.7 * k); }
+      for (const s of [-1, 1]) { poly(ctx, [x + s * 4.4 * k, top - 0.2 * k, x + s * 4.6 * k, top - 4.2 * k, x + s * 1.8 * k, top - 0.6 * k], s > 0 ? shade(MY_JAG, -0.2) : MY_JAG); poly(ctx, [x + s * 3.9 * k, top - 0.4 * k, x + s * 4 * k, top - 2.6 * k, x + s * 2.6 * k, top - 0.6 * k], '#f0b8a0'); }
+      for (let i = 0; i < 4; i++) poly(ctx, [x + (0.6 + i * 1.45) * k, top + 6.2 * k + i * 0.3 * k - 0.4 * k, x + (2 + i * 1.45) * k, top + 6.4 * k + i * 0.3 * k - 0.6 * k, x + (1.3 + i * 1.45) * k, top + 8.6 * k + i * 0.3 * k - 0.4 * k], '#fbf6e6'); // fangs
+      myPlume(ctx, x - 1 * k, top - 1 * k, 3, 0.7, 9 * k, -0.15, 1.2 * k);
+      break;
+    }
+    case 'knight': case 'rider': {
+      // a turquoise cotton cap bound in jade, under a great fan of quetzal plumes
+      box(ctx, x, top + 2.6 * k, hw + 1 * k, 3.8 * k, MY_TQ, shade(MY_TQ, 0.25));
+      myWeave(ctx, 'R', x, top + 2.6 * k, hw + 1 * k, 3.8 * k, 0.04, 0.96, 0.5, 0.86, MY_TQD, MY_COT, 6);
+      band(ctx, x, top + 2.6 * k, hw + 1 * k, 3.8 * k, 0.08, 0.28, MY_RED);
+      const [px, py] = myPt('R', x, top + 2.6 * k, hw + 1 * k, 3.8 * k, 0.5, 0.5); myJade(ctx, px, py, 1.4 * k);
+      myPlume(ctx, x - 1 * k, top - 0.6 * k, kind === 'knight' ? 7 : 5, 1.5, (kind === 'knight' ? 15 : 12) * k, -0.25, 1.3 * k);
+      break;
+    }
+    case 'giant': {
+      // the ruler's crown: a jade mask on the brow, a stepped tiered headdress and a tall fan of quetzal plumes
+      box(ctx, x, top + 2.4 * k, hw + 2 * k, 3.6 * k, MY_JADED, MY_JADE);
+      for (let i = 0; i < 5; i++) faceQuad(ctx, 'R', x, top + 2.4 * k, hw + 2 * k, 3.6 * k, 0.06 + i * 0.19, 0.16 + i * 0.19, 0.18, 0.84, i % 2 ? MY_TQ : MY_JADE);
+      band(ctx, x, top + 2.4 * k, hw + 2 * k, 3.6 * k, 0.86, 1, MY_OCH);
+      box(ctx, x, top - 1.2 * k, 8 * k, 3.4 * k, MY_REDD, shade(MY_RED, 0.2));
+      myFret(ctx, 'R', x, top - 1.2 * k, 8 * k, 3.4 * k, 0.1, 0.9, 0.2, 0.8, MY_OCH, 3);
+      box(ctx, x, top - 4.4 * k, 5 * k, 3.4 * k, MY_TQ, shade(MY_TQ, 0.25));
+      myPlume(ctx, x - 0.6 * k, top - 5.4 * k, 7, 1.7, 11 * k, -0.15, 1.2 * k);
+      for (const s of [-1, 1]) myPlume(ctx, x + s * 3.6 * k, top - 1.4 * k, 2, 0.6, 5 * k, s * 1.1, 1 * k);
+      break;
+    }
+    case 'explorer': {
+      // hair wrapped in a cream cloth knot; a tumpline strap runs from the brow over the head to the pack
+      ellipse(ctx, x - 0.6 * k, top - 0.8 * k, 3.6 * k, 2.6 * k, MY_COT);
+      ellipse(ctx, x - 1.2 * k, top - 1.6 * k, 2 * k, 1.2 * k, shade(MY_COT, 0.18));
+      for (const t of [-0.6, 0.4]) ellipse(ctx, x + t * 3 * k, top - 0.6 * k, 0.7 * k, 1.8 * k, MY_TQ);
+      hband(MY_COT, 0.8, 0.9);
+      line(ctx, x - 0.6 * k, top + 1.6 * k, x - 6 * k, top + 0.2 * k, '#8a6a3a', 1 * k);
+      feather(ctx, x - 1.6 * k, top - 2 * k, x - 4.6 * k, top - 8.6 * k, 1 * k, MY_QZ, MY_QZD);
+      break;
+    }
+  }
+}
+
+/** A leaf-shaped obsidian or flint point, lit on one face, with a bright chipped edge. */
+function myPoint(ctx: Ctx, tx: number, ty: number, len: number, wd: number, tip: string = MY_OBS) {
+  poly(ctx, [tx + 0.4, ty - len, tx - wd, ty - len * 0.28, tx - wd * 0.5, ty + 0.8, tx + 0.4, ty + 1.2], shade(tip, 0.28));
+  poly(ctx, [tx + 0.4, ty - len, tx + wd, ty - len * 0.28, tx + wd * 0.5, ty + 0.8, tx + 0.4, ty + 1.2], shade(tip, -0.05));
+  line(ctx, tx + 0.4, ty - len * 0.92, tx - wd * 0.85, ty - len * 0.3, '#aab2c0', 0.4);
+  line(ctx, tx + 0.4, ty - len * 0.86, tx + 0.4, ty + 0.6, shade(tip, 0.5), 0.3);
+}
+
+/** The holcan's spear: a long shaft, an obsidian leaf point, a cotton streamer and a tuft of feathers under the head. */
+function mySpear(ctx: Ctx, x: number, y: number, k: number, rider = false) {
+  const x0 = x - 1.8 * k, y0 = y + 6.2 * k, x1 = x + (rider ? 8 : 3) * k, y1 = y - (rider ? 20 : 21) * k;
+  line(ctx, x0, y0, x1, y1, MY_WOOD, 1.4 * k);
+  line(ctx, x0 - 0.4 * k, y0, x1 - 0.4 * k, y1, shade(MY_WOOD, 0.4), 0.4 * k);
+  myPoint(ctx, x1 + 0.2 * k, y1 + 0.6 * k, 6.6 * k, 1.9 * k);
+  for (const t of [0.1, 0.17, 0.24]) line(ctx, x0 + (x1 - x0) * t - 1 * k, y0 + (y1 - y0) * t, x0 + (x1 - x0) * t + 1 * k, y0 + (y1 - y0) * t - 0.3 * k, t === 0.17 ? MY_TQ : MY_COT, 0.7 * k); // wrapped grip
+  for (let i = 0; i < 4; i++) { // a tuft of feathers and a streamer below the point
+    const t = 0.86 - i * 0.05, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t;
+    feather(ctx, px, py, px + (i % 2 ? 2.4 : -2.4) * k, py + 5.4 * k, 0.9 * k, i % 2 ? MY_QRED : MY_QZ, MY_BLK);
+  }
+  const sx = x0 + (x1 - x0) * 0.74, sy = y0 + (y1 - y0) * 0.74;
+  poly(ctx, [sx, sy, sx - 5.4 * k, sy + 2.4 * k, sx - 4 * k, sy + 4 * k, sx - 1.4 * k, sy + 3.4 * k], MY_TQ);
+  poly(ctx, [sx, sy, sx - 5.4 * k, sy + 2.4 * k, sx - 5 * k, sy + 3 * k, sx, sy + 1.2 * k], MY_COT);
+}
+
+/** A flint-bladed axe on a carved haft, with a jade bead and hanging feathers. */
+function myAxe(ctx: Ctx, x: number, y: number, k: number) {
+  const x0 = x - 1.6 * k, y0 = y + 6 * k, x1 = x + 2.4 * k, y1 = y - 14 * k;
+  line(ctx, x0, y0, x1, y1, MY_WOOD, 1.5 * k);
+  line(ctx, x0 - 0.4 * k, y0, x1 - 0.4 * k, y1, shade(MY_WOOD, 0.4), 0.4 * k);
+  for (const t of [0.1, 0.18, 0.26]) line(ctx, x0 + (x1 - x0) * t - 1 * k, y0 + (y1 - y0) * t, x0 + (x1 - x0) * t + 1 * k, y0 + (y1 - y0) * t - 0.3 * k, t === 0.18 ? MY_RED : MY_COT, 0.7 * k);
+  ellipse(ctx, x1, y1 + 0.4 * k, 1.5 * k, 2.2 * k, MY_WOODD); // the wooden socket
+  poly(ctx, [x1 + 0.6 * k, y1 - 2.6 * k, x1 + 4.4 * k, y1 - 4 * k, x1 + 5.4 * k, y1 + 0.8 * k, x1 + 0.8 * k, y1 + 2 * k], shade('#34343e', 0.05)); // a chipped flint blade
+  poly(ctx, [x1 + 0.6 * k, y1 - 2.6 * k, x1 + 4.4 * k, y1 - 4 * k, x1 + 4 * k, y1 - 2.4 * k, x1 + 0.7 * k, y1 - 0.8 * k], shade('#5a6068', 0.35));
+  line(ctx, x1 + 4.4 * k, y1 - 4 * k, x1 + 5.4 * k, y1 + 0.8 * k, '#dbe1e8', 0.6 * k);
+  for (const t of [0.3, 0.6]) line(ctx, x1 + 1.4 * k, y1 - 2.4 * k + t * 4 * k, x1 + 4 * k, y1 - 3.4 * k + t * 4.4 * k, shade('#5a6068', -0.3), 0.3 * k);
+  myJade(ctx, x1 - 0.2 * k, y1 + 3.6 * k, 0.9 * k);
+  feather(ctx, x1, y1 + 3.6 * k, x1 - 2.4 * k, y1 + 9.4 * k, 0.9 * k, MY_QRED, MY_BLK);
+  feather(ctx, x1, y1 + 3.6 * k, x1 + 1 * k, y1 + 10 * k, 0.9 * k, MY_QZ, MY_QZD);
+}
+
+/** The atlatl: a carved spear-thrower with a hook and finger loops, and a feathered dart laid along it. */
+function myAtlatl(ctx: Ctx, x: number, y: number, k: number) {
+  const a0 = { x: x - 3.2 * k, y: y + 2 * k }, a1 = { x: x + 5 * k, y: y - 5 * k };
+  const d0 = { x: x - 5.4 * k, y: y + 3.2 * k }, d1 = { x: x + 13.4 * k, y: y - 12.6 * k };
+  line(ctx, d0.x - 1.6 * k, d0.y + 1.2 * k, d1.x - 1.6 * k, d1.y + 1.2 * k, shade(MY_WOOD, -0.2), 0.7 * k); // a second dart behind
+  line(ctx, d0.x, d0.y, d1.x, d1.y, '#c9a06a', 0.8 * k); // the dart
+  line(ctx, d0.x, d0.y - 0.3 * k, d1.x, d1.y - 0.3 * k, shade('#c9a06a', 0.4), 0.25 * k);
+  poly(ctx, [d1.x + 3.2 * k, d1.y - 2.6 * k, d1.x - 0.4 * k, d1.y - 1.5 * k, d1.x - 0.2 * k, d1.y + 0.9 * k], shade(MY_OBS, 0.3)); // obsidian tip
+  poly(ctx, [d1.x + 3.2 * k, d1.y - 2.6 * k, d1.x + 0.4 * k, d1.y + 1 * k, d1.x - 0.2 * k, d1.y + 0.9 * k], shade(MY_OBS, -0.1));
+  for (const t of [0.02, 0.09]) { const px = d0.x + (d1.x - d0.x) * t, py = d0.y + (d1.y - d0.y) * t; poly(ctx, [px, py, px - 1.6 * k, py - 2.6 * k, px + 1.4 * k, py - 1 * k], t < 0.05 ? MY_QRED : MY_QZ); poly(ctx, [px, py, px - 0.6 * k, py + 2 * k, px + 1.4 * k, py - 0.4 * k], shade(t < 0.05 ? MY_QRED : MY_QZ, -0.28)); }
+  line(ctx, a0.x, a0.y, a1.x, a1.y, MY_WOODD, 1.6 * k); // the thrower under it
+  line(ctx, a0.x - 0.2 * k, a0.y - 0.3 * k, a1.x - 0.2 * k, a1.y - 0.3 * k, shade(MY_WOOD, 0.35), 0.5 * k);
+  poly(ctx, [a1.x, a1.y - 0.4 * k, a1.x + 1.6 * k, a1.y - 1.8 * k, a1.x + 1 * k, a1.y + 0.6 * k], MY_WOODD); // the hook the dart rests on
+  ellipse(ctx, a0.x - 0.2 * k, a0.y + 0.6 * k, 0.9 * k, 0.9 * k, '#efe6cf'); // a shell weight
+  ellipse(ctx, a0.x + 1.6 * k, a0.y - 1 * k, 0.8 * k, 0.5 * k, MY_JADED); // a finger loop
+}
+
+/** An obsidian-edged club-sword: a long wooden blade with razor teeth set along both edges, jade inlay and a feather tuft. */
+function myClub(ctx: Ctx, x: number, y: number, k: number, big = false) {
+  const s = big ? 1.1 : 1;
+  const x0 = x - 1.6 * k, y0 = y + 5 * k, x1 = x + 3.4 * k * s, y1 = y - 18 * k * s, ux = x1 - x0, uy = y1 - y0, L = Math.hypot(ux, uy), nx = -uy / L, ny = ux / L;
+  const P = (t: number, o: number): [number, number] => [x0 + ux * t + nx * o * k, y0 + uy * t + ny * o * k];
+  const hw = 2.2 * s;
+  const blade = [P(0.2, -hw), P(0.86, -hw), P(1, -hw * 0.5), P(1, hw * 0.5), P(0.86, hw), P(0.2, hw)];
+  poly(ctx, blade.flatMap((p) => p), MY_WOOD);
+  poly(ctx, [...[P(0.2, -hw), P(0.86, -hw), P(1, -hw * 0.5), P(1, 0), P(0.2, 0)]].flatMap((p) => p), shade(MY_WOOD, 0.22));
+  line(ctx, P(0.24, 0)[0], P(0.24, 0)[1], P(0.96, 0)[0], P(0.96, 0)[1], shade(MY_WOOD, -0.4), 0.4 * k);
+  for (let i = 0; i < 7; i++) { // the obsidian teeth
+    const t = 0.24 + i * 0.1;
+    for (const sd of [-1, 1]) poly(ctx, [...P(t, sd * hw), ...P(t + 0.05, sd * (hw + 1.5 * s)), ...P(t + 0.1, sd * hw)], MY_OBS);
+  }
+  for (const [t, c] of [[0.34, MY_TQ], [0.55, MY_RED]] as const) { const a = P(t, -hw * 0.6), b = P(t, hw * 0.6); line(ctx, a[0], a[1], b[0], b[1], c, 0.9 * k); }
+  const pj = P(0.72, 0); myJade(ctx, pj[0], pj[1], 0.85 * k);
+  const g = P(0.16, 0);
+  line(ctx, x0, y0, g[0], g[1], MY_WOODD, 1.3 * k);
+  for (const t of [0.04, 0.09, 0.14]) { const a = P(t, -1), b = P(t, 1); line(ctx, a[0], a[1], b[0], b[1], MY_RED, 0.6 * k); }
+  feather(ctx, x0, y0, x0 - 2.6 * k, y0 + 5.4 * k, 0.9 * k, MY_QZ, MY_QZD);
+  feather(ctx, x0, y0, x0 + 1.4 * k, y0 + 5.8 * k, 0.9 * k, MY_QRED, MY_BLK);
+}
+
+/** The pathfinder's walking staff: a cane with a woven pouch of cacao beans and a turquoise pennant. */
+function myStaff(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x + 1 * k, y + 6 * k, x + 2.6 * k, y - 16 * k, MY_WOOD, 1.5 * k);
+  line(ctx, x + 0.6 * k, y + 6 * k, x + 2.2 * k, y - 16 * k, shade(MY_WOOD, 0.4), 0.45 * k);
+  ellipse(ctx, x + 2.4 * k, y - 12 * k, 2 * k, 2.6 * k, '#b8956a'); // a woven pouch
+  ellipse(ctx, x + 2 * k, y - 12.6 * k, 1.2 * k, 1.4 * k, shade('#b8956a', 0.2));
+  line(ctx, x + 0.6 * k, y - 12 * k, x + 4.2 * k, y - 12 * k, MY_RED, 0.5 * k);
+  ellipse(ctx, x + 3 * k, y - 9.4 * k, 0.9 * k, 1.4 * k, MY_OCH); // a cacao pod tied below
+  ellipse(ctx, x + 2.6 * k, y - 9.8 * k, 0.4 * k, 0.8 * k, shade(MY_OCH, 0.3));
+  poly(ctx, [x + 2.6 * k, y - 16 * k, x + 8.6 * k, y - 15 * k, x + 7.4 * k, y - 13.6 * k, x + 8.6 * k, y - 12.2 * k, x + 2.6 * k, y - 13 * k], MY_TQ);
+  poly(ctx, [x + 2.6 * k, y - 16 * k, x + 8.6 * k, y - 15 * k, x + 8 * k, y - 14.4 * k, x + 2.6 * k, y - 15.2 * k], MY_COT);
+  myJade(ctx, x + 2.6 * k, y - 16.4 * k, 0.9 * k);
+  feather(ctx, x + 2.6 * k, y - 16.4 * k, x + 0.8 * k, y - 22 * k, 0.9 * k, MY_QZ, MY_QZD);
+}
+
+/** What the atlatl-thrower and the trader carry: a case of darts, or a cargo frame held by a forehead strap. */
+function myBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'archer') {
+    const qx = x - 7 * k;
+    box(ctx, qx, y - 8 * k, 4 * k, 8 * k, '#b8956a');
+    band(ctx, qx, y - 8 * k, 4 * k, 8 * k, 0.6, 0.74, MY_TQ);
+    myWeave(ctx, 'R', qx, y - 8 * k, 4 * k, 8 * k, 0.06, 0.94, 0.28, 0.44, MY_RED, MY_COT, 3);
+    for (const i of [-1.5, -0.5, 0.5, 1.5]) {
+      const tx = qx - 2 * k + i * 1.2 * k;
+      line(ctx, qx + i * 0.8 * k, y - 8.4 * k, tx, y - 16 * k, '#c9a06a', 0.6 * k);
+      poly(ctx, [tx, y - 16 * k, tx - 1 * k, y - 18.6 * k, tx + 0.5 * k, y - 17 * k], i > 0 ? MY_QZ : MY_QRED);
+      poly(ctx, [tx, y - 16 * k, tx + 1.2 * k, y - 18.4 * k, tx + 0.5 * k, y - 17 * k], shade(i > 0 ? MY_QZ : MY_QRED, -0.28));
+    }
+    return;
+  }
+  // the trader's cargo: a slatted frame with a bundle of woven cloth and a cacao sack, the strap running to the brow
+  box(ctx, x - 6 * k, y - 7 * k, 4.6 * k, 8 * k, '#9a7a4a');
+  for (const u of [0.25, 0.5, 0.75]) faceQuad(ctx, 'R', x - 6 * k, y - 7 * k, 4.6 * k, 8 * k, u, u + 0.06, 0.04, 0.96, MY_WOODD);
+  band(ctx, x - 6 * k, y - 7 * k, 4.6 * k, 8 * k, 0.4, 0.5, MY_TQ);
+  ellipse(ctx, x - 5.6 * k, y - 16.4 * k, 4.4 * k, 2.6 * k, shade(MY_COT, -0.25));
+  ellipse(ctx, x - 5.8 * k, y - 16.8 * k, 4.2 * k, 2.4 * k, MY_COT);
+  for (const dx of [-2.4, 0, 2.4]) ellipse(ctx, x - 5.8 * k + dx * k, y - 16.6 * k, 0.8 * k, 2 * k, dx ? MY_RED : MY_TQ);
+  ellipse(ctx, x - 9 * k, y - 10 * k, 2 * k, 2.4 * k, '#a4744a'); // a sack of cacao beans
+  ellipse(ctx, x - 9.4 * k, y - 10.6 * k, 1 * k, 1.2 * k, shade('#a4744a', 0.25));
+  line(ctx, x - 9 * k, y - 12.4 * k, x - 9.4 * k, y - 13.6 * k, MY_RED, 0.6 * k);
+  for (const dx of [-1.6, 1.6]) line(ctx, x - 5.6 * k + dx * k, y - 18 * k, x - 5.6 * k + dx * k, y - 7.6 * k, '#c9b58a', 0.6 * k);
+}
+
+/** The Maya arms on foot. Returns true when it drew the unit's weapon (and its shield, when it carries one in this hand). */
+function myWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
+  const { x, y } = b.hand;
+  switch (kind) {
+    case 'warrior':
+      myAxe(ctx, x, y, k);
+      myShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'holcan':
+      mySpear(ctx, x, y, k);
+      myShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'archer':
+      myAtlatl(ctx, x, y, k);
+      return true;
+    case 'defender': // the shield is drawn afterwards, like everyone's
+      mySpear(ctx, x, y, k * 0.92);
+      return true;
+    case 'swordsman':
+      myClub(ctx, x, y, k);
+      myShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'giant':
+      myClub(ctx, x, y, k, true);
+      myShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'explorer':
+      myStaff(ctx, x, y, k);
+      return true;
+  }
+  return false;
+}
+
+/** Shields: a jaguar-pelt round for the holcan, a woven mat for the defender, a mosaic disc, a painted cotton one. */
+function myShield(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  const cx = x - 1.2 * k, cy = y - 5.6 * k;
+  if (kind === 'defender') {
+    // a tall woven-reed shield, plaited in a diagonal weave, edged in turquoise, with a carved jade mask boss
+    const rx = 5.4 * k, ry = 8 * k;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - rx, cy - ry * 0.8); ctx.quadraticCurveTo(cx, cy - ry * 1.25, cx + rx, cy - ry * 0.8); ctx.lineTo(cx + rx, cy + ry * 0.8); ctx.quadraticCurveTo(cx, cy + ry * 1.2, cx - rx, cy + ry * 0.8); ctx.closePath();
+    ctx.fillStyle = ink(MY_WOODD); ctx.fill();
+    ctx.clip();
+    poly(ctx, [cx - rx * 0.86, cy - ry * 1.2, cx + rx * 0.86, cy - ry * 1.2, cx + rx * 0.86, cy + ry * 1.2, cx - rx * 0.86, cy + ry * 1.2], '#d8c08c');
+    for (let i = -6; i <= 6; i++) { // diagonal plait, in dark and red
+      line(ctx, cx + i * 1.7 * k - 6 * k, cy - ry * 1.1, cx + i * 1.7 * k + 6 * k, cy + ry * 1.1, i % 3 === 0 ? MY_REDD : i % 3 === 1 ? shade('#d8c08c', -0.3) : '#efe0b4', 0.7 * k);
+      line(ctx, cx + i * 1.7 * k + 6 * k, cy - ry * 1.1, cx + i * 1.7 * k - 6 * k, cy + ry * 1.1, i % 2 ? shade('#d8c08c', -0.2) : '#c0a468', 0.5 * k);
+    }
+    ctx.restore();
+    ctx.strokeStyle = ink(MY_TQ); ctx.lineWidth = 1.1 * k; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - rx * 0.9, cy - ry * 0.8); ctx.quadraticCurveTo(cx, cy - ry * 1.15, cx + rx * 0.9, cy - ry * 0.8); ctx.lineTo(cx + rx * 0.9, cy + ry * 0.8); ctx.quadraticCurveTo(cx, cy + ry * 1.1, cx - rx * 0.9, cy + ry * 0.8); ctx.closePath();
+    ctx.stroke();
+    ellipse(ctx, cx, cy, 2.5 * k, 2.9 * k, MY_JADED); ellipse(ctx, cx, cy - 0.2 * k, 2.1 * k, 2.5 * k, MY_JADE);
+    ellipse(ctx, cx - 0.8 * k, cy - 0.6 * k, 0.5 * k, 0.6 * k, MY_BLK); ellipse(ctx, cx + 0.8 * k, cy - 0.6 * k, 0.5 * k, 0.6 * k, MY_BLK); line(ctx, cx - 0.7 * k, cy + 1.1 * k, cx + 0.7 * k, cy + 1.1 * k, MY_BLK, 0.5 * k);
+    for (const i of [0, 1, 2]) feather(ctx, cx - 2.6 * k + i * 2.6 * k, cy + ry * 0.92, cx - 3 * k + i * 2.8 * k, cy + ry * 0.92 + 4.6 * k, 0.8 * k, i === 1 ? MY_QRED : MY_QZ, MY_QZD);
+    return;
+  }
+  const rx = 5.2 * k, ry = 6 * k;
+  const jag = kind === 'holcan' || kind === 'warrior';
+  ellipse(ctx, cx + 0.7 * k, cy + 0.6 * k, rx, ry, MY_WOODD);
+  ellipse(ctx, cx, cy, rx, ry, kind === 'giant' ? MY_OCH : MY_TQ); // the rim
+  ellipse(ctx, cx, cy, rx * 0.86, ry * 0.86, jag && kind === 'holcan' ? MY_JAG : kind === 'giant' ? MY_REDD : kind === 'swordsman' ? MY_JADED : MY_COT);
+  if (kind === 'holcan') { // the pelt: rosettes over tawny fur, a pale belly along the bottom
+    ellipse(ctx, cx, cy + ry * 0.62, rx * 0.66, ry * 0.2, '#f0dca8');
+    for (const [px, py] of [[-2.8, -3.2], [1.2, -3.8], [3, -0.6], [-1, -0.2], [-3.4, 2.2], [1.8, 2.6], [0, -5]] as const) myRosette(ctx, cx + px * k, cy + py * k, 1.05 * k);
+    ellipse(ctx, cx, cy, 1.5 * k, 1.5 * k, MY_JADED); ellipse(ctx, cx, cy - 0.2 * k, 1.2 * k, 1.2 * k, MY_JADE); // a jade boss
+  } else if (kind === 'warrior') { // painted cotton: a stepped red-and-black design
+    myFretDisc(ctx, cx, cy, k);
+  } else if (kind === 'swordsman') { // a mosaic of jade and turquoise tiles
+    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) {
+      if (i * i + j * j > 5) continue;
+      poly(ctx, [cx + i * 1.7 * k - 0.75 * k, cy + j * 1.9 * k - 0.85 * k, cx + i * 1.7 * k + 0.75 * k, cy + j * 1.9 * k - 0.85 * k, cx + i * 1.7 * k + 0.75 * k, cy + j * 1.9 * k + 0.85 * k, cx + i * 1.7 * k - 0.75 * k, cy + j * 1.9 * k + 0.85 * k], (i + j) % 2 ? MY_TQ : MY_JADE);
+    }
+    ellipse(ctx, cx, cy, 1 * k, 1.1 * k, MY_OCH);
+  } else { // the ruler's great shield: a jade face mask on red, ringed with gold
+    ring(ctx, cx, cy, rx * 0.66, ry * 0.66, MY_OCH, 0.8 * k);
+    ellipse(ctx, cx, cy, 2.8 * k, 3.4 * k, MY_JADED); ellipse(ctx, cx, cy - 0.2 * k, 2.4 * k, 3 * k, MY_JADE);
+    for (const s of [-1, 1]) ellipse(ctx, cx + s * 1 * k, cy - 0.8 * k, 0.55 * k, 0.7 * k, MY_BLK);
+    line(ctx, cx - 0.8 * k, cy + 1.4 * k, cx + 0.8 * k, cy + 1.4 * k, MY_BLK, 0.5 * k);
+    line(ctx, cx, cy - 0.2 * k, cx, cy + 0.7 * k, shade(MY_JADED, -0.2), 0.5 * k);
+  }
+  ring(ctx, cx, cy, rx * 0.95, ry * 0.95, shade(MY_TQD, -0.2), 0.6 * k);
+  ellipse(ctx, cx - 2.2 * k, cy - 3 * k, 1 * k, 1.5 * k, 'rgba(255,255,255,0.2)');
+  for (let i = 0; i < 5; i++) { // quetzal and macaw feathers hang from the rim
+    const a = 0.4 + i * 0.58, fx = cx + Math.cos(a) * rx * 0.95, fy = cy + Math.sin(a) * ry * 0.95;
+    feather(ctx, fx, fy, fx - 0.6 * k, fy + 5.2 * k, 0.9 * k, i % 2 ? MY_QRED : MY_QZ, i % 2 ? MY_BLK : MY_QZD);
+  }
+}
+
+/** The painted cotton shield's face: a red step-pyramid on black, in a cream field. */
+function myFretDisc(ctx: Ctx, cx: number, cy: number, k: number) {
+  ring(ctx, cx, cy, 3.6 * k, 4.2 * k, MY_BLK, 0.8 * k);
+  poly(ctx, [cx - 3.2 * k, cy + 3 * k, cx - 3.2 * k, cy + 1.2 * k, cx - 1.8 * k, cy + 1.2 * k, cx - 1.8 * k, cy - 0.6 * k, cx - 0.5 * k, cy - 0.6 * k, cx - 0.5 * k, cy - 2.4 * k, cx + 0.5 * k, cy - 2.4 * k, cx + 0.5 * k, cy - 0.6 * k, cx + 1.8 * k, cy - 0.6 * k, cx + 1.8 * k, cy + 1.2 * k, cx + 3.2 * k, cy + 1.2 * k, cx + 3.2 * k, cy + 3 * k], MY_RED);
+  ellipse(ctx, cx, cy - 4 * k, 0.6 * k, 0.6 * k, MY_BLK);
+  myNum(ctx, cx, cy + 0.4 * k, 0.9 * k, 1, 2, MY_BLK);
+}
+
+// ----- the mount: a horse with jade, feathers and a painted cloth (the Maya had none, so this is a stylised, ceremonial mount)
+
+/** A jade breast collar, a quetzal plume between the ears, a painted saddle cloth; the ruler's mount wears a jaguar-pelt caparison. */
+function myHorse(ctx: Ctx, kind: UnitKind, x: number, y: number, saddle: { x: number; y: number }) {
+  const knight = kind === 'knight';
+  const hx0 = x - 1, hy0 = y + 3, kh = 0.95;
+  const bx = hx0, by = hy0 - 6 * kh, bw = 17 * kh, bh = 7 * kh;
+  if (knight) { // the pelt over the flank, rosettes along it, a turquoise fringe at the hem
+    faceQuad(ctx, 'R', bx, by, bw, bh, 0.34, 0.98, 0.14, 0.86, MY_JAG);
+    faceQuad(ctx, 'L', bx, by, bw, bh, 0.02, 0.5, 0.14, 0.86, MY_JAG);
+    for (const [u, v] of [[0.5, 0.7], [0.74, 0.5], [0.9, 0.74], [0.62, 0.3]] as const) { const p = myPt('R', bx, by, bw, bh, u, v); myRosette(ctx, p[0], p[1], 1.1 * kh); }
+    for (const [u, v] of [[0.1, 0.7], [0.3, 0.45]] as const) { const p = myPt('L', bx, by, bw, bh, u, v); myRosette(ctx, p[0], p[1], 1.1 * kh); }
+    faceQuad(ctx, 'R', bx, by, bw, bh, 0.34, 0.98, 0.14, 0.22, MY_TQ);
+    faceQuad(ctx, 'L', bx, by, bw, bh, 0.02, 0.5, 0.14, 0.22, MY_TQ);
+  } else {
+    myWeave(ctx, 'R', bx, by, bw, bh, 0.36, 0.94, 0.16, 0.4, MY_TQD, MY_COT, 6);
+    myWeave(ctx, 'L', bx, by, bw, bh, 0.06, 0.5, 0.16, 0.4, MY_TQD, MY_COT, 4);
+    faceQuad(ctx, 'R', bx, by, bw, bh, 0.36, 0.94, 0.4, 0.46, MY_RED);
+  }
+  for (const [lx, ly] of [[-6, -1.5], [-3, 0.5], [4, -0.5], [7, 1.5]] as const) { // an ankle band of jade on every leg
+    faceQuad(ctx, 'R', hx0 + lx * kh, hy0 + ly * kh, 2.2 * kh, 7 * kh, 0, 1, 0.24, 0.32, MY_JADE);
+  }
+  // the head: a painted nose bar, jade at the cheek, a plume between the ears
+  const hhx = hx0 + 10.5 * kh, hhy = hy0 - 15 * kh;
+  faceQuad(ctx, 'R', hhx, hhy, 7 * kh, 5 * kh, 0.64, 0.92, 0.2, 0.32, MY_TQ);
+  faceQuad(ctx, 'R', hhx, hhy, 7 * kh, 5 * kh, 0.1, 0.26, 0.14, 0.92, MY_RED);
+  myJade(ctx, hhx + 0.6, hhy - 1.2, 1.1);
+  myPlume(ctx, hhx + 0.2, hhy - 4.4, knight ? 7 : 4, knight ? 1.5 : 1.1, knight ? 13 : 8.5, -0.3, 1.1);
+  line(ctx, hhx + 3.4, hhy + 2, hhx + 3.4, hhy + 5, MY_JADE, 0.6); // a tassel under the chin
+  // the tail tied up with cloth, and a feather
+  line(ctx, hx0 - 9.4 * kh, hy0 - 10.4 * kh, hx0 - 10.4 * kh, hy0 - 8.6 * kh, MY_RED, 1.5);
+  feather(ctx, hx0 - 11.4 * kh, hy0 - 5 * kh, hx0 - 14.6 * kh, hy0 + 1 * kh, 1, MY_QZ, MY_QZD);
+  // a folded cotton saddle cloth, fringed, under a padded seat
+  const sx = saddle.x, sy = saddle.y;
+  poly(ctx, [sx - 3.8, sy - 0.6, sx + 3, sy - 0.6, sx + 2.6, sy + 3.8, sx - 1, sy + 2.8, sx - 3.6, sy + 4.8], MY_COT);
+  const hem: [number, number][] = [[sx - 3.6, sy + 4.8], [sx - 1, sy + 2.8], [sx + 2.6, sy + 3.8]];
+  for (const [d0, d1, c] of [[0, 1, MY_RED], [1, 1.8, MY_TQ]] as const) poly(ctx, [hem[0][0], hem[0][1] - d0, hem[1][0], hem[1][1] - d0, hem[2][0], hem[2][1] - d0, hem[2][0], hem[2][1] - d1, hem[1][0], hem[1][1] - d1, hem[0][0], hem[0][1] - d1], c);
+  for (const [p, q] of [[hem[0], hem[1]], [hem[1], hem[2]]] as const) for (let i = 0; i < 4; i++) { const t = i / 3; line(ctx, p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[0] + (q[0] - p[0]) * t - 0.2, p[1] + (q[1] - p[1]) * t + 1.5, MY_COT, 0.45); }
+  poly(ctx, [sx, sy - 1.7, sx + 5.2, sy + 0.6, sx, sy + 2.9, sx - 5.2, sy + 0.6], '#a4744a');
+  poly(ctx, [sx, sy - 1.7, sx + 5.2, sy + 0.6, sx, sy + 2.9, sx - 5.2, sy + 0.6, sx, sy + 1.9, sx + 4, sy + 0.5, sx, sy - 0.7, sx - 4, sy + 0.5, sx, sy + 1.9], MY_TQD);
+  // breast collar: jade beads on a strap, ending in a big jade medallion
+  line(ctx, x + 3.5, y - 9.6, x + 8, y - 3.4, MY_REDD, 1.2);
+  myBeads(ctx, x + 3.8, y - 9.2, x + 7.8, y - 3.8, 6, 0.75);
+  ellipse(ctx, x + 8.2, y - 2.6, 1.5, 1.7, MY_OCH); myJade(ctx, x + 8.2, y - 2.6, 1.05);
+  line(ctx, x + 8.2, y - 1, x + 8.2, y + 1.6, MY_TQ, 0.6);
+}
+
+function myRider(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const knight = kind === 'knight';
+  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, knight ? '#e6dcc6' : '#8a5a33', knight ? '#3a2c20' : '#20140c', undefined, MY_TQ);
+  myHorse(ctx, kind, x, y, saddle);
+  const b = figure(ctx, kind, 'maya', saddle.x, saddle.y, 0.9, true);
+  myShield(ctx, knight ? 'giant' : 'holcan', b.off.x - 1.5, b.off.y + 1.5, 0.7);
+  mySpear(ctx, b.hand.x, b.hand.y, knight ? 0.86 : 0.76, true);
+}
+
+// ----- the wooden spring frame (catapult)
+
+function myCatapult(ctx: Ctx, x: number, y: number) {
+  const rope = '#d8c898', wood = MY_WOOD, woodD = MY_WOODD;
+  ctx.lineCap = 'round';
+  // three log rollers under the sled
+  for (const [dx, dy] of [[-10, 5.4], [0, 7], [10, 5.6]] as const) { ellipse(ctx, x + dx, y + dy, 2, 2.3, woodD); ellipse(ctx, x + dx - 0.2, y + dy - 0.2, 1.4, 1.7, shade(wood, 0.3)); ellipse(ctx, x + dx - 0.2, y + dy - 0.2, 0.5, 0.6, woodD); }
+  box(ctx, x - 1, y + 3.4, 26, 3.6, wood, shade(wood, 0.28));
+  for (const u of [0.16, 0.38, 0.6, 0.82]) faceQuad(ctx, 'R', x - 1, y + 3.4, 26, 3.6, u, u + 0.03, 0.05, 0.95, woodD);
+  band(ctx, x - 1, y + 3.4, 26, 3.6, 0.7, 0.86, MY_TQ);
+  // a heap of round river stones for the sling
+  for (const [ax, ay, ar] of [[13, 4.8, 2.2], [16, 5.6, 1.8], [14.6, 2.6, 1.8], [10.4, 6.4, 1.4]] as const) { ellipse(ctx, x + ax, y + ay, ar, ar * 0.85, '#7d746a'); ellipse(ctx, x + ax - ar * 0.3, y + ay - ar * 0.3, ar * 0.45, ar * 0.35, '#b0a698'); }
+  // two stout posts, lashed to a crossbeam
+  box(ctx, x - 9, y + 1.2, 3.4, 21, wood);
+  box(ctx, x + 4.4, y + 3, 3.4, 20, wood);
+  for (const [px, py] of [[x - 9, y - 12], [x + 4.4, y - 10]] as const) faceQuad(ctx, 'R', px, py + 11, 3.4, 20, 0, 1, 0.2, 0.26, MY_RED);
+  line(ctx, x - 9.4, y - 19.6, x + 4.6, y - 16.6, woodD, 2.6);
+  line(ctx, x - 9.4, y - 20.2, x + 4.6, y - 17.2, shade(wood, 0.3), 0.8);
+  line(ctx, x - 8, y + 2, x - 1, y - 13, woodD, 1.1); line(ctx, x + 4, y + 3, x - 2, y - 13, woodD, 1.1); // braces
+  // the torsion skein: a great bundle of twisted sinew and hair rope, wound round the arm's foot
+  ellipse(ctx, x - 2.4, y - 15.8, 4, 3, shade(rope, -0.3));
+  ellipse(ctx, x - 2.6, y - 16.2, 3.8, 2.8, rope);
+  for (let i = -3; i <= 3; i++) line(ctx, x - 2.6 + i * 1, y - 18.4, x - 2.6 + i * 1 + 1.4, y - 14, shade(rope, -0.32), 0.45);
+  // the arm: a long bowed pole rooted in the skein, bent back over the rear post, hauled down by a cord to the windlass
+  const root: [number, number] = [x - 2.6, y - 16], tip: [number, number] = [x - 18, y - 33];
+  for (const [c, wd, dx] of [[woodD, 2.8, 0], [wood, 1.8, -0.3], [shade(wood, 0.4), 0.5, -0.8]] as const) {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wd;
+    ctx.beginPath();
+    ctx.moveTo(root[0] + dx, root[1]);
+    ctx.quadraticCurveTo(x - 3 + dx, y - 33, tip[0] + dx, tip[1]);
+    ctx.stroke();
+  }
+  for (const t of [0.4, 0.62, 0.84]) { const u = 1 - t; const bx = u * u * root[0] + 2 * u * t * (x - 3) + t * t * tip[0], by = u * u * root[1] + 2 * u * t * (y - 33) + t * t * tip[1]; line(ctx, bx - 1.2, by + 0.5, bx + 1.2, by - 0.5, t === 0.62 ? MY_RED : MY_TQ, 0.9); }
+  const wind: [number, number] = [x - 15, y + 3];
+  line(ctx, tip[0], tip[1], wind[0], wind[1], rope, 0.8);
+  box(ctx, wind[0], wind[1] + 1, 3, 3, woodD); ellipse(ctx, wind[0], wind[1] - 2.4, 1.4, 1.4, wood); // the windlass drum
+  line(ctx, wind[0] - 2.6, wind[1] - 2.6, wind[0] + 2.6, wind[1] - 2, woodD, 0.9);
+  // the sling cup and its stone
+  ellipse(ctx, tip[0] - 1.4, tip[1] + 3.6, 3.2, 2.4, shade('#c8b078', -0.3));
+  ellipse(ctx, tip[0] - 1.6, tip[1] + 3.2, 2.9, 2.1, '#c8b078');
+  ellipse(ctx, tip[0] - 1.6, tip[1] + 2.4, 1.6, 1.4, '#7d746a'); ellipse(ctx, tip[0] - 2, tip[1] + 2, 0.6, 0.5, '#b0a698');
+  line(ctx, tip[0], tip[1] + 0.4, tip[0] - 3.2, tip[1] + 2.6, rope, 0.5); line(ctx, tip[0], tip[1] + 0.4, tip[0] + 0.2, tip[1] + 3.4, rope, 0.5);
+  feather(ctx, tip[0], tip[1], tip[0] - 3, tip[1] - 8, 1.1, MY_QZ, MY_QZD);
+  // a carved stone mask on the front post: brow, eyes, a broad nose and a toothed mouth, under a crest of plumes
+  const mx = x + 6.4, my = y - 8.2;
+  poly(ctx, [mx - 4.6, my - 5.4, mx + 4.6, my - 5, mx + 4.6, my + 4.8, mx, my + 6.2, mx - 4.6, my + 4.6], MY_JADED);
+  poly(ctx, [mx - 4, my - 4.8, mx + 4, my - 4.4, mx + 4, my + 4.2, mx, my + 5.4, mx - 4, my + 4.2], MY_JADE);
+  poly(ctx, [mx - 4, my - 4.8, mx + 4, my - 4.4, mx + 4, my - 3.4, mx - 4, my - 3.6], shade(MY_JADE, 0.25)); // the brow
+  for (const s of [-1, 1]) { poly(ctx, [mx + s * 2.7 - 1.3, my - 2.4, mx + s * 2.7 + 1.3, my - 2.4, mx + s * 2.7 + 1.1, my - 0.6, mx + s * 2.7 - 1.1, my - 0.6], MY_BLK); ellipse(ctx, mx + s * 2.7, my - 1.5, 0.45, 0.45, '#efe6cf'); }
+  poly(ctx, [mx - 0.7, my - 1, mx + 0.7, my - 1, mx + 1.2, my + 1.4, mx - 1.2, my + 1.4], shade(MY_JADED, 0.1)); // the nose
+  poly(ctx, [mx - 2.6, my + 2.2, mx + 2.6, my + 2.2, mx + 2.2, my + 3.8, mx - 2.2, my + 3.8], MY_BLK);
+  for (let i = 0; i < 4; i++) poly(ctx, [mx - 2.2 + i * 1.1, my + 2.2, mx - 1.2 + i * 1.1, my + 2.2, mx - 1.7 + i * 1.1, my + 3.2], '#efe6cf'); // teeth
+  for (const s of [-1, 1]) { line(ctx, mx + s * 4.6, my - 0.4, mx + s * 5.6, my + 1.2, MY_JADED, 0.7); myJade(ctx, mx + s * 5.8, my + 1.6, 1.3); } // ear flares
+  myPlume(ctx, mx, my - 5.2, 5, 1.6, 9, 0, 1.1);
+  myFret(ctx, 'R', x - 1, y + 3.4, 26, 3.6, 0.1, 0.66, 0.06, 0.4, MY_COT, 5);
+}
+
+// ----- boats: dugout canoes
+
+/** A palm-thatch roof over four poles, fringed at the eaves. */
+function myThatch(ctx: Ctx, cx: number, cy: number, w: number, h: number) {
+  const thatch = '#c8a85a', thatchD = '#8a6a34';
+  for (const dx of [-0.85, -0.3, 0.3, 0.85]) line(ctx, cx + dx * w / 2, cy + h * 0.15, cx + dx * w / 2, cy - h * 0.1, woodDark(), 0.7); // the poles
+  poly(ctx, [cx - w / 2, cy, cx - w * 0.36, cy - h * 0.7, cx, cy - h, cx + w * 0.36, cy - h * 0.7, cx + w / 2, cy], thatchD);
+  poly(ctx, [cx - w / 2 + 1, cy - 0.4, cx - w * 0.34, cy - h * 0.7, cx, cy - h + 0.8, cx + w * 0.3, cy - h * 0.74, cx + w / 2 - 2, cy - 0.6], thatch);
+  for (let i = -3; i <= 3; i++) line(ctx, cx + i * w * 0.07, cy - h * 0.94 + Math.abs(i) * 0.7, cx + i * w * 0.14, cy - 0.4, shade(thatch, -0.3), 0.4); // the layers of leaf
+  for (let i = 0; i < 9; i++) poly(ctx, [cx - w / 2 + i * w / 9, cy - 0.2, cx - w / 2 + (i + 0.5) * w / 9, cy + 2.2, cx - w / 2 + (i + 1) * w / 9, cy - 0.2], i % 2 ? thatchD : shade(thatch, -0.1)); // the ragged eave
+  poly(ctx, [cx, cy - h, cx + 1.4, cy - h - 2.4, cx - 0.4, cy - h - 0.4], thatchD); // a tied-off ridge tip
+}
+const woodDark = () => MY_WOODD;
+
+/** A dugout canoe with a low waist and upswept ends, painted with a band of steps; the bow can carry a carved jaguar head. */
+function myDugout(ctx: Ctx, cx: number, cy: number, w: number, fill: () => void, head = false) {
+  const wood = MY_WOOD, woodD = MY_WOODD, woodL = shade(MY_WOOD, 0.3);
+  const rim = (dy: number): [number, number][] => [[cx - w, cy - 9 + dy], [cx - w * 0.66, cy - 6.4 + dy], [cx - w * 0.3, cy - 5.4 + dy], [cx, cy - 5.2 + dy], [cx + w * 0.3, cy - 5.6 + dy], [cx + w * 0.66, cy - 6.6 + dy], [cx + w + 1, cy - 10.4 + dy]];
+  const near = rim(0), far = rim(-2.8).map(([px, py], i) => [px + (i === 0 ? 2.6 : i === 6 ? -2.4 : 0), py] as [number, number]);
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), ...[...far].reverse().flatMap(([a, b]) => [a, b])], '#3f2a16');
+  fill();
+  const hull = [...near, [cx + w * 0.78, cy - 1], [cx + w * 0.42, cy + 2.8], [cx, cy + 3.4], [cx - w * 0.42, cy + 3], [cx - w * 0.8, cy - 1]] as [number, number][];
+  poly(ctx, hull.flatMap(([a, b]) => [a, b]), wood);
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), cx + w * 0.7, cy - 3.6, cx, cy - 2.4, cx - w * 0.7, cy - 3.2], woodL);
+  poly(ctx, [cx - w * 0.8, cy - 1, cx - w * 0.42, cy + 3, cx, cy + 3.4, cx + w * 0.42, cy + 2.8, cx + w * 0.78, cy - 1, cx + w * 0.4, cy - 0.2, cx, cy + 0.6, cx - w * 0.4, cy], woodD);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = ink(shade(woodL, 0.2));
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  near.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  ctx.stroke();
+  const n = Math.max(5, Math.round(w / 2.6));
+  for (let i = 0; i < n; i++) { // a painted band of stepped-pyramid shapes along the side
+    const t = -0.66 + (i / (n - 1)) * 1.32, px = cx + t * w, py = cy - 3.2 + Math.abs(t) * 1.6;
+    poly(ctx, [px - 1.3, py + 1.1, px - 1.3, py + 0.1, px - 0.7, py + 0.1, px - 0.7, py - 0.7, px - 0.2, py - 0.7, px - 0.2, py - 1.4, px + 0.2, py - 1.4, px + 0.2, py - 0.7, px + 0.7, py - 0.7, px + 0.7, py + 0.1, px + 1.3, py + 0.1, px + 1.3, py + 1.1], i % 2 ? MY_COT : MY_TQ);
+  }
+  line(ctx, cx - w * 0.72, cy - 3.6 + 0.3, cx + w * 0.72, cy - 3.6 + 0.3, MY_RED, 0.6);
+  for (const t of [-0.5, -0.2, 0.15, 0.5]) line(ctx, cx + t * w, cy - 5.4, cx + t * w - 0.6, cy + 2.4, shade(wood, -0.3), 0.4); // adze marks
+  for (const e of [-1, 1]) { // the raised ends
+    const ex = cx + e * w, ey = cy - (e < 0 ? 9 : 10.4);
+    line(ctx, ex, ey, ex + e * 1.6, ey - 2, woodD, 1.3);
+    if (e > 0 && head) { // a carved jaguar head at the bow: pricked ear, a black eye, fangs
+      ellipse(ctx, ex + 3, ey - 3.6, 3.4, 2.6, MY_JAG);
+      ellipse(ctx, ex + 4.2, ey - 3, 2.2, 1.6, '#f0dca8');
+      poly(ctx, [ex + 1.6, ey - 5.4, ex + 1.2, ey - 7.8, ex + 3.4, ey - 5.8], MY_JAG);
+      ellipse(ctx, ex + 3, ey - 4.2, 0.6, 0.6, MY_BLK);
+      poly(ctx, [ex + 4, ey - 2.2, ex + 4.8, ey - 0.4, ex + 5.4, ey - 2.4], '#fbf6e6');
+      myRosette(ctx, ex + 1.6, ey - 3.2, 0.6);
+    } else {
+      ellipse(ctx, ex + e * 1.6, ey - 2.2, 0.8, 0.8, MY_RED);
+      if (e > 0) feather(ctx, ex + 1.6, ey - 2.4, ex + 3.4, ey - 9, 1.1, MY_QZ, MY_QZD);
+    }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 3.4, w * 0.74, 2.2, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.stroke();
+}
+
+function myPaddle(ctx: Ctx, px: number, py: number, dir: number) {
+  line(ctx, px + dir * 2.4, py - 9, px - dir * 3.6, py + 5, MY_WOOD, 0.9);
+  ellipse(ctx, px - dir * 4.2, py + 6, 1.1, 2.1, MY_WOODD);
+  ellipse(ctx, px - dir * 4.2, py + 5.6, 0.5, 1.1, MY_TQ);
+}
+
+/** A cacao pod: a ridged, pointed ochre gourd. */
+function myPod(ctx: Ctx, x: number, y: number, s: number, c = MY_OCH) {
+  ellipse(ctx, x, y, 1.5 * s, 2.3 * s, shade(c, -0.3));
+  ellipse(ctx, x - 0.1 * s, y - 0.2 * s, 1.3 * s, 2.1 * s, c);
+  line(ctx, x - 0.5 * s, y - 1.6 * s, x - 0.5 * s, y + 1.6 * s, shade(c, -0.25), 0.3 * s);
+  line(ctx, x + 0.4 * s, y - 1.6 * s, x + 0.4 * s, y + 1.6 * s, shade(c, 0.25), 0.3 * s);
+  poly(ctx, [x - 0.5 * s, y + 1.9 * s, x + 0.3 * s, y + 3 * s, x + 0.8 * s, y + 1.7 * s], shade(c, -0.2));
+}
+
+/** The Maya fleet: a small dugout with a palm-thatch canopy, a great trading canoe with a sail and a cargo of cacao, and a war canoe with many paddlers. */
+function myBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const crew = (cx: number, cy: number, kd: UnitKind, kk: number) => figure(ctx, kd, 'maya', cx, cy, kk, true);
+  if (tier === 0) {
+    myDugout(ctx, x, y + 1, 12, () => {
+      crew(x - 1.6, y - 1.6, 'explorer', 0.5);
+    });
+    myThatch(ctx, x - 1, y - 12.6, 15, 6.4);
+    myPaddle(ctx, x + 9, y - 0.4, 1);
+    return;
+  }
+  if (tier === 1) {
+    // a great trading canoe: a woven sail on a mast, baskets and jars of cacao heaped amidships, a thatched shelter aft
+    const w = 18;
+    myDugout(ctx, x, y + 1, w, () => {
+      crew(x - w * 0.4, y - 2.6, 'explorer', 0.44);
+      crew(x + w * 0.42, y - 2.4, 'archer', 0.42);
+    });
+    const mx = x - 1;
+    line(ctx, mx, y - 4, mx + 0.4, y - 36, MY_WOODD, 1.5);
+    line(ctx, mx - 0.4, y - 4, mx, y - 36, shade(MY_WOOD, 0.4), 0.4);
+    line(ctx, mx - 10, y - 32, mx + 11, y - 30.6, MY_WOOD, 1.1); // the yard
+    poly(ctx, [mx - 9.6, y - 32, mx + 10.6, y - 30.7, mx + 10, y - 13.4, mx - 9, y - 14.6], MY_COT);
+    for (const [v0, v1, c] of [[0.0, 0.14, MY_TQ], [0.3, 0.38, MY_RED], [0.62, 0.7, MY_TQ], [0.86, 1.0, MY_RED]] as const) { // banded cloth
+      const y0 = y - 32 + v0 * 17.6, y1 = y - 32 + v1 * 17.6;
+      poly(ctx, [mx - 9.6 + v0 * 0.6, y0 + v0 * 1.3, mx + 10.6 - v0 * 0.6, y0 + 1.3 - v0 * 0.7 + v0 * 0.4, mx + 10.6 - v1 * 0.6, y1 + 1.3 - v1 * 0.7 + v1 * 0.4, mx - 9.6 + v1 * 0.6, y1 + v1 * 1.3], c);
+    }
+    poly(ctx, [mx - 3.4, y - 27, mx + 4.6, y - 26.6, mx + 4.6, y - 20.4, mx - 3.4, y - 20.8], MY_TQD); // a glyph panel: a stepped mark and a bar-and-dots numeral
+    poly(ctx, [mx - 2.4, y - 21.6, mx - 2.4, y - 23, mx - 1, y - 23, mx - 1, y - 24.6, mx + 0.4, y - 24.6, mx + 0.4, y - 23, mx + 1.8, y - 23, mx + 1.8, y - 21.6], MY_COT);
+    myNum(ctx, mx + 2.6, y - 23, 1, 1, 1, MY_COT);
+    line(ctx, mx - 9.4, y - 14.6, mx - 12, y - 6, MY_COT, 0.5); line(ctx, mx + 10, y - 13.4, mx + 11.4, y - 6, MY_COT, 0.5); // sheets
+    for (const [dx, dy] of [[-9.6, -30.6], [10.6, -30.6]] as const) feather(ctx, mx + dx, y + dy, mx + dx + (dx > 0 ? 2 : -2), y + dy - 6, 0.9, MY_QZ, MY_QZD);
+    // the cargo: baskets brimming with pods, a stack of tall jars, a heap of cacao sacks
+    ellipse(ctx, x + 6.6, y - 5.8, 4.6, 2.2, '#8a6a3a');
+    ellipse(ctx, x + 6.6, y - 6.6, 4.2, 1.8, '#b8956a');
+    for (const [dx, dy] of [[3.8, -8.4], [6.2, -9.2], [8.6, -8.6], [5, -6.6], [7.6, -7]] as const) myPod(ctx, x + dx, y + dy, 0.8, dx > 6.5 ? MY_RED : MY_OCH);
+    for (const [dx, dy, r] of [[-7, -5.2, 2.6], [-3.6, -5.6, 2.2]] as const) { // storage jars
+      ellipse(ctx, x + dx, y + dy - r * 0.2, r, r * 1.3, '#a4552a');
+      ellipse(ctx, x + dx - r * 0.3, y + dy - r * 0.5, r * 0.5, r * 0.7, '#c9703a');
+      ellipse(ctx, x + dx, y + dy - r * 1.4, r * 0.55, r * 0.3, '#3a2010');
+      line(ctx, x + dx - r * 0.9, y + dy - r * 0.2, x + dx + r * 0.9, y + dy - r * 0.2, MY_COT, 0.5);
+    }
+    myThatch(ctx, x - w * 0.62, y - 8, 9, 4.6);
+    myPaddle(ctx, x + w * 0.42 + 3.4, y - 3, 1);
+    return;
+  }
+  // a war canoe: a long hull, a row of paddlers, painted shields, upright spears and a plumed stern
+  const w = 24;
+  myDugout(ctx, x, y + 1, w, () => {
+    crew(x - w * 0.7, y - 2.4, 'holcan', 0.4);
+    crew(x - w * 0.4, y - 2.6, 'warrior', 0.4);
+    crew(x - w * 0.12, y - 2.4, 'giant', 0.34);
+    crew(x + w * 0.16, y - 2.6, 'holcan', 0.4);
+    crew(x + w * 0.44, y - 2.8, 'warrior', 0.4);
+    crew(x + w * 0.7, y - 3, 'archer', 0.4);
+  }, true);
+  for (const [i, t] of [-0.6, -0.34, -0.08, 0.18, 0.44].entries()) { // painted round shields hung from the gunwale
+    const sx = x + t * w, sy = y - 2;
+    ellipse(ctx, sx + 0.3, sy + 0.4, 2.7, 2.8, MY_WOODD);
+    ellipse(ctx, sx, sy, 2.6, 2.7, i % 2 ? MY_TQ : MY_JAG);
+    if (i % 2) { ring(ctx, sx, sy, 1.6, 1.7, MY_COT, 0.5); ellipse(ctx, sx, sy, 0.7, 0.7, MY_RED); }
+    else { myRosette(ctx, sx - 0.7, sy - 0.6, 0.6); myRosette(ctx, sx + 0.8, sy + 0.5, 0.6); }
+    feather(ctx, sx + 1.4, sy + 2, sx + 1.2, sy + 5, 0.6, i % 2 ? MY_QRED : MY_QZ, MY_QZD);
+  }
+  for (const [ox, lean] of [[w * 0.62, 2.4], [w * 0.3, 1.2], [-w * 0.3, -0.4]] as const) { // upright spears
+    const lx = x + ox, ly = y - 9;
+    line(ctx, lx, ly, lx + lean, ly - 20, MY_WOOD, 0.9);
+    myPoint(ctx, lx + lean, ly - 19.2, 4.4, 1.1);
+    for (let i = 0; i < 2; i++) feather(ctx, lx + lean * (0.75 + i * 0.1), ly - 15 - i * 1.6, lx + lean * (0.75 + i * 0.1) - 2.2, ly - 9.6 - i * 1.6, 0.8, i % 2 ? MY_QRED : MY_QZ, MY_QZD);
+  }
+  myPlume(ctx, x - w - 0.4, y - 10.6, 5, 1.5, 11, -0.35, 1); // the stern's plume
+  myPaddle(ctx, x - w * 0.4 + 3.4, y - 5, 1);
+  myPaddle(ctx, x + w * 0.16 + 3.4, y - 5, 1);
+}
+
+// ----- the jaguar
+
+/** A jaguar padding through the undergrowth: a low, muscular tawny body, rosettes, a heavy round head with a pale muzzle, a long ringed tail. */
+function myJaguar(ctx: Ctx, x: number, y: number, k: number, body: string) {
+  const dk = MY_JAGD, belly = '#f0dca8';
+  for (const lx of [-6.4, -3, 3.2, 6.6]) {
+    const ly = lx > 0 ? 0.6 : -0.4;
+    box(ctx, x + lx * k, y + ly * k, 2.6 * k, 5.6 * k, shade(body, lx > 0 ? -0.12 : -0.3));
+    faceQuad(ctx, 'R', x + lx * k, y + ly * k, 2.6 * k, 5.6 * k, 0, 1, 0, 0.22, belly); // pale paws
+    faceQuad(ctx, 'R', x + lx * k, y + ly * k, 2.6 * k, 5.6 * k, 0.15, 0.4, 0.5, 0.62, dk);
+  }
+  // the tail: long, low, curling up at the tip, banded
+  ctx.lineCap = 'round';
+  for (const [c, wd] of [[shade(body, -0.3), 2.4], [body, 1.7]] as const) { ctx.strokeStyle = ink(c); ctx.lineWidth = wd * k; ctx.beginPath(); ctx.moveTo(x - 8 * k, y - 6.4 * k); ctx.bezierCurveTo(x - 13 * k, y - 6.4 * k, x - 15 * k, y - 2 * k, x - 17.6 * k, y - 8 * k); ctx.stroke(); }
+  for (const t of [0.35, 0.6, 0.85]) { const u = 1 - t; const px = u * u * u * (x - 8 * k) + 3 * u * u * t * (x - 13 * k) + 3 * u * t * t * (x - 15 * k) + t * t * t * (x - 17.6 * k), py = u * u * u * (y - 6.4 * k) + 3 * u * u * t * (y - 6.4 * k) + 3 * u * t * t * (y - 2 * k) + t * t * t * (y - 8 * k); ellipse(ctx, px, py, 0.9 * k, 0.9 * k, dk); }
+  ellipse(ctx, x - 17.6 * k, y - 8.4 * k, 1.1 * k, 1.1 * k, dk);
+  box(ctx, x, y - 4.6 * k, 17 * k, 6.4 * k, body);
+  band(ctx, x, y - 4.6 * k, 17 * k, 6.4 * k, 0, 0.2, belly);
+  faceQuad(ctx, 'R', x, y - 4.6 * k, 17 * k, 6.4 * k, 0.5, 0.96, 0.3, 0.9, shade(body, 0.08)); // shoulder
+  faceQuad(ctx, 'R', x, y - 4.6 * k, 17 * k, 6.4 * k, 0.04, 0.5, 0.86, 1, shade(body, -0.16)); // the spine's shadow
+  for (const [u, v] of [[0.1, 0.5], [0.24, 0.72], [0.36, 0.42], [0.5, 0.7], [0.62, 0.42], [0.76, 0.66], [0.9, 0.44], [0.3, 0.9], [0.7, 0.9]] as const) { const p = myPt('R', x, y - 4.6 * k, 17 * k, 6.4 * k, u, v); myRosette(ctx, p[0], p[1], 1.15 * k, body); }
+  for (const [u, v] of [[0.14, 0.6], [0.34, 0.36], [0.52, 0.74], [0.74, 0.5], [0.9, 0.78]] as const) { const p = myPt('L', x, y - 4.6 * k, 17 * k, 6.4 * k, u, v); myRosette(ctx, p[0], p[1], 1.15 * k, body); }
+  for (const [s1, t1] of [[0.2, 0.3], [0.4, 0.55], [0.6, 0.25], [0.75, 0.6], [0.3, 0.8], [0.55, 0.85], [0.85, 0.3]] as const) myRosette(ctx, x + (s1 - t1) * 8.5 * k, y - 11 * k - 4.25 * k + (s1 + t1) * 4.25 * k, 1 * k, body); // rosettes along the back
+  box(ctx, x + 7.4 * k, y - 8 * k, 6 * k, 6.6 * k, shade(body, 0.03)); // thick neck
+  // the head
+  const hx = x + 11.4 * k, hy = y - 8.4 * k;
+  box(ctx, hx, hy, 7 * k, 6 * k, shade(body, 0.06));
+  box(ctx, hx + 3.6 * k, hy + 0.8 * k, 3.6 * k, 3.4 * k, belly); // the muzzle
+  faceQuad(ctx, 'R', hx + 3.6 * k, hy + 0.8 * k, 3.6 * k, 3.4 * k, 0.5, 0.86, 0.55, 0.9, '#c8788a'); // the nose
+  faceQuad(ctx, 'R', hx + 3.6 * k, hy + 0.8 * k, 3.6 * k, 3.4 * k, 0.15, 0.85, 0.16, 0.24, dk);
+  faceQuad(ctx, 'R', hx, hy, 7 * k, 6 * k, 0.34, 0.66, 0.46, 0.8, '#f2d040'); // an amber eye
+  faceQuad(ctx, 'R', hx, hy, 7 * k, 6 * k, 0.46, 0.56, 0.46, 0.8, MY_BLK);
+  faceQuad(ctx, 'R', hx, hy, 7 * k, 6 * k, 0.38, 0.64, 0.76, 0.82, dk); // the brow
+  faceQuad(ctx, 'R', hx, hy, 7 * k, 6 * k, 0.28, 0.34, 0.1, 0.5, dk); // a tear stripe
+  for (const [u, v] of [[0.7, 0.86], [0.12, 0.7], [0.2, 0.9]] as const) faceQuad(ctx, 'R', hx, hy, 7 * k, 6 * k, u, u + 0.08, v, v + 0.1, dk);
+  for (const s of [0, 1]) { box(ctx, hx - 1.6 * k + s * 3.6 * k, hy - 5.8 * k, 2.4 * k, 2 * k, body); faceQuad(ctx, 'R', hx - 1.6 * k + s * 3.6 * k, hy - 5.8 * k, 2.4 * k, 2 * k, 0.2, 0.8, 0.2, 0.7, '#e8b0a0'); } // round ears
+  line(ctx, hx + 5.6 * k, hy - 0.4 * k, hx + 8.6 * k, hy - 1.4 * k, '#fbf6e6', 0.3 * k); // whiskers
+  line(ctx, hx + 5.6 * k, hy + 0.2 * k, hx + 8.6 * k, hy + 0.6 * k, '#fbf6e6', 0.3 * k);
 }

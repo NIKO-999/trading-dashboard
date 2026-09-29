@@ -1678,6 +1678,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
   if (biome === 'lakota') return lkTree(ctx, x, y, k, P, variant);
   if (biome === 'tibet') return tbTree(ctx, x, y, k, P, variant);
+  if (biome === 'maya') return myTree(ctx, x, y, k, P, variant);
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'china') return drawChinaTree(ctx, x, y, k, P, variant);
   if (biome === 'mali') return mlTree(ctx, x, y, k, P, variant);
@@ -1993,7 +1994,8 @@ function drawImprovement(ctx: Ctx, s: GameState, t: Tile, x: number, y: number) 
       break;
     }
     case 'temple':
-      if (t.terrain === 'mountain' || t.terrain === 'forest') {
+      if (tribe.id === 'maya') myShrine(ctx, 0, 4); // a small stepped pyramid with a roof-combed sanctuary
+      else if (t.terrain === 'mountain' || t.terrain === 'forest') {
         box(ctx, 0, 4, 12, 6, '#e8e2d0');
         roof(ctx, 0, -2, 12, 7, tribe.color);
       } else {
@@ -2289,6 +2291,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'tibet':
       tbBuilding(ctx, x, y, big, capital);
       break;
+    case 'maya':
+      myBuilding(ctx, x, y, big, roofC, capital);
+      break;
     case 'egypt':
       box(ctx, x, y, w, h, '#ecdcaa');
       if (big) {
@@ -2517,7 +2522,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : 0; // the flag rides on the dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : tribe === 'maya' && big ? 5 : 0; // the flag rides on the dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -4554,3 +4559,330 @@ export function drawCityIcon(ctx: Ctx, tribe: TribeId, x: number, y: number, cap
   drawBuilding(ctx, tribe, x + 4, y + 6, true, T.roof, T.color, capital);
 }
 
+// ---------------------------------------------------------------- Maya jungle and limestone cities
+
+const MY_LIME = '#d9d0b4', MY_LIMED = '#bdb394', MY_STUCCO = '#b8402e', MY_PLASTER = '#ece2c6', MY_MOSS = '#7d9c58';
+const MY_TEAL = '#00b8c4', MY_JADEC = '#3fbf8f', MY_JADEDK = '#1f7a5a', MY_WOODC = '#8a5a34';
+
+/** A flat polygon on one visible side of a box, in the (u, v) coordinates of faceQuad. */
+function myFP(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, pts: [number, number][], color: string) {
+  const P = (u: number, v: number) => face === 'R'
+    ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h]
+    : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+  poly(ctx, pts.flatMap(([u, v]) => P(u, v)), face === 'L' ? shade(color, 0.06) : shade(color, -0.2));
+}
+
+/** A corbel-arched doorway: a dark opening whose top steps in on both sides. */
+function myDoor(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u0: number, u1: number, v1: number) {
+  const du = (u1 - u0) * 0.2, vs = v1 * 0.62;
+  myFP(ctx, face, cx, cy, w, h, [[u0, 0], [u1, 0], [u1, vs], [u1 - du, vs], [u1 - du, v1], [u0 + du, v1], [u0 + du, vs], [u0, vs]], '#1d1410');
+  myFP(ctx, face, cx, cy, w, h, [[u0 + du * 0.6, 0], [u1 - du * 0.6, 0], [u1 - du * 0.6, vs * 0.4], [u0 + du * 0.6, vs * 0.4]], '#3a2a1e'); // a step of light inside
+}
+
+/**
+ * A prism whose footprint is `len` long along the iso axis (1, 0.5) and `thick` deep along (1, -0.5): the long lit side
+ * (the L face), the end cap (R face) and the top. Ball-court walls and other long masonry are built from it.
+ */
+function myPrism(ctx: Ctx, cx: number, cy: number, len: number, thick: number, h: number, color: string) {
+  const P = (a: number, b: number): [number, number] => [cx + (a * len) / 2 + (b * thick) / 2, cy + (a * len) / 4 - (b * thick) / 4];
+  const [l0x, l0y] = P(-1, -1), [l1x, l1y] = P(1, -1), [r1x, r1y] = P(1, 1), [t0x, t0y] = P(-1, 1);
+  poly(ctx, [l0x, l0y, l1x, l1y, l1x, l1y - h, l0x, l0y - h], shade(color, 0.04));
+  poly(ctx, [l1x, l1y, r1x, r1y, r1x, r1y - h, l1x, l1y - h], shade(color, -0.24));
+  poly(ctx, [l0x, l0y - h, l1x, l1y - h, r1x, r1y - h, t0x, t0y - h], shade(color, 0.22));
+  return P;
+}
+
+/**
+ * A stepped limestone pyramid: `tiers` boxes narrowing upward, moss on the lower steps, a stair up the middle of the
+ * right face between painted balustrades, and moulded cornices with niches on the left. Returns the summit's y and width.
+ */
+function myPyramid(ctx: Ctx, x: number, y: number, baseW: number, tiers: number, tierH: number, taper = 0.16, stair = true) {
+  for (let i = 0; i < tiers; i++) {
+    const w = baseW * (1 - i * taper), cy = y - i * tierH;
+    const c = i % 2 ? MY_LIME : shade(MY_LIME, -0.06);
+    box(ctx, x, cy, w, tierH, c, shade(c, 0.3));
+    band(ctx, x, cy, w, tierH, 0.82, 1, shade(c, 0.18)); // the cornice
+    band(ctx, x, cy, w, tierH, 0, 0.12, shade(c, -0.18)); // shadow under the step above
+    if (i < tiers - 1) for (const [u, v] of [[0.1, 0.4], [0.76, 0.3]] as const) faceQuad(ctx, 'R', x, cy, w, tierH, u, u + 0.12, v, v + 0.24, MY_MOSS);
+    if (i < 2) faceQuad(ctx, 'L', x, cy, w, tierH, 0.2, 0.34, 0.34, 0.56, MY_MOSS);
+    if (i % 2 === 1) for (let j = 0; j < 4; j++) faceQuad(ctx, 'L', x, cy, w, tierH, 0.14 + j * 0.2, 0.22 + j * 0.2, 0.3, 0.7, '#8d836a'); // niches of a moulded frieze
+    if (stair) {
+      faceQuad(ctx, 'R', x, cy, w, tierH, 0.3, 0.7, 0, 1, '#f6f0da');
+      for (const v of [0.25, 0.5, 0.75]) faceQuad(ctx, 'R', x, cy, w, tierH, 0.3, 0.7, v, v + 0.07, shade('#f6f0da', -0.3)); // the treads
+      faceQuad(ctx, 'R', x, cy, w, tierH, 0.26, 0.31, 0, 1, MY_STUCCO); // painted balustrades
+      faceQuad(ctx, 'R', x, cy, w, tierH, 0.69, 0.74, 0, 1, MY_STUCCO);
+    }
+  }
+  return { y: y - tiers * tierH, w: baseW * (1 - tiers * taper + taper) };
+}
+
+/**
+ * The temple on a summit: a chamber of dressed stone with a broad corbel-vaulted doorway split by a column, a red
+ * stucco band, a stepped mansard roof and a roof comb carved with a mask.
+ */
+function myTemple(ctx: Ctx, x: number, cy: number, w: number, h: number, combH: number, doors = 3) {
+  box(ctx, x, cy, w, h, MY_PLASTER, shade(MY_PLASTER, 0.16));
+  band(ctx, x, cy, w, h, 0.82, 1, MY_STUCCO); // the red frieze under the roof
+  band(ctx, x, cy, w, h, 0, 0.08, shade(MY_PLASTER, -0.2));
+  if (doors === 3) {
+    myDoor(ctx, 'R', x, cy, w, h, 0.16, 0.84, 0.66);
+    for (const u of [0.38, 0.6]) faceQuad(ctx, 'R', x, cy, w, h, u, u + 0.06, 0, 0.66, MY_PLASTER); // two piers
+    faceQuad(ctx, 'R', x, cy, w, h, 0.16, 0.84, 0.66, 0.74, shade(MY_PLASTER, -0.12)); // the lintel
+  } else myDoor(ctx, 'R', x, cy, w, h, 0.3, 0.7, 0.72);
+  myDoor(ctx, 'L', x, cy, w, h, 0.28, 0.72, 0.66);
+  for (const u of [0.08, 0.3, 0.52, 0.74]) faceQuad(ctx, 'R', x, cy, w, h, u, u + 0.1, 0.84, 0.94, MY_JADEDK); // jade glyph blocks
+  // the roof: two stepped slabs, then the comb
+  const ry = cy - h;
+  box(ctx, x, ry, w + 1.2, 1, shade(MY_LIME, -0.04), shade(MY_LIME, 0.26));
+  box(ctx, x, ry - 1, w * 0.84, 1, MY_LIME, shade(MY_LIME, 0.26));
+  const cw = w * 0.66, cyb = ry - 2;
+  box(ctx, x, cyb, cw, combH, MY_LIME, shade(MY_LIME, 0.25));
+  faceQuad(ctx, 'R', x, cyb, cw, combH, 0.08, 0.92, 0.1, 0.92, MY_STUCCO); // a red field with a jade mask on the front
+  const mk = (u: number, v: number): [number, number] => [x + (u * cw) / 2, cyb + (cw / 4) * (1 - u) - v * combH];
+  const f = mk(0.5, 0.5);
+  ellipse(ctx, f[0], f[1], cw * 0.2, combH * 0.3, MY_JADEDK);
+  ellipse(ctx, f[0], f[1] - 0.1, cw * 0.17, combH * 0.26, MY_JADEC);
+  for (const s of [-1, 1]) ellipse(ctx, f[0] + s * cw * 0.07, f[1] - combH * 0.06, 0.45, 0.5, '#1d1410');
+  line(ctx, f[0] - cw * 0.06, f[1] + combH * 0.12, f[0] + cw * 0.06, f[1] + combH * 0.12, '#1d1410', 0.5);
+  for (const [u, v] of [[0.2, 0.28], [0.8, 0.28]] as const) { const p = mk(u, v); ellipse(ctx, p[0], p[1], 0.5, 0.5, MY_PLASTER); }
+  for (let j = 0; j < 3; j++) faceQuad(ctx, 'L', x, cyb, cw, combH, 0.18 + j * 0.27, 0.32 + j * 0.27, 0.34, 0.66, '#3a2a1e'); // pierced openings on the flank
+  box(ctx, x, cyb - combH, cw * 0.72, 1.1, MY_STUCCO, shade(MY_STUCCO, 0.3)); // the crest, in steps
+  box(ctx, x, cyb - combH - 1.1, cw * 0.4, 1.1, MY_LIME, shade(MY_LIME, 0.3));
+}
+
+/** A carved stela: a slender upright slab with a relief figure and a column of glyph blocks, before a round altar. */
+function myStela(ctx: Ctx, x: number, y: number, s = 1) {
+  ellipse(ctx, x, y + 1 * s, 6.4 * s, 2.6 * s, MY_LIMED); // a low plaza slab
+  ellipse(ctx, x, y + 0.4 * s, 6 * s, 2.3 * s, MY_LIME);
+  ellipse(ctx, x + 3.6 * s, y + 1.2 * s, 2 * s, 0.9 * s, shade(MY_LIME, -0.3)); // altar: a squat round drum
+  ellipse(ctx, x + 3.6 * s, y + 0.6 * s, 2 * s, 0.9 * s, MY_LIME);
+  ellipse(ctx, x + 3.6 * s, y + 0.5 * s, 1.3 * s, 0.55 * s, shade(MY_LIME, -0.12));
+  box(ctx, x - 0.6 * s, y + 0.6 * s, 3.4 * s, 12.6 * s, '#cfc6a6', '#e6dfc4');
+  faceQuad(ctx, 'R', x - 0.6 * s, y + 0.6 * s, 3.4 * s, 12.6 * s, 0.12, 0.88, 0.08, 0.92, '#bfb594');
+  const f = (u: number, v: number): [number, number] => [x - 0.6 * s + (u * 3.4 * s) / 2, y + 0.6 * s + (3.4 * s / 4) * (1 - u) - v * 12.6 * s];
+  const head = f(0.5, 0.78), body = f(0.5, 0.5);
+  ellipse(ctx, head[0], head[1], 0.75 * s, 0.85 * s, '#8d836a'); // a ruler's carved face under a big headdress
+  ellipse(ctx, head[0], head[1] - 1 * s, 1 * s, 0.7 * s, MY_JADEDK);
+  poly(ctx, [body[0] - 0.9 * s, body[1] - 1.6 * s, body[0] + 0.9 * s, body[1] - 1.9 * s, body[0] + 0.7 * s, body[1] + 2.4 * s, body[0] - 0.7 * s, body[1] + 2.6 * s], '#8d836a');
+  for (const [u, v] of [[0.22, 0.4], [0.22, 0.28], [0.22, 0.16], [0.7, 0.4], [0.7, 0.28], [0.7, 0.16]] as const) { const p = f(u, v); poly(ctx, [p[0] - 0.5 * s, p[1] - 0.5 * s, p[0] + 0.5 * s, p[1] - 0.6 * s, p[0] + 0.5 * s, p[1] + 0.4 * s, p[0] - 0.5 * s, p[1] + 0.5 * s], '#8d836a'); } // glyph blocks
+  faceQuad(ctx, 'R', x - 0.6 * s, y + 0.6 * s, 3.4 * s, 12.6 * s, 0.05, 0.95, 0.93, 1, MY_STUCCO);
+}
+
+/** A ball court: two long masonry walls with a stone hoop set in the higher one, a plastered lane between and a little shrine at each end. */
+function myBallCourt(ctx: Ctx, x: number, y: number) {
+  const P = (a: number, b: number): [number, number] => [x + a * 8 + b * 4.6, y + a * 4 - b * 2.3];
+  const fl = (a0: number, a1: number, b0: number, b1: number, c: string) => poly(ctx, [...P(a0, b0), ...P(a1, b0), ...P(a1, b1), ...P(a0, b1)], c);
+  fl(-1.18, 1.18, -1.4, 1.4, MY_LIMED);
+  fl(-1.1, 1.1, -1.28, 1.28, MY_PLASTER);
+  fl(-0.86, -0.78, -1.28, 1.28, shade(MY_PLASTER, -0.22)); // the end-zone lines
+  fl(0.78, 0.86, -1.28, 1.28, shade(MY_PLASTER, -0.22));
+  const c = P(0, 0); ellipse(ctx, c[0], c[1], 1.4, 0.7, shade(MY_PLASTER, -0.26)); // the centre marker
+  // far wall (higher, with the hoop), then the near wall (lower), each sitting on a low sloping apron
+  const far = P(0, 1.42), near = P(0, -1.42);
+  myPrism(ctx, far[0], far[1], 19, 2.6, 4.6, MY_LIME);
+  fl(-0.96, 0.96, 1.0, 1.3, shade(MY_PLASTER, -0.05));
+  const hp = P(0.2, 1.1);
+  ctx.strokeStyle = ink(MY_JADEDK); ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.ellipse(hp[0], hp[1] - 3.2, 1.1, 1.6, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = ink(MY_JADEC); ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.ellipse(hp[0], hp[1] - 3.3, 0.8, 1.3, 0, 0, Math.PI * 2); ctx.stroke();
+  const b0 = P(0.85, 1.1); ellipse(ctx, b0[0], b0[1] - 0.8, 1.2, 0.7, MY_JADEDK); // the heavy rubber ball, mid-game
+  ellipse(ctx, x + 1.6, y - 0.8, 1, 0.9, '#3a2a1e'); ellipse(ctx, x + 1.4, y - 1, 0.5, 0.4, '#7a5a3e');
+  myPrism(ctx, near[0], near[1], 19, 2.6, 3.2, MY_LIME);
+  for (const a of [-1.1, 1.1]) { const e = P(a, 0); myPrism(ctx, e[0], e[1], 2.6, 3.4, 3.8, MY_LIMED); ellipse(ctx, e[0], e[1] - 4, 1.4, 0.8, MY_STUCCO); } // the end shrines
+}
+
+/** A range palace: a long, low platform of dressed stone with a row of corbel-vaulted doorways, a painted frieze and a flat roof. */
+function myPalace(ctx: Ctx, x: number, y: number, w = 14, doors = 4) {
+  box(ctx, x, y + 1, w + 2, 2.2, MY_LIMED, shade(MY_LIMED, 0.2)); // the platform
+  faceQuad(ctx, 'R', x, y + 1, w + 2, 2.2, 0.38, 0.62, 0, 1, '#eee6cc'); // a stair down its front
+  const h = 5.2;
+  box(ctx, x, y - 1.2, w, h, MY_PLASTER, shade(MY_PLASTER, 0.14));
+  for (let i = 0; i < doors; i++) myDoor(ctx, 'R', x, y - 1.2, w, h, 0.07 + i * (0.86 / doors), 0.07 + i * (0.86 / doors) + 0.86 / doors * 0.58, 0.68);
+  myDoor(ctx, 'L', x, y - 1.2, w, h, 0.4, 0.62, 0.66);
+  band(ctx, x, y - 1.2, w, h, 0.78, 1, MY_STUCCO);
+  for (let i = 0; i < 7; i++) faceQuad(ctx, 'R', x, y - 1.2, w, h, 0.06 + i * 0.13, 0.11 + i * 0.13, 0.84, 0.94, MY_JADEDK);
+  band(ctx, x, y - 1.2, w, h, 0, 0.07, shade(MY_PLASTER, -0.2));
+  box(ctx, x, y - 1.2 - h, w + 1.2, 1.2, shade(MY_LIME, -0.03), shade(MY_LIME, 0.28)); // the slab roof
+  box(ctx, x, y - 2.4 - h, w * 0.6, 1.6, MY_LIME, shade(MY_LIME, 0.28));
+  band(ctx, x, y - 2.4 - h, w * 0.6, 1.6, 0.3, 0.7, MY_STUCCO);
+}
+
+/** A thatched house (na) on a low stone platform: whitewashed walls, a steep palm-thatch roof and a jar at the door. */
+function myHouse(ctx: Ctx, x: number, y: number, roofC: string, v = 0) {
+  box(ctx, x, y + 1.6, 12.4, 2, MY_LIMED, shade(MY_LIMED, 0.22));
+  box(ctx, x, y - 0.4, 8.4, 4.4, MY_PLASTER, shade(MY_PLASTER, 0.14));
+  myDoor(ctx, 'R', x, y - 0.4, 8.4, 4.4, 0.34, 0.66, 0.7);
+  if (v) faceQuad(ctx, 'L', x, y - 0.4, 8.4, 4.4, 0.3, 0.5, 0.36, 0.7, '#3a2a1e'); // a window opening
+  band(ctx, x, y - 0.4, 8.4, 4.4, 0.06, 0.14, MY_TEAL);
+  // the roof, hip-ended and steep, layered thatch with a ragged eave and crossed ridge poles
+  const ry = y - 4.6;
+  poly(ctx, [x - 7.4, ry + 1.6, x, ry + 5.6, x, ry - 6.6], shade(roofC, 0.12));
+  poly(ctx, [x + 7.4, ry + 1.6, x, ry + 5.6, x, ry - 6.6], shade(roofC, -0.22));
+  for (let i = 0; i < 4; i++) { line(ctx, x - 6.4 + i * 1.2, ry + 1.7 + i * 0.5, x - 0.4, ry - 5 + i * 0.4 + 5.2 - i * 0.6, shade(roofC, -0.3), 0.4); line(ctx, x + 6.4 - i * 1.2, ry + 1.7 + i * 0.5, x + 0.4, ry - 5 + i * 0.4 + 5.2 - i * 0.6, shade(roofC, -0.4), 0.4); }
+  for (let i = 0; i < 7; i++) poly(ctx, [x - 7.4 + i * 1.06, ry + 1.6 + i * 0.5, x - 6.9 + i * 1.06, ry + 3 + i * 0.5, x - 6.3 + i * 1.06, ry + 1.9 + i * 0.5], shade(roofC, -0.32)); // fringe
+  for (let i = 0; i < 7; i++) poly(ctx, [x + 0.4 + i * 1.02, ry + 5.4 - i * 0.5, x + 0.9 + i * 1.02, ry + 6.4 - i * 0.5, x + 1.4 + i * 1.02, ry + 5.2 - i * 0.5], shade(roofC, -0.5));
+  line(ctx, x - 0.6, ry - 6.4, x + 0.8, ry - 8.4, MY_WOODC, 0.9); line(ctx, x + 1.4, ry - 6.6, x - 0.2, ry - 8.4, MY_WOODC, 0.9);
+  ellipse(ctx, x + 5.6, y + 2, 1.4, 1.8, '#a4552a'); ellipse(ctx, x + 5.3, y + 1.4, 0.6, 0.8, '#c9703a'); ellipse(ctx, x + 5.6, y + 0.3, 0.8, 0.4, '#3a2010'); // a water jar
+}
+
+/** A small shrine pyramid: two tiers, a stair and a tiny red-roofed chamber. */
+function myShrine(ctx: Ctx, x: number, y: number) {
+  const top = myPyramid(ctx, x, y + 2, 11, 2, 2.6, 0.2);
+  myTemple(ctx, x, top.y, 4.6, 3.2, 3, 1);
+}
+
+/** The capital's great pyramid: five stepped terraces, a broad stair, a temple, a tall roof comb, braziers of smoke and a jade banner. */
+function myGreatPyramid(ctx: Ctx, x: number, y: number) {
+  ellipse(ctx, x, y + 3, 15, 6.6, 'rgba(90,120,70,0.3)');
+  const top = myPyramid(ctx, x, y + 3, 24, 5, 2.6, 0.13);
+  // stone dais round the summit
+  myTemple(ctx, x, top.y, 9.6, 5, 5, 3);
+  for (const s of [-1, 1]) { // a lit brazier on each side of the top stair
+    const bx = x + s * 5.2, by = top.y + 1.6 - s * 0.8;
+    box(ctx, bx, by, 2, 1.6, MY_LIMED);
+    ellipse(ctx, bx, by - 2, 1.1, 0.7, '#3a2a1e');
+    poly(ctx, [bx - 0.7, by - 2.4, bx, by - 5, bx + 0.7, by - 2.4], '#f4a020');
+    poly(ctx, [bx - 0.3, by - 2.4, bx, by - 4, bx + 0.3, by - 2.4], '#ffe070');
+  }
+}
+
+/** The trees of the Yucatan and Petén: a ceiba with buttress roots, a palm, mahogany, cacao, a strangler fig and heliconia. */
+function myTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 6;
+  const leaf = P.forest, bark = P.trunk;
+  ctx.lineCap = 'round';
+  const curve = (x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, c: string) => {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
+    ctx.stroke();
+  };
+  const clump = (cx: number, cy: number, r: number, c: string) => {
+    ellipse(ctx, cx + 0.5 * k, cy + 0.8 * k, r * 1.02, r * 0.62, shade(c, -0.32));
+    ellipse(ctx, cx, cy, r, r * 0.62, c);
+    ellipse(ctx, cx - r * 0.25, cy - r * 0.22, r * 0.62, r * 0.38, shade(c, 0.18));
+    for (const [dx, dy] of [[-0.4, -0.2], [0.3, 0.1], [0.1, -0.4]] as const) ellipse(ctx, cx + dx * r, cy + dy * r, r * 0.16, r * 0.1, shade(c, 0.34));
+  };
+  // a frond: a curved midrib with two rows of narrow leaflets
+  const frond = (cx: number, cy: number, tx: number, ty: number, bend: number, c: string, w: number) => {
+    const mx = (cx + tx) / 2, my = (cy + ty) / 2 - bend;
+    curve(cx, cy, mx, my, tx, ty, w, shade(c, -0.25));
+    for (let i = 1; i <= 6; i++) {
+      const t = i / 7, u = 1 - t;
+      const px = u * u * cx + 2 * u * t * mx + t * t * tx, py = u * u * cy + 2 * u * t * my + t * t * ty;
+      const dx = 2 * u * (mx - cx) + 2 * t * (tx - mx), dy = 2 * u * (my - cy) + 2 * t * (ty - my), d = Math.hypot(dx, dy) || 1;
+      const nx = -dy / d, ny = dx / d, ll = (1 - t * 0.5) * 4.2 * k;
+      for (const sg of [-1, 1]) line(ctx, px, py, px + nx * ll * sg + dx / d * 1.2 * k, py + ny * ll * sg + dy / d * 1.2 * k + ll * 0.35, i % 2 ? c : shade(c, 0.16), 1 * k);
+    }
+  };
+  if (v === 0) {
+    // the ceiba: a sacred giant, a smooth pale trunk on great flanged buttresses, thorny knobs, an umbrella of branches
+    const tk = '#a49a80';
+    ellipse(ctx, x, y + 1.2 * k, 8.4 * k, 2.4 * k, shade(tk, -0.42));
+    for (const [dx, w, top] of [[-1, 8.6, 12], [1, 9, 11], [-1, 4.8, 8], [1, 5, 7]] as const) { // buttress flanges
+      poly(ctx, [x + dx * 1.6 * k, y - top * k, x + dx * w * k, y + 1.4 * k, x + dx * 1.2 * k, y + 2 * k], dx < 0 ? shade(tk, 0.14) : shade(tk, -0.34));
+      line(ctx, x + dx * 1.7 * k, y - (top - 1.2) * k, x + dx * (w - 0.8) * k, y + 1 * k, dx < 0 ? shade(tk, 0.32) : shade(tk, -0.5), 0.5 * k);
+    }
+    poly(ctx, [x - 3.2 * k, y + 0.8 * k, x - 2.2 * k, y - 12 * k, x - 1.6 * k, y - 19 * k, x, y - 19.4 * k, x, y + 1.4 * k], shade(tk, 0.1));
+    poly(ctx, [x + 3.2 * k, y + 0.8 * k, x + 2.2 * k, y - 12 * k, x + 1.6 * k, y - 19 * k, x, y - 19.4 * k, x, y + 1.4 * k], shade(tk, -0.22));
+    ellipse(ctx, x, y + 1 * k, 5.6 * k, 1.8 * k, shade(tk, -0.4));
+    for (const [dx, dy] of [[-1.2, -4], [1.4, -7], [-0.8, -10.4], [1, -13.6], [-0.6, -16]] as const) poly(ctx, [x + (dx - 0.6) * k, y + (dy + 1) * k, x + dx * k, y + (dy - 1) * k, x + (dx + 0.6) * k, y + (dy + 1) * k], shade(tk, 0.28)); // conical thorns
+    for (const [dx, dy] of [[-7.6, -9], [8, -8.6], [-3.4, -12], [3.8, -11.4]] as const) curve(x, y - 18 * k, x + dx * 0.4 * k, y - 18 * k + dy * 0.4 * k - 2 * k, x + dx * k, y - 18 * k + dy * k * 0.5, 1.7 * k, tk); // limbs
+    for (const [ex, ey, r] of [[-8.4, -25, 5.2], [8.6, -24.4, 5.2], [0, -28, 6], [-4, -22.6, 4.6], [4.6, -22.2, 4.6]] as const) clump(x + ex * k, y + ey * k, r * k, ey < -27 ? shade(leaf, 0.1) : leaf);
+    for (const [ex, ey] of [[-5, -18.6], [5.4, -18.2], [0.6, -20.4]] as const) { line(ctx, x + ex * k, y + ey * k, x + ex * k, y + (ey + 2.4) * k, '#4a3a26', 0.35 * k); ellipse(ctx, x + ex * k, y + (ey + 3.6) * k, 0.7 * k, 1.5 * k, '#d8d0b0'); } // silky seed pods
+    return;
+  }
+  if (v === 1 || v === 5) {
+    // royal palms with a smooth, ringed grey trunk and a green crownshaft; the heliconia variant adds red-and-yellow flower spikes below
+    const mk = (px: number, py: number, h: number, lean: number, s: number) => {
+      const tx = px + lean * k, ty = py - h * k;
+      curve(px, py, px + lean * 0.2 * k, py - h * 0.55 * k, tx, ty, 2.4 * s * k, '#8a7c66');
+      curve(px - 0.5 * k, py, px + lean * 0.2 * k - 0.5 * k, py - h * 0.55 * k, tx - 0.5 * k, ty, 0.8 * k, '#b4a88c');
+      for (let i = 1; i < 7; i++) { const t = i / 7; line(ctx, px + lean * t * t * k - 1.2 * s * k, py - h * t * k, px + lean * t * t * k + 1.2 * s * k, py - h * t * k + 0.3 * k, '#5a4a3a', 0.4 * k); }
+      poly(ctx, [tx - 1.1 * k, ty + 3 * k, tx + 1.1 * k, ty + 3 * k, tx + 0.8 * k, ty - 0.4 * k, tx - 0.8 * k, ty - 0.4 * k], '#6aaa4a'); // crownshaft
+      for (let i = 0; i < 9; i++) {
+        const a = -Math.PI / 2 + (i - 4) * 0.5;
+        frond(tx, ty, tx + Math.cos(a) * 13 * s * k, ty + Math.sin(a) * 5 * s * k + 5.4 * s * k, 4.4 * s * k, i % 2 ? leaf : shade(leaf, 0.12), 1.2 * k);
+      }
+      for (const dx of [-1, 1]) ellipse(ctx, tx + dx * 0.9 * k, ty + 2.8 * k, 0.7 * k, 0.8 * k, '#7a5a2a'); // fruit clusters
+    };
+    if (v === 1) mk(x, y, 20, 2.6, 1);
+    else {
+      mk(x - 3.6 * k, y + 0.6 * k, 15, -1.6, 0.9);
+      mk(x + 4.4 * k, y, 10, 1.8, 0.8);
+      for (const [dx, dy, c] of [[-1.4, -0.4, '#d8402a'], [1.4, 0.4, '#e8402a'], [0.2, 1.4, '#e8a020']] as const) { // heliconia
+        line(ctx, x + dx * k, y + dy * k, x + dx * k + 0.4 * k, y + (dy - 6) * k, '#3f8a3a', 0.9 * k);
+        for (let i = 0; i < 4; i++) poly(ctx, [x + (dx + 0.4) * k, y + (dy - 3 - i * 1.4) * k, x + (dx + 2.4 + (i % 2 ? -1 : 0.4)) * k, y + (dy - 3.8 - i * 1.4) * k, x + (dx + 0.4) * k, y + (dy - 4.6 - i * 1.4) * k], i % 2 ? c : shade(c, 0.2));
+      }
+    }
+    return;
+  }
+  if (v === 2) {
+    // mahogany: a straight red-brown trunk with small flares, a dense high dome, hanging woody seed pods
+    const tk = '#6a3a26';
+    poly(ctx, [x - 3.4 * k, y + 0.6 * k, x - 1.5 * k, y - 8 * k, x - 1.3 * k, y - 17 * k, x, y - 17.4 * k, x, y + 1.2 * k], shade(tk, 0.1));
+    poly(ctx, [x + 3.4 * k, y + 0.6 * k, x + 1.5 * k, y - 8 * k, x + 1.3 * k, y - 17 * k, x, y - 17.4 * k, x, y + 1.2 * k], shade(tk, -0.25));
+    for (const dy of [-3, -7, -11, -14.4]) line(ctx, x - 1.2 * k, y + dy * k, x + 1.2 * k, y + (dy + 0.6) * k, shade(tk, -0.4), 0.4 * k);
+    ellipse(ctx, x, y + 0.8 * k, 3.6 * k, 1.4 * k, shade(tk, -0.35));
+    for (const [dx, dy] of [[-5, -9], [5.6, -9.6], [0.4, -12]] as const) curve(x, y - 15 * k, x + dx * 0.4 * k, y - 15 * k + dy * 0.4 * k, x + dx * k, y - 15 * k + dy * 0.6 * k, 1.4 * k, tk);
+    for (const [ex, ey, r] of [[-7.4, -20, 5], [7.2, -19.6, 5], [0, -25, 6.2], [-3.6, -18.6, 4.8], [4, -18.4, 4.8], [-1, -21.6, 5.4]] as const) clump(x + ex * k, y + ey * k, r * k, ey < -24 ? shade(leaf, 0.1) : shade(leaf, -0.04));
+    for (const [ex, ey] of [[-4, -16], [5, -15.6], [0.6, -17]] as const) { line(ctx, x + ex * k, y + ey * k, x + ex * k, y + (ey + 1.8) * k, '#4a3a26', 0.4 * k); ellipse(ctx, x + ex * k, y + (ey + 3) * k, 0.8 * k, 1.3 * k, '#7a4a2a'); }
+    return;
+  }
+  if (v === 3) {
+    // cacao: a low, spreading tree of big glossy leaves, with ridged pods growing straight out of the trunk
+    curve(x, y, x - 0.6 * k, y - 4 * k, x + 0.4 * k, y - 8 * k, 2 * k, '#5a4230');
+    curve(x + 0.4 * k, y - 8 * k, x - 3 * k, y - 9 * k, x - 5 * k, y - 10.6 * k, 1.1 * k, '#5a4230');
+    curve(x + 0.4 * k, y - 8 * k, x + 3 * k, y - 9.6 * k, x + 5.4 * k, y - 10.4 * k, 1.1 * k, '#5a4230');
+    for (let i = 0; i < 24; i++) { // big oval leaves
+      const a = i * 2.4, r = 2 + (i % 4) * 1.1, lx = x + Math.cos(a) * r * 1.5 * k, ly = y - 12.6 * k + Math.sin(a) * r * 0.7 * k - (i % 3) * 1.1 * k;
+      ctx.save(); ctx.translate(lx, ly); ctx.rotate(Math.cos(a) * 0.7);
+      ellipse(ctx, 0, 0, 2.6 * k, 1.3 * k, shade(leaf, i % 2 ? 0.08 : -0.12));
+      line(ctx, -2.2 * k, 0, 2.2 * k, 0, shade(leaf, 0.3), 0.3 * k);
+      ctx.restore();
+    }
+    for (const [dx, dy, c] of [[-0.9, -3.4, '#e0a52e'], [0.8, -5.2, '#c0392b'], [-0.6, -6.4, '#e0a52e'], [-4.4, -9.6, '#c0392b'], [4.6, -9.4, '#e0a52e'], [1, -2.2, '#a4552a']] as const) {
+      ellipse(ctx, x + dx * k, y + dy * k, 1.1 * k, 1.9 * k, shade(c, -0.3));
+      ellipse(ctx, x + (dx - 0.1) * k, y + (dy - 0.1) * k, 0.95 * k, 1.7 * k, c);
+      line(ctx, x + (dx - 0.4) * k, y + (dy - 1.3) * k, x + (dx - 0.4) * k, y + (dy + 1.3) * k, shade(c, -0.25), 0.3 * k);
+      poly(ctx, [x + (dx - 0.6) * k, y + (dy + 1.6) * k, x + (dx + 0.1) * k, y + (dy + 2.6) * k, x + (dx + 0.7) * k, y + (dy + 1.5) * k], shade(c, -0.2));
+    }
+    return;
+  }
+  // v === 4: a strangler fig: a lattice of twisting aerial roots for a trunk, a big canopy, and curtains of hanging vines and orchids
+  const wood = shade(bark, 0.14);
+  for (const [dx, w] of [[-3.6, 1.7], [-1.6, 1.9], [0.4, 2], [2.4, 1.8], [4, 1.5]] as const) curve(x + dx * k, y + 0.4 * k, x + (dx + (dx < 0 ? 1.4 : -1.4)) * k, y - 8 * k, x + dx * 0.4 * k, y - 16 * k, w * k, dx % 2 ? wood : shade(bark, -0.08));
+  for (const [dx, dy] of [[-2.6, -5], [1.6, -8], [-0.6, -11], [3, -12.6]] as const) curve(x + (dx - 2) * k, y + dy * k, x + dx * k, y + (dy - 1.2) * k, x + (dx + 2) * k, y + dy * k, 0.9 * k, wood);
+  ellipse(ctx, x, y + 1 * k, 6 * k, 1.8 * k, shade(bark, -0.3));
+  for (const [ex, ey, r] of [[-8, -20, 5], [8, -20.4, 5.2], [0, -24.6, 6.6], [-4, -18, 4.6], [4.6, -18, 4.6]] as const) clump(x + ex * k, y + ey * k, r * k, shade(leaf, ey < -24 ? 0.06 : -0.06));
+  for (const [ex, len] of [[-9, 11], [-6, 8], [-2.4, 12], [3, 9], [7, 12], [10, 7]] as const) { // hanging vines
+    const vy = y - 17 * k;
+    line(ctx, x + ex * k, vy, x + (ex + 0.6) * k, vy + len * k, '#3f6a30', 0.6 * k);
+    for (let i = 1; i < 4; i++) ellipse(ctx, x + (ex + 0.3 + (i % 2) * 0.6) * k, vy + len * i / 4 * k, 0.9 * k, 0.55 * k, shade(leaf, i % 2 ? 0.2 : 0));
+  }
+  for (const [ex, ey] of [[-5, -15.6], [4.6, -14.8]] as const) { ellipse(ctx, x + ex * k, y + ey * k, 1.2 * k, 0.8 * k, '#e070b0'); ellipse(ctx, x + ex * k, y + (ey - 0.2) * k, 0.5 * k, 0.4 * k, '#fff0a0'); } // wild orchids
+}
+
+/** The Maya city: stepped limestone pyramids topped by temples, palaces, ball courts and carved stelae, among thatched houses. */
+function myBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, capital: boolean) {
+  if (big && capital) return myGreatPyramid(ctx, x, y);
+  if (big) {
+    // a temple pyramid of three terraces, with a stela at its foot
+    const top = myPyramid(ctx, x, y + 3, 17, 3, 2.8, 0.17);
+    myTemple(ctx, x, top.y, 7, 4.2, 4, 3);
+    myStela(ctx, x - 10.6, y + 6, 0.5);
+    return;
+  }
+  const spot: Record<string, number> = { '-10,2': 3, '10,2': 0, '0,8': 0, '-6,-8': 4, '7,-7': 2, '-14,-3': 1, '14,-2': 4 };
+  const v = spot[`${Math.round(x)},${Math.round(y)}`] ?? ((Math.round(x) * 7 + Math.round(y) * 3) % 5 + 5) % 5;
+  switch (v) {
+    case 1: return myStela(ctx, x, y);
+    case 2: return myBallCourt(ctx, x, y + 1);
+    case 3: return myPalace(ctx, x, y, 13, 4);
+    case 4: return myShrine(ctx, x, y);
+    default: return myHouse(ctx, x, y, roofC, Math.abs(Math.round(x)) % 2);
+  }
+}
