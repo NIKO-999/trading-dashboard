@@ -544,6 +544,7 @@ function drawForest(ctx: Ctx, t: Tile, cx: number, cy: number, P: BiomePalette) 
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
+  if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
       // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
@@ -870,10 +871,228 @@ function drawCity(ctx: Ctx, s: GameState, city: City, x: number, y: number) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------- Inuit dwellings and scrub
+
+
+/** A snow-block dome (igloo): two lit-and-shaded halves, staggered courses of blocks, an ice window and a tunnel entrance. */
+function drawIgloo(ctx: Ctx, x: number, y: number, r: number, snow: string, tunnel: boolean, window = true) {
+  const hgt = r * 0.95, fl = r * 0.46;
+  ellipse(ctx, x + 1.5, y + 1.2, r * 1.08, fl * 1.05, 'rgba(60,90,120,0.22)');
+  ellipse(ctx, x, y, r, fl, shade(snow, -0.2)); // the trampled base ring
+  ctx.beginPath(); // lit left half of the dome
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - r, y);
+  ctx.ellipse(x, y, r, hgt, 0, Math.PI, Math.PI * 1.5);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(snow, 0.02));
+  ctx.fill();
+  ctx.beginPath(); // shaded right half
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + r, y);
+  ctx.ellipse(x, y, r, hgt, 0, 0, -Math.PI / 2, true);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(snow, -0.16));
+  ctx.fill();
+  ctx.beginPath(); // the front lip that rounds the base
+  ctx.ellipse(x, y, r, fl, 0, 0, Math.PI);
+  ctx.fillStyle = ink(shade(snow, -0.05));
+  ctx.fill();
+  if (tunnel) {
+    // a low barrel-vaulted entrance tunnel poking out front and to the right
+    const tx = x + r * 0.62, ty = y + fl * 0.86, tr = r * 0.44;
+    ctx.beginPath();
+    ctx.moveTo(tx - tr, ty);
+    ctx.lineTo(tx - tr * 0.9, ty - tr * 0.2);
+    ctx.ellipse(tx, ty - tr * 0.2, tr * 0.9, tr * 0.9, 0, Math.PI, 0);
+    ctx.lineTo(tx + tr, ty);
+    ctx.closePath();
+    ctx.fillStyle = ink(shade(snow, -0.06));
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx + tr, ty);
+    ctx.lineTo(tx + tr * 0.9, ty - tr * 0.2);
+    ctx.ellipse(tx, ty - tr * 0.2, tr * 0.9, tr * 0.9, 0, 0, -Math.PI / 2, true);
+    ctx.closePath();
+    ctx.fillStyle = ink(shade(snow, -0.2));
+    ctx.fill();
+    ellipse(ctx, tx, ty, tr, tr * 0.5, shade(snow, -0.12));
+    ellipse(ctx, tx, ty - tr * 0.1, tr * 0.6, tr * 0.62, '#1b2632'); // the doorway
+    ellipse(ctx, tx, ty + tr * 0.1, tr * 0.6, tr * 0.28, '#3a4a5a');
+  }
+  // courses of snow blocks, each row offset from the last
+  ctx.strokeStyle = ink('#aec4d6');
+  ctx.lineWidth = 0.55;
+  const rows = r > 7 ? 4 : 3;
+  for (let j = 0; j < rows; j++) {
+    const t0 = j / (rows + 0.6), t1 = (j + 1) / (rows + 0.6);
+    const w0 = r * Math.sqrt(1 - t0 * t0), w1 = r * Math.sqrt(1 - t1 * t1);
+    const y0 = y - t0 * hgt, y1 = y - t1 * hgt;
+    ctx.beginPath();
+    ctx.ellipse(x, y1, w1, w1 * 0.46, 0, 0.04 * Math.PI, 0.96 * Math.PI);
+    ctx.stroke();
+    const n = 4 + (r > 7 ? 1 : 0) - j;
+    if (n < 1) continue;
+    for (let m = 0; m <= n; m++) {
+      const a = Math.PI * ((m + (j % 2 ? 0.5 : 0)) / n);
+      if (a > Math.PI || a < 0.02) continue;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a) * w0, y0 + Math.sin(a) * w0 * 0.46);
+      ctx.lineTo(x + Math.cos(a) * w1, y1 + Math.sin(a) * w1 * 0.46);
+      ctx.stroke();
+    }
+  }
+  poly(ctx, [x - r * 0.24, y - hgt + 0.4, x + r * 0.05, y - hgt - 1.4, x + r * 0.26, y - hgt + 0.6, x, y - hgt + r * 0.14], shade(snow, 0.1)); // the capstone
+  ellipse(ctx, x - r * 0.5, y - hgt * 0.42, r * 0.34, r * 0.16, shade(snow, 0.16)); // sunlit sheen
+  if (window) {
+    ellipse(ctx, x - r * 0.42, y - hgt * 0.56, r * 0.2, r * 0.22, '#7fbfe0'); // an ice-slab window glowing from the lamp within
+    ellipse(ctx, x - r * 0.46, y - hgt * 0.62, r * 0.08, r * 0.09, '#eafaff');
+    ctx.strokeStyle = ink('#8eaac0');
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.42, y - hgt * 0.56, r * 0.2, r * 0.22, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+/** An inuksuk: stacked stones in the shape of a person, with a long arm-slab. */
+function drawInuksuk(ctx: Ctx, x: number, y: number, s: number) {
+  ellipse(ctx, x + 0.6 * s, y + 0.6 * s, 4.6 * s, 1.6 * s, 'rgba(50,80,110,0.2)');
+  box(ctx, x - 1.8 * s, y, 3 * s, 2.8 * s, '#8b98a3');
+  box(ctx, x + 1.8 * s, y + 0.2 * s, 3 * s, 2.4 * s, '#a3afb9');
+  box(ctx, x, y - 2.6 * s, 3.4 * s, 3.2 * s, '#7d8b96');
+  box(ctx, x, y - 5.6 * s, 3 * s, 3 * s, '#9aa7b2');
+  box(ctx, x, y - 8.2 * s, 8.4 * s, 2 * s, '#8b98a3'); // the arms
+  box(ctx, x + 0.2 * s, y - 10.4 * s, 2.4 * s, 2.4 * s, '#a9b5bf'); // the head-stone
+  poly(ctx, [x - 2.6 * s, y - 12.4 * s, x + 0.6 * s, y - 13.4 * s, x + 1.4 * s, y - 12 * s], '#ffffff'); // a cap of snow
+}
+
+/** A turf-and-snow qarmaq with a whale-rib doorway and a hide door flap. */
+function drawSodHouse(ctx: Ctx, x: number, y: number, w: number, snow: string) {
+  ellipse(ctx, x + 1.5, y + 1.2, w * 0.66, w * 0.3, 'rgba(60,90,120,0.2)');
+  box(ctx, x, y, w, 3.6, '#6b5a40', '#7c8a52'); // turf walls with a moss top
+  // the roof: a low turf mound, thick snow on top
+  const rh = 6;
+  poly(ctx, [x - w / 2, y - 3.6, x, y - 3.6 + w / 4, x, y - 3.6 - rh], shade('#7c8a52', 0.02));
+  poly(ctx, [x + w / 2, y - 3.6, x, y - 3.6 + w / 4, x, y - 3.6 - rh], shade('#7c8a52', -0.22));
+  poly(ctx, [x - w / 2 + 1, y - 3.6 - 0.6, x, y - 3.6 - rh, x + 0.4, y - 3.6 - rh + 1.6, x - w * 0.16, y - 3.6 - rh * 0.4], snow);
+  poly(ctx, [x + w / 2 - 1, y - 3.6 - 0.6, x, y - 3.6 - rh, x, y - 3.6 - rh + 1.8, x + w * 0.26, y - 3.6 - rh * 0.34], shade(snow, -0.14));
+  for (const [dx, dy] of [[-3, -3.4], [1.6, -2.6], [4, -1.2]] as const) line(ctx, x + dx, y + dy, x + dx - 1.6, y + dy - 3, '#e8e0c8', 0.9); // rafter ribs sticking out through the roof
+  // the doorway: a rib arch with a dark opening and a red-banded hide flap
+  ellipse(ctx, x + w * 0.3, y + w * 0.02, 2.2, 2.4, '#1b2632');
+  ctx.strokeStyle = ink('#efe8d2');
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x + w * 0.3, y + w * 0.02, 2.5, 2.9, 0, Math.PI, 0);
+  ctx.stroke();
+  poly(ctx, [x + w * 0.3 - 3, y + 1.6, x + w * 0.3 + 3, y + 2.2, x + w * 0.3 + 2.4, y + 3.6, x + w * 0.3 - 2.6, y + 3.4], '#a48a68');
+  line(ctx, x + w * 0.3 - 2.8, y + 2.2, x + w * 0.3 + 2.8, y + 2.6, '#c8372d', 0.7);
+}
+
+/** A skin tent (tupiq) of pale hide on crossed poles, with a rack of drying fish beside it. */
+function drawSkinTent(ctx: Ctx, x: number, y: number, r: number, snow: string) {
+  ellipse(ctx, x + 1.4, y + 1, r * 1.1, r * 0.5, 'rgba(60,90,120,0.2)');
+  const top = y - r * 1.35;
+  poly(ctx, [x - r, y, x, y + r * 0.45, x + 0.4, top], '#d8ccb0');
+  poly(ctx, [x + r, y, x, y + r * 0.45, x + 0.4, top], '#a99c7e');
+  poly(ctx, [x - r, y, x - r * 0.4, y + r * 0.34, x + 0.4, top], '#e5dcc4'); // lit skin panel
+  line(ctx, x - r * 0.5, y + r * 0.2, x + 0.4, top, '#8a7c62', 0.6); // seams
+  line(ctx, x + r * 0.5, y + r * 0.2, x + 0.4, top, '#7a6c54', 0.6);
+  line(ctx, x - r * 0.9, y - r * 0.44, x + r * 0.9, y - r * 0.44, '#c8372d', 0.9); // a painted band
+  for (const s of [-1, 1]) line(ctx, x + 0.4 + s * 0.4, top - 0.4, x + 0.4 + s * 3.2, top - 5, '#8a6a44', 1.1); // pole tips crossing at the apex
+  poly(ctx, [x - 1.6, y + r * 0.44, x + 1, y + r * 0.46, x + 1.6, y - r * 0.24, x - 0.4, y - r * 0.34], '#2a3846'); // the door flap, tied back
+  poly(ctx, [x - r * 0.9, y - r * 0.1, x - r * 0.6, y + r * 0.2, x - r * 0.3, y - r * 0.1], snow); // snow drift
+  // the drying rack: two poles under a rail, hung with split fish
+  const rx = x + r * 1.5, ry = y + 2.6;
+  for (const s of [-1, 1]) line(ctx, rx + s * 4.6, ry, rx + s * 3, ry - 7.4, '#7a5a3a', 1.1);
+  line(ctx, rx - 4.6, ry - 6.8, rx + 4.4, ry - 7.6, '#8a6a44', 1.2);
+  for (const [fx, c] of [[-3, '#e8845a'], [-0.6, '#b9c8d4'], [1.8, '#e8845a'], [3.6, '#b9c8d4']] as const) {
+    line(ctx, rx + fx, ry - 7.2, rx + fx, ry - 6, '#5a4632', 0.5);
+    poly(ctx, [rx + fx, ry - 6.2, rx + fx - 1, ry - 3.6, rx + fx, ry - 1.4, rx + fx + 1, ry - 3.6], c);
+    poly(ctx, [rx + fx, ry - 1.4, rx + fx - 0.9, ry - 0.4, rx + fx + 0.9, ry - 0.4], shade(c, -0.2));
+  }
+}
+
+/** A whale-rib arch: two great ribs leaning together, lashed at the top with sinew. */
+function drawBoneArch(ctx: Ctx, x: number, y: number, s: number) {
+  for (const [c, w, o] of [['#b8ad90', 2.4, 0], ['#efe8d2', 1.5, -0.5]] as const) {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w * s;
+    ctx.lineCap = 'round';
+    for (const d of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(x + d * 6 * s + o, y);
+      ctx.quadraticCurveTo(x + d * 5.6 * s + o, y - 13 * s, x + d * 0.6 * s + o, y - 15 * s);
+      ctx.stroke();
+    }
+  }
+  ellipse(ctx, x, y - 14.6 * s, 1.5 * s, 1.1 * s, '#c8372d'); // sinew lashing
+  ellipse(ctx, x - 6 * s, y + 0.4 * s, 1.5 * s, 0.8 * s, '#a89e82');
+  ellipse(ctx, x + 6 * s, y + 0.4 * s, 1.5 * s, 0.8 * s, '#a89e82');
+}
+
+/** Sparse subarctic scrub: stunted black spruce, willow thickets and dwarf birch, snow clinging to them. */
+function drawTundraTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const kind = variant % 3;
+  if (kind === 0) {
+    // a stunted black spruce: a thin, slightly leaning trunk under ragged tiers with snow on their upper sides
+    const lean = ((variant % 4) - 1.5) * 0.35 * k;
+    line(ctx, x, y, x + lean, y - 6 * k, P.trunk, 1.8 * k);
+    for (let i = 0; i < 4; i++) {
+      const by = y - (2.4 + i * 3.7) * k, hw = (5.4 - i * 1.15) * k, th = 5.6 * k, cx = x + lean * (0.4 + i * 0.25);
+      poly(ctx, [cx, by - th, cx - hw, by, cx - hw * 0.5, by - 0.8 * k, cx - hw * 0.3, by + 0.9 * k, cx, by + 0.4 * k], shade(P.forest, 0.1));
+      poly(ctx, [cx, by - th, cx + hw, by, cx + hw * 0.55, by - 0.6 * k, cx + hw * 0.25, by + 1.1 * k, cx, by + 0.4 * k], shade(P.forest, -0.26));
+      poly(ctx, [cx, by - th, cx - hw * 0.62, by - th * 0.4, cx - hw * 0.1, by - th * 0.5, cx + hw * 0.4, by - th * 0.34], '#ffffff'); // snow on the boughs
+    }
+    const tx = x + lean * 1.25, ty = y - 17.4 * k;
+    poly(ctx, [tx, ty - 2.6 * k, tx - 0.9 * k, ty + 0.4 * k, tx + 0.9 * k, ty + 0.4 * k], shade(P.forest, -0.1));
+    return;
+  }
+  if (kind === 1) {
+    // willow scrub: a thicket of thin red-brown stems, bare but for a few grey-green leaves and clumps of snow
+    for (let i = 0; i < 7; i++) {
+      const a = -Math.PI / 2 + (i - 3) * 0.3;
+      const len = (8.4 - Math.abs(i - 3) * 0.9) * k;
+      const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len * 1.05;
+      line(ctx, x + (i - 3) * 0.3 * k, y, ex, ey, i % 2 ? '#8a4a3a' : '#6a3a2e', 0.85 * k);
+      line(ctx, (x + ex) / 2, (y + ey) / 2, ex + (i % 2 ? 2.4 : -2.4) * k, ey + 1.6 * k, '#8a4a3a', 0.5 * k);
+      for (const t of [0.5, 0.8, 1]) ellipse(ctx, x + (ex - x) * t + (i - 3) * 0.2 * k, y + (ey - y) * t, 0.9 * k, 0.6 * k, i % 2 ? '#9db08a' : '#b8c49c');
+    }
+    ellipse(ctx, x, y - 0.4 * k, 4.4 * k, 1.4 * k, '#f7fbfd');
+    ellipse(ctx, x - 2.4 * k, y - 5.4 * k, 1.6 * k, 0.8 * k, '#ffffff');
+    return;
+  }
+  // dwarf birch: a low, knee-high thicket of coppery leaves on pale stems, snow lying in its crown
+  for (const dx of [-3, -1, 1.4, 3.2]) line(ctx, x + dx * k, y, x + dx * 1.3 * k, y - 2.6 * k, '#d8d0c0', 0.8 * k);
+  ellipse(ctx, x + 3 * k, y - 3.2 * k, 3 * k, 2.2 * k, '#8e4f24');
+  ellipse(ctx, x - 3 * k, y - 3.4 * k, 3.2 * k, 2.4 * k, '#a8622c');
+  ellipse(ctx, x, y - 4.8 * k, 4 * k, 2.8 * k, '#c8843a');
+  ellipse(ctx, x - 1.2 * k, y - 5.6 * k, 2.4 * k, 1.5 * k, '#dea04a');
+  for (const [dx, dy] of [[-3.6, -3.4], [1.4, -5.6], [3.6, -3], [-0.8, -3], [-1.8, -6]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.8 * k, 0.7 * k, '#e9b95e');
+  ellipse(ctx, x + 0.4 * k, y - 7 * k, 2.4 * k, 0.8 * k, '#ffffff');
+  ellipse(ctx, x - 3.4 * k, y - 0.4 * k, 2.6 * k, 0.8 * k, '#f7fbfd');
+}
+
 function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boolean, roofC: string, color: string, capital: boolean) {
   const w = big ? 16 : 11;
   const h = big ? 13 : 8;
   switch (tribe) {
+    case 'inuit': {
+      if (big) {
+        // the great snow house: a tall dome with a tunnel, a smaller dome joined behind it, an inuksuk and a smoke-hole plume
+        drawIgloo(ctx, x + 5, y - 3.4, 5.4, roofC, false, false);
+        drawIgloo(ctx, x, y, 9.4, roofC, true);
+        drawInuksuk(ctx, x - 12, y + 1.6, 0.85);
+        line(ctx, x + 1, y - 9.6, x + 1.4, y - 13, 'rgba(120,140,160,0.35)', 1.4); // lamp smoke
+        ellipse(ctx, x + 1.8, y - 14, 1.6, 1.2, 'rgba(150,165,180,0.28)');
+      } else {
+        const v = Math.abs(Math.round(x * 3 + y)) % 3;
+        if (v === 0) drawIgloo(ctx, x, y, 6.6, roofC, true);
+        else if (v === 1) { drawSodHouse(ctx, x, y, 11, roofC); drawBoneArch(ctx, x + 6, y + 3.4, 0.5); }
+        else drawSkinTent(ctx, x - 2, y, 6, roofC);
+      }
+      break;
+    }
     case 'egypt':
       box(ctx, x, y, w, h, '#ecdcaa');
       if (big) {

@@ -96,7 +96,7 @@ function hilt(ctx: Ctx, x: number, y: number, dx: number, dy: number, k: number,
 }
 
 /** The metal an empire's armour is made of. */
-const metalOf = (tribe: TribeId) => (tribe === 'egypt' || tribe === 'greeks' ? BRONZE : tribe === 'japan' ? '#3a3a48' : STEEL);
+const metalOf = (tribe: TribeId) => (tribe === 'egypt' || tribe === 'greeks' ? BRONZE : tribe === 'japan' ? '#3a3a48' : tribe === 'inuit' ? '#e8e0c8' : STEEL);
 
 /** Units that wear real armour: they get shoulder plates, greaves, gloves and bracers. */
 const isHeavy = (kind: UnitKind) =>
@@ -125,13 +125,14 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'greeks': torso = '#f4f1ea'; legs = L.skin; break;
     case 'zulu': torso = L.skin; legs = L.skin; break;
     case 'persia': torso = T.color; legs = P_TROUSER; sleeves = kind === 'immortal' || kind === 'giant' ? P_DPINK : '#2f9bb9'; break;
+    case 'inuit': torso = kind === 'harpooner' ? T.colorDark : kind === 'swordsman' ? '#5a3e2b' : kind === 'giant' ? '#eef3f6' : T.color; legs = '#5a3e2b'; sleeves = torso; break;
   }
   const hip = seated ? y : y - 5 * k;
   const tw = 10 * k, th = 8.5 * k;
 
   // A cloak hangs behind the tallest ranks, in the empire's colour with a darker lining.
   if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal') {
-    const cape = kind === 'giant' ? GOLD : T.color;
+    const cape = tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : kind === 'giant' ? GOLD : T.color;
     const top = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cape, -0.22));
     poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(cape, 0.02));
@@ -141,6 +142,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
       poly(ctx, [x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7.6 * k, hip + 6.2 * k, x - 5.2 * k, top + 3.6 * k], P_TURQ);
       for (const t of [0.25, 0.55, 0.85]) ellipse(ctx, x - 6.2 * k - t * 2.2 * k, top + 3.6 * k + t * (hip + 2.6 * k - top), 0.6 * k, 0.6 * k, GOLD);
     }
+    if (tribe === 'inuit') for (let i = 0; i < 4; i++) poly(ctx, [x - 9.4 * k + i * 1.9 * k, hip + 6.5 * k - i * 0.4 * k, x - 8.5 * k + i * 1.9 * k, hip + 9.6 * k - i * 0.4 * k, x - 7.4 * k + i * 1.9 * k, hip + 6.3 * k - i * 0.4 * k], i % 2 ? '#c5d4de' : '#f4f8fb'); // hanging fur points
     if (tribe === 'aztec') for (let i = 0; i < 3; i++) poly(ctx, [x - 9.3 * k + i * 2.4 * k, hip + 6.6 * k - i * 0.5 * k, x - 8.3 * k + i * 2.4 * k, hip + 10 * k - i * 0.5 * k, x - 7 * k + i * 2.4 * k, hip + 6.3 * k - i * 0.5 * k], ['#1faa6b', '#d6453b', '#1faa9b'][i]); // feather fringe
   }
 
@@ -174,8 +176,8 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (!seated) {
     box(ctx, x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, legs);
     box(ctx, x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, legs);
-    const boots = tribe === 'pirates' || tribe === 'mongols' || tribe === 'vikings';
-    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'zulu' ? L.skin : tribe === 'japan' ? '#e2dccb' : '#6b4424';
+    const boots = tribe === 'pirates' || tribe === 'mongols' || tribe === 'vikings' || tribe === 'inuit';
+    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'inuit' ? '#3a2a20' : tribe === 'zulu' ? L.skin : tribe === 'japan' ? '#e2dccb' : '#6b4424';
     const sv = boots ? 0.45 : 0.2;
     const leg = [[-2.2, -0.3, 'L'], [2.2, 0.7, 'R'], [2.2, 0.7, 'L']] as const;
     for (const [dx, dy, f] of leg) {
@@ -186,6 +188,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
       if (tribe === 'japan' && !heavy) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.42, 0.56, sv + 0.1, 0.9, shade(legs, -0.28)); // hakama pleat
       if (tribe === 'japan') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, sv - 0.02, sv + 0.02, '#8a3a2a'); // waraji straps
       if (tribe === 'mongols') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.3, 0.7, sv + 0.1, sv + 0.42, '#c8372d'); // embroidered boot panel
+      if (tribe === 'inuit') inuitLeg(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, heavy);
       if (tribe === 'greeks') {
         if (heavy) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.68, 0.8, shade(metal, 0.35)); // flared knee guard
         else for (const v of [0.3, 0.46]) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.05, 0.95, v, v + 0.06, '#6b4424'); // sandal laces up the shin
@@ -227,12 +230,13 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   }
 
   // Back arm, torso, front arm.
-  const glove = heavy ? '#5a4634' : L.skin;
+  const glove = tribe === 'inuit' ? '#5a3e2b' : heavy ? '#5a4634' : L.skin; // Inuit hands are in fur mitts
   box(ctx, x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, sleeves);
   faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, heavy ? metal : shade(sleeves, -0.25)); // bracer or cuff
   box(ctx, x - 5.9 * k, hip + 0.9 * k, 2.4 * k, 2 * k, glove);
   if (tribe === 'mongols') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a'); // fur cuff
   if (tribe === 'zulu') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.64, '#d9a441'); // brass arm ring
+  if (tribe === 'inuit') { faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, '#f4f8fb'); faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.6, '#c8372d'); } // fur cuff and a red band
   if (heavy) box(ctx, x - 5.9 * k, hip - 6.1 * k, 3.6 * k, 2.2 * k, metal); // back pauldron
   box(ctx, x, hip, tw, th, torso);
   dressTorso(ctx, tribe, kind, x, hip, tw, th, armoured);
@@ -253,6 +257,12 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.72, GOLD);
   }
   if (tribe === 'japan' && !heavy) faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.3, 0.42, '#f4f1ea'); // kimono under-sleeve
+  if (tribe === 'inuit') { // white fur cuff, red beaded band with white dots and a bone bracelet
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, '#f4f8fb');
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.52, 0.66, '#c8372d');
+    for (const u of [0.1, 0.5]) faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, u, u + 0.34, 0.56, 0.62, '#f4f8fb');
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.34, 0.4, '#e8e0c8');
+  }
   if (tribe === 'polynesia') {
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.55, 0.75, '#2a1a10');
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.76, 0.88, '#b3302a'); // taniko armband
@@ -319,6 +329,9 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
 
 function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number, w: number, h: number, armoured: boolean) {
   switch (tribe) {
+    case 'inuit':
+      inuitTorso(ctx, kind, x, y, w, h);
+      break;
     case 'egypt':
       band(ctx, x, y, w, h, 0, 0.42, '#f4efe0'); // linen kilt
       for (const u of [0.12, 0.3, 0.7, 0.88]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.05, 0, 0.38, '#d9d0b8'); // pleats
@@ -591,6 +604,9 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
     faceQuad(ctx, 'R', x, y, w, h, u + 0.08, u + 0.11, 0.54, 0.59, '#ffffff');
   }
   switch (tribe) {
+    case 'inuit':
+      inuitFace(ctx, kind, x, y, w, h);
+      break;
     case 'egypt':
       faceQuad(ctx, 'R', x, y, w, h, 0.18, 0.86, 0.62, 0.67, '#101010'); // kohl line
       faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.98, 0.52, 0.58, '#101010'); // the kohl wing at the outer corner
@@ -729,6 +745,9 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
 
 function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: number, k: number, hw: number) {
   switch (tribe) {
+    case 'inuit':
+      inuitHead(ctx, kind, x, top, k, hw);
+      break;
     case 'egypt': {
       if (kind === 'giant') {
         // tall white crown with a red rim
@@ -1062,6 +1081,14 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
   // Things carried on the back go first.
+  if (kind === 'harpooner') {
+    // a sealskin float on a cord and spare harpoon shafts slung behind the shoulder
+    for (const [dx, tip] of [[0, -22], [2.6, -20.4]] as const) {
+      line(ctx, x - 6 * k, y - 8 * k, x + (dx - 10.4) * k, y + tip * k, '#7a5a3a', 1 * k);
+      poly(ctx, [x + (dx - 10.4) * k, y + tip * k, x + (dx - 11.4) * k, y + (tip + 2.6) * k, x + (dx - 9.2) * k, y + (tip + 2.4) * k], I_BONE);
+    }
+    inuitFloat(ctx, x - 7.4 * k, y - 6.6 * k, k * 0.95);
+  }
   if (kind === 'archer' || kind === 'explorer') {
     box(ctx, x - (kind === 'archer' ? 7 : 4.5) * k, y - 8 * k, 4 * k, 8 * k, kind === 'explorer' ? '#8a5a2b' : '#6b4424');
     if (kind === 'archer' && tribe === 'polynesia') {
@@ -1080,7 +1107,8 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
     } else if (kind === 'archer') {
       // a quiver banded in gold, arrows fletched in the empire's colour leaning out of it
       const qx = x - 7 * k;
-      band(ctx, qx, y - 8 * k, 4 * k, 8 * k, 0.62, 0.72, GOLD);
+      band(ctx, qx, y - 8 * k, 4 * k, 8 * k, 0.62, 0.72, tribe === 'inuit' ? I_RED : GOLD);
+      if (tribe === 'inuit') band(ctx, qx, y - 8 * k, 4 * k, 8 * k, 0.88, 1, I_FUR); // a fur-trimmed sealskin quiver
       for (const i of [-1, 0, 1]) {
         line(ctx, qx + i * 1 * k, y - 8.4 * k, qx - 1.6 * k + i * 1.3 * k, y - 15 * k, '#c9b58a', 0.7 * k);
         const tx = qx - 1.6 * k + i * 1.3 * k;
@@ -1248,6 +1276,11 @@ function maoriSpear(ctx: Ctx, hx: number, hy: number, thick: number, grand: bool
 function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number) {
   if (tribe === 'persia' && persiaWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
+  if (tribe === 'inuit') {
+    if (kind === 'harpooner') return inuitHarpoon(ctx, x, y, k);
+    if (kind === 'swordsman') return inuitSword(ctx, x, y, k);
+    if (kind === 'defender') return inuitSpear(ctx, x, y, k);
+  }
   switch (kind) {
     case 'warrior':
     case 'jaguar':
@@ -1313,7 +1346,7 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
         maoriWeapon(ctx, 'dart', x, y, k);
         break;
       }
-      const wood = tribe === 'egypt' ? '#5a3b1e' : '#8a5a2b';
+      const wood = tribe === 'egypt' ? '#5a3b1e' : tribe === 'inuit' ? '#7a6248' : '#8a5a2b';
       ctx.lineCap = 'round';
       ctx.strokeStyle = wood;
       ctx.lineWidth = 1.9 * k;
@@ -1339,11 +1372,16 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
         ellipse(ctx, t0.x + 1 * k, t0.y - 5.2 * k, 0.9 * k, 0.9 * k, shade(wood, -0.3));
         line(ctx, t0.x, t0.y, t0.x + 1 * k, t0.y - 5 * k, '#f4efe0', 0.4 * k);
       }
+      if (tribe === 'inuit') { // a sinew-backed bow: twisted cords bound along the limbs and antler tips
+        for (const t of [-0.75, -0.4, 0.4, 0.75]) { const ax = x + 1 * k + Math.cos(t * 1.4) * 9.6 * k, ay = y - 3 * k + Math.sin(t * 1.4) * 9.6 * k; line(ctx, ax - 0.5 * k, ay - 1 * k, ax + 0.5 * k, ay + 1 * k, I_SINEW, 0.9 * k); }
+        for (const t of [t0, t1]) ellipse(ctx, t.x, t.y, 1.3 * k, 1.3 * k, I_BONE);
+        line(ctx, x + 9.9 * k, y - 6 * k, x + 9.9 * k, y, I_RED, 1 * k);
+      }
       line(ctx, t0.x, t0.y, x - 3.5 * k, y - 3 * k, '#f4efe0', 0.8 * k); // string, drawn back to the nock
       line(ctx, t1.x, t1.y, x - 3.5 * k, y - 3 * k, '#f4efe0', 0.8 * k);
       line(ctx, x + 9.9 * k, y - 6 * k, x + 9.9 * k, y, '#3a2a1a', 2.6 * k); // wrapped grip
       line(ctx, x - 3.5 * k, y - 3 * k, x + 8 * k, y - 3 * k, '#6b4424', 1.1 * k); // arrow shaft
-      poly(ctx, [x + 8 * k, y - 4.6 * k, x + 10.8 * k, y - 3 * k, x + 8 * k, y - 1.4 * k], STEEL); // head
+      poly(ctx, [x + 8 * k, y - 4.6 * k, x + 10.8 * k, y - 3 * k, x + 8 * k, y - 1.4 * k], tribe === 'inuit' ? I_BONE : STEEL); // head
       line(ctx, x + 8 * k, y - 3 * k, x + 10.2 * k, y - 3 * k, shade(STEEL, -0.35), 0.5 * k);
       poly(ctx, [x - 3.6 * k, y - 3 * k, x - 6.2 * k, y - 5 * k, x - 4.2 * k, y - 3 * k], TRIBES[tribe].color); // fletching
       poly(ctx, [x - 3.6 * k, y - 3 * k, x - 6.2 * k, y - 1 * k, x - 4.2 * k, y - 3 * k], shade(TRIBES[tribe].color, -0.3));
@@ -1445,6 +1483,9 @@ function meleeWeapon(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: num
     }
   };
   switch (tribe) {
+    case 'inuit':
+      inuitMelee(ctx, kind, x, y, k);
+      break;
     case 'egypt': {
       // khopesh: a bronze sickle-sword on a gilded grip
       line(ctx, x, y + 1 * k, x + 1 * k, y - 5 * k, WOOD, 1.8 * k);
@@ -1555,6 +1596,9 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
     }
   };
   switch (tribe) {
+    case 'inuit':
+      inuitShieldFace(ctx, x, y, k);
+      break;
     case 'rome': {
       // scutum: tall curved rectangle, gilded edge, winged boss and studs
       box(ctx, x, y, 3 * k, 13 * k, '#b3302a', GOLD);
@@ -2537,6 +2581,15 @@ function lance(ctx: Ctx, hx: number, hy: number, color: string, thick: number, p
 
 function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
   const knight = kind === 'knight';
+  if (tribe === 'inuit') {
+    // the Inuit ride caribou, hung with white fur pads and beaded harness
+    const seat = drawCaribou(ctx, x - 1, y + 3, 0.95, { saddle: true, armour: knight });
+    const bi = figure(ctx, kind, tribe, seat.x, seat.y, 0.9, true);
+    if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, bi, 0.9);
+    drawShield(ctx, tribe, kind, bi.off.x - 1.5, bi.off.y + 1.5, 0.7);
+    inuitLance(ctx, bi.hand.x, bi.hand.y, knight ? 2 : 1.6);
+    return;
+  }
   const T = TRIBES[tribe];
   const coat = knight ? '#eeeeee' : tribe === 'pirates' ? '#3a2a22' : tribe === 'mongols' ? '#a07845' : '#8a5a33';
   const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, coat, knight ? '#9aa3ad' : '#2a1a10', knight ? T.color : undefined, T.color);
@@ -2722,6 +2775,7 @@ function drawChariot(ctx: Ctx, tribe: TribeId, x: number, y: number) {
 
 /** Each empire fields its own siege engine. */
 function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
+  if (tribe === 'inuit') return inuitCatapult(ctx, x, y);
   const T = TRIBES[tribe];
   const wheels = (hub: string) => {
     for (const [wx, wy] of [[-7, 1], [6, 3]]) {
@@ -3175,6 +3229,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   }
   if (tribe === 'polynesia') return drawMaoriBoat(ctx, kind, x, y);
   if (tribe === 'persia') return drawPersianBoat(ctx, kind, x, y);
+  if (tribe === 'inuit') return drawInuitBoat(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
@@ -3404,9 +3459,700 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   figure(ctx, 'warrior', tribe, x - 9, y - 6, 0.5, true);
 }
 
+// ---------------------------------------------------------------- Inuit: bone arms, sled, caribou and skin boats
+
+const I_FUR = '#f4f8fb', I_FUR2 = '#c5d4de', I_BONE = '#e8e0c8', I_BONE2 = '#b8ad90', I_BROWN = '#5a3e2b', I_RED = '#c8372d';
+const I_SLATE = '#8fa5b5', I_SINEW = '#d9c9a0', I_DEEP = '#2f6f94', I_ICE = '#7fd0f5';
+
+/** A sealskin kamik: a white fur cuff, a red-and-white mosaic band and (for the heavy ranks) lashed bone shin guards. */
+function inuitLeg(ctx: Ctx, f: 'L' | 'R', cx: number, cy: number, w: number, h: number, heavy: boolean) {
+  const q = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, cx, cy, w, h, u0, u1, v0, v1, c);
+  q(0, 1, 0.13, 0.2, I_RED); // mosaic band
+  for (const u of [0.08, 0.4, 0.72]) q(u, u + 0.2, 0.13, 0.2, I_FUR);
+  q(0, 1, 0.2, 0.23, I_BROWN);
+  q(0, 1, 0.42, 0.55, I_FUR); // fur cuff
+  for (const u of [0.1, 0.4, 0.7]) q(u, u + 0.12, 0.42, 0.47, I_FUR2);
+  if (heavy) q(0.1, 0.9, 0.66, 0.7, I_RED); // sinew lashing on the shin guard
+}
+
+/** A husky in harness: grey coat, pale belly and mask, pricked ears and a curled tail. `face` flips it. */
+function inuitDog(ctx: Ctx, x: number, y: number, k: number, coat: string, patch: string) {
+  for (const lx of [-3.6, -1.8, 2.4, 4]) line(ctx, x + lx * k, y - 3 * k, x + (lx + 0.3) * k, y + 0.4 * k, shade(coat, -0.35), 1.3 * k);
+  poly(ctx, [x - 5.4 * k, y - 6.6 * k, x - 8.6 * k, y - 10.2 * k, x - 9.4 * k, y - 7 * k, x - 6.6 * k, y - 4.6 * k], coat); // curled tail
+  poly(ctx, [x - 8.6 * k, y - 10.2 * k, x - 9.4 * k, y - 7 * k, x - 8.4 * k, y - 8 * k], I_FUR);
+  box(ctx, x, y - 3 * k, 10 * k, 4.2 * k, coat);
+  band(ctx, x, y - 3 * k, 10 * k, 4.2 * k, 0, 0.3, patch);
+  faceQuad(ctx, 'R', x, y - 3 * k, 10 * k, 4.2 * k, 0.5, 0.95, 0.4, 0.9, shade(coat, 0.1));
+  line(ctx, x - 2 * k, y - 7 * k, x + 4 * k, y - 4.6 * k, I_RED, 0.8 * k); // harness
+  box(ctx, x + 5.6 * k, y - 6.4 * k, 4.4 * k, 3.8 * k, coat);
+  faceQuad(ctx, 'R', x + 5.6 * k, y - 6.4 * k, 4.4 * k, 3.8 * k, 0.15, 0.95, 0, 0.5, patch); // pale muzzle
+  faceQuad(ctx, 'R', x + 5.6 * k, y - 6.4 * k, 4.4 * k, 3.8 * k, 0.7, 0.95, 0.3, 0.5, '#1a1a1e'); // nose
+  faceQuad(ctx, 'R', x + 5.6 * k, y - 6.4 * k, 4.4 * k, 3.8 * k, 0.32, 0.5, 0.58, 0.8, '#101010'); // eye
+  poly(ctx, [x + 4 * k, y - 10 * k, x + 4.4 * k, y - 12.8 * k, x + 6 * k, y - 10.2 * k], shade(coat, -0.2));
+  poly(ctx, [x + 6.6 * k, y - 10.2 * k, x + 8 * k, y - 12.6 * k, x + 8.8 * k, y - 9.6 * k], coat);
+}
+
+/** A branching caribou antler rooted at (bx, by), leaning back and up; `s` mirrors the tines. */
+function antler(ctx: Ctx, bx: number, by: number, k: number, col: string, w: number, lean = 1) {
+  const P = (dx: number, dy: number) => [bx + dx * k * lean, by + dy * k] as const;
+  const seg = (a: readonly [number, number], b: readonly [number, number], t: number) => line(ctx, a[0], a[1], b[0], b[1], col, t * k);
+  const p0 = P(0, 0), p1 = P(-1, -5), p2 = P(-3.4, -9.6), p3 = P(-3.6, -15.4);
+  seg(p0, p1, w); seg(p1, p2, w * 0.9); seg(p2, p3, w * 0.75);
+  seg(p1, P(3.4, -7.8), w * 0.7); // brow tine reaching forward
+  seg(P(3.4, -7.8), P(4.2, -10.4), w * 0.5);
+  seg(p2, P(0.6, -13.6), w * 0.6);
+  seg(p3, P(-7, -18), w * 0.6);
+  seg(p3, P(-1.8, -20.4), w * 0.55);
+  seg(P(-3.5, -12), P(-6.4, -13), w * 0.5);
+}
+
+/**
+ * A caribou: shaggy brown coat with a white mane, belly and rump, dark flank stripe, big hooves and a great rack of antlers.
+ * With `saddle` it wears a white fur pad edged in red and a beaded harness; `armour` adds lashed bone plates.
+ * Returns the point where a rider sits (the same seat as drawHorse).
+ */
+function drawCaribou(ctx: Ctx, x: number, y: number, k: number, o: { saddle?: boolean; armour?: boolean } = {}) {
+  const coat = '#8a6a4c', dark = '#5e4530', pale = '#f1ede2';
+  const legs: [number, number][] = [[-6, -1.5], [-3, 0.5], [4, -0.5], [7, 1.5]];
+  antler(ctx, x + 8.8 * k, y - 20 * k, k * 0.7, '#cbbd9a', 1, 1); // the far antler, paler and behind
+  for (const [lx, ly] of legs) {
+    box(ctx, x + lx * k, y + ly * k, 2.6 * k, 7 * k, dark);
+    faceQuad(ctx, 'R', x + lx * k, y + ly * k, 2.6 * k, 7 * k, 0, 1, 0.14, 0.34, pale); // pale fetlocks
+    faceQuad(ctx, 'L', x + lx * k, y + ly * k, 2.6 * k, 7 * k, 0, 1, 0.14, 0.34, pale);
+    box(ctx, x + lx * k, y + ly * k, 3 * k, 1.5 * k, '#2a1c14'); // broad, splayed hooves
+  }
+  poly(ctx, [x - 9 * k, y - 11 * k, x - 11 * k, y - 8.2 * k, x - 9.4 * k, y - 8 * k], pale); // stub of a tail
+  box(ctx, x, y - 6 * k, 17 * k, 7 * k, coat);
+  band(ctx, x, y - 6 * k, 17 * k, 7 * k, 0, 0.2, pale); // pale belly
+  faceQuad(ctx, 'R', x, y - 6 * k, 17 * k, 7 * k, 0.1, 0.95, 0.24, 0.42, dark); // dark flank stripe
+  faceQuad(ctx, 'L', x, y - 6 * k, 17 * k, 7 * k, 0.05, 0.9, 0.24, 0.42, dark);
+  faceQuad(ctx, 'L', x, y - 6 * k, 17 * k, 7 * k, 0.02, 0.28, 0.42, 0.92, pale); // white rump
+  faceQuad(ctx, 'R', x, y - 6 * k, 17 * k, 7 * k, 0.5, 0.94, 0.6, 1, shade(coat, 0.1)); // shoulder
+  for (let i = 0; i < 6; i++) faceQuad(ctx, 'R', x, y - 6 * k, 17 * k, 7 * k, 0.06 + i * 0.15, 0.1 + i * 0.15, 0.04, 0.14, I_FUR2); // shaggy belly fringe
+  if (o.armour) {
+    band(ctx, x, y - 6 * k, 17 * k, 7 * k, 0, 0.7, I_FUR);
+    band(ctx, x, y - 6 * k, 17 * k, 7 * k, 0.1, 0.18, I_RED);
+    for (let i = 0; i < 6; i++) {
+      faceQuad(ctx, 'R', x, y - 6 * k, 17 * k, 7 * k, 0.08 + i * 0.15, 0.17 + i * 0.15, 0.22, 0.66, I_BONE); // bone barding plates
+      faceQuad(ctx, 'R', x, y - 6 * k, 17 * k, 7 * k, 0.08 + i * 0.15, 0.09 + i * 0.15, 0.22, 0.66, I_BONE2);
+    }
+    band(ctx, x, y - 6 * k, 17 * k, 7 * k, 0.44, 0.48, I_RED);
+    band(ctx, x, y - 6 * k, 17 * k, 7 * k, 0.62, 0.66, I_DEEP);
+  } else if (o.saddle) {
+    band(ctx, x - 1 * k, y - 6 * k, 9 * k, 7 * k, 0.62, 0.9, I_FUR); // white fur saddle pad
+    band(ctx, x - 1 * k, y - 6 * k, 9 * k, 7 * k, 0.62, 0.7, I_RED);
+    for (const u of [0.15, 0.4, 0.65, 0.88]) faceQuad(ctx, 'R', x - 1 * k, y - 6 * k, 9 * k, 7 * k, u, u + 0.1, 0.63, 0.69, I_FUR);
+  }
+  box(ctx, x - 1 * k, y - 12.6 * k, 6 * k, 1.5 * k, I_BROWN); // saddle
+  box(ctx, x - 4 * k, y - 12.8 * k, 1.6 * k, 2.4 * k, '#3a2a1e');
+  box(ctx, x + 2.4 * k, y - 12.6 * k, 1.4 * k, 2 * k, '#3a2a1e');
+  // thick neck under a great white mane
+  box(ctx, x + 7.8 * k, y - 10.4 * k, 5.4 * k, 8 * k, coat);
+  box(ctx, x + 8 * k, y - 8.8 * k, 6.4 * k, 5.6 * k, pale);
+  for (const [mx, my] of [[5.2, -5.4], [6.6, -3.6], [9.4, -3.2], [12, -4.4], [11.6, -6.8]] as const) poly(ctx, [x + mx * k, y + my * k, x + (mx + 1.6) * k, y + (my + 0.3) * k, x + (mx + 0.4) * k, y + (my + 2.2) * k], I_FUR2); // ragged mane points
+  box(ctx, x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, shade(coat, -0.05)); // head
+  box(ctx, x + 14.8 * k, y - 14.8 * k, 3.8 * k, 3.6 * k, '#d9d1c0'); // pale muzzle
+  faceQuad(ctx, 'R', x + 14.8 * k, y - 14.8 * k, 3.8 * k, 3.6 * k, 0.4, 0.78, 0.25, 0.5, '#1a1010'); // nostril
+  faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, 0.42, 0.6, 0.45, 0.75, '#101010'); // eye
+  faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, 0.47, 0.53, 0.62, 0.72, '#ffffff');
+  poly(ctx, [x + 9.2 * k, y - 20 * k, x + 8.4 * k, y - 23.4 * k, x + 11 * k, y - 20.6 * k], shade(coat, -0.2)); // ear
+  antler(ctx, x + 12 * k, y - 20.4 * k, k * 0.82, '#eadfc2', 1.4, 1); // the near antler, thick with velvet
+  if (o.saddle || o.armour) {
+    // beaded harness: a strap across the chest hung with bone discs, a red-and-white browband and reins
+    line(ctx, x + 4.4 * k, y - 10 * k, x + 9.6 * k, y - 3.6 * k, I_RED, 1.2 * k);
+    for (const t of [0.15, 0.5, 0.85]) ellipse(ctx, x + 4.4 * k + 5.2 * k * t, y - 10 * k + 6.4 * k * t, 1.1 * k, 1.1 * k, I_BONE);
+    faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, 0.05, 0.95, 0.82, 0.96, I_RED);
+    for (const u of [0.16, 0.42, 0.68]) faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, u, u + 0.12, 0.84, 0.94, I_FUR);
+    line(ctx, x + 15.6 * k, y - 14.6 * k, x + 12 * k, y - 16.4 * k, I_BROWN, 0.6 * k);
+    ctx.strokeStyle = I_BROWN;
+    ctx.lineWidth = 0.6 * k;
+    ctx.beginPath();
+    ctx.moveTo(x + 15.6 * k, y - 14.6 * k);
+    ctx.quadraticCurveTo(x + 9 * k, y - 8.6 * k, x + 2.6 * k, y - 12.2 * k);
+    ctx.stroke();
+  }
+  if (o.armour) {
+    faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, 0.1, 0.9, 0.5, 0.8, I_BONE); // a bone chamfron
+    faceQuad(ctx, 'R', x + 11 * k, y - 15.6 * k, 7 * k, 5.6 * k, 0.46, 0.54, 0.5, 0.8, I_BONE2);
+  }
+  return { x: x - 1 * k, y: y - 13 * k };
+}
+
+/** A harpoon-lance for the mounted hunters: a long shaft, an ivory foreshaft with a slate blade, and fur tassels. */
+function inuitLance(ctx: Ctx, hx: number, hy: number, thick: number) {
+  const tx = hx + 8, ty = hy - 20;
+  line(ctx, hx - 3, hy + 6, tx, ty, '#8a6a44', thick);
+  line(ctx, hx - 3.6, hy + 6, tx - 0.6, ty, shade('#8a6a44', 0.35), 0.5);
+  for (const t of [0.1, 0.16, 0.22]) line(ctx, hx - 3 + 11 * t - 1, hy + 6 - 26 * t + 0.4, hx - 3 + 11 * t + 1, hy + 6 - 26 * t - 0.4, I_RED, 0.8); // sinew grip
+  ellipse(ctx, hx - 0.4, hy + 0.4, 2.4, 1.4, I_FUR); // a fur mitt-guard
+  poly(ctx, [tx + 0.4, ty - 6, tx - 1.6, ty + 0.6, tx + 0.4, ty + 1.2], shade(I_BONE, 0.1)); // ivory head
+  poly(ctx, [tx + 0.4, ty - 6, tx + 2.4, ty + 0.4, tx + 0.4, ty + 1.2], shade(I_BONE, -0.25));
+  poly(ctx, [tx + 0.4, ty - 4, tx - 0.6, ty - 0.4, tx + 1.4, ty - 0.4], I_SLATE); // slate blade
+  poly(ctx, [tx - 1, ty + 0.6, tx - 3.2, ty + 2.6, tx - 0.6, ty + 1.8], I_BONE); // a barb
+  poly(ctx, [tx - 0.4, ty + 2.4, tx + 7, ty + 3.4, tx + 4.6, ty + 5.2, tx + 7, ty + 7, tx - 0.8, ty + 6], I_DEEP); // swallow-tailed pennant
+  poly(ctx, [tx - 0.4, ty + 2.4, tx + 7, ty + 3.4, tx + 6, ty + 4, tx - 0.5, ty + 3.6], I_ICE);
+  ellipse(ctx, tx + 1.6, ty + 4.4, 0.7, 0.7, I_FUR);
+}
+
+/** Inuit hand weapons. Called with the weapon hand at (x, y). */
+function inuitMelee(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  const wrap = (x0: number, y0: number, x1: number, y1: number, n: number, color: string, w: number) => {
+    for (let i = 0; i < n; i++) {
+      const t = (i + 0.5) / n;
+      line(ctx, x0 + (x1 - x0) * t - 0.9 * k, y0 + (y1 - y0) * t + 0.3 * k, x0 + (x1 - x0) * t + 0.9 * k, y0 + (y1 - y0) * t - 0.3 * k, color, w);
+    }
+  };
+  if (kind === 'giant') {
+    // a whale-rib great-club: a curved rib as thick as an arm, a slate-edged head and a polar-bear-fur tassel
+    curvedBlade(ctx, x - 0.5 * k, y + 4 * k, x + 1.5 * k, y - 8 * k, x + 7.6 * k, y - 16.6 * k, 3.2 * k, I_BONE, k);
+    ellipse(ctx, x + 7.8 * k, y - 16.8 * k, 2.6 * k, 2.2 * k, shade(I_BONE, -0.1));
+    ellipse(ctx, x + 7.2 * k, y - 17.4 * k, 1.2 * k, 0.9 * k, shade(I_BONE, 0.35));
+    for (const [dx, dy] of [[9.6, -18.8], [10.4, -15.6], [6.8, -19.6]] as const) poly(ctx, [x + (dx - 1.2) * k, y + (dy + 1.6) * k, x + dx * k, y + dy * k, x + (dx + 1) * k, y + (dy + 1.8) * k], I_SLATE); // slate teeth
+    wrap(x - 0.3 * k, y + 3 * k, x + 0.8 * k, y - 3 * k, 4, I_RED, 1 * k);
+    poly(ctx, [x - 0.4 * k, y + 4 * k, x - 3 * k, y + 8 * k, x - 0.6 * k, y + 7 * k, x + 0.8 * k, y + 8.4 * k, x + 1 * k, y + 4 * k], I_FUR);
+    return;
+  }
+  // a walrus-tusk war pick: a hafted, curved tusk with a slate tip and a round stone counterweight behind
+  line(ctx, x - 0.6 * k, y + 2.4 * k, x + 1.8 * k, y - 9 * k, '#8a6a44', 1.9 * k);
+  line(ctx, x - 0.9 * k, y + 2.4 * k, x + 1.5 * k, y - 9 * k, shade('#8a6a44', 0.4), 0.5 * k);
+  wrap(x - 0.4 * k, y + 1.6 * k, x + 0.6 * k, y - 2.4 * k, 3, I_RED, 0.8 * k);
+  curvedBlade(ctx, x - 0.4 * k, y - 8.6 * k, x + 5.4 * k, y - 15.4 * k, x + 10 * k, y - 9.2 * k, 2.8 * k, I_BONE, k);
+  poly(ctx, [x + 10 * k, y - 9.2 * k, x + 11.2 * k, y - 6.2 * k, x + 8.6 * k, y - 8.6 * k], I_SLATE); // slate tip
+  ellipse(ctx, x - 1.8 * k, y - 9.6 * k, 1.9 * k, 1.9 * k, '#7d8c98'); // the counterweight stone
+  ellipse(ctx, x - 2.3 * k, y - 10.2 * k, 0.7 * k, 0.7 * k, '#b6c4ce');
+  ellipse(ctx, x + 1.8 * k, y - 9 * k, 1.5 * k, 1.2 * k, I_RED); // sinew lashing
+  poly(ctx, [x - 0.6 * k, y + 2.6 * k, x - 2.8 * k, y + 5.6 * k, x - 0.2 * k, y + 4.6 * k], I_FUR); // a fur tassel on the wrist loop
+}
+
+/** The bone sword of the heavy ranks: a flat whalebone blade with a slate edge and a tusk cross-guard. */
+function inuitSword(ctx: Ctx, x: number, y: number, k: number) {
+  blade(ctx, x + 0.2 * k, y - 1 * k, x + 3 * k, y - 14 * k, 3 * k, I_BONE);
+  line(ctx, x + 1.2 * k, y - 4 * k, x + 2.8 * k, y - 12 * k, I_SLATE, 0.7 * k); // slate inlay
+  for (const t of [0.35, 0.55, 0.75]) line(ctx, x + (0.2 + 2.8 * t) * k + 1.2 * k, y + (-1 - 13 * t) * k, x + (0.2 + 2.8 * t) * k + 2 * k, y + (-1 - 13 * t) * k - 0.4 * k, I_BONE2, 0.6 * k); // notches
+  hilt(ctx, x + 0.2 * k, y - 1 * k, 0.2, -1, k, I_BONE, I_BROWN);
+  line(ctx, x - 0.4 * k, y - 0.4 * k, x + 1.2 * k, y - 0.6 * k, I_RED, 0.9 * k);
+  poly(ctx, [x + 0.2 * k, y + 2.4 * k, x - 1.6 * k, y + 6 * k, x + 0.4 * k, y + 4.8 * k], I_FUR); // fur tassel on the pommel
+}
+
+/** A leister-spear for the shield-bearers: bone head with a slate blade and side barbs, red-wrapped shaft, fur tassel. */
+function inuitSpear(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x + 1 * k, y + 5 * k, x + 2 * k, y - 18 * k, '#8a6a44', 1.7 * k);
+  line(ctx, x + 0.6 * k, y + 5 * k, x + 1.6 * k, y - 18 * k, shade('#8a6a44', 0.4), 0.5 * k);
+  ellipse(ctx, x + 1 * k, y + 5.2 * k, 1.2 * k, 0.9 * k, I_BONE2);
+  poly(ctx, [x + 2 * k, y - 24 * k, x + 0.4 * k, y - 17.6 * k, x + 2 * k, y - 16.4 * k], shade(I_BONE, 0.15)); // ivory head, lit side
+  poly(ctx, [x + 2 * k, y - 24 * k, x + 3.8 * k, y - 17.6 * k, x + 2 * k, y - 16.4 * k], shade(I_BONE, -0.28));
+  poly(ctx, [x + 2 * k, y - 22.4 * k, x + 1.2 * k, y - 19 * k, x + 2.9 * k, y - 19 * k], I_SLATE); // slate blade
+  for (const s of [-1, 1]) poly(ctx, [x + 2 * k, y - 17 * k, x + (2 + s * 3.4) * k, y - 20.2 * k, x + (2 + s * 2.6) * k, y - 16.6 * k], I_BONE); // barbs
+  ellipse(ctx, x + 1.95 * k, y - 16.2 * k, 1.5 * k, 0.9 * k, I_RED);
+  for (const t of [0.05, 0.1, 0.15, 0.2]) line(ctx, x + 1 * k + 1 * k * t * 4 - 0.9 * k, y + 5 * k - 23 * k * t * 1.6, x + 1 * k + 1 * k * t * 4 + 0.9 * k, y + 5 * k - 23 * k * t * 1.6 - 0.3 * k, I_RED, 0.5 * k);
+  poly(ctx, [x + 1.4 * k, y - 15.8 * k, x - 0.4 * k, y - 11 * k, x + 1.2 * k, y - 12.4 * k, x + 2.4 * k, y - 10.6 * k, x + 2.8 * k, y - 15.8 * k], I_FUR); // fur tassel
+  line(ctx, x + 0.6 * k, y - 13.4 * k, x + 0.4 * k, y - 11.4 * k, I_FUR2, 0.4 * k);
+}
+
+/** The toggling harpoon: ivory foreshaft, a barbed bone head with slate blade, and the line coiled back to the hand and a float. */
+function inuitHarpoon(ctx: Ctx, hx: number, hy: number, k: number) {
+  const ux = 0.42, uy = -0.9;
+  const P = (t: number) => [hx + ux * t * k, hy + uy * t * k] as const;
+  const butt = P(-9), tip = P(17);
+  line(ctx, butt[0], butt[1], tip[0], tip[1], '#7a5a3a', 1.9 * k);
+  line(ctx, butt[0] - 0.4 * k, butt[1], tip[0] - 0.4 * k, tip[1], shade('#7a5a3a', 0.4), 0.5 * k);
+  for (const t of [-6, -4.6, -3.2, -1.8]) { const p = P(t); line(ctx, p[0] - 1 * k, p[1] + 0.3 * k, p[0] + 1 * k, p[1] - 0.3 * k, I_RED, 0.7 * k); } // red-wrapped grip
+  const b0 = P(-9);
+  ellipse(ctx, b0[0], b0[1], 1.3 * k, 1 * k, I_BONE2); // ivory butt cap
+  const f0 = P(15.4), f1 = P(19.4);
+  line(ctx, f0[0], f0[1], f1[0], f1[1], I_BONE, 2.4 * k); // the foreshaft
+  const h1 = P(24.4);
+  poly(ctx, [f1[0], f1[1], f1[0] - 2.6 * k, f1[1] - 1.2 * k, h1[0], h1[1], f1[0] + 2.6 * k, f1[1] + 0.4 * k], shade(I_BONE, 0.05)); // the toggle head
+  poly(ctx, [f1[0], f1[1], f1[0] + 2.6 * k, f1[1] + 0.4 * k, h1[0], h1[1]], shade(I_BONE, -0.28));
+  const s1 = P(23);
+  poly(ctx, [h1[0], h1[1], s1[0] - 1 * k, s1[1] + 0.6 * k, s1[0] + 1.2 * k, s1[1] + 0.8 * k], I_SLATE); // slate blade
+  ellipse(ctx, f1[0], f1[1], 1.4 * k, 0.9 * k, I_RED);
+  // the line: from the head, sagging down to a coil in the hand and a trailing loop
+  ctx.strokeStyle = I_SINEW;
+  ctx.lineWidth = 0.7 * k;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(f1[0] + 0.6 * k, f1[1] + 1 * k);
+  ctx.quadraticCurveTo(hx + 8.4 * k, hy - 4 * k, hx + 1.8 * k, hy + 3 * k);
+  ctx.stroke();
+  for (const [ox, oy] of [[0, 3.6], [-0.8, 4.6], [0.6, 5.4]] as const) ring(ctx, hx + 2 * k + ox * k, hy + oy * k, 2 * k, 1.1 * k, I_SINEW, 0.6 * k); // coiled line
+}
+
+/** A sealskin float (avataq): a taut inflated bladder with a bone plug and a painted band. */
+function inuitFloat(ctx: Ctx, x: number, y: number, k: number) {
+  ellipse(ctx, x, y, 3.2 * k, 3.8 * k, '#7a6a5a');
+  ellipse(ctx, x - 0.8 * k, y - 1 * k, 1.9 * k, 2.3 * k, '#a89886');
+  ring(ctx, x, y, 3.2 * k, 3.8 * k, '#4a3a2c', 0.5 * k);
+  line(ctx, x - 3 * k, y + 0.2 * k, x + 3 * k, y + 0.6 * k, I_RED, 0.9 * k);
+  ellipse(ctx, x + 0.4 * k, y - 4 * k, 0.9 * k, 0.7 * k, I_BONE);
+}
+
+/** A round hide shield stretched on a bone hoop, painted with a six-armed snow crystal. */
+function inuitShieldFace(ctx: Ctx, x: number, y: number, k: number) {
+  const cx = x - 1 * k, cy = y - 5 * k;
+  ellipse(ctx, cx, cy, 5 * k, 5.5 * k, I_BONE); // hoop
+  ellipse(ctx, cx, cy, 4.1 * k, 4.6 * k, '#e9f0f4'); // hide
+  ring(ctx, cx, cy, 3.6 * k, 4 * k, I_RED, 0.8 * k);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + 0.3;
+    const ex = cx + Math.cos(a) * 3.3 * k, ey = cy + Math.sin(a) * 3.6 * k;
+    line(ctx, cx, cy, ex, ey, I_DEEP, 0.9 * k);
+    const mx = cx + Math.cos(a) * 2 * k, my = cy + Math.sin(a) * 2.2 * k;
+    for (const s of [-0.6, 0.6]) line(ctx, mx, my, mx + Math.cos(a + s) * 1.4 * k, my + Math.sin(a + s) * 1.5 * k, I_DEEP, 0.5 * k);
+  }
+  ellipse(ctx, cx, cy, 1.1 * k, 1.2 * k, I_RED);
+  ellipse(ctx, cx - 0.3 * k, cy - 0.4 * k, 0.4 * k, 0.4 * k, I_FUR);
+  for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; ellipse(ctx, cx + Math.cos(a) * 4.7 * k, cy + Math.sin(a) * 5.2 * k, 0.4 * k, 0.4 * k, I_BONE2); } // lashing knots
+  ellipse(ctx, cx - 2.2 * k, cy - 3 * k, 1 * k, 0.7 * k, 'rgba(255,255,255,0.7)'); // sheen
+}
+
+/**
+ * The sled catapult: a bone-and-sinew torsion engine on a runnered sled, whale-rib uprights bound with twisted
+ * sinew skeins, a tusk throwing arm with a sealskin sling, and a pair of huskies in harness. It flings ice.
+ */
+function inuitCatapult(ctx: Ctx, x: number, y: number) {
+  // huskies pulling ahead, each on a trace to the sled
+  line(ctx, x + 15, y + 1, x + 22, y + 2.4, I_SINEW, 0.7);
+  line(ctx, x + 14, y + 5, x + 26, y + 6.6, I_SINEW, 0.7);
+  inuitDog(ctx, x + 22, y + 3.6, 0.72, '#8e9aa3', '#e9e4d8');
+  inuitDog(ctx, x + 27, y + 8, 0.72, '#e9e4d8', '#b59a78');
+  // runners, curled up at the front, joined by stanchions
+  ctx.lineCap = 'round';
+  for (const [dx, dy, w] of [[3.4, -2.2, 1.6], [0, 0, 2.2]] as const) {
+    for (const c of ['#3a2a1c', '#8a6a44']) {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = c === '#3a2a1c' ? w : 0.7;
+      ctx.beginPath();
+      ctx.moveTo(x - 17 + dx, y + 7 + dy - (c === '#3a2a1c' ? 0 : 0.5));
+      ctx.lineTo(x + 11 + dx, y + 6 + dy - (c === '#3a2a1c' ? 0 : 0.5));
+      ctx.quadraticCurveTo(x + 17 + dx, y + 5.6 + dy, x + 16 + dx, y + 0.6 + dy);
+      ctx.stroke();
+    }
+  }
+  for (const sx of [-12, -2, 8]) line(ctx, x + sx, y + 2.6, x + sx, y + 6.6, '#5a4632', 1.6);
+  for (const sx of [-10, 0, 10]) line(ctx, x + sx + 3.4, y + 0.4, x + sx + 3.4, y + 4.4, '#4a3828', 1.2);
+  // the deck: driftwood boards lashed with sinew
+  poly(ctx, [x - 16, y + 1.6, x + 12, y + 0.4, x + 16, y - 3.2, x - 12, y - 2.4], '#c9b48e');
+  poly(ctx, [x - 16, y + 1.6, x + 12, y + 0.4, x + 12, y + 3.4, x - 16, y + 4.6], '#8a7250');
+  poly(ctx, [x + 12, y + 0.4, x + 16, y - 3.2, x + 16, y - 0.4, x + 12, y + 3.4], '#6a5438');
+  for (const t of [0.2, 0.42, 0.64, 0.86]) line(ctx, x - 16 + 28 * t, y + 1.6 - 1.2 * t, x - 12 + 28 * t, y - 2.4 - 0.8 * t, '#a08a66', 0.5); // board seams
+  for (const t of [0.12, 0.5, 0.88]) line(ctx, x - 16 + 28 * t, y + 1.8 - 1.2 * t, x - 16 + 28 * t, y + 4.2 - 0.5 * t, I_SINEW, 0.6); // lashings on the deck edge
+  for (const [ax, ay, ar] of [[-13.4, -0.4, 2.2], [-10, 0.4, 2.1], [-11.8, -2.6, 2]] as const) { // ice-ball ammunition stacked on the deck
+    ellipse(ctx, x + ax, y + ay, ar, ar * 0.92, '#cfe6f2');
+    ellipse(ctx, x + ax - ar * 0.3, y + ay - ar * 0.3, ar * 0.45, ar * 0.38, '#ffffff');
+  }
+  // whale-rib uprights: a pair of curved ribs bound to the deck, a cross-brace and twisted sinew skeins
+  for (const [ux, uy, lean] of [[-6, 0.8, -0.6], [1.6, -0.4, -0.6], [4.6, -2, 0]] as const) {
+    ctx.strokeStyle = I_BONE2;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + ux, y + uy);
+    ctx.quadraticCurveTo(x + ux + lean * 3 - 1, y + uy - 6, x + ux + lean * 6, y + uy - 12.4);
+    ctx.stroke();
+    ctx.strokeStyle = I_BONE;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x + ux - 0.5, y + uy);
+    ctx.quadraticCurveTo(x + ux + lean * 3 - 1.5, y + uy - 6, x + ux + lean * 6 - 0.5, y + uy - 12.4);
+    ctx.stroke();
+    ellipse(ctx, x + ux, y + uy + 0.3, 1.6, 0.8, I_SINEW);
+  }
+  line(ctx, x - 9, y - 11.6, x + 2.6, y - 12.4, I_BONE, 1.8); // top cross-brace
+  ellipse(ctx, x - 9, y - 11.6, 1.3, 1.3, I_RED);
+  ellipse(ctx, x + 2.6, y - 12.4, 1.3, 1.3, I_RED);
+  for (const [cx, cy] of [[-4.2, -5.4], [2.6, -5.2]] as const) { // torsion skeins
+    ellipse(ctx, x + cx, y + cy, 3.6, 3.2, '#e6d8b0');
+    ellipse(ctx, x + cx, y + cy, 3.6, 3.2, 'rgba(0,0,0,0)');
+    for (let i = 0; i < 4; i++) line(ctx, x + cx - 3 + i * 0.4, y + cy - 2.6 + i * 1.5, x + cx + 3.2 + i * 0.1, y + cy - 1.6 + i * 1.5, '#8a7a56', 0.6);
+    ring(ctx, x + cx, y + cy, 3.6, 3.2, '#8a7a56', 0.6);
+    ellipse(ctx, x + cx - 1, y + cy - 1, 1, 0.8, '#fff6dc');
+  }
+  // the arm: a long walrus tusk seated in the skein, curving forward, tipped with a sealskin sling
+  ctx.strokeStyle = I_BONE2;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 1.4, y - 4.6);
+  ctx.quadraticCurveTo(x + 3, y - 16, x + 12.4, y - 22.4);
+  ctx.stroke();
+  ctx.strokeStyle = I_BONE;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x - 1.8, y - 4.8);
+  ctx.quadraticCurveTo(x + 2.6, y - 16.4, x + 12, y - 22.8);
+  ctx.stroke();
+  ellipse(ctx, x + 12.6, y - 22.4, 1.5, 1.5, I_BONE2);
+  line(ctx, x + 12.4, y - 22.2, x + 10.6, y - 17, I_SINEW, 0.7); // sling cords
+  line(ctx, x + 12.6, y - 22.2, x + 15.2, y - 17.4, I_SINEW, 0.7);
+  poly(ctx, [x + 9.6, y - 17.4, x + 16.2, y - 17.6, x + 15, y - 14, x + 11, y - 14], I_BROWN); // the sling pouch
+  poly(ctx, [x + 9.6, y - 17.4, x + 16.2, y - 17.6, x + 15.8, y - 16.4, x + 10, y - 16.2], shade(I_BROWN, 0.3));
+  ellipse(ctx, x + 12.8, y - 19, 3.3, 3.3, '#cfe6f2'); // the ice ball ready to fly
+  ellipse(ctx, x + 12, y - 19.8, 1.3, 1.2, '#ffffff');
+  ring(ctx, x + 12.8, y - 19, 3.3, 3.3, '#8fb8d4', 0.5);
+  // a padded stop-bar at the front, a tent-pole flag of antler and a fur ruff
+  line(ctx, x + 8, y - 2.6, x + 8.6, y - 8.4, '#7a5a3a', 1.6);
+  ellipse(ctx, x + 8.6, y - 8.8, 2.4, 1.3, I_FUR);
+  line(ctx, x - 12.6, y - 0.6, x - 12.6, y - 15.6, '#cbbd9a', 1.3);
+  line(ctx, x - 12.6, y - 9, x - 15, y - 12, '#cbbd9a', 0.9); // a tine
+  poly(ctx, [x - 12.6, y - 15.6, x - 5.4, y - 13.8, x - 12.6, y - 10.4], I_ICE);
+  poly(ctx, [x - 12.6, y - 15.6, x - 5.4, y - 13.8, x - 7, y - 14.6, x - 12.6, y - 13.6], shade(I_ICE, 0.4));
+  ellipse(ctx, x - 5, y - 13.8, 1.3, 1.2, I_FUR); // fur tassel at the flag's tip
+  for (const [nx, ny] of [[-13, 0.6], [-6, 0.4], [3, -0.6], [10, -1.4]] as const) ellipse(ctx, x + nx, y + ny, 0.55, 0.55, I_BONE); // bone toggles
+}
+
+/** The paddle of a kayak: a long shaft with a leaf-shaped blade at each end, painted ice-blue with a red edge. */
+function inuitPaddle(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, sc: number) {
+  line(ctx, x0, y0, x1, y1, '#8a6a44', 1 * sc);
+  line(ctx, x0, y0 - 0.4, x1, y1 - 0.4, shade('#8a6a44', 0.4), 0.35 * sc);
+  const a = Math.atan2(y1 - y0, x1 - x0);
+  for (const [px, py, s] of [[x0, y0, -1], [x1, y1, 1]] as const) {
+    const bx = px + Math.cos(a) * 1.8 * s * sc, by = py + Math.sin(a) * 1.8 * s * sc;
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 2.6 * sc, 1.3 * sc, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ink(I_ICE);
+    ctx.fill();
+    ctx.strokeStyle = ink(I_RED);
+    ctx.lineWidth = 0.5 * sc;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/**
+ * Inuit craft. The kayak is a slim sealskin decked hull with a lashed cockpit ring, a hunter in a hooded anorak,
+ * a double-bladed paddle and a harpoon with float lying on the foredeck. The umiak (ship) is a big open skin boat
+ * with a driftwood gunwale, a crew paddling and a steersman; the warship adds a walrus-tusk stem, a painted snow-crystal
+ * sail, rail shields and a harpooner crew.
+ */
+function drawInuitBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const foam = (w: number) => {
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 3.6, w, 2.2, 0, 0.06 * Math.PI, 0.94 * Math.PI);
+    ctx.stroke();
+  };
+  if (tier === 0) {
+    // ------------------------------------------------------------ kayak
+    const w = 23;
+    ctx.beginPath(); // dark hull side
+    ctx.moveTo(x - w, y - 5);
+    ctx.quadraticCurveTo(x - 4, y - 10, x + w + 1, y - 6.6);
+    ctx.quadraticCurveTo(x + 3, y + 6, x - w, y - 5);
+    ctx.fillStyle = ink('#3e2f26');
+    ctx.fill();
+    ctx.beginPath(); // sealskin deck
+    ctx.moveTo(x - w, y - 5);
+    ctx.quadraticCurveTo(x - 4, y - 10.6, x + w + 1, y - 6.8);
+    ctx.quadraticCurveTo(x + 2, y - 2, x - w, y - 5);
+    ctx.fillStyle = ink('#8a6f52');
+    ctx.fill();
+    ctx.beginPath(); // pale highlight along the deck
+    ctx.moveTo(x - w * 0.8, y - 5.6);
+    ctx.quadraticCurveTo(x - 4, y - 9.6, x + w * 0.8, y - 7);
+    ctx.quadraticCurveTo(x + 2, y - 5.2, x - w * 0.8, y - 5.6);
+    ctx.fillStyle = ink('#b39a76');
+    ctx.fill();
+    line(ctx, x - w + 1, y - 4.8, x + w, y - 6.6, I_BONE, 0.6); // keel-strip along the gunwale
+    for (const t of [-0.66, -0.4, 0.2, 0.46, 0.7]) line(ctx, x + t * w, y - 7.6 + Math.abs(t) * 1.6, x + t * w - 0.8, y - 3.4 + Math.abs(t) * 1.4, '#5e4a38', 0.7); // ribs showing through the skin
+    for (const s of [-1, 1]) { // bone caps on the upturned ends
+      poly(ctx, [x + s * w, y - 5.2 - (s > 0 ? 1.6 : 0), x + s * (w + 3.4), y - 8.4 - (s > 0 ? 1.4 : 0), x + s * (w + 1), y - 4 - (s > 0 ? 1.6 : 0)], I_BONE);
+    }
+    poly(ctx, [x + w + 1, y - 8.2, x + w + 3, y - 12, x + w + 4, y - 8.6, x + w + 1.4, y - 6.6], I_BONE); // a bone-tipped bow
+    ellipse(ctx, x + w * 0.62, y - 6.2, 0.7, 0.7, I_RED);
+    line(ctx, x + w * 0.5, y - 6.6, x + w * 0.74, y - 5.8, I_RED, 0.9); // painted stripe near the bow
+    foam(w * 0.78);
+    // harpoon and float lashed on the foredeck under sinew cords
+    line(ctx, x + 6, y - 8.6, x + w - 1, y - 8.6, '#7a5a3a', 1.2);
+    poly(ctx, [x + w - 1, y - 8.6, x + w - 4, y - 10, x + w - 3.4, y - 7.6], I_BONE);
+    for (const t of [10, 15]) line(ctx, x + t, y - 9.6, x + t, y - 7, I_SINEW, 0.6);
+    inuitFloat(ctx, x - w * 0.6, y - 9.4, 0.6);
+    // the cockpit: a lashed bone coaming and the hunter
+    ellipse(ctx, x + 0.6, y - 6.4, 5.6, 2.3, '#241a14');
+    figure(ctx, 'harpooner', 'inuit', x + 0.6, y - 5.6, 0.52, true);
+    ring(ctx, x + 0.6, y - 5.4, 5.6, 2.2, I_BONE, 1);
+    ring(ctx, x + 0.6, y - 5.4, 5.6, 2.2, I_RED, 0.3);
+    // the double-bladed paddle, held across the body
+    inuitPaddle(ctx, x - 9, y + 2, x + 11, y - 14, 0.95);
+    return;
+  }
+  // -------------------------------------------------------------- umiak / war umiak
+  const w = tier === 2 ? 25 : 22;
+  const hull = '#c9bc9c', hullDk = '#7f6e55', rail = '#7a5a3a';
+  const bowY = y - 7 - tier, sternY = y - 6 - tier * 0.4;
+  ctx.beginPath(); // the skin hull
+  ctx.moveTo(x - w, sternY);
+  ctx.lineTo(x + w + 3, bowY);
+  ctx.quadraticCurveTo(x + w * 0.7, y + 3.4, x + w * 0.35, y + 3.6);
+  ctx.lineTo(x - w * 0.55, y + 3.6);
+  ctx.quadraticCurveTo(x - w * 0.9, y + 2, x - w, sternY);
+  ctx.fillStyle = ink(hull);
+  ctx.fill();
+  ctx.beginPath(); // dark waterline where the skin is wet
+  ctx.moveTo(x - w * 0.86, y - 0.4);
+  ctx.lineTo(x + w * 0.96, y - 1.6);
+  ctx.quadraticCurveTo(x + w * 0.7, y + 3.4, x + w * 0.35, y + 3.6);
+  ctx.lineTo(x - w * 0.55, y + 3.6);
+  ctx.quadraticCurveTo(x - w * 0.8, y + 2.4, x - w * 0.86, y - 0.4);
+  ctx.fillStyle = ink(hullDk);
+  ctx.fill();
+  for (let i = 0; i < 9; i++) { // ribs pressing through the skin, and sinew stitching along the seam
+    const t = i / 8, rx = x - w * 0.86 + t * w * 1.8;
+    line(ctx, rx, y - 5.4 - tier * 0.6 - t * 0.6, rx - 0.7, y + 1.6, shade(hull, -0.28), 0.7);
+    ellipse(ctx, rx, y - 1 - t * 0.6, 0.45, 0.45, I_SINEW);
+  }
+  poly(ctx, [x - w, sternY, x + w + 3, bowY, x + w + 3, bowY + 1.2, x - w, sternY + 1.2], rail); // gunwale beam
+  poly(ctx, [x - w, sternY, x + w + 3, bowY, x + w + 2.6, bowY - 0.6, x - w, sternY - 0.8], shade(rail, 0.3));
+  // a painted band under the rail: ice-blue with red triangles
+  poly(ctx, [x - w + 1, sternY + 1.2, x + w + 2, bowY + 1.2, x + w + 1.6, bowY + 3.2, x - w + 1.4, sternY + 3.2], I_ICE);
+  for (let i = 0; i < 9; i++) {
+    const t = (i + 0.5) / 9, px = x - w + 2 + t * (2 * w), py = sternY + 1.6 + (bowY - sternY) * t;
+    poly(ctx, [px - 1.6, py, px + 1.6, py - 0.2, px, py + 1.9], i % 2 ? I_RED : I_FUR);
+  }
+  // stem and stern-post: the bow rises to a carved walrus head with tusks on the war umiak
+  poly(ctx, [x + w + 3, bowY + 1, x + w + 4.4, bowY - 6 - tier * 1.4, x + w + 6.6, bowY - 6.4 - tier * 1.4, x + w + 4.6, bowY + 0.4], rail);
+  if (tier === 2) {
+    const hx = x + w + 6.4, hy = bowY - 9;
+    ellipse(ctx, hx, hy, 3.4, 2.8, '#8a6a4a');
+    ellipse(ctx, hx + 1.2, hy + 1.2, 2.4, 1.7, '#b09070');
+    ellipse(ctx, hx + 2.4, hy + 0.6, 1, 0.8, '#1a1a1e');
+    ellipse(ctx, hx - 0.4, hy - 0.8, 0.7, 0.7, '#101010');
+    for (const [tx, ty] of [[2.4, 1.4], [3.4, 0.8]] as const) poly(ctx, [hx + tx, hy + ty, hx + tx + 0.8, hy + ty + 0.2, hx + tx + 0.2, hy + ty + 4.8], I_BONE); // tusks
+  } else {
+    poly(ctx, [x + w + 4.4, bowY - 6, x + w + 6.6, bowY - 6.4, x + w + 5.6, bowY - 9.4], I_BONE);
+  }
+  poly(ctx, [x - w, sternY, x - w - 1.2, sternY - 5.6, x - w + 1.4, sternY - 6.2, x - w + 1.8, sternY - 0.4], rail); // stern-post
+  ellipse(ctx, x - w + 0.2, sternY - 6.6, 1.5, 1.5, I_BONE);
+  foam(w * 0.78);
+  // thwarts and, on the war umiak, a row of round painted shields on the gunwale
+  const nCrew = tier === 2 ? 5 : 3;
+  const px = (i: number) => x - w * 0.6 + i * ((w * 1.4) / (nCrew - 1));
+  const gy = (xx: number) => sternY + (bowY - sternY) * ((xx - (x - w)) / (2 * w + 3));
+  // crew, seated low, paddling with single-bladed paddles (harpooners standing tall in the warship)
+  for (let i = 0; i < nCrew; i++) {
+    const cxp = px(i);
+    const kindF: UnitKind = tier === 2 && (i === 1 || i === nCrew - 1) ? 'swordsman' : tier === 2 ? 'harpooner' : i === nCrew - 1 ? 'harpooner' : 'warrior';
+    figure(ctx, kindF, 'inuit', cxp, gy(cxp) + 2.6, 0.5, true);
+  }
+  for (let i = 0; i < nCrew; i++) {
+    const cxp = px(i);
+    if (tier === 2 && (i === nCrew - 1 || i === 1)) {
+      line(ctx, cxp + 2, gy(cxp) - 6, cxp + 4.6, gy(cxp) - 26, '#7a5a3a', 0.9); // upright harpoons
+      poly(ctx, [cxp + 4.6, gy(cxp) - 26, cxp + 3.6, gy(cxp) - 23.4, cxp + 5.6, gy(cxp) - 23.4], I_BONE);
+      continue;
+    }
+    if (tier === 2 || i < nCrew - 1) {
+      line(ctx, cxp + 2, gy(cxp) - 8, cxp - 4.6, y + 5.4, '#8a6a44', 0.9);
+      ellipse(ctx, cxp - 5, y + 6, 1, 1.8, I_ICE);
+      ellipse(ctx, cxp - 5, y + 6, 0.4, 1, I_RED);
+    }
+  }
+  if (tier === 2) {
+    for (let i = 0; i < 5; i++) {
+      const sx = x - w * 0.7 + i * (w * 0.36), sy = gy(sx) + 4.2;
+      ellipse(ctx, sx, sy, 2.5, 2.6, I_BONE);
+      ellipse(ctx, sx, sy, 1.9, 2, i % 2 ? '#dbe8f0' : I_ICE);
+      line(ctx, sx - 1.5, sy, sx + 1.5, sy, I_RED, 0.5);
+      line(ctx, sx, sy - 1.6, sx, sy + 1.6, I_RED, 0.5);
+    }
+  }
+  // cargo: a heap of walrus hides and a float on the stern thwart
+  if (tier === 1) {
+    ellipse(ctx, x - w * 0.36, y - 8.4, 4.6, 2, '#8a6a4a');
+    ellipse(ctx, x - w * 0.36, y - 9.4, 3.4, 1.4, '#b09070');
+    inuitFloat(ctx, x - w * 0.86, y - 8.6, 0.6);
+  }
+  // mast and a skin sail: pale gut-skin with brown seams and a painted snow-crystal
+  const top = y - (33 + tier * 6);
+  const mx = x + 1;
+  line(ctx, mx, y - 6, mx, top, '#5e4530', 1.9);
+  line(ctx, mx - 0.6, y - 6, mx - 0.6, top, '#8a6a4a', 0.5);
+  const sw = 11 + tier * 3.4;
+  const sailC = '#f1f5f7';
+  poly(ctx, [mx + 1, top + 2, mx + sw, y - 14, mx + 1, y - 11], sailC);
+  poly(ctx, [mx - 1, top + 3, mx - sw + 1, y - 14.4, mx - 1, y - 11], shade(sailC, -0.14));
+  poly(ctx, [mx + 1, top + 2, mx + sw, y - 14, mx + sw - 1.4, y - 15.2, mx + 1, top + 4], I_ICE);
+  for (const f of [0.3, 0.55, 0.8]) { // seams of stitched panels
+    line(ctx, mx + 1, top + 2 + (y - 11 - top - 2) * f, mx + 1 + (sw - 1) * f, top + 2 + (y - 14 - top - 2) * f + (y - 12 - top) * 0.02, '#a89a80', 0.5);
+    line(ctx, mx - 1, top + 3 + (y - 11 - top - 3) * f, mx - 1 - (sw - 2) * f, top + 3 + (y - 14.4 - top - 3) * f, '#8a7c62', 0.5);
+  }
+  const sx0 = mx + sw * 0.42, sy0 = top + (y - 12 - top) * 0.56;
+  for (let i = 0; i < 6; i++) { // a snow crystal on the sail
+    const a = (i / 6) * Math.PI;
+    line(ctx, sx0 - Math.cos(a) * 3.4, sy0 - Math.sin(a) * 3.4, sx0 + Math.cos(a) * 3.4, sy0 + Math.sin(a) * 3.4, I_DEEP, 0.8);
+  }
+  ellipse(ctx, sx0, sy0, 1, 1, I_RED);
+  poly(ctx, [mx, top - 2, mx + 9, top, mx, top + 2], I_ICE); // pennant with a white fur tuft
+  poly(ctx, [mx, top - 2, mx + 9, top, mx + 7.6, top - 0.8, mx, top - 1.2], shade(I_ICE, 0.35));
+  ellipse(ctx, mx + 9.4, top, 1.5, 1.3, I_FUR);
+  ellipse(ctx, mx, top - 3.4, 1.3, 1.3, I_BONE);
+  line(ctx, mx, top, mx + w + 3, bowY - 0.6, '#5e4530', 0.5); // stays
+  line(ctx, mx, top, mx - w, sternY - 0.6, '#5e4530', 0.5);
+  if (tier === 2) {
+    box(ctx, mx, top + 7, 5.6, 2.4, '#5e4530'); // a lookout's perch
+    line(ctx, mx - 3, top + 4.8, mx + 3, top + 4.8, '#3a2a1a', 0.6);
+  }
+}
+
+/** The Inuit anorak: a white-furred hem, a beaded red yoke, a belt with a bone toggle and slate ulu, and bone plates for the heavy ranks. */
+function inuitTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const Q = (f: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, x, y, w, h, u0, u1, v0, v1, c);
+  const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender';
+  // hem: white fur with dark-tipped strands, a red trim and a blue-and-white beaded line
+  band(ctx, x, y, w, h, 0, 0.12, I_FUR);
+  for (const u of [0.06, 0.3, 0.54, 0.78]) { Q('R', u, u + 0.1, 0, 0.07, I_FUR2); Q('L', u, u + 0.1, 0, 0.07, I_FUR2); }
+  band(ctx, x, y, w, h, 0.12, 0.17, I_RED);
+  for (const u of [0.05, 0.3, 0.55, 0.8]) { Q('R', u, u + 0.12, 0.12, 0.17, I_FUR); Q('L', u, u + 0.12, 0.12, 0.17, I_FUR); }
+  if (!armoured) {
+    // a hanging pouch-front and a beaded chest yoke: red band with white and blue diamonds
+    Q('R', 0.24, 0.76, 0.2, 0.42, shade(kind === 'harpooner' ? I_DEEP : '#5fb4dc', -0.14));
+    Q('R', 0.24, 0.76, 0.4, 0.42, I_BROWN);
+    Q('R', 0.5, 0.52, 0.2, 0.4, I_BROWN); // the front seam
+    band(ctx, x, y, w, h, 0.62, 0.78, I_RED);
+    for (let i = 0; i < 4; i++) {
+      Q('R', 0.06 + i * 0.24, 0.16 + i * 0.24, 0.66, 0.74, i % 2 ? I_ICE : I_FUR);
+      Q('L', 0.06 + i * 0.24, 0.16 + i * 0.24, 0.66, 0.74, i % 2 ? I_ICE : I_FUR);
+    }
+  } else {
+    // lamellar armour: vertical bone slats side by side, lashed with red sinew, over a hide belt
+    band(ctx, x, y, w, h, 0.2, 0.84, I_BONE2);
+    for (let i = 0; i < 6; i++) {
+      Q('R', 0.02 + i * 0.165, 0.15 + i * 0.165, 0.22, 0.82, i % 2 ? I_BONE : shade(I_BONE, 0.12));
+      Q('L', 0.02 + i * 0.165, 0.15 + i * 0.165, 0.22, 0.82, i % 2 ? I_BONE : shade(I_BONE, 0.12));
+    }
+    for (const v of [0.34, 0.54, 0.72]) band(ctx, x, y, w, h, v, v + 0.05, I_RED);
+    Q('R', 0.4, 0.6, 0.52, 0.74, I_BROWN); // a hide chest-strap patch
+    Q('R', 0.44, 0.56, 0.56, 0.7, I_ICE);
+  }
+  // belt with a bone toggle, and a slate-bladed ulu hanging in a hide sheath
+  band(ctx, x, y, w, h, 0.2, 0.28, I_BROWN);
+  Q('R', 0.42, 0.58, 0.19, 0.3, I_BONE);
+  Q('R', 0.47, 0.53, 0.2, 0.29, I_BROWN);
+  if (kind !== 'archer' && kind !== 'harpooner' && kind !== 'explorer') {
+    Q('R', 0.72, 0.9, 0.02, 0.2, '#9fb2bf'); // ulu blade
+    Q('R', 0.72, 0.9, 0.02, 0.05, I_FUR2);
+    Q('R', 0.78, 0.84, 0.2, 0.32, I_BONE); // its handle
+  }
+  if (kind === 'harpooner') {
+    // a coil of line across the chest and a bone line-toggle on the belt
+    facePoly(ctx, 'R', x, y, w, h, [[0.02, 0.98], [0.2, 0.98], [0.98, 0.4], [0.8, 0.36]], I_SINEW);
+    facePoly(ctx, 'R', x, y, w, h, [[0.08, 0.98], [0.12, 0.98], [0.92, 0.4], [0.88, 0.38]], shade(I_SINEW, -0.3));
+  }
+  if (kind === 'giant') {
+    band(ctx, x, y, w, h, 0.7, 1, I_FUR); // a polar-bear pelt mantle
+    for (const u of [0.08, 0.34, 0.6, 0.84]) { Q('R', u, u + 0.12, 0.64, 0.74, I_FUR2); Q('L', u, u + 0.12, 0.64, 0.74, I_FUR2); }
+    for (const u of [0.22, 0.52, 0.8]) Q('R', u, u + 0.06, 0.76, 0.9, I_FUR2);
+  } else if (kind === 'knight' || kind === 'swordsman') {
+    band(ctx, x, y, w, h, 0.84, 1, I_BROWN); // a caribou fur ruff
+    for (const u of [0.1, 0.4, 0.7]) { Q('R', u, u + 0.14, 0.9, 1, I_FUR2); Q('L', u, u + 0.14, 0.9, 1, I_FUR2); }
+  } else band(ctx, x, y, w, h, 0.88, 1, I_FUR); // white fur collar
+}
+
+/** Squints the eyes into almond slits, warms the nose, adds goggles or chin-lines by rank. */
+function inuitFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const skin = LOOK.inuit.skin;
+  const Q = (f: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, x, y, w, h, u0, u1, v0, v1, c);
+  for (const u of [0.2, 0.6]) Q('R', u, u + 0.24, 0.55, 0.64, skin); // upper lids narrow the eyes
+  for (const u of [0.2, 0.6]) Q('R', u, u + 0.24, 0.4, 0.44, shade(skin, -0.08)); // lower lids
+  Q('R', 0.44, 0.58, 0.3, 0.36, mix(skin, '#e0605a', 0.4)); // the nose, red from the cold
+  Q('R', 0.04, 0.22, 0.24, 0.36, mix(skin, '#e0605a', 0.4)); // windburnt cheeks
+  Q('R', 0.78, 0.96, 0.24, 0.36, mix(skin, '#e0605a', 0.4));
+  if (kind === 'harpooner' || kind === 'explorer') {
+    // bone snow goggles: a carved band across the eyes with two narrow slits
+    Q('R', 0.04, 0.96, 0.36, 0.7, I_BONE);
+    Q('R', 0.04, 0.96, 0.64, 0.7, I_BONE2);
+    Q('R', 0.16, 0.42, 0.5, 0.56, '#0e0e12');
+    Q('R', 0.58, 0.84, 0.5, 0.56, '#0e0e12');
+    Q('R', 0.46, 0.54, 0.44, 0.64, I_BONE2); // the bridge
+    Q('L', 0.3, 1, 0.5, 0.58, I_BROWN); // the thong round the hood
+    Q('R', 0.06, 0.94, 0.36, 0.39, I_RED); // painted lower edge
+  }
+  if (kind === 'swordsman' || kind === 'knight' || kind === 'giant') {
+    // chin tattoos: three fine lines running down from the lower lip
+    for (const u of [0.36, 0.48, 0.6]) Q('R', u, u + 0.03, 0.0, 0.14, '#243a5c');
+  }
+}
+
+/**
+ * The hood: a fur-framed cap over the back and top of the head. Each rank has its own furs: caribou browns for archers and
+ * scouts, seal-hide with bone brow plates for defenders, polar-bear white with ears and a bear-head cowl for the heavy ranks.
+ */
+function inuitHead(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  const hy = top + 10.5 * k, hh = 10.5 * k;
+  const bear = kind === 'swordsman' || kind === 'knight' || kind === 'giant';
+  const brown = kind === 'archer' || kind === 'explorer';
+  const seal = kind === 'defender';
+  const hc = bear ? '#eef3f6' : brown ? '#6a4a34' : seal ? '#4a3a32' : kind === 'harpooner' ? I_DEEP : '#7fd0f5';
+  const rc = bear ? '#ffffff' : brown ? '#cfc2b0' : seal ? '#9a7a58' : I_FUR;
+  const Q = (f: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, x, hy, hw, hh, u0, u1, v0, v1, c);
+  // the hood over back, side and crown
+  Q('L', 0, 1, 0.2, 1, hc);
+  Q('L', 0, 1, 0.2, 0.27, shade(hc, -0.25)); // the hood's lower edge
+  for (const u of [0.1, 0.4, 0.7]) Q('L', u, u + 0.1, 0.5, 0.9, shade(hc, -0.08)); // quilting seams
+  const hw2 = hw / 2;
+  poly(ctx, [x, top - hw2 * 0.5 - 0.6 * k, x + hw2 + 0.5 * k, top + 0.2 * k, x, top + hw2 * 0.5 + 0.4 * k, x - hw2 - 0.5 * k, top + 0.2 * k], shade(hc, 0.16)); // rounded crown
+  ellipse(ctx, x - 0.4 * k, top - 0.2 * k, hw2 * 0.7, 2.2 * k, shade(hc, 0.06)); ellipse(ctx, x - 1.4 * k, top - 0.8 * k, hw2 * 0.4, 1.1 * k, shade(hc, 0.3));
+  // the fur ruff framing the face
+  Q('R', 0, 1, 0.84, 1.02, rc);
+  Q('R', 0, 0.11, 0.06, 0.9, rc);
+  Q('R', 0.89, 1, 0.06, 0.9, rc);
+  Q('L', 0.86, 1, 0.08, 0.9, rc);
+  Q('R', 0.12, 0.88, 0.8, 0.84, shade(LOOK.inuit.skin, -0.32)); // shadow under the ruff
+  for (let i = 0; i < 5; i++) { // fur strands standing out along the crown
+    const fx = x - hw2 + 0.6 * k + i * (hw * 0.24);
+    poly(ctx, [fx, top + 1 * k, fx + 1.1 * k, top - 1.6 * k, fx + 1.8 * k, top + 1.2 * k], i % 2 ? shade(rc, -0.08) : rc);
+  }
+  for (const [ux, vy] of [[0.94, 0.3], [0.94, 0.6], [0.04, 0.5], [0.5, 0.9], [0.24, 0.92], [0.74, 0.92]] as const) Q('R', ux, ux + 0.05, vy, vy + 0.06, shade(rc, -0.18)); // speckle of darker hairs
+  if (!bear) {
+    // a beaded browband of red and white under the ruff
+    for (let i = 0; i < 4; i++) Q('R', 0.14 + i * 0.19, 0.24 + i * 0.19, 0.74, 0.82, i % 2 ? I_FUR : I_RED);
+  }
+  if (brown) {
+    // a snow-goose feather stuck in the hood and dangling earflaps
+    poly(ctx, [x + 1 * k, top + 0.4 * k, x + 3.6 * k, top - 8 * k, x + 4.4 * k, top - 3 * k, x + 2.4 * k, top + 0.6 * k], '#f4f8fb');
+    poly(ctx, [x + 3.6 * k, top - 8 * k, x + 4.4 * k, top - 3 * k, x + 4 * k, top - 5 * k], '#c5d4de');
+    line(ctx, x + 1.2 * k, top + 0.6 * k, x + 3.6 * k, top - 7 * k, '#a0a8b0', 0.4 * k);
+    Q('L', 0.3, 0.8, 0.02, 0.24, hc);
+    Q('L', 0.3, 0.8, 0.02, 0.07, rc);
+  }
+  if (seal) {
+    // three ivory brow plates on a hide cap, lashed with red sinew
+    for (let i = 0; i < 3; i++) {
+      Q('R', 0.1 + i * 0.29, 0.34 + i * 0.29, 0.73, 0.9, I_BONE);
+      Q('R', 0.1 + i * 0.29, 0.14 + i * 0.29, 0.73, 0.9, I_BONE2);
+      Q('R', 0.2 + i * 0.29, 0.24 + i * 0.29, 0.78, 0.86, I_BROWN);
+    }
+    Q('R', 0.1, 0.9, 0.7, 0.74, I_RED);
+    Q('L', 0.1, 0.9, 0.7, 0.76, I_BONE); // a bone band round the cap
+    for (const u of [0.2, 0.5, 0.8]) Q('L', u, u + 0.08, 0.72, 0.9, I_BONE2);
+  }
+  if (bear) {
+    // round white ears with pink insides, and a black-nosed bear snout resting on the brow for the higher ranks
+    for (const [ex, ey] of [[-3.6, -2.6], [3.6, -2.4]] as const) {
+      ellipse(ctx, x + ex * k, top + ey * k, 2 * k, 1.8 * k, '#ffffff');
+      ellipse(ctx, x + ex * k + 0.2 * k, top + ey * k + 0.2 * k, 1.1 * k, 1 * k, '#d9a8a8');
+    }
+    if (kind !== 'swordsman') {
+      const bx = x + 2.4 * k, by = top + 4.4 * k;
+      box(ctx, bx, by, 5 * k, 2.6 * k, '#f4f8fb');
+      faceQuad(ctx, 'R', bx, by, 5 * k, 2.6 * k, 0.6, 1, 0.25, 0.85, '#101014'); // the black nose
+      faceQuad(ctx, 'R', bx, by, 5 * k, 2.6 * k, 0.05, 0.6, 0, 0.12, '#f4efe0'); // teeth
+      for (const u of [0.14, 0.3, 0.46]) faceQuad(ctx, 'R', bx, by, 5 * k, 2.6 * k, u, u + 0.06, 0, 0.16, '#d7cfb8');
+      // a pair of walrus tusks rising from the cowl
+      for (const dx of [-3.4, 4.4]) poly(ctx, [x + dx * k, top + 1.2 * k, x + (dx + 1.4) * k, top + 0.6 * k, x + (dx + (dx < 0 ? -0.4 : 1.2)) * k, top - 6.4 * k], I_BONE);
+    } else {
+      Q('R', 0.06, 0.94, 0.8, 0.86, I_BONE); // a bone brow-band lashed round the fur
+      for (const u of [0.2, 0.5, 0.8]) Q('R', u, u + 0.08, 0.8, 0.86, I_RED);
+    }
+  }
+}
+
 // ---------------------------------------------------------------- wildlife (map resources)
 
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' }> = {
+const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' | 'caribou' | 'llama' | 'ibex' }> = {
   egypt: { body: '#d0a45e', feature: 'hump' },
   aztec: { body: '#9c6236', feature: 'antlers' },
   polynesia: { body: '#7a5a3a', feature: 'kiwi' },
@@ -3419,7 +4165,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   zulu: { body: '#f4f1ea', feature: 'stripes' },
   persia: { body: '#d2a458', feature: 'lion' },
   celts: { body: '#8a4a2a', feature: 'antlers' },
-  inuit: { body: '#dfe6ea', feature: 'antlers' },
+  inuit: { body: '#8a6a4c', feature: 'caribou' },
   inca: { body: '#e8dcc0', feature: 'hump' },
   ethiopia: { body: '#6a4a34', feature: 'horns' },
 };
@@ -3428,6 +4174,10 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   const spec = CRITTER[biome];
   const body = spec.body;
   ellipse(ctx, x + 2 * k, y + 1, 11 * k, 3 * k, 'rgba(0,0,0,0.2)');
+  if (spec.feature === 'caribou') {
+    drawCaribou(ctx, x, y, 0.9 * k);
+    return;
+  }
   if (spec.feature === 'kiwi') {
     // a kiwi: round shaggy brown body, no wings, a long thin curved beak and sturdy legs
     for (const lx of [-1, 4]) line(ctx, x + lx * k, y - 3 * k, x + (lx + 0.4) * k, y, '#c9a06a', 1.4 * k);
