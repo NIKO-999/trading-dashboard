@@ -49,6 +49,25 @@ for (const [i, seed] of [1, 7, 42, 1234, 99999].entries()) {
   });
 }
 
+test('every capital and village starts with enough resources to level up', () => {
+  const pop = { fruit: 1, animal: 1, fish: 1, crop: 2, ore: 2, whale: 0 } as const;
+  let checked = 0;
+  for (const mapSize of ['normal', 'large', 'huge'] as const) {
+    for (let seed = 1; seed <= 40; seed++) {
+      const tribes = TRIBE_IDS.slice(seed % 5, (seed % 5) + 2 + (seed % 4));
+      const s = createGame({ seed, human: tribes[0], opponents: tribes.slice(1), mode: 'domination', mapSize });
+      const spots = [...s.tiles.filter((t) => t.village), ...s.cities.map((c) => tileAt(s, c.x, c.y)!)];
+      for (const t of spots) {
+        const ring = s.tiles.filter((n) => Math.max(Math.abs(n.x - t.x), Math.abs(n.y - t.y)) === 1);
+        const worth = ring.reduce((a, n) => a + (n.resource ? pop[n.resource] : 0), 0);
+        assert.ok(worth >= 3, `${mapSize} seed ${seed}: ${t.village ? 'village' : 'capital'} at ${t.x},${t.y} only has ${worth} population of resources`);
+        checked++;
+      }
+    }
+  }
+  assert.ok(checked > 500, `checked ${checked} settlements`);
+});
+
 test('a 10-empire game runs 30 AI turns cleanly', () => {
   const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
   assert.equal(s.players.length, 10);

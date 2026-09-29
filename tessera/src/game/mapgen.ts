@@ -2,7 +2,7 @@ import { TRIBES, unitFor } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
-import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, TribeId, Unit, UnitKind } from './types';
+import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
 
 export type MapSize = 'normal' | 'large' | 'huge';
 
@@ -76,6 +76,7 @@ export function createGame(opts: NewGameOptions): GameState {
   });
 
   placeVillagesAndRuins(state, rng, capitals);
+  ensureGrowthResources(state, rng);
   for (const p of players) revealAround(state, p.id);
   return state;
 }
@@ -202,6 +203,39 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
       }
     }
     if (t.terrain === w.terrain) t.resource = w.res;
+  }
+}
+
+/** Population a resource adds when harvested (whales only pay stars). */
+const RESOURCE_POP: Record<Resource, number> = { fruit: 1, animal: 1, fish: 1, crop: 2, ore: 2, whale: 0 };
+/** Population worth of resources every city is guaranteed inside its first borders: a city needs 2 to level up. */
+const MIN_GROWTH = 3;
+
+/**
+ * Every capital and every village gets enough harvestable resources in its starting ring to grow
+ * its city at least one level, however the map rolled. Cheap-to-reach ones (fruit, game, fish) are
+ * added first, on whatever the ring's terrain supports.
+ */
+function ensureGrowthResources(state: GameState, rng: Rng) {
+  const spots = [...state.tiles.filter((t) => t.village), ...state.cities.map((c) => tileAt(state, c.x, c.y)!)];
+  for (const spot of spots) {
+    const ring = neighbors(state, spot.x, spot.y, 1);
+    const worth = () => ring.reduce((a, t) => a + (t.resource ? RESOURCE_POP[t.resource] : 0), 0);
+    const free = rng.shuffle(ring.filter((t) => !t.resource && !t.village && !t.ruin && t.cityId === null));
+    const add = (t: Tile): Resource | null => {
+      switch (t.terrain) {
+        case 'field': return 'fruit';
+        case 'forest': return 'animal';
+        case 'shallow': return 'fish';
+        case 'mountain': return 'ore';
+        default: return null;
+      }
+    };
+    for (const t of free) {
+      if (worth() >= MIN_GROWTH) break;
+      const r = add(t);
+      if (r) t.resource = r;
+    }
   }
 }
 
