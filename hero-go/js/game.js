@@ -172,9 +172,14 @@
 
   // ---------------------------------------------------------------- home
   let viewCh = null;
+  // The first chapter you have not cleared yet (never past what is unlocked).
+  function frontierChapter() {
+    const c = CHAPTERS.find(ch => (save.best[ch.id] || 0) < ch.days);
+    return Math.min(save.unlocked, c ? c.id : CHAPTERS.length);
+  }
   function renderHome() {
     tickEnergy(); tickDaily();
-    if (viewCh === null) viewCh = save.unlocked;
+    if (viewCh === null) viewCh = save.lastCh && save.lastCh <= save.unlocked ? save.lastCh : frontierChapter();
     const ch = CHAPTERS[viewCh - 1], locked = viewCh > save.unlocked, best = save.best[ch.id] || 0;
     const scr = el(`<div class="screen home">
       <div class="home-top"><div class="player"><div class="avatar">${art.portrait(save.hero)}</div><button class="gear snd-btn">${SPEAKER(save.music || save.sfx)}</button></div>${resChips()}</div>
@@ -208,7 +213,7 @@
       tickEnergy();
       if (save.energy < RUN_COST) { SND.play('error'); return toast('Not enough energy! Visit the Shop.'); }
       save.energy -= RUN_COST; if (save.energy < ENERGY_MAX && save.energy + RUN_COST >= ENERGY_MAX) save.energyTs = Date.now();
-      persist(); startRun(ch);
+      save.lastCh = ch.id; persist(); startRun(ch);
     };
   }
 
