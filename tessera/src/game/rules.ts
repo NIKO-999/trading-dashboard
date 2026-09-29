@@ -575,12 +575,15 @@ function openRuin(s: GameState, u: Unit, t: Tile) {
 
 // ---------------------------------------------------------------- combat
 
+/** Defence multiplier for a unit standing on a mountain. */
+export const MOUNTAIN_DEFENSE = 2;
+
 export function defenseBonus(s: GameState, u: Unit) {
   const t = tileAt(s, u.x, u.y)!;
   const c = cityById(s, t.cityId);
   if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return c.walls ? 4 : 1.5;
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
-  if (t.terrain === 'mountain' && hasTech(s, u.owner, 'climbing')) return 1.5;
+  if (t.terrain === 'mountain') return MOUNTAIN_DEFENSE; // high ground: the best cover on the map
   if (isWater(t) && hasTech(s, u.owner, 'aquaculture')) return 1.5;
   return 1;
 }

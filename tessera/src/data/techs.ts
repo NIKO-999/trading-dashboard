@@ -36,7 +36,7 @@ export const TECHS: TechDef[] = [
   T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence.'),
   T('chivalry', 'Chivalry', 3, 'horsemanship', 0, 'Train Knights.'),
 
-  T('climbing', 'Climbing', 1, null, 0, 'Move onto mountains; mountain defence.'),
+  T('climbing', 'Climbing', 1, null, 0, 'Move onto mountains. Units on a mountain defend at ×2.'),
   T('mining', 'Mining', 2, 'climbing', 0, 'Build mines on ore (+2 pop).'),
   T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen.'),
   T('meditation', 'Meditation', 2, 'climbing', 0, 'Mountain shrines (+1 pop).'),

@@ -5,7 +5,7 @@ import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
-  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, doAction, hasTech, income, isExplored, maxHp,
+  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, hasTech, income, isExplored, maxHp,
   moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
@@ -594,7 +594,7 @@ export class GameView {
       const preview = this.previewLine(u);
       const stats = h('span', { class: 'stat-line' },
         h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u)))),
-        h('span', {}, 'Defence ', h('b', {}, String(d.def))),
+        h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null),
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range))) : null,

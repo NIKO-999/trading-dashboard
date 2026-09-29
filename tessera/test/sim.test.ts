@@ -480,3 +480,20 @@ test('rival empires build roads to link their own cities', () => {
   }
   assert.ok(linked > 0, 'at least one AI city ends up linked by road');
 });
+
+test('units on a mountain get a x2 defence bonus and take less damage', () => {
+  const s = createGame({ seed: 12, human: 'rome', opponents: ['egypt'], mode: 'domination' });
+  const cap = citiesOf(s, 0)[0];
+  const free = s.tiles.filter((t) => t.cityId === null && Math.abs(t.x - cap.x) > 2 && Math.abs(t.y - cap.y) > 2 && !s.units.some((u) => u.x === t.x && u.y === t.y));
+  const spot = free.find((t) => tileAt(s, t.x + 1, t.y) && !s.units.some((u) => u.x === t.x + 1 && u.y === t.y))!;
+  const next = tileAt(s, spot.x + 1, spot.y)!;
+  spot.terrain = next.terrain = 'field';
+  const defender = spawnUnit(s, 'warrior', 1, spot.x, spot.y, null);
+  const attacker = spawnUnit(s, 'warrior', 0, next.x, next.y, null);
+  s.players[0].explored.fill(true);
+  const flat = previewCombat(s, attacker, defender).dmg;
+  assert.equal(defenseBonus(s, defender), 1);
+  spot.terrain = 'mountain';
+  assert.equal(defenseBonus(s, defender), 2, 'mountain: x2, no matter the tech');
+  assert.ok(previewCombat(s, attacker, defender).dmg < flat, 'the same attack hurts less on a mountain');
+});
