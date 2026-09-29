@@ -2,6 +2,7 @@
 import type { MechUiRegistry } from './types';
 export type { MechUi, MechView } from './types';
 
+import { ui as aboriginal } from './aboriginal';
 import { ui as aztec } from './aztec';
 import { ui as celts } from './celts';
 import { ui as china } from './china';
@@ -19,4 +20,4 @@ import { ui as persia } from './persia';
 import { ui as tibet } from './tibet';
 import { ui as vikings } from './vikings';
 
-export const MECH_UI: MechUiRegistry = { aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, mali, maya, ottoman, persia, tibet, vikings };
+export const MECH_UI: MechUiRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, mali, maya, ottoman, persia, tibet, vikings };
