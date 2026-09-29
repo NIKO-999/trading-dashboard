@@ -356,8 +356,11 @@ test('every empire gets its starting tech, unique unit and capital', () => {
     assert.equal(citiesOf(s, 0).length, 1);
     assert.equal(me.techs.length, 1);
     const cap = citiesOf(s, 0)[0];
-    assert.equal(tileAt(s, cap.x, cap.y)!.terrain, tribe === 'pirates' ? 'platform' : 'field'); // the Flotilla's capital floats
-    assert.equal(s.units.filter((u) => u.owner === 0).length, tribe === 'pirates' ? 2 : 1); // (plus its starting galley)
+    const capT = tileAt(s, cap.x, cap.y)!;
+    if (tribe === 'pirates') assert.equal(capT.terrain, 'platform'); // the Flotilla's capital floats
+    else if (tribe === 'polynesia') assert.ok(cap.data?.waka && !isLand(capT), 'the Maori capital is a Great Waka afloat');
+    else assert.equal(capT.terrain, 'field');
+    assert.equal(s.units.filter((u) => u.owner === 0).length, tribe === 'pirates' ? 2 : 1); // (pirates: plus a starting galley)
   }
 });
 
@@ -633,6 +636,7 @@ test('every terrain style makes a playable map', () => {
       const s = createGame({ seed, human: null, opponents: ['rome', 'polynesia', 'zulu', 'inuit'], mode: 'perfection', terrain: st.id });
       for (const c of s.cities) {
         const t = tileAt(s, c.x, c.y)!;
+        if (s.players[c.owner].tribe === 'polynesia') { assert.ok(!isLand(t) && c.data?.waka, `${st.id}: Maori capital afloat`); continue; }
         assert.ok(isLand(t), `${st.id}: capital on land`);
         assert.ok(neighbors(s, c.x, c.y).some(isLand), `${st.id}: capital has land around it`);
       }

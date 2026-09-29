@@ -519,7 +519,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   if (t.ruin) drawRuin(ctx, t, c.x, c.y);
   if (t.cityId !== null) {
     const city = cityById(s, t.cityId);
-    if (city && cityVisibleTo(s, viewer, city)) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it
+    if (city && cityVisibleTo(s, viewer, city) && !city.data?.waka) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it; a Great Waka is drawn by render/mech/polynesia
   }
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }

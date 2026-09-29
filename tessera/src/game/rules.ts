@@ -229,6 +229,25 @@ function freeSpotNear(s: GameState, x: number, y: number, water: boolean) {
 
 export const unitCap = (c: City) => c.level + 1;
 
+/** Where a city afloat (`city.data.waka`) puts a newly trained unit: a free land tile beside it, else a free water tile. */
+export function wakaSpawn(s: GameState, c: City): Tile | undefined {
+  const free = neighbors(s, c.x, c.y).filter((t) => t.cityId === null && !unitAt(s, t.x, t.y) && t.terrain !== 'mountain');
+  return free.find(isLand) ?? free.find(isWater);
+}
+
+/** Train `kind` in a city afloat: on shore beside it, or afloat in a boat carrying it (such voyagers may cross deep ocean). */
+function trainAfloat(s: GameState, c: City, kind: UnitKind): boolean {
+  const spot = wakaSpawn(s, c);
+  if (!spot) return false;
+  const u = spawnUnit(s, kind, c.owner, spot.x, spot.y, c.id);
+  if (isWater(spot)) {
+    u.carrying = kind;
+    u.kind = s.players[c.owner].tribe === 'polynesia' ? 'waka' : 'boat';
+    u.data = { ...(u.data ?? {}), voyager: true };
+  }
+  return true;
+}
+
 // ---------------------------------------------------------------- tile actions
 
 export interface Action {
@@ -281,7 +300,9 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
 
   const u = unitAt(s, t.x, t.y);
   if (u && u.owner === pid) {
-    if ((t.village || (t.cityId !== null && cityById(s, t.cityId)!.owner !== pid)) && def(u).naval === false) {
+    // a city afloat (the Maori Great Waka) can only be taken from the water, by a ship or boat standing on it
+    const afloat = t.cityId !== null && !!cityById(s, t.cityId)?.data?.waka;
+    if ((t.village || (t.cityId !== null && cityById(s, t.cityId)!.owner !== pid)) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
@@ -292,10 +313,12 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
 
   if (t.cityId !== null && city && city.owner === pid && t.cityId === city.id) {
     const full = city.units >= unitCap(city);
+    const afloat = !!city.data?.waka; // a Great Waka trains onto a free tile beside it, so a unit on the city tile does not block it
+    const room = afloat ? wakaSpawn(s, city) : undefined;
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
       add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
-        u ? 'City tile is occupied' : full ? `City supports ${unitCap(city)} units` : undefined);
+        u && !afloat ? 'City tile is occupied' : full ? `City supports ${unitCap(city)} units` : afloat && !room ? 'No free tile beside the Great Waka' : undefined);
     }
     return acts;
   }
@@ -397,6 +420,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('mech:')) return hookDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
+    if (city?.data?.waka) return trainAfloat(s, city, kind);
     spawnUnit(s, kind, pid, t.x, t.y, t.cityId);
     return true;
   }
@@ -574,7 +598,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
           if (to.terrain === 'mountain' && !canClimb(s, pid)) continue;
           opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;
-        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship') continue;
+        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship' && !u.data?.voyager) continue; // voyagers: born on a Great Waka
       } else {
         if (isWater(to)) {
           // amphibious units wade through shallows, but still board a boat at a port
