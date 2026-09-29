@@ -12,7 +12,7 @@ All ten are hand-drawn, animated SVG. Each file was built by its own agent, foll
 | Kenji, the Samurai | `js/heroes/samurai.js` | Iaijutsu: 25% crit for 250% | Bushido: ATK +15%; the first strike of each battle always crits |
 | Sir Aldric, the Knight | `js/heroes/knight.js` | Holy Bulwark: 30% HP shield each battle | Chivalry: DEF +25%; 20% less damage from elites and bosses |
 | Itzcoatl, the Jaguar Warrior | `js/heroes/aztec.js` | Obsidian Fury: bleed on hit | Jaguar Spirit: +12% dodge; heal 6% HP per kill |
-| Kaimana, the Ocean Warrior | `js/heroes/polynesian.js` | Mana Surge: 15% lifesteal | Ocean's Bounty: Max HP +20%; healing +40% |
+| K’awiil, God of Storm (Maya) | `js/heroes/polynesian.js` | Serpent Bite: 15% lifesteal | Storm's Blessing: Max HP +20%; healing +40% |
 | Bjorn, the Viking Berserker | `js/heroes/viking.js` | Berserkergang: up to +60% ATK at low HP | Plunder: +30% coins; starts with Power Up |
 | Themba, the Zulu Warrior | `js/heroes/zulu.js` | Iklwa Flurry: 30% chance to strike twice | Impi Swiftness: +30% EXP; free opening spear throw |
 | Kallias, the Spartan Hoplite | `js/heroes/spartan.js` | Phalanx: reflect 30% of damage taken | Molon Labe: Max HP +15%; survive one fatal blow per journey at 30% HP |

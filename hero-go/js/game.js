@@ -9,7 +9,7 @@
   const EGGS = window.EGGS || {};
   const G = window.GEAR;
   const HERO_KEYS = ['samurai', 'knight', 'aztec', 'polynesian', 'viking', 'zulu', 'spartan', 'mongol', 'egyptian', 'celtic'].filter(k => HEROES[k]);
-  const HERO_SCENE = { samurai: 'forest', knight: 'desert', aztec: 'swamp', polynesian: 'volcano', viking: 'snow', zulu: 'desert', spartan: 'desert', mongol: 'snow', egyptian: 'desert', celtic: 'forest' };
+  const HERO_SCENE = { samurai: 'forest', knight: 'desert', aztec: 'swamp', polynesian: 'storm', viking: 'snow', zulu: 'desert', spartan: 'desert', mongol: 'snow', egyptian: 'desert', celtic: 'forest' };
   const bonusOf = k => (HERO_BONUS[k] || { name: '', desc: '', fx: {} });
 
   // ---------------------------------------------------------------- utils
