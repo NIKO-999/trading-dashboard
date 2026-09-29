@@ -1256,10 +1256,10 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
     ore: ['Ore', 'Mine with Mining.'],
     whale: ['Whales', 'Hunt with Whaling.'],
   };
-  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market' };
+  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track' };
   if (t.village) return { title: 'Village', desc: 'Move a unit here, then claim it next turn to found a city.' };
   if (t.ruin) return { title: 'Ancient Ruins', desc: 'Step on them to discover what was left behind.' };
-  if (t.improvement) {
+  if (t.improvement && (t.improvement !== 'songline' || s.players[viewer]?.tribe === 'aboriginal')) { // Songlines are secret
     const title = t.improvement === 'temple' ? (t.terrain === 'field' ? 'Temple' : t.terrain === 'forest' ? 'Grove Shrine' : 'Mountain Shrine') : imp[t.improvement];
     return { title, desc: `${terrain[t.terrain]}. ${where}` };
   }
