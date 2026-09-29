@@ -100,7 +100,7 @@ const metalOf = (tribe: TribeId) => (tribe === 'egypt' || tribe === 'greeks' ? B
 
 /** Units that wear real armour: they get shoulder plates, greaves, gloves and bracers. */
 const isHeavy = (kind: UnitKind) =>
-  kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'samurai' || kind === 'berserker' || kind === 'hoplite' || kind === 'defender';
+  kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'samurai' || kind === 'berserker' || kind === 'hoplite' || kind === 'defender' || kind === 'immortal';
 
 /**
  * Draws a figure. `seated` hides the legs (riders). The returned points are the weapon hand,
@@ -109,7 +109,7 @@ const isHeavy = (kind: UnitKind) =>
 function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number, seated = false): Body {
   const L = LOOK[tribe];
   const T = TRIBES[tribe];
-  const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary';
+  const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'immortal';
   const heavy = isHeavy(kind);
   const metal = metalOf(tribe);
   let torso = T.color, legs = shade(T.colorDark, 0.1), sleeves = L.skin;
@@ -124,18 +124,23 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'mongols': torso = T.color; legs = '#4a3a2a'; sleeves = T.color; break;
     case 'greeks': torso = '#f4f1ea'; legs = L.skin; break;
     case 'zulu': torso = L.skin; legs = L.skin; break;
+    case 'persia': torso = T.color; legs = P_TROUSER; sleeves = kind === 'immortal' || kind === 'giant' ? P_DPINK : '#2f9bb9'; break;
   }
   const hip = seated ? y : y - 5 * k;
   const tw = 10 * k, th = 8.5 * k;
 
   // A cloak hangs behind the tallest ranks, in the empire's colour with a darker lining.
-  if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman') {
+  if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal') {
     const cape = kind === 'giant' ? GOLD : T.color;
     const top = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cape, -0.22));
     poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(cape, 0.02));
     line(ctx, x - 4 * k, top + 0.5 * k, x - 8.6 * k, hip + 6.2 * k, shade(cape, -0.4), 0.7 * k);
-    if (tribe === 'egypt') line(ctx, x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, GOLD, 1 * k); // gilded hem
+    if (tribe === 'egypt' || tribe === 'persia') line(ctx, x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, GOLD, 1 * k); // gilded hem
+    if (tribe === 'persia') { // a turquoise lining and a row of gold rosettes down the cloak
+      poly(ctx, [x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7.6 * k, hip + 6.2 * k, x - 5.2 * k, top + 3.6 * k], P_TURQ);
+      for (const t of [0.25, 0.55, 0.85]) ellipse(ctx, x - 6.2 * k - t * 2.2 * k, top + 3.6 * k + t * (hip + 2.6 * k - top), 0.6 * k, 0.6 * k, GOLD);
+    }
     if (tribe === 'aztec') for (let i = 0; i < 3; i++) poly(ctx, [x - 9.3 * k + i * 2.4 * k, hip + 6.6 * k - i * 0.5 * k, x - 8.3 * k + i * 2.4 * k, hip + 10 * k - i * 0.5 * k, x - 7 * k + i * 2.4 * k, hip + 6.3 * k - i * 0.5 * k], ['#1faa6b', '#d6453b', '#1faa9b'][i]); // feather fringe
   }
 
@@ -185,6 +190,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
         if (heavy) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.68, 0.8, shade(metal, 0.35)); // flared knee guard
         else for (const v of [0.3, 0.46]) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.05, 0.95, v, v + 0.06, '#6b4424'); // sandal laces up the shin
       }
+      if (tribe === 'persia') persiaLeg(ctx, f, x + dx * k, y + dy * k, k, heavy, kind);
       if (tribe === 'zulu') {
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.27, 0.4, '#f4efe0'); // cow-tail anklet
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.22, 0.27, '#2a1a10');
@@ -272,6 +278,14 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.55, 0.7, '#c8372d');
   }
   if (tribe === 'zulu') faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.66, '#f4efe0'); // cow-tail armband
+  if (tribe === 'persia') { // gold armlets set with turquoise, a wrist bracelet, and pink embroidered cuffs
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.66, 0.8, GOLD);
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0.35, 0.65, 0.68, 0.78, P_TURQ);
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.34, 0.42, P_PINK);
+    faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.04, 0.12, GOLD);
+    faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.55, 0.7, GOLD);
+    faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.34, 0.42, P_PINK);
+  }
   if (tribe === 'vikings') { // twisted gold arm ring above the bracer
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.76, GOLD);
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0.3, 0.5, 0.62, 0.76, shade(GOLD, 0.4));
@@ -530,6 +544,9 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       }
       break;
     }
+    case 'persia':
+      persiaTorso(ctx, kind, x, y, w, h);
+      break;
     case 'zulu': {
       band(ctx, x, y, w, h, 0, 0.36, '#5a3a22'); // hide kilt
       for (let i = 0; i < 6; i++) { // umutsha: a fringe of dangling cow tails
@@ -696,6 +713,9 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
       faceQuad(ctx, 'R', x, y, w, h, 0.9, 1, 0.24, 0.5, LOOK.greeks.hair); // sideburn
       if (kind === 'giant' || kind === 'knight' || kind === 'swordsman') faceQuad(ctx, 'R', x, y, w, h, 0.22, 0.78, -0.14, 0.02, LOOK.greeks.hair); // a longer, forked beard
       if (kind === 'archer' || kind === 'explorer' || kind === 'catapult') for (const u of [0.05, 0.3, 0.55, 0.8]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.16, 0.82, 0.93, LOOK.greeks.hair); // curls under the wreath
+      break;
+    case 'persia':
+      persiaFace(ctx, kind, x, y, w, h);
       break;
     case 'zulu':
       for (const u of [0.1, 0.84]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, 0.34, 0.4, '#f4efe0'); // white dots
@@ -1015,6 +1035,9 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       if (kind === 'giant' || kind === 'knight' || kind === 'hoplite') faceQuad(ctx, 'R', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0, 1, 0.47, 0.53, GOLD); // gilded brow rim
       break;
     }
+    case 'persia':
+      persiaHeadgear(ctx, kind, x, top, k, hw);
+      break;
     case 'zulu': {
       box(ctx, x, top + 2.8 * k, hw + 1 * k, 2.4 * k, '#6a4a2a'); // fur headband
       faceQuad(ctx, 'R', x, top + 2.8 * k, hw + 1 * k, 2.4 * k, 0.3, 0.45, 0, 1, '#c9a45a');
@@ -1034,7 +1057,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       break;
     }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'greeks' || tribe === 'zulu' ? 12 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' ? 16 : tribe === 'greeks' || tribe === 'zulu' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
@@ -1052,6 +1075,8 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
         line(ctx, qx + i * 1 * k, y - 8.4 * k, tx, y - 16 * k, '#8a5a2b', 0.8 * k);
         feather(ctx, tx, y - 16 * k, tx - 0.6 * k + i * 0.6 * k, y - 20.4 * k, 1 * k, i === 0 ? '#f4efe0' : '#b3302a', '#1a1a1e');
       }
+    } else if (kind === 'archer' && tribe === 'persia') {
+      persiaQuiver(ctx, x, y, k);
     } else if (kind === 'archer') {
       // a quiver banded in gold, arrows fletched in the empire's colour leaning out of it
       const qx = x - 7 * k;
@@ -1071,7 +1096,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
       ellipse(ctx, x - 6.8 * k, y - 4.5 * k, 1.4 * k, 1.8 * k, '#7a8a9a');
     }
   }
-  const shieldFirst = kind === 'defender' || kind === 'legionary' || kind === 'jaguar' || kind === 'hoplite' || kind === 'impi' || (kind === 'warrior' && tribe === 'vikings');
+  const shieldFirst = kind === 'defender' || kind === 'immortal' || kind === 'legionary' || kind === 'jaguar' || kind === 'hoplite' || kind === 'impi' || (kind === 'warrior' && tribe === 'vikings');
   const b = figure(ctx, kind, tribe, x, y, k);
   drawWeapon(ctx, kind, tribe, b, k);
   if (shieldFirst) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
@@ -1221,6 +1246,7 @@ function maoriSpear(ctx: Ctx, hx: number, hy: number, thick: number, grand: bool
 }
 
 function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number) {
+  if (tribe === 'persia' && persiaWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
   switch (kind) {
     case 'warrior':
@@ -1520,6 +1546,7 @@ function meleeWeapon(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: num
 }
 
 function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number, k: number) {
+  if (tribe === 'persia') return persiaShield(ctx, kind, x, y, k);
   const T = TRIBES[tribe];
   const rivets = (cx: number, cy: number, rx: number, ry: number, n: number, color: string) => {
     for (let i = 0; i < n; i++) {
@@ -1691,6 +1718,741 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   void kind;
 }
 
+// ---------------------------------------------------------------- Persian arms and finery
+
+const P_PINK = '#e0559c', P_DPINK = '#8c1f5a', P_TURQ = '#3fa9c9', P_DTURQ = '#1f7f9c', P_LTURQ = '#9fe6ee';
+const P_CREAM = '#f4efe0', P_WICK = '#c9a262', P_DWICK = '#8a6a34', P_GILD = '#d9a93c', P_TROUSER = '#237b9b';
+
+/** A winged sun disc: gold sun with layered spread wings and forked tail feathers. */
+function wingedDisc(ctx: Ctx, x: number, y: number, s: number, wing = P_CREAM, gold = GOLD) {
+  for (const sd of [-1, 1]) {
+    poly(ctx, [x + sd * 1.4 * s, y - 1 * s, x + sd * 7.2 * s, y - 2.4 * s, x + sd * 6.4 * s, y - 0.8 * s, x + sd * 1.4 * s, y + 0.3 * s], wing);
+    poly(ctx, [x + sd * 1.4 * s, y + 0.1 * s, x + sd * 6.2 * s, y - 0.6 * s, x + sd * 5.2 * s, y + 0.9 * s, x + sd * 1.4 * s, y + 1.3 * s], shade(wing, -0.18));
+    poly(ctx, [x + sd * 1.4 * s, y + 1 * s, x + sd * 4.6 * s, y + 0.6 * s, x + sd * 3.8 * s, y + 2 * s, x + sd * 1.4 * s, y + 2.1 * s], shade(wing, -0.34));
+  }
+  poly(ctx, [x - 1.5 * s, y + 1.4 * s, x - 2.7 * s, y + 4.8 * s, x, y + 3.2 * s, x + 2.7 * s, y + 4.8 * s, x + 1.5 * s, y + 1.4 * s], shade(gold, -0.15));
+  ellipse(ctx, x, y - 0.2 * s, 1.8 * s, 1.8 * s, gold);
+  ellipse(ctx, x - 0.4 * s, y - 0.7 * s, 0.6 * s, 0.6 * s, shade(gold, 0.6));
+  ring(ctx, x, y - 0.2 * s, 1.8 * s, 1.8 * s, shade(gold, -0.4), 0.4 * s);
+}
+
+/** A striding lion in profile (facing right when dir is 1): the royal beast of the Persian court. */
+function lionMark(ctx: Ctx, x: number, y: number, s: number, color: string, dir = 1) {
+  const X = (dx: number) => x + dir * dx * s, Y = (dy: number) => y + dy * s;
+  const dk = shade(color, -0.3);
+  for (const [a, b, c, d] of [[-3.4, 0.6, -4.2, 3.4], [-1.8, 0.9, -1.8, 3.6], [1.8, 0.9, 2.2, 3.6], [3.2, 0.5, 4.4, 3]] as const) line(ctx, X(a), Y(b), X(c), Y(d), dk, 1.2 * s);
+  line(ctx, X(-4.2), Y(-1.2), X(-6), Y(-2.4), color, 0.9 * s);
+  line(ctx, X(-6), Y(-2.4), X(-5.4), Y(-4.4), color, 0.9 * s);
+  ellipse(ctx, X(-5.4), Y(-4.8), 0.9 * s, 1.1 * s, dk);
+  ellipse(ctx, X(0), Y(-0.6), 4.6 * s, 2 * s, color);
+  ellipse(ctx, X(3.7), Y(-2.3), 2.3 * s, 2.4 * s, dk);
+  ellipse(ctx, X(4.7), Y(-1.9), 1.6 * s, 1.4 * s, color);
+  ellipse(ctx, X(5.6), Y(-1.7), 0.5 * s, 0.4 * s, dk);
+}
+
+/** A golden pomegranate: the counterweight on an Immortal's spear and a symbol of plenty. */
+function pomegranate(ctx: Ctx, x: number, y: number, r: number) {
+  ellipse(ctx, x, y, r, r * 1.05, shade(P_GILD, -0.25));
+  ellipse(ctx, x - r * 0.15, y - r * 0.12, r * 0.85, r * 0.9, P_GILD);
+  ellipse(ctx, x - r * 0.4, y - r * 0.45, r * 0.34, r * 0.28, shade(P_GILD, 0.65));
+  poly(ctx, [x - r * 0.5, y - r * 0.9, x - r * 0.35, y - r * 1.5, x, y - r * 1.05, x + r * 0.35, y - r * 1.5, x + r * 0.5, y - r * 0.9], shade(P_GILD, -0.2)); // the calyx crown
+}
+
+function persiaTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const mailed = kind === 'swordsman' || kind === 'immortal' || kind === 'knight' || kind === 'defender' || kind === 'giant';
+  // a long kandys tunic: pleated skirt, a turquoise embroidered hem, rosette trim
+  band(ctx, x, y, w, h, 0, 0.32, shade(P_PINK, -0.08));
+  for (const u of [0.12, 0.28, 0.44, 0.6, 0.76, 0.9]) {
+    faceQuad(ctx, 'R', x, y, w, h, u, u + 0.045, 0.1, 0.32, P_DPINK);
+    faceQuad(ctx, 'L', x, y, w, h, u, u + 0.045, 0.1, 0.32, P_DPINK);
+  }
+  band(ctx, x, y, w, h, 0, 0.1, P_TURQ);
+  for (const u of [0.06, 0.28, 0.5, 0.72, 0.92]) {
+    faceQuad(ctx, 'R', x, y, w, h, u, u + 0.08, 0.03, 0.075, GOLD);
+    faceQuad(ctx, 'L', x, y, w, h, u, u + 0.08, 0.03, 0.075, GOLD);
+  }
+  // a gold sash with a turquoise buckle and a tail hanging to the hem
+  band(ctx, x, y, w, h, 0.3, 0.4, GOLD);
+  faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.28, 0.42, P_TURQ);
+  faceQuad(ctx, 'R', x, y, w, h, 0.46, 0.54, 0.32, 0.38, shade(GOLD, 0.5));
+  faceQuad(ctx, 'R', x, y, w, h, 0.68, 0.8, 0.05, 0.3, P_TURQ);
+  faceQuad(ctx, 'R', x, y, w, h, 0.68, 0.8, 0.05, 0.1, GOLD);
+  if (!mailed) {
+    // the chest: a turquoise placket, cream-and-gold rosettes
+    faceQuad(ctx, 'R', x, y, w, h, 0.46, 0.54, 0.4, 0.92, P_TURQ);
+    for (const u of [0.12, 0.7]) {
+      faceQuad(ctx, 'R', x, y, w, h, u, u + 0.18, 0.58, 0.74, P_CREAM);
+      faceQuad(ctx, 'R', x, y, w, h, u + 0.06, u + 0.12, 0.62, 0.7, GOLD);
+    }
+    faceQuad(ctx, 'L', x, y, w, h, 0.3, 0.5, 0.58, 0.74, P_CREAM);
+    faceQuad(ctx, 'L', x, y, w, h, 0.37, 0.43, 0.62, 0.7, GOLD);
+    faceQuad(ctx, 'R', x, y, w, h, 0.05, 0.4, 0.42, 0.5, P_DPINK); // a darker lozenge border
+    faceQuad(ctx, 'R', x, y, w, h, 0.6, 0.95, 0.42, 0.5, P_DPINK);
+  } else if (kind === 'giant') {
+    // the royal robe: a gold breastplate blazoned with the winged sun
+    band(ctx, x, y, w, h, 0.4, 0.94, P_GILD);
+    for (const v of [0.46, 0.66, 0.86]) band(ctx, x, y, w, h, v, v + 0.025, shade(P_GILD, -0.45));
+    faceQuad(ctx, 'R', x, y, w, h, 0.1, 0.9, 0.66, 0.72, P_CREAM); // the wings
+    faceQuad(ctx, 'R', x, y, w, h, 0.22, 0.78, 0.58, 0.64, shade(P_CREAM, -0.2));
+    faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.55, 0.8, GOLD);
+    faceQuad(ctx, 'R', x, y, w, h, 0.45, 0.55, 0.6, 0.72, P_PINK);
+    faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.44, 0.56, shade(P_CREAM, -0.1)); // tail feathers
+    faceQuad(ctx, 'L', x, y, w, h, 0.2, 0.8, 0.6, 0.68, P_TURQ);
+    for (const u of [0.2, 0.5, 0.8]) faceQuad(ctx, 'L', x, y, w, h, u, u + 0.06, 0.48, 0.56, P_CREAM);
+  } else {
+    // scale armour: rows of overlapping scales, each row a shade apart, seams offset row to row
+    const rows = kind === 'defender' ? 3 : 5;
+    const r0 = 0.94 - rows * 0.1;
+    for (let i = 0; i < rows; i++) {
+      const v0 = r0 + i * 0.1;
+      const c = kind === 'immortal' ? (i % 2 ? P_TURQ : '#e6c15a') : kind === 'knight' ? (i % 2 ? '#aab4c2' : '#c7d0dc') : (i % 2 ? '#c99a3a' : P_GILD);
+      band(ctx, x, y, w, h, v0, v0 + 0.1, c);
+      band(ctx, x, y, w, h, v0, v0 + 0.025, shade(c, -0.45));
+      for (let j = 0; j < 5; j++) {
+        const u = (i % 2 ? 0.1 : 0) + j * 0.2;
+        if (u + 0.02 > 1) continue;
+        faceQuad(ctx, 'R', x, y, w, h, u, u + 0.02, v0, v0 + 0.1, shade(c, -0.4));
+        faceQuad(ctx, 'L', x, y, w, h, u, u + 0.02, v0, v0 + 0.1, shade(c, -0.4));
+      }
+    }
+    if (kind === 'immortal') { // a pomegranate blazon at the breast
+      faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.58, 0.8, P_DPINK);
+      faceQuad(ctx, 'R', x, y, w, h, 0.45, 0.55, 0.62, 0.74, GOLD);
+    }
+    if (kind === 'defender') faceQuad(ctx, 'R', x, y, w, h, 0.05, 0.95, 0.4, 0.44, P_DPINK); // a pink surcoat shows over the belly
+  }
+  // the torc: a twisted gold collar with turquoise terminals
+  band(ctx, x, y, w, h, 0.92, 1, GOLD);
+  faceQuad(ctx, 'R', x, y, w, h, 0.03, 0.14, 0.88, 1, P_TURQ);
+  faceQuad(ctx, 'R', x, y, w, h, 0.86, 0.97, 0.88, 1, P_TURQ);
+  for (const u of [0.24, 0.42, 0.6, 0.78]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, 0.93, 0.99, shade(GOLD, 0.45));
+}
+
+/** Striped trousers (anaxyrides), a gold ankle cuff and, on the armoured ranks, cloth over the generic greave. */
+function persiaLeg(ctx: Ctx, f: 'L' | 'R', x: number, y: number, k: number, heavy: boolean, kind: UnitKind) {
+  const W = 3.6 * k, H = 5.2 * k;
+  if (heavy) faceQuad(ctx, f, x, y, W, H, 0.02, 0.98, 0.2, 0.9, P_TROUSER);
+  faceQuad(ctx, f, x, y, W, H, 0.2, 0.32, 0.26, 0.92, P_PINK);
+  faceQuad(ctx, f, x, y, W, H, 0.68, 0.8, 0.26, 0.92, P_PINK);
+  faceQuad(ctx, f, x, y, W, H, 0.4, 0.5, 0.26, 0.92, shade(P_TROUSER, 0.22));
+  faceQuad(ctx, f, x, y, W, H, 0, 1, 0.2, 0.27, GOLD); // ankle cuff
+  if (kind === 'immortal' || kind === 'giant' || kind === 'knight') faceQuad(ctx, f, x, y, W, H, 0.3, 0.7, 0.6, 0.72, GOLD); // gilded knee plaque
+}
+
+function persiaFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const hair = '#241810', curl = '#6a4c38';
+  const noble = kind === 'giant' || kind === 'swordsman' || kind === 'immortal' || kind === 'knight' || kind === 'defender';
+  // a heavy, upturned moustache
+  faceQuad(ctx, 'R', x, y, w, h, 0.16, 0.86, 0.2, 0.27, hair);
+  faceQuad(ctx, 'R', x, y, w, h, 0.05, 0.2, 0.2, 0.33, hair);
+  faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.95, 0.2, 0.33, hair);
+  // sideburns and the beard along the jaw
+  faceQuad(ctx, 'R', x, y, w, h, 0.9, 1, 0.2, 0.55, hair);
+  faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0, 0.16, hair);
+  faceQuad(ctx, 'L', x, y, w, h, 0.5, 1, 0, 0.2, hair);
+  // tiers of curled beard: each tier a row of ringlets, narrower and longer for the nobles
+  const tiers = noble ? 3 : 1;
+  for (let t = 0; t < tiers; t++) {
+    const v1 = -t * 0.12, v0 = v1 - 0.12;
+    const inset = t * 0.06;
+    const n = 5 - Math.floor(t * 0.7);
+    for (let j = 0; j < n; j++) {
+      const u0 = inset + (j * (1 - inset * 2)) / n, u1 = u0 + (1 - inset * 2) / n - 0.02;
+      faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1 + 0.02, j % 2 ? hair : shade(hair, 0.16));
+      faceQuad(ctx, 'R', x, y, w, h, u0 + 0.02, u0 + 0.07, v1 - 0.06, v1 - 0.01, curl); // each ringlet catching the light
+    }
+    if (t === tiers - 1 && noble) for (const u of [0.18, 0.5, 0.78]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, v0 - 0.04, v0 + 0.02, GOLD); // gold bead ties
+  }
+  if (noble) faceQuad(ctx, 'L', x, y, w, h, 0.55, 1, -0.12, 0.04, hair);
+  // dark kohl on the lids and a gold drop earring
+  faceQuad(ctx, 'R', x, y, w, h, 0.1, 0.2, 0.5, 0.56, DARK); // kohl wings at the outer corners of the eyes
+  faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.94, 0.5, 0.56, DARK);
+  faceQuad(ctx, 'L', x, y, w, h, 0.66, 0.84, 0.24, 0.36, GOLD);
+  faceQuad(ctx, 'L', x, y, w, h, 0.72, 0.78, 0.1, 0.24, GOLD);
+  faceQuad(ctx, 'L', x, y, w, h, 0.7, 0.8, 0.06, 0.12, P_TURQ);
+}
+
+function persiaHeadgear(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  const hb = top + 10.5 * k;
+  const hq = (face: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string, extra = 1) => faceQuad(ctx, face, x, hb, hw + extra * k, 10.5 * k, u0, u1, v0, v1, c);
+  /** Studs and a gold trim along a brow band whose box sits at (x, cy) with height h. */
+  const bandTrim = (cy: number, bw: number, h: number) => {
+    faceQuad(ctx, 'R', x, cy, bw, h, 0, 1, 0, 0.14, GOLD);
+    faceQuad(ctx, 'L', x, cy, bw, h, 0, 1, 0, 0.14, GOLD);
+    for (const u of [0.16, 0.46, 0.76]) faceQuad(ctx, 'R', x, cy, bw, h, u, u + 0.1, 0.4, 0.7, GOLD);
+    faceQuad(ctx, 'L', x, cy, bw, h, 0.3, 0.4, 0.4, 0.7, GOLD);
+  };
+  const tail = (dy = 0, c = P_TURQ) => { // a cloth tail streaming down the back
+    poly(ctx, [x - 5.2 * k, top + (3 + dy) * k, x - 9.8 * k, top + (8.6 + dy) * k, x - 8.4 * k, top + (13 + dy) * k, x - 4.8 * k, top + (9 + dy) * k], c);
+    poly(ctx, [x - 5.2 * k, top + (3 + dy) * k, x - 8.6 * k, top + (8.2 + dy) * k, x - 8.4 * k, top + (13 + dy) * k, x - 5.4 * k, top + (8 + dy) * k], shade(c, -0.25));
+    line(ctx, x - 9.8 * k, top + (8.6 + dy) * k, x - 8.4 * k, top + (13 + dy) * k, GOLD, 0.6 * k);
+  };
+  if (kind === 'giant') {
+    // the king's crenellated crown: a gold cylinder with turquoise inlay set on a jewelled brow-ring, merlons on top and the winged sun on its face
+    tail(0, P_PINK);
+    box(ctx, x, top + 4.4 * k, hw + 2 * k, 4.4 * k, GOLD);
+    bandTrim(top + 4.4 * k, hw + 2 * k, 4.4 * k);
+    faceQuad(ctx, 'R', x, top + 4.4 * k, hw + 2 * k, 4.4 * k, 0.42, 0.58, 0.3, 0.8, P_TURQ);
+    box(ctx, x, top, 9.4 * k, 9 * k, P_GILD);
+    for (const u of [0.12, 0.72]) faceQuad(ctx, 'R', x, top, 9.4 * k, 9 * k, u, u + 0.16, 0.08, 0.92, P_TURQ);
+    faceQuad(ctx, 'L', x, top, 9.4 * k, 9 * k, 0.4, 0.56, 0.08, 0.92, P_TURQ);
+    band(ctx, x, top, 9.4 * k, 9 * k, 0.9, 1, shade(P_GILD, 0.3));
+    for (const [mx, my] of [[0, -11.2], [-3.6, -9], [3.6, -9], [0, -6.8]] as const) box(ctx, x + mx * k, top + my * k, 1.9 * k, 2.2 * k, GOLD);
+    wingedDisc(ctx, x + 2.3 * k, top - 3.6 * k, 0.36 * k, P_CREAM, GOLD);
+    return;
+  }
+  if (kind === 'immortal' || kind === 'defender') {
+    // a tall fluted felt tiara on a turquoise band: pink for the line troops, cream and gold for the King's Immortals
+    const im = kind === 'immortal';
+    const cap = im ? P_CREAM : shade(P_PINK, 0.12);
+    tail(0.4, im ? P_PINK : P_TURQ);
+    box(ctx, x, top + 3.8 * k, hw + 1.2 * k, 3.2 * k, P_TURQ);
+    bandTrim(top + 3.8 * k, hw + 1.2 * k, 3.2 * k);
+    box(ctx, x, top + 0.6 * k, hw * 0.86, 10 * k, cap);
+    for (const u of [0.18, 0.4, 0.62, 0.84]) faceQuad(ctx, 'R', x, top + 0.6 * k, hw * 0.86, 10 * k, u, u + 0.06, 0.06, 0.94, im ? '#e2b64a' : P_DPINK);
+    for (const u of [0.15, 0.4, 0.65, 0.9]) faceQuad(ctx, 'L', x, top + 0.6 * k, hw * 0.86, 10 * k, u, u + 0.06, 0.06, 0.94, im ? '#e2b64a' : P_DPINK);
+    box(ctx, x, top - 8.6 * k, hw * 0.98, 1.6 * k, GOLD); // the flared, gilded crown-rim
+    if (im) for (const [mx, my] of [[0, -12.2], [-3.8, -10], [3.8, -10], [0, -7.9]] as const) box(ctx, x + mx * k, top + my * k, 1.6 * k, 1.8 * k, GOLD); // little merlons
+    if (im) {
+      poly(ctx, [x - 3.4 * k, top - 0.4 * k, x + 3.4 * k, top - 3.8 * k, x + 4.6 * k, top - 2.6 * k, x - 2.6 * k, top + 1.2 * k], P_PINK); // a sash wound across the tiara
+      line(ctx, x - 3.4 * k, top - 0.2 * k, x + 4 * k, top - 3.4 * k, GOLD, 0.5 * k);
+    }
+    return;
+  }
+  if (kind === 'swordsman' || kind === 'knight') {
+    // a gilded (or steel) domed helm with a turquoise horsehair plume, cheek plates and a scale aventail
+    const kn = kind === 'knight';
+    const m = kn ? '#c7d0dc' : P_GILD;
+    const ax = x - 0.4 * k, hgt = kn ? 1.3 : 1, ay = top - 7.6 * k * hgt;
+    const plume = kn ? P_PINK : P_TURQ;
+    poly(ctx, [ax, ay, ax - 3.6 * k, ay + 0.4 * k, ax - 8.4 * k, ay + 4.6 * k, ax - 8.6 * k, ay + 11 * k, ax - 5 * k, ay + 6.2 * k, ax - 2.2 * k, ay + 3.4 * k], plume);
+    poly(ctx, [ax, ay, ax - 3.6 * k, ay + 0.4 * k, ax - 6 * k, ay + 2.6 * k, ax - 2.4 * k, ay + 2.4 * k], shade(plume, 0.3));
+    for (const t of [0.3, 0.55, 0.8]) line(ctx, ax - 2 * k - t * 5 * k, ay + 2 * k + t * 2 * k, ax - 4.4 * k - t * 3.4 * k, ay + 4 * k + t * 7 * k, shade(plume, -0.35), 0.4 * k);
+    box(ctx, x, top + 3.8 * k, hw + 1.2 * k, 4.6 * k, m);
+    const dome = [x - 5.6 * k, top - 0.6 * k, x - 5.2 * k, top - 3.4 * k * hgt, x - 3.2 * k, top - 5.8 * k * hgt, ax, ay, x + 3.2 * k, top - 5.6 * k * hgt, x + 5.2 * k, top - 3.2 * k * hgt, x + 5.6 * k, top - 0.6 * k, x, top + 2.4 * k];
+    poly(ctx, dome, shade(m, 0.12));
+    poly(ctx, [ax, ay, x + 3.2 * k, top - 5.6 * k * hgt, x + 5.2 * k, top - 3.2 * k * hgt, x + 5.6 * k, top - 0.6 * k, x, top + 2.4 * k], shade(m, -0.26));
+    line(ctx, ax, ay, x - 0.2 * k, top + 2.4 * k, GOLD, 0.8 * k); // ridge
+    line(ctx, ax, ay, ax, ay - 2.6 * k, GOLD, 0.9 * k);
+    ellipse(ctx, ax, ay - 3 * k, 1.1 * k, 1.1 * k, GOLD);
+    faceQuad(ctx, 'R', x, top + 3.8 * k, hw + 1.2 * k, 4.6 * k, 0, 1, 0, 0.2, GOLD);
+    faceQuad(ctx, 'L', x, top + 3.8 * k, hw + 1.2 * k, 4.6 * k, 0, 1, 0, 0.2, GOLD);
+    faceQuad(ctx, 'R', x, top + 3.8 * k, hw + 1.2 * k, 4.6 * k, 0.42, 0.58, 0.4, 0.85, P_TURQ);
+    for (const u of [0.15, 0.78]) faceQuad(ctx, 'R', x, top + 3.8 * k, hw + 1.2 * k, 4.6 * k, u, u + 0.08, 0.5, 0.7, shade(m, 0.5)); // rivets
+    hq('R', 0.84, 1, 0.3, 0.72, m); // cheek plates
+    hq('L', 0.88, 1, 0.3, 0.72, m);
+    hq('L', 0, 0.55, 0.26, 0.6, shade(m, -0.15)); // the aventail of scales across the neck
+    for (const v of [0.34, 0.44, 0.54]) hq('L', 0, 0.55, v, v + 0.025, shade(m, -0.5));
+    return;
+  }
+  if (kind === 'archer' || kind === 'horsearcher') {
+    // a Scythian pointed hood, its tip bent back, with a long neck-cloth and gold-trimmed edge
+    tail(-0.6, P_TURQ);
+    box(ctx, x, top + 3.4 * k, hw + 0.8 * k, 3.2 * k, P_PINK);
+    bandTrim(top + 3.4 * k, hw + 0.8 * k, 3.2 * k);
+    poly(ctx, [x - 5.4 * k, top + 0.2 * k, x - 4.6 * k, top - 6.6 * k, x - 9.6 * k, top - 11.4 * k, x - 2.4 * k, top - 9.6 * k, x + 1.6 * k, top - 4.6 * k, x + 5.4 * k, top + 0.2 * k, x, top + 3.1 * k], P_TURQ);
+    poly(ctx, [x - 2.4 * k, top - 9.6 * k, x + 1.6 * k, top - 4.6 * k, x + 5.4 * k, top + 0.2 * k, x, top + 3.1 * k, x - 0.8 * k, top - 1 * k], shade(P_TURQ, -0.26));
+    line(ctx, x - 4.6 * k, top - 6.6 * k, x - 9.6 * k, top - 11.4 * k, P_PINK, 0.9 * k); // pink piping along the crest
+    line(ctx, x - 5.4 * k, top + 0.2 * k, x - 4.6 * k, top - 6.6 * k, P_PINK, 0.9 * k);
+    ellipse(ctx, x - 9.6 * k, top - 11.4 * k, 0.8 * k, 0.8 * k, GOLD);
+    hq('L', 0, 0.5, 0.3, 0.78, P_DTURQ, 0.8); // the hood covers the ear
+    hq('R', 0.9, 1, 0.4, 0.75, P_TURQ, 0.8);
+    return;
+  }
+  if (kind === 'explorer') {
+    // a courier's wrapped cream turban with a pink cloth wound through and a feathered gold brooch
+    tail(0, P_PINK);
+    box(ctx, x, top + 4.6 * k, hw + 1.6 * k, 6 * k, P_CREAM);
+    for (const v of [0.3, 0.66]) {
+      faceQuad(ctx, 'R', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, 0, 1, v, v + 0.08, shade(P_CREAM, -0.18));
+      faceQuad(ctx, 'L', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, 0, 1, v, v + 0.08, shade(P_CREAM, -0.18));
+    }
+    facePoly(ctx, 'R', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, [[0.05, 0], [0.3, 0], [0.98, 1], [0.72, 1]], P_PINK);
+    facePoly(ctx, 'L', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, [[0.2, 0], [0.5, 0], [0.98, 1], [0.7, 1]], P_PINK);
+    ellipse(ctx, x, top - 1.6 * k, 5.6 * k, 3.1 * k, P_CREAM);
+    ellipse(ctx, x - 1.2 * k, top - 2.4 * k, 3.4 * k, 1.5 * k, shade(P_CREAM, 0.4));
+    line(ctx, x - 4.6 * k, top - 1.2 * k, x + 3.6 * k, top - 3 * k, P_PINK, 0.9 * k);
+    faceQuad(ctx, 'R', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, 0.4, 0.6, 0.35, 0.8, GOLD);
+    faceQuad(ctx, 'R', x, top + 4.6 * k, hw + 1.6 * k, 6 * k, 0.46, 0.54, 0.45, 0.7, P_TURQ);
+    feather(ctx, x + 1 * k, top + 1.6 * k, x + 2.4 * k, top - 8 * k, 1.1 * k, P_PINK, P_CREAM);
+    return;
+  }
+  // the warrior's soft Median cap: felt, pink, its tip flopped forward, a turquoise band and a neck-cloth
+  tail(0, P_TURQ);
+  box(ctx, x, top + 3.8 * k, hw + 1.2 * k, 3.4 * k, P_TURQ);
+  bandTrim(top + 3.8 * k, hw + 1.2 * k, 3.4 * k);
+  poly(ctx, [x - 5.6 * k, top + 0.4 * k, x - 4.4 * k, top - 5 * k, x + 0.6 * k, top - 9.6 * k, x + 7.6 * k, top - 6.6 * k, x + 3.8 * k, top - 5.4 * k, x + 5.6 * k, top + 0.4 * k, x, top + 3.45 * k], shade(P_PINK, 0.06));
+  poly(ctx, [x, top + 3.45 * k, x + 2 * k, top - 6.6 * k, x + 0.6 * k, top - 9.6 * k, x + 7.6 * k, top - 6.6 * k, x + 3.8 * k, top - 5.4 * k, x + 5.6 * k, top + 0.4 * k], shade(P_PINK, -0.24));
+  line(ctx, x + 3.8 * k, top - 5.4 * k, x + 2 * k, top - 7.6 * k, shade(P_PINK, -0.5), 0.6 * k); // the fold of the drooping tip
+  ellipse(ctx, x + 7.6 * k, top - 6.6 * k, 0.9 * k, 0.9 * k, GOLD); // a gold bead on the tip
+  for (const [dx, dy] of [[-2.6, -3], [-1, -6.6], [-3.4, 0]] as const) ellipse(ctx, x + dx * k, top + dy * k, 0.55 * k, 0.55 * k, P_CREAM); // embroidered dots
+  hq('L', 0, 0.3, 0.3, 0.7, P_DTURQ); // a turned-down flap over the ear
+}
+
+/** The Persian arms: returns true when it drew the weapon (or its stand-in) for this unit. */
+function persiaWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
+  const { x, y } = b.hand;
+  switch (kind) {
+    case 'warrior': {
+      // the akinakes: a short curved blade with a gold guard and a ram's-head pommel, its lobed scabbard slung behind
+      poly(ctx, [x - 4.6 * k, y + 6.4 * k, x - 3.6 * k, y + 5.4 * k, x - 8.6 * k, y + 9.6 * k, x - 9.8 * k, y + 9.2 * k], P_GILD);
+      poly(ctx, [x - 4.6 * k, y + 6.4 * k, x - 4.1 * k, y + 5.9 * k, x - 9.2 * k, y + 9.4 * k, x - 9.8 * k, y + 9.2 * k], shade(P_GILD, -0.3));
+      ellipse(ctx, x - 9.2 * k, y + 9.6 * k, 1.1 * k, 0.9 * k, P_TURQ);
+      ellipse(ctx, x - 6.4 * k, y + 7.4 * k, 0.6 * k, 0.6 * k, P_TURQ);
+      line(ctx, x, y + 1.6 * k, x + 0.4 * k, y - 2.2 * k, '#3a2416', 1.9 * k);
+      for (const t of [0, 0.4, 0.8]) line(ctx, x - 0.8 * k + t * 0.4 * k, y + 1.2 * k - t * 3 * k, x + 1 * k + t * 0.4 * k, y + 0.8 * k - t * 3 * k, GOLD, 0.5 * k);
+      curvedBlade(ctx, x + 0.4 * k, y - 2.6 * k, x + 1.6 * k, y - 8.4 * k, x + 5 * k, y - 12.6 * k, 2.7 * k, '#dfe7f0', k);
+      line(ctx, x - 2 * k, y - 2.6 * k, x + 2.8 * k, y - 2.6 * k, GOLD, 1.4 * k);
+      ellipse(ctx, x - 2 * k, y - 2.6 * k, 0.9 * k, 0.9 * k, P_TURQ);
+      ellipse(ctx, x + 2.8 * k, y - 2.6 * k, 0.9 * k, 0.9 * k, P_TURQ);
+      ellipse(ctx, x - 0.1 * k, y + 2.6 * k, 1.4 * k, 1.2 * k, GOLD);
+      ring(ctx, x - 1.6 * k, y + 3.2 * k, 0.8 * k, 0.8 * k, GOLD, 0.5 * k); // the curling ram horns
+      ring(ctx, x + 1.4 * k, y + 3.2 * k, 0.8 * k, 0.8 * k, GOLD, 0.5 * k);
+      return true;
+    }
+    case 'swordsman': {
+      // a long curved sabre with a lion-head pommel and a pink-and-turquoise tassel
+      curvedBlade(ctx, x + 0.4 * k, y - 2.6 * k, x + 0.4 * k, y - 11 * k, x + 6.4 * k, y - 17.6 * k, 2.8 * k, '#e2e9f2', k);
+      line(ctx, x, y + 1.8 * k, x + 0.4 * k, y - 2.2 * k, '#3a2416', 2 * k);
+      for (const t of [0, 0.4, 0.8]) line(ctx, x - 0.8 * k, y + 1.2 * k - t * 3 * k, x + 1 * k, y + 0.8 * k - t * 3 * k, GOLD, 0.5 * k);
+      line(ctx, x - 2.4 * k, y - 2.6 * k, x + 3 * k, y - 2.6 * k, GOLD, 1.5 * k);
+      for (const dx of [-2.4, 3]) ellipse(ctx, x + dx * k, y - 2.6 * k, 0.9 * k, 0.9 * k, P_TURQ);
+      ellipse(ctx, x - 0.1 * k, y + 2.6 * k, 1.5 * k, 1.4 * k, GOLD); // the lion head
+      poly(ctx, [x - 1.6 * k, y + 1.8 * k, x - 1.4 * k, y + 0.6 * k, x - 0.6 * k, y + 1.6 * k], shade(GOLD, -0.2));
+      poly(ctx, [x + 1.4 * k, y + 1.8 * k, x + 1.2 * k, y + 0.6 * k, x + 0.6 * k, y + 1.6 * k], shade(GOLD, -0.2));
+      ellipse(ctx, x + 0.5 * k, y + 2.4 * k, 0.4 * k, 0.4 * k, P_TURQ);
+      line(ctx, x - 0.2 * k, y + 3.6 * k, x - 1.6 * k, y + 7.4 * k, P_PINK, 0.9 * k);
+      line(ctx, x + 0.2 * k, y + 3.6 * k, x + 0.4 * k, y + 7.6 * k, P_TURQ, 0.9 * k);
+      return true;
+    }
+    case 'giant': {
+      // a great gilded mace crowned with a lion's head, its shaft wound in gold wire
+      line(ctx, x - 0.4 * k, y + 5 * k, x + 2.4 * k, y - 15 * k, '#6b4424', 2.2 * k);
+      line(ctx, x - 0.8 * k, y + 5 * k, x + 2 * k, y - 15 * k, shade('#6b4424', 0.4), 0.6 * k);
+      for (let i = 0; i < 6; i++) line(ctx, x - 0.2 * k + i * 0.5 * k - 1.2 * k, y + 3.6 * k - i * 3.2 * k, x - 0.2 * k + i * 0.5 * k + 1.2 * k, y + 3 * k - i * 3.2 * k, GOLD, 0.5 * k);
+      pomegranate(ctx, x - 0.4 * k, y + 5.8 * k, 1.5 * k);
+      const hx = x + 2.6 * k, hy = y - 19 * k;
+      ellipse(ctx, hx, hy, 5.4 * k, 5.4 * k, shade(P_GILD, -0.3)); // mane
+      for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; poly(ctx, [hx + Math.cos(a - 0.3) * 4.6 * k, hy + Math.sin(a - 0.3) * 4.6 * k, hx + Math.cos(a) * 6.6 * k, hy + Math.sin(a) * 6.6 * k, hx + Math.cos(a + 0.3) * 4.6 * k, hy + Math.sin(a + 0.3) * 4.6 * k], i % 2 ? P_GILD : shade(P_GILD, -0.2)); }
+      ellipse(ctx, hx, hy, 3.6 * k, 3.8 * k, P_GILD);
+      ellipse(ctx, hx - 0.8 * k, hy - 1 * k, 1.6 * k, 1.4 * k, shade(P_GILD, 0.5));
+      poly(ctx, [hx - 3 * k, hy - 2.6 * k, hx - 2.4 * k, hy - 4.8 * k, hx - 1 * k, hy - 3 * k], P_GILD); // ears
+      poly(ctx, [hx + 3 * k, hy - 2.6 * k, hx + 2.4 * k, hy - 4.8 * k, hx + 1 * k, hy - 3 * k], P_GILD);
+      for (const ex of [-1.4, 1.4]) { ellipse(ctx, hx + ex * k, hy - 0.6 * k, 0.8 * k, 0.7 * k, P_TURQ); ellipse(ctx, hx + ex * k, hy - 0.6 * k, 0.3 * k, 0.3 * k, DARK); }
+      ellipse(ctx, hx, hy + 1 * k, 0.8 * k, 0.6 * k, DARK); // nose
+      line(ctx, hx, hy + 1.4 * k, hx, hy + 2.6 * k, DARK, 0.4 * k);
+      for (const dx of [-1, 1]) poly(ctx, [hx + dx * 0.6 * k, hy + 2.4 * k, hx + dx * 1.2 * k, hy + 3.8 * k, hx + dx * 1.7 * k, hy + 2.4 * k], P_CREAM); // fangs
+      return true;
+    }
+    case 'archer':
+    case 'horsearcher': {
+      // a recurved composite bow of horn and sinew: gilded tips, a turquoise-wrapped grip, a pink-fletched arrow
+      const wood = '#7a4a24';
+      const path = () => {
+        ctx.beginPath();
+        ctx.moveTo(x + 8.2 * k, y - 12.8 * k);
+        ctx.bezierCurveTo(x + 5.4 * k, y - 10.8 * k, x + 10.6 * k, y - 8.6 * k, x + 10.2 * k, y - 5.4 * k);
+        ctx.lineTo(x + 10.2 * k, y - 0.6 * k);
+        ctx.bezierCurveTo(x + 10.6 * k, y + 2.6 * k, x + 5.4 * k, y + 4.8 * k, x + 8.2 * k, y + 6.8 * k);
+      };
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      path();
+      ctx.strokeStyle = ink(shade(wood, -0.2));
+      ctx.lineWidth = 2.1 * k;
+      ctx.stroke();
+      path();
+      ctx.strokeStyle = ink(shade(wood, 0.35));
+      ctx.lineWidth = 0.7 * k;
+      ctx.stroke();
+      for (const [tx, ty] of [[8.2, -12.8], [8.2, 6.8]] as const) { ellipse(ctx, x + tx * k, y + ty * k, 1.1 * k, 1.1 * k, GOLD); ellipse(ctx, x + tx * k, y + ty * k, 0.5 * k, 0.5 * k, P_TURQ); }
+      line(ctx, x + 8.2 * k, y - 12.8 * k, x - 3.5 * k, y - 3 * k, P_CREAM, 0.7 * k); // the string, drawn to the nock
+      line(ctx, x + 8.2 * k, y + 6.8 * k, x - 3.5 * k, y - 3 * k, P_CREAM, 0.7 * k);
+      line(ctx, x + 10.2 * k, y - 5.4 * k, x + 10.2 * k, y - 0.6 * k, P_TURQ, 2.7 * k);
+      for (const t of [-4.8, -3.4, -2, -0.8]) line(ctx, x + 9.2 * k, y + t * k, x + 11.2 * k, y + (t - 0.5) * k, GOLD, 0.4 * k);
+      line(ctx, x - 3.5 * k, y - 3 * k, x + 8 * k, y - 3 * k, '#6b4424', 1.1 * k);
+      poly(ctx, [x + 8 * k, y - 4.8 * k, x + 11.6 * k, y - 3 * k, x + 8 * k, y - 1.2 * k], STEEL);
+      line(ctx, x + 8 * k, y - 3 * k, x + 10.6 * k, y - 3 * k, shade(STEEL, -0.35), 0.5 * k);
+      poly(ctx, [x - 3.6 * k, y - 3 * k, x - 6.6 * k, y - 5.2 * k, x - 4.2 * k, y - 3 * k], P_PINK);
+      poly(ctx, [x - 3.6 * k, y - 3 * k, x - 6.6 * k, y - 0.8 * k, x - 4.2 * k, y - 3 * k], P_DPINK);
+      return true;
+    }
+    case 'defender':
+    case 'immortal': {
+      // a long spear: a leaf head in bright steel, a gold socket, a tassel, and a butt-spike or a golden pomegranate
+      const im = kind === 'immortal';
+      line(ctx, x + 1 * k, y + 5 * k, x + 2 * k, y - 18 * k, '#6b4424', 1.8 * k);
+      line(ctx, x + 0.6 * k, y + 5 * k, x + 1.6 * k, y - 18 * k, shade('#6b4424', 0.35), 0.5 * k);
+      for (const t of [0.05, 0.4, 0.75]) line(ctx, x + 0.2 * k + t * 0.6 * k, y + 3 * k - t * 19 * k, x + 2 * k + t * 0.6 * k, y + 2.6 * k - t * 19 * k, GOLD, 0.6 * k);
+      if (im) pomegranate(ctx, x + 0.9 * k, y + 6.6 * k, 1.9 * k);
+      else { poly(ctx, [x + 0.4 * k, y + 5 * k, x + 1.6 * k, y + 5 * k, x + 1 * k, y + 8 * k], shade(STEEL, -0.2)); ellipse(ctx, x + 1 * k, y + 5 * k, 1.2 * k, 0.8 * k, P_GILD); }
+      poly(ctx, [x + 2 * k, y - 23.5 * k, x + 0 * k, y - 17.5 * k, x + 2 * k, y - 16.5 * k], shade(STEEL, 0.28));
+      poly(ctx, [x + 2 * k, y - 23.5 * k, x + 4 * k, y - 17.5 * k, x + 2 * k, y - 16.5 * k], shade(STEEL, -0.22));
+      line(ctx, x + 2 * k, y - 23 * k, x + 2 * k, y - 17 * k, shade(STEEL, -0.45), 0.5 * k);
+      ellipse(ctx, x + 1.95 * k, y - 16.4 * k, 1.6 * k, 1 * k, GOLD);
+      poly(ctx, [x + 1.4 * k, y - 16 * k, x + 0.2 * k, y - 11.4 * k, x + 1.4 * k, y - 12.4 * k, x + 2.4 * k, y - 11 * k, x + 2.6 * k, y - 16 * k], P_PINK);
+      poly(ctx, [x + 1.8 * k, y - 15.6 * k, x + 2.8 * k, y - 10.6 * k, x + 3.6 * k, y - 15.6 * k], P_TURQ);
+      if (im) { // a pennant with the winged sun
+        poly(ctx, [x + 2.4 * k, y - 14.4 * k, x + 9 * k, y - 13.4 * k, x + 7.2 * k, y - 11.6 * k, x + 9 * k, y - 9.8 * k, x + 2.2 * k, y - 10.4 * k], P_TURQ);
+        wingedDisc(ctx, x + 5.2 * k, y - 12.2 * k, 0.32 * k, P_CREAM, GOLD);
+      }
+      return true;
+    }
+    case 'explorer': {
+      // a herald's staff with a gilded winged-sun finial and a pink pennant; a waterskin at the hip
+      line(ctx, x + 1 * k, y + 6 * k, x + 2.5 * k, y - 12 * k, '#7a4a24', 1.6 * k);
+      line(ctx, x + 0.6 * k, y + 6 * k, x + 2.1 * k, y - 12 * k, shade('#7a4a24', 0.4), 0.5 * k);
+      for (const t of [0.3, 0.6]) line(ctx, x + 1 * k + t * 1.5 * k - 1 * k, y + 6 * k - t * 18 * k, x + 1 * k + t * 1.5 * k + 1 * k, y + 6 * k - t * 18 * k, GOLD, 0.6 * k);
+      wingedDisc(ctx, x + 2.7 * k, y - 15.4 * k, 0.5 * k, P_CREAM, GOLD);
+      line(ctx, x + 2 * k, y - 8 * k, x + 4.5 * k, y - 7 * k, P_CREAM, 0.7 * k);
+      poly(ctx, [x + 4.5 * k, y - 7 * k, x + 9 * k, y - 8.4 * k, x + 7.6 * k, y - 6.6 * k, x + 9 * k, y - 4.6 * k, x + 4.4 * k, y - 5.6 * k], P_PINK);
+      lionMark(ctx, x + 6.8 * k, y - 6.2 * k, 0.32 * k, GOLD);
+      ellipse(ctx, x - 6.8 * k, y - 3 * k, 1.5 * k, 2 * k, '#8a5a2b');
+      line(ctx, x - 6.8 * k, y - 5 * k, x - 5.2 * k, y - 7.6 * k, P_TURQ, 0.6 * k);
+      return true;
+    }
+  }
+  return false;
+}
+
+/** A Persian shield: the tall wicker spara of the line, a gilded lion roundel for the Immortals, and small painted rounds for the riders. */
+function persiaShield(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'defender') {
+    const cx = x - 1.2 * k;
+    const out = [cx - 3.9 * k, y + 2 * k, cx - 3.9 * k, y - 10 * k, cx - 2.4 * k, y - 11.8 * k, cx + 2.4 * k, y - 13 * k, cx + 3.9 * k, y - 11.6 * k, cx + 3.9 * k, y - 0.2 * k, cx + 2.4 * k, y + 1.6 * k, cx - 2.4 * k, y + 2.4 * k];
+    poly(ctx, out, P_DWICK);
+    poly(ctx, out.map((v, i) => (i % 2 ? v + (i > 8 ? -0.4 * k : 0.4 * k) : v + (v < cx ? 0.5 * k : -0.5 * k))), P_WICK);
+    for (let i = 0; i < 8; i++) { // basket-weave: courses of darker reed, with staggered ticks
+      const yy = y + 1 * k - i * 1.6 * k;
+      line(ctx, cx - 3.4 * k, yy + 0.4 * k, cx + 3.4 * k, yy - 0.6 * k, shade(P_WICK, -0.28), 0.5 * k);
+      for (let j = 0; j < 4; j++) line(ctx, cx - 2.7 * k + j * 1.9 * k + (i % 2) * 0.9 * k, yy - 0.2 * k, cx - 2.7 * k + j * 1.9 * k + (i % 2) * 0.9 * k, yy - 1.4 * k, shade(P_WICK, 0.25), 0.4 * k);
+    }
+    poly(ctx, [cx - 3.9 * k, y - 8.4 * k, cx + 3.9 * k, y - 9.6 * k, cx + 3.9 * k, y - 11.6 * k, cx + 2.4 * k, y - 13 * k, cx - 2.4 * k, y - 11.8 * k, cx - 3.9 * k, y - 10 * k], P_PINK); // a pink painted crest band
+    for (const t of [-2.6, 0, 2.6]) ellipse(ctx, cx + t * k, y - 10.6 * k - t * 0.15 * k, 0.55 * k, 0.55 * k, GOLD);
+    ellipse(ctx, cx, y - 4.4 * k, 2.2 * k, 2.4 * k, P_TURQ);
+    ring(ctx, cx, y - 4.4 * k, 2.2 * k, 2.4 * k, GOLD, 0.6 * k);
+    ellipse(ctx, cx, y - 4.4 * k, 0.9 * k, 0.9 * k, GOLD);
+    ctx.strokeStyle = ink(P_DPINK);
+    ctx.lineWidth = 0.9 * k;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(out[0], out[1]);
+    for (let i = 2; i < out.length; i += 2) ctx.lineTo(out[i], out[i + 1]);
+    ctx.closePath();
+    ctx.stroke();
+    for (const [rx, ry] of [[-3.7, 1.4], [3.7, -0.6], [-3.7, -9.8], [3.7, -11]] as const) ellipse(ctx, cx + rx * k, y + ry * k, 0.5 * k, 0.5 * k, GOLD);
+    return;
+  }
+  if (kind === 'immortal') {
+    const cx = x - 1 * k, cy = y - 5.2 * k;
+    ellipse(ctx, cx, cy, 5.6 * k, 6.2 * k, shade(P_GILD, -0.25));
+    ellipse(ctx, cx, cy, 4.8 * k, 5.4 * k, P_DTURQ);
+    ellipse(ctx, cx, cy, 3.6 * k, 4.1 * k, P_TURQ);
+    ring(ctx, cx, cy, 4.8 * k, 5.4 * k, GOLD, 0.7 * k);
+    for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; ellipse(ctx, cx + Math.cos(a) * 5.2 * k, cy + Math.sin(a) * 5.8 * k, 0.5 * k, 0.5 * k, P_PINK); }
+    lionMark(ctx, cx - 0.2 * k, cy - 0.4 * k, 0.62 * k, P_GILD);
+    ellipse(ctx, cx - 1.8 * k, cy - 3.8 * k, 1.3 * k, 0.9 * k, shade(P_TURQ, 0.5)); // sheen
+    return;
+  }
+  // the rider's round wicker target, painted in the empire's colours
+  const cx = x - 1 * k, cy = y - 5 * k, kn = kind === 'knight';
+  ellipse(ctx, cx, cy, 5 * k, 5.6 * k, kn ? P_DPINK : P_DWICK);
+  ellipse(ctx, cx, cy, 4.4 * k, 5 * k, kn ? P_PINK : P_WICK);
+  for (const r of [3.2, 2]) ring(ctx, cx, cy, r * k, r * 1.12 * k, kn ? P_DPINK : P_DWICK, 0.5 * k);
+  ring(ctx, cx, cy, 4.7 * k, 5.3 * k, GOLD, 0.7 * k);
+  ellipse(ctx, cx, cy, 1.5 * k, 1.6 * k, P_TURQ);
+  ellipse(ctx, cx, cy, 0.6 * k, 0.6 * k, GOLD);
+  for (const a of [0.4, 2, 3.6, 5.2]) ellipse(ctx, cx + Math.cos(a) * 3.2 * k, cy + Math.sin(a) * 3.6 * k, 0.5 * k, 0.5 * k, P_CREAM);
+}
+
+/** The gorytos: a patterned bow-and-arrow case with a gilded rim, arrows fletched in pink and cream. */
+function persiaQuiver(ctx: Ctx, x: number, y: number, k: number) {
+  const qx = x - 7 * k, qy = y - 8 * k, w = 4 * k, h = 8 * k;
+  band(ctx, qx, qy, w, h, 0.84, 1, GOLD);
+  band(ctx, qx, qy, w, h, 0, 0.12, GOLD);
+  band(ctx, qx, qy, w, h, 0.68, 0.76, P_PINK);
+  for (const v of [0.18, 0.4]) for (const u of [0.1, 0.5]) {
+    faceQuad(ctx, 'R', qx, qy, w, h, u, u + 0.34, v, v + 0.16, P_TURQ);
+    faceQuad(ctx, 'L', qx, qy, w, h, u, u + 0.34, v, v + 0.16, P_DTURQ);
+    faceQuad(ctx, 'R', qx, qy, w, h, u + 0.12, u + 0.22, v + 0.05, v + 0.11, P_CREAM);
+  }
+  for (const i of [-1.5, -0.5, 0.5, 1.5]) {
+    const tx = qx - 1.4 * k + i * 1.1 * k;
+    line(ctx, qx + i * 0.8 * k, qy - 4.4 * k, tx, qy - 10.6 * k, '#c9b58a', 0.6 * k);
+    poly(ctx, [tx, qy - 10.6 * k, tx - 1 * k, qy - 13.2 * k, tx + 0.3 * k, qy - 11.4 * k], i % 2 ? P_CREAM : P_PINK);
+    poly(ctx, [tx, qy - 10.6 * k, tx + 1.1 * k, qy - 13 * k, tx + 0.3 * k, qy - 11.4 * k], shade(i % 2 ? P_CREAM : P_PINK, -0.3));
+  }
+  ellipse(ctx, qx, qy - 2.6 * k, 0.9 * k, 0.9 * k, GOLD);
+}
+
+/** The Persian horse furniture: a lion-blazoned saddle cloth, plumes and a gilded frontlet. */
+function persiaHorseGear(ctx: Ctx, kind: UnitKind, x: number, y: number, saddle: { x: number; y: number }) {
+  const kh = 0.95, hx0 = x - 1, hy0 = y + 3;
+  const hx = hx0 + 10.5 * kh, hy = hy0 - 15 * kh;
+  const knight = kind === 'knight';
+  const sx = saddle.x, sy = saddle.y;
+  if (!knight) {
+    // a hanging saddle cloth: pink, turquoise-bordered, its hem set with gold triangles
+    poly(ctx, [sx - 6.6, sy - 1, sx + 4.2, sy - 1, sx + 3.6, sy + 6.8, sx - 1.4, sy + 5.4, sx - 5.4, sy + 8.4], P_PINK);
+    poly(ctx, [sx - 6.6, sy - 1, sx - 1.6, sy - 1, sx - 1.4, sy + 5.4, sx - 5.4, sy + 8.4], shade(P_PINK, 0.14));
+    for (const [a, b, c, d] of [[-5.4, 8.4, -1.4, 5.4], [-1.4, 5.4, 3.6, 6.8]] as const) line(ctx, sx + a, sy + b, sx + c, sy + d, P_TURQ, 1.5);
+    for (let i = 0; i < 5; i++) {
+      const t = i / 4;
+      const px = i < 3 ? sx - 5.2 + t * 2 * 4 * 0.5 * 2 : sx - 1.4 + (t - 0.5) * 2 * 5, py = i < 3 ? sy + 8.4 - t * 6 : sy + 5.4 + (t - 0.5) * 2 * 1.4;
+      poly(ctx, [px - 0.9, py + 0.6, px + 0.9, py + 0.9, px, py + 2.6], GOLD);
+    }
+    lionMark(ctx, sx - 1.6, sy + 2.4, 0.46, GOLD);
+    line(ctx, sx - 6.6, sy - 1, sx + 4.2, sy - 1, GOLD, 0.8);
+  } else {
+    // the cataphract's caparison: turquoise stripes down the pink cloth, a gold-lion roundel, a fringe of gold triangles
+    for (let i = 0; i < 6; i++) {
+      faceQuad(ctx, 'R', hx0, hy0 - 6 * kh, 17 * kh, 7 * kh, 0.06 + i * 0.16, 0.12 + i * 0.16, 0.14, 0.62, P_TURQ);
+      faceQuad(ctx, 'L', hx0, hy0 - 6 * kh, 17 * kh, 7 * kh, 0.06 + i * 0.16, 0.12 + i * 0.16, 0.14, 0.62, P_DTURQ);
+    }
+    band(ctx, hx0, hy0 - 6 * kh, 17 * kh, 7 * kh, 0.62, 0.7, P_DPINK);
+    for (let i = 0; i < 7; i++) faceQuad(ctx, 'R', hx0, hy0 - 6 * kh, 17 * kh, 7 * kh, 0.04 + i * 0.14, 0.11 + i * 0.14, 0.02, 0.1, P_CREAM);
+    ellipse(ctx, hx0 + 4.4, hy0 - 6.6, 2.7, 2.7, P_DPINK);
+    ring(ctx, hx0 + 4.4, hy0 - 6.6, 2.7, 2.7, GOLD, 0.6);
+    lionMark(ctx, hx0 + 4.2, hy0 - 6.4, 0.36, GOLD);
+    wingedDisc(ctx, sx + 5.4, sy + 1, 0.42, P_CREAM, GOLD);
+  }
+  // the horse's head: a gold frontlet with a turquoise gem, twin plumes and hanging tassels
+  faceQuad(ctx, 'R', hx, hy, 7 * kh, 5 * kh, 0.3, 0.7, 0.78, 0.96, GOLD);
+  faceQuad(ctx, 'R', hx, hy, 7 * kh, 5 * kh, 0.44, 0.56, 0.8, 0.94, P_TURQ);
+  poly(ctx, [hx + 0.4, hy - 4.4, hx - 1.6, hy - 11.4, hx + 2.6, hy - 5.2], P_PINK);
+  poly(ctx, [hx + 1.6, hy - 4.6, hx + 3.2, hy - 11, hx + 4.4, hy - 4.6], P_TURQ);
+  poly(ctx, [hx + 0.4, hy - 4.4, hx - 0.6, hy - 9, hx + 1.4, hy - 5], shade(P_PINK, 0.4));
+  ellipse(ctx, hx + 1.4, hy - 4.2, 1.3, 1, GOLD);
+  for (const [tx, ty] of [[hx + 3.6, hy + 2.2], [hx + 5.6, hy + 3]] as const) { line(ctx, tx, ty, tx - 0.4, ty + 2.6, P_PINK, 0.8); ellipse(ctx, tx - 0.4, ty + 3, 0.8, 0.9, GOLD); }
+  // a turquoise breast collar hung with gold discs
+  line(ctx, x + 3.4, y - 9.6, x + 8.4, y - 3.8, P_TURQ, 1.4);
+  for (const t of [0.15, 0.45, 0.75]) { ellipse(ctx, x + 3.4 + 5 * t, y - 9.6 + 5.8 * t + 1.2, 1.2, 1.2, GOLD); ellipse(ctx, x + 3.4 + 5 * t, y - 9.6 + 5.8 * t + 1.2, 0.5, 0.5, P_PINK); }
+  // the mane braided with gold ribbons, the tail tied up in turquoise
+  for (const [mx, my] of [[9.4, -19.6], [8.2, -17], [7, -14.4]] as const) line(ctx, x - 1 + mx * kh - 1.2, y + 3 + my * kh, x - 1 + mx * kh + 1.2, y + 3 + my * kh, GOLD, 0.7);
+  line(ctx, hx0 - 10.6 * kh, hy0 - 9.6 * kh, hx0 - 8.6 * kh, hy0 - 8.2 * kh, P_TURQ, 1.6);
+}
+
+/** A great arm-sling engine on a turquoise-painted carriage: tiled gable, winged-sun finial, a lion-headed arm. */
+function persiaCatapult(ctx: Ctx, x: number, y: number, wheels: (hub: string) => void, flag: (fx: number, fy: number, color: string) => void) {
+  box(ctx, x, y - 2, 18, 4, '#7a5230');
+  band(ctx, x, y - 2, 18, 4, 0.48, 0.76, P_TURQ);
+  for (const u of [0.1, 0.3, 0.5, 0.7, 0.9]) faceQuad(ctx, 'R', x, y - 2, 18, 4, u - 0.04, u + 0.04, 0.54, 0.7, GOLD);
+  wheels(P_TURQ);
+  for (const [ox, oy] of [[-7, 1], [6, 3]]) ring(ctx, x + ox, y + oy, 3.4, 3.8, P_PINK, 0.8); // pink-painted wheel rims
+  // two tile-painted uprights, a cross-beam and a gable roof
+  line(ctx, x - 5.4, y - 2, x - 2, y - 20, P_TURQ, 2.9);
+  line(ctx, x + 5.4, y - 1, x + 2, y - 20, P_DTURQ, 2.9);
+  line(ctx, x - 5.8, y - 2, x - 2.4, y - 20, P_LTURQ, 0.6);
+  for (const t of [0.2, 0.4, 0.6, 0.8]) { line(ctx, x - 5.4 + 3.4 * t - 1.4, y - 2 - 18 * t, x - 5.4 + 3.4 * t + 1.4, y - 2 - 18 * t, P_CREAM, 0.5); line(ctx, x + 5.4 - 3.4 * t - 1.4, y - 1 - 19 * t, x + 5.4 - 3.4 * t + 1.4, y - 1 - 19 * t, P_CREAM, 0.5); } // tile courses
+  line(ctx, x - 3.8, y - 10, x + 3.8, y - 10, GOLD, 1.2);
+  poly(ctx, [x - 5.2, y - 20.4, x, y - 25.4, x + 5.2, y - 20.4, x, y - 18], P_TURQ);
+  poly(ctx, [x, y - 25.4, x + 5.2, y - 20.4, x, y - 18], shade(P_TURQ, -0.28));
+  line(ctx, x - 5.2, y - 20.4, x, y - 18, GOLD, 0.7);
+  line(ctx, x, y - 18, x + 5.2, y - 20.4, shade(GOLD, -0.3), 0.7);
+  wingedDisc(ctx, x, y - 27.6, 0.5, P_CREAM, GOLD);
+  // the throwing arm ends in a lion's head that holds the stone in its open jaws
+  line(ctx, x - 8, y - 11, x + 12, y - 30, '#6b4424', 3.2);
+  line(ctx, x - 8, y - 11.7, x + 12, y - 30.7, shade('#6b4424', 0.4), 0.6);
+  for (const t of [0.25, 0.5, 0.75]) line(ctx, x - 8 + 20 * t - 1, y - 11 - 19 * t + 1.6, x - 8 + 20 * t + 1, y - 11 - 19 * t - 1.6, GOLD, 0.7);
+  ellipse(ctx, x - 1.6, y - 16.6, 1.5, 1.5, GOLD); // the pivot
+  line(ctx, x - 8, y - 11, x - 8.6, y - 8.6, '#5a3a22', 1);
+  box(ctx, x - 8.6, y - 5.4, 5, 3.6, P_PINK, shade(P_PINK, 0.2)); // the counterweight box
+  band(ctx, x - 8.6, y - 5.4, 5, 3.6, 0.4, 0.6, GOLD);
+  const hx = x + 13, hy = y - 31.4;
+  ellipse(ctx, hx, hy, 4.4, 4.2, shade(P_GILD, -0.3));
+  for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + 0.2; poly(ctx, [hx + Math.cos(a - 0.3) * 3.8, hy + Math.sin(a - 0.3) * 3.6, hx + Math.cos(a) * 5.6, hy + Math.sin(a) * 5.4, hx + Math.cos(a + 0.3) * 3.8, hy + Math.sin(a + 0.3) * 3.6], i % 2 ? P_GILD : shade(P_GILD, -0.2)); }
+  ellipse(ctx, hx, hy, 3, 3, P_GILD);
+  poly(ctx, [hx - 0.4, hy + 0.6, hx + 3.6, hy + 2.6, hx + 3.2, hy + 4.4, hx - 0.4, hy + 3], shade(P_GILD, -0.25)); // the lower jaw
+  ellipse(ctx, hx + 1.4, hy - 0.8, 0.7, 0.7, P_TURQ);
+  ellipse(ctx, hx + 3.2, hy + 0.8, 0.6, 0.5, DARK);
+  ellipse(ctx, hx + 1.6, hy + 2.6, 2.1, 1.7, '#8a8a90'); // the stone in its jaws
+  ellipse(ctx, hx + 1.2, hy + 2.2, 0.8, 0.5, '#b4b4bc');
+  line(ctx, x + 12, y - 27, x + 8, y - 7, '#c9b58a', 0.7); // sling rope
+  flag(x + 8, y + 1, P_PINK);
+  // a striped awning pole at the rear shading the crew's stores
+  line(ctx, x - 12.4, y - 1, x - 12.4, y - 15, '#5a3b1e', 1);
+  poly(ctx, [x - 12.4, y - 15, x - 5.6, y - 13.4, x - 12.4, y - 10.6], P_TURQ);
+  poly(ctx, [x - 12.4, y - 15, x - 8.6, y - 14.2, x - 12.4, y - 12.8], P_CREAM);
+  ellipse(ctx, x - 12.4, y - 15.6, 0.9, 0.9, GOLD);
+}
+
+/** The Persian navy: painted galleys with a gilded lion's-head prow and a fan-tailed stern, sails blazoned with the winged sun. */
+function drawPersianBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const T = TRIBES.persia;
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const s = 1 + tier * 0.14, w = 19 * s;
+  const hullC = '#7a2a56';
+  const at = (t: number) => ({ l: { x: x - w + w * 0.3 * t, y: y - 5 + 8 * t }, r: { x: x + w + 3 - (w * 0.28 + 3) * t, y: y - 6 + 9 * t } });
+  // the fan-tailed stern: turned-up planking with a spray of gilded feathers
+  poly(ctx, [x - w, y - 5, x - w - 1.6, y - 12, x - w - 3.4, y - 15.6, x - w + 2.6, y - 9, x - w + 3, y - 6], shade(hullC, 0.2));
+  for (let i = 0; i < 4; i++) {
+    const a = -2.5 + i * 0.32;
+    poly(ctx, [x - w - 1, y - 12, x - w - 1 + Math.cos(a) * 8.6, y - 12 + Math.sin(a) * 8.6, x - w - 1 + Math.cos(a + 0.28) * 7.6, y - 12 + Math.sin(a + 0.28) * 7.6], i % 2 ? P_TURQ : GOLD);
+  }
+  ellipse(ctx, x - w - 1, y - 12, 1.3, 1.3, P_PINK);
+  // hull, painted plum below a pink strake
+  poly(ctx, [x - w, y - 5, x + w + 3, y - 6, x + w * 0.72, y + 3, x - w * 0.7, y + 3], hullC);
+  poly(ctx, [x - w, y - 5, x + w + 3, y - 6, x + w * 0.9, y - 8.5, x - w * 0.9, y - 8], P_PINK);
+  poly(ctx, [x - w, y - 5, x + w + 3, y - 6, x + w + 2.4, y - 6.9, x - w + 0.4, y - 5.9], shade(P_PINK, -0.3));
+  // a turquoise frieze along the hull, with cream rosettes and gold edging
+  const a0 = at(0.16), a1 = at(0.5);
+  poly(ctx, [a0.l.x, a0.l.y, a0.r.x, a0.r.y, a1.r.x, a1.r.y, a1.l.x, a1.l.y], P_TURQ);
+  line(ctx, a0.l.x, a0.l.y, a0.r.x, a0.r.y, GOLD, 0.8);
+  line(ctx, a1.l.x, a1.l.y, a1.r.x, a1.r.y, GOLD, 0.8);
+  const mid = at(0.33);
+  const n = 6 + tier * 2;
+  for (let i = 0; i < n; i++) {
+    const f = 0.06 + (i / (n - 1)) * 0.88, px = mid.l.x + (mid.r.x - mid.l.x) * f, py = mid.l.y + (mid.r.y - mid.l.y) * f;
+    ellipse(ctx, px, py, 1.4, 1.4, P_CREAM);
+    ellipse(ctx, px, py, 0.6, 0.6, i % 2 ? P_PINK : GOLD);
+  }
+  for (let i = 0; i < 6; i++) line(ctx, x - w * 0.8 + i * (w * 0.32), y - 1, x - w * 0.8 + i * (w * 0.32) - 0.8, y + 2.6, shade(hullC, -0.35), 0.5); // ribs
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 3.4, w * 0.8, 2.3, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.stroke();
+  // the bow: a bronze ram at the waterline and a gilded lion's-head figurehead on a curving neck
+  poly(ctx, [x + w * 0.7, y + 0.6, x + w + 6, y + 2.6, x + w * 0.7, y + 3.4], BRONZE);
+  poly(ctx, [x + w * 0.7, y + 0.6, x + w + 6, y + 2.6, x + w * 0.9, y + 1.8], shade(BRONZE, 0.35));
+  ctx.strokeStyle = ink(P_GILD);
+  ctx.lineWidth = 2.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + w + 1.4, y - 6);
+  ctx.quadraticCurveTo(x + w + 2.2, y - 13, x + w + 4.2, y - 14.6);
+  ctx.stroke();
+  const fx = x + w + 4.4, fy = y - 15.6;
+  ellipse(ctx, fx, fy, 3.6, 3.6, shade(P_GILD, -0.3));
+  for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2; poly(ctx, [fx + Math.cos(a - 0.35) * 3, fy + Math.sin(a - 0.35) * 3, fx + Math.cos(a) * 4.8, fy + Math.sin(a) * 4.8, fx + Math.cos(a + 0.35) * 3, fy + Math.sin(a + 0.35) * 3], i % 2 ? P_GILD : shade(P_GILD, -0.2)); }
+  ellipse(ctx, fx, fy, 2.6, 2.6, P_GILD);
+  poly(ctx, [fx + 0.4, fy + 0.8, fx + 3.6, fy + 1.8, fx + 3, fy + 3.2, fx + 0.4, fy + 2.6], shade(P_GILD, -0.28)); // open jaw
+  poly(ctx, [fx + 1.4, fy + 1.4, fx + 3.2, fy + 1.8, fx + 2.6, fy + 2.4], '#c8372d');
+  ellipse(ctx, fx + 1.1, fy - 0.6, 0.7, 0.7, P_TURQ);
+  ellipse(ctx, fx + 2.8, fy + 0.6, 0.55, 0.45, DARK);
+  poly(ctx, [fx - 1, fy - 2.6, fx - 0.6, fy - 4.4, fx + 0.8, fy - 2.8], P_GILD);
+  // oars: a bank along the hull, a second above it on the war fleet
+  const bank = 4 + tier * 2;
+  for (let i = 0; i < bank; i++) {
+    const ox = x - w * 0.62 + i * ((w * 1.24) / (bank - 1));
+    line(ctx, ox, y - 1, ox - 3, y + 6, '#6b4424', 1.1);
+    ellipse(ctx, ox - 3.4, y + 6.6, 1.7, 0.8, P_TURQ);
+    ellipse(ctx, ox - 3.4, y + 6.6, 0.6, 0.4, P_PINK);
+  }
+  // mast and sails
+  const mt = y - (34 + tier * 6);
+  line(ctx, x, y - 6, x, mt, '#5a3b1e', 2);
+  const top = mt + 2;
+  if (tier === 0) {
+    // a pink lateen sail with a cream border and a little gold sun
+    poly(ctx, [x + 0.8, top, x + 15, y - 11.4, x + 0.8, y - 10.4], P_PINK);
+    poly(ctx, [x + 0.8, top, x + 15, y - 11.4, x + 0.8, y - 10.4], P_PINK);
+    poly(ctx, [x - 0.8, top + 3, x - 10, y - 12, x - 0.8, y - 10.6], shade(P_PINK, -0.2));
+    line(ctx, x + 0.8, top, x + 15, y - 11.4, P_CREAM, 0.9);
+    line(ctx, x + 15, y - 11.4, x + 0.8, y - 10.4, P_CREAM, 0.9);
+    ellipse(ctx, x + 5.4, y - 19, 2.4, 2.4, GOLD);
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; line(ctx, x + 5.4 + Math.cos(a) * 2.8, y - 19 + Math.sin(a) * 2.8, x + 5.4 + Math.cos(a) * 4, y - 19 + Math.sin(a) * 4, GOLD, 0.5); }
+  } else {
+    // a square sail striped pink and cream, blazoned with the winged sun, on a gilded yard
+    const yw = 14 * s, sy0 = top + 5, sy1 = y - 12;
+    poly(ctx, [x - yw, sy0, x + yw, sy0, x + yw - 1, sy1, x - yw + 1, sy1], P_CREAM);
+    poly(ctx, [x, sy0, x + yw, sy0, x + yw - 1, sy1, x, sy1], shade(P_CREAM, -0.1));
+    for (const f of [-0.76, -0.4, 0.4, 0.76]) poly(ctx, [x + yw * f - 1.6, sy0, x + yw * f + 1.6, sy0, x + yw * f + 1.4, sy1, x + yw * f - 1.4, sy1], P_PINK);
+    for (let i = 0; i < 6; i++) line(ctx, x - yw + 1 + i * (yw * 2 - 2) / 5, sy1 - 0.4, x - yw + 1 + i * (yw * 2 - 2) / 5, sy1 + 1.8, GOLD, 0.7); // hem tassels
+    wingedDisc(ctx, x, (sy0 + sy1) / 2 - 0.4, 0.8 * s, P_CREAM, GOLD);
+    line(ctx, x - yw - 1, sy0, x + yw + 1, sy0, GOLD, 1.3);
+    ellipse(ctx, x - yw - 1, sy0, 0.9, 0.9, P_TURQ);
+    ellipse(ctx, x + yw + 1, sy0, 0.9, 0.9, P_TURQ);
+    for (const f of [0.4, 0.7]) line(ctx, x - yw + 0.5 * f, sy0 + (sy1 - sy0) * f, x + yw - 0.5 * f, sy0 + (sy1 - sy0) * f, shade(P_CREAM, -0.32), 0.4); // battens
+  }
+  // a swallow-tailed royal pennant and a gold finial at the masthead
+  poly(ctx, [x, mt - 2, x + 10, mt - 0.4, x + 7.6, mt + 1.4, x + 10, mt + 3.2, x, mt + 1.6], T.color);
+  poly(ctx, [x, mt - 2, x + 10, mt - 0.4, x + 9, mt + 0.4, x, mt - 0.4], shade(T.color, 0.35));
+  ellipse(ctx, x + 3.4, mt + 0.6, 0.9, 0.9, GOLD);
+  ellipse(ctx, x, mt - 2.6, 1.3, 1.3, GOLD);
+  // rigging
+  line(ctx, x, mt - 1, x + w + 3, y - 7.4, '#3a2a1a', 0.6);
+  line(ctx, x, mt - 1, x - w, y - 6.4, '#3a2a1a', 0.6);
+  // a round-shield rail: gold-rimmed wicker and painted rounds
+  if (tier >= 1) for (let i = 0; i < 4 + tier; i++) {
+    const sx = x - w * 0.62 + i * ((w * 1.24) / (3 + tier));
+    ellipse(ctx, sx, y - 7.6, 2.3, 2.3, i % 2 ? P_TURQ : P_WICK);
+    ring(ctx, sx, y - 7.6, 2.3, 2.3, GOLD, 0.6);
+    ellipse(ctx, sx, y - 7.6, 0.7, 0.7, i % 2 ? GOLD : P_PINK);
+  }
+  if (tier < 2) { // stores on deck
+    box(ctx, x + w * 0.45, y - 7.2, 4, 3, '#7a5230');
+    band(ctx, x + w * 0.45, y - 7.2, 4, 3, 0.4, 0.55, P_TURQ);
+  }
+  if (tier >= 1) {
+    // a stern pavilion: a turquoise onion dome on a little pink kiosk
+    const kx = x - w * 0.66, ky = y - 8.2;
+    box(ctx, kx, ky, 7, 4.6, '#f0dfb8');
+    faceQuad(ctx, 'R', kx, ky, 7, 4.6, 0.3, 0.7, 0.1, 0.8, DARK);
+    band(ctx, kx, ky, 7, 4.6, 0.86, 1, P_PINK);
+    ctx.fillStyle = ink(P_TURQ);
+    ctx.beginPath();
+    ctx.moveTo(kx - 4, ky - 5.2);
+    ctx.bezierCurveTo(kx - 5.4, ky - 9.4, kx - 1, ky - 10.4, kx, ky - 14.6);
+    ctx.bezierCurveTo(kx + 1, ky - 10.4, kx + 5.4, ky - 9.4, kx + 4, ky - 5.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = ink(shade(P_TURQ, -0.28));
+    ctx.beginPath();
+    ctx.moveTo(kx, ky - 14.6);
+    ctx.bezierCurveTo(kx + 1, ky - 10.4, kx + 5.4, ky - 9.4, kx + 4, ky - 5.2);
+    ctx.lineTo(kx, ky - 4.6);
+    ctx.closePath();
+    ctx.fill();
+    line(ctx, kx, ky - 14.6, kx, ky - 17.4, GOLD, 0.8);
+    ellipse(ctx, kx, ky - 17.8, 0.9, 0.9, GOLD);
+    line(ctx, kx - 4, ky - 5.2, kx + 4, ky - 5.2, GOLD, 0.8);
+  }
+  if (tier === 2) { // a fighting-top for the lookout and a lion banner
+    box(ctx, x, top + 9, 6.4, 2.6, '#5a3b1e', GOLD);
+    line(ctx, x - 3.2, top + 6.8, x + 3.2, top + 6.8, '#3a2a1a', 0.6);
+    line(ctx, x + w * 0.5, y - 8.4, x + w * 0.5, y - 20, '#5a3b1e', 1);
+    poly(ctx, [x + w * 0.5, y - 20, x + w * 0.5 + 8, y - 18.6, x + w * 0.5 + 8, y - 12.6, x + w * 0.5, y - 14], P_TURQ);
+    lionMark(ctx, x + w * 0.5 + 3.8, y - 15.8, 0.5, GOLD);
+  }
+  // the crew: bowmen and spearmen at the rail
+  const crew: [UnitKind, number, number][] = tier === 0 ? [['warrior', -8, 0.42]] : tier === 1 ? [['warrior', -8, 0.4], ['archer', 9, 0.4]] : [['defender', -12, 0.38], ['archer', 3, 0.38], ['immortal', 12, 0.4]];
+  for (const [ck, cx, cs] of crew) figure(ctx, ck, 'persia', x + cx, y - 6, cs, true);
+}
+
+/** The Asiatic lion of the Persian plains: a tawny cat with a shaggy dark mane and a tufted tail. */
+function persiaLion(ctx: Ctx, x: number, y: number, k: number, body: string) {
+  const mane = '#6b3c1e';
+  for (const lx of [-6, -2.5, 3, 6.5]) {
+    box(ctx, x + lx * k, y + (lx > 0 ? 0.5 : -0.5) * k, 2.2 * k, 6 * k, shade(body, -0.28));
+    box(ctx, x + lx * k, y + (lx > 0 ? 0.5 : -0.5) * k, 2.6 * k, 1.4 * k, shade(body, -0.45)); // paws
+  }
+  ctx.strokeStyle = ink(shade(body, -0.1)); // the tail with its dark tuft
+  ctx.lineWidth = 1.5 * k;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - 7.6 * k, y - 6 * k);
+  ctx.quadraticCurveTo(x - 13 * k, y - 8 * k, x - 12 * k, y - 14 * k);
+  ctx.stroke();
+  ellipse(ctx, x - 12 * k, y - 15 * k, 1.6 * k, 2.2 * k, mane);
+  box(ctx, x, y - 5 * k, 16 * k, 7 * k, body);
+  band(ctx, x, y - 5 * k, 16 * k, 7 * k, 0, 0.18, shade(body, -0.3));
+  faceQuad(ctx, 'R', x, y - 5 * k, 16 * k, 7 * k, 0.55, 0.95, 0.3, 0.85, shade(body, 0.1)); // shoulder
+  faceQuad(ctx, 'L', x, y - 5 * k, 16 * k, 7 * k, 0.1, 0.5, 0.3, 0.85, shade(body, 0.06));
+  ellipse(ctx, x + 8 * k, y - 11.6 * k, 6.6 * k, 7 * k, shade(mane, -0.2)); // the mane rings the head and drapes over the shoulders
+  for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; poly(ctx, [x + 8 * k + Math.cos(a - 0.3) * 5.4 * k, y - 11.6 * k + Math.sin(a - 0.3) * 5.6 * k, x + 8 * k + Math.cos(a) * 7.6 * k, y - 11.6 * k + Math.sin(a) * 7.8 * k, x + 8 * k + Math.cos(a + 0.3) * 5.4 * k, y - 11.6 * k + Math.sin(a + 0.3) * 5.6 * k], i % 2 ? mane : shade(mane, 0.2)); }
+  ellipse(ctx, x + 6.4 * k, y - 6.6 * k, 4.6 * k, 2.4 * k, mane);
+  box(ctx, x + 9 * k, y - 8.6 * k, 7 * k, 6.8 * k, shade(body, 0.06)); // the face
+  box(ctx, x + 13 * k, y - 8.2 * k, 3.4 * k, 3 * k, shade(body, 0.28)); // muzzle
+  faceQuad(ctx, 'R', x + 13 * k, y - 8.2 * k, 3.4 * k, 3 * k, 0.4, 0.7, 0.55, 0.85, '#2a1a10'); // nose
+  faceQuad(ctx, 'R', x + 9 * k, y - 8.6 * k, 7 * k, 6.8 * k, 0.42, 0.62, 0.5, 0.68, '#3a2410'); // eye
+  faceQuad(ctx, 'R', x + 9 * k, y - 8.6 * k, 7 * k, 6.8 * k, 0.46, 0.54, 0.56, 0.64, '#f2c53a');
+  faceQuad(ctx, 'R', x + 9 * k, y - 8.6 * k, 7 * k, 6.8 * k, 0.4, 0.8, 0.72, 0.78, shade(body, -0.3)); // brow
+  box(ctx, x + 6.4 * k, y - 15.6 * k, 1.8 * k, 2 * k, mane); // ears
+  box(ctx, x + 11.6 * k, y - 15.2 * k, 1.8 * k, 2 * k, mane);
+  poly(ctx, [x + 15 * k, y - 4.6 * k, x + 15.6 * k, y - 2.6 * k, x + 16.2 * k, y - 4.6 * k], '#f4f0e2'); // a fang
+}
+
 // ---------------------------------------------------------------- mounts & machines
 
 /**
@@ -1800,6 +2562,7 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
       for (const [u, v] of [[0.62, 0.3], [0.78, 0.5], [0.7, 0.68]] as const) faceQuad(ctx, 'R', x - 1, y + 3 - 6 * 0.95, 17 * 0.95, 7 * 0.95, u, u + 0.08, v * 0.7, v * 0.7 + 0.16, '#3a2410');
     }
   }
+  if (tribe === 'persia') persiaHorseGear(ctx, kind, x, y, saddle);
   if (tribe === 'polynesia') {
     // a woven flax saddle blanket: black with a red taniko border, white diamonds and a hanging tassel fringe
     const sx = saddle.x, sy = saddle.y;
@@ -1898,6 +2661,10 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   if (tribe === 'polynesia') maoriSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);
   else lance(ctx, b.hand.x, b.hand.y, tribe === 'pirates' ? '#15151a' : T.color, knight ? 2 : 1.6, true);
   if (tribe === 'pirates') ellipse(ctx, b.hand.x + 12.6, b.hand.y - 15.6, 1, 0.9, '#ffffff'); // skull on the black pennant
+  if (tribe === 'persia') { // a winged sun on the pennant and gilded bands on the lance
+    wingedDisc(ctx, b.hand.x + 11.4, b.hand.y - 15.2, 0.42, P_CREAM, GOLD);
+    for (const t of [0.3, 0.38, 0.6]) line(ctx, b.hand.x - 3 + 11 * t - 1, b.hand.y + 6 - 26 * t, b.hand.x - 3 + 11 * t + 1, b.hand.y + 6 - 26 * t, GOLD, 0.8);
+  }
   if (tribe === 'vikings') for (const t of [0.34, 0.42]) line(ctx, b.hand.x - 3 + 11 * t - 1, b.hand.y + 6 - 26 * t, b.hand.x - 3 + 11 * t + 1, b.hand.y + 6 - 26 * t, GOLD, 0.8); // gilt bands on the lance
 }
 
@@ -2210,6 +2977,9 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
       for (const ox of [-6, -1, 4, 9]) ellipse(ctx, x + ox, y - 0.4, 0.6, 0.6, GOLD); // bronze studs along the rail
       break;
     }
+    case 'persia':
+      persiaCatapult(ctx, x, y, wheels, flag);
+      break;
     case 'zulu': {
       // a sapling A-frame lever thrower: cowhide lashings, a stone-filled hide sling, an ox skull and feathers
       box(ctx, x, y - 2, 18, 4, '#6b4424');
@@ -2404,6 +3174,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
     return;
   }
   if (tribe === 'polynesia') return drawMaoriBoat(ctx, kind, x, y);
+  if (tribe === 'persia') return drawPersianBoat(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
@@ -2635,7 +3406,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
 
 // ---------------------------------------------------------------- wildlife (map resources)
 
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' }> = {
+const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' }> = {
   egypt: { body: '#d0a45e', feature: 'hump' },
   aztec: { body: '#9c6236', feature: 'antlers' },
   polynesia: { body: '#7a5a3a', feature: 'kiwi' },
@@ -2646,7 +3417,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   mongols: { body: '#4a3628', feature: 'horns' },
   greeks: { body: '#e6e0d0', feature: 'horns' },
   zulu: { body: '#f4f1ea', feature: 'stripes' },
-  persia: { body: '#c9a06a', feature: 'horns' },
+  persia: { body: '#d2a458', feature: 'lion' },
   celts: { body: '#8a4a2a', feature: 'antlers' },
   inuit: { body: '#dfe6ea', feature: 'antlers' },
   inca: { body: '#e8dcc0', feature: 'hump' },
@@ -2670,6 +3441,7 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
     ellipse(ctx, x + 8 * k, y - 11.8 * k, 0.7 * k, 0.7 * k, '#101010');
     return;
   }
+  if (spec.feature === 'lion') return persiaLion(ctx, x, y, k, body);
   for (const lx of [-6, -2.5, 3, 6.5]) box(ctx, x + lx * k, y + (lx > 0 ? 0.5 : -0.5) * k, 2 * k, 6 * k, shade(body, -0.3));
   box(ctx, x, y - 5 * k, 16 * k, 7 * k, body);
   if (spec.feature === 'hump') box(ctx, x - 1 * k, y - 12 * k, 6 * k, 4 * k, shade(body, 0.05));

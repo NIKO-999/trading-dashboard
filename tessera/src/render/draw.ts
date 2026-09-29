@@ -7,7 +7,7 @@ import { tileAt } from '../game/grid';
 import { cityById, tileOwnerPlayer } from '../game/rules';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
-import { box, drawStar, ellipse, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
+import { band, box, drawStar, ellipse, ink, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
@@ -543,6 +543,7 @@ function drawForest(ctx: Ctx, t: Tile, cx: number, cy: number, P: BiomePalette) 
 
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
+  if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
       // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
@@ -964,6 +965,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       roof(ctx, x, y - h, w + 2, big ? 7 : 5, big ? '#e9e4d8' : roofC);
       if (big) for (const ox of [-6, -2, 2, 6]) { ctx.fillStyle = '#dcd6c8'; ctx.fillRect(x + ox - 0.7, y - h + 2, 1.4, h - 2); }
       break;
+    case 'persia':
+      drawPersianBuilding(ctx, x, y, big, capital);
+      break;
     case 'zulu': {
       // woven grass beehive huts
       const r = big ? 9 : 6.5;
@@ -985,14 +989,195 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
+    const fo = tribe === 'persia' && big ? 10 : 0; // the flag rides on the fire temple's dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.moveTo(x - 1, y - h - 6);
-    ctx.lineTo(x - 1, y - h - 26);
+    ctx.moveTo(x - 1, y - h - 6 - fo);
+    ctx.lineTo(x - 1, y - h - 26 - fo);
     ctx.stroke();
-    poly(ctx, [x - 1, y - h - 26, x + 11, y - h - 23, x - 1, y - h - 19], tribe === 'pirates' ? '#15151a' : color);
-    if (tribe === 'pirates') ellipse(ctx, x + 3.5, y - h - 23, 1.6, 1.6, '#fff');
+    poly(ctx, [x - 1, y - h - 26 - fo, x + 11, y - h - 23 - fo, x - 1, y - h - 19 - fo], tribe === 'pirates' ? '#15151a' : color);
+    if (tribe === 'pirates') ellipse(ctx, x + 3.5, y - h - 23 - fo, 1.6, 1.6, '#fff');
+  }
+}
+
+// ---------------------------------------------------------------- Persian trees and buildings
+
+/** The Persian garden: tall flame-shaped cypresses, broad mottled-barked plane trees and pink-blossomed almond trees. */
+function drawPersianTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 4;
+  if (v === 0 || v === 2) {
+    // cypress: a dark green flame, swelling low and drawn to a point, its lit flank on the left
+    const H = (v === 0 ? 31 : 26) * k, W = (v === 0 ? 3.8 : 3.3) * k;
+    ctx.fillStyle = P.trunk;
+    ctx.fillRect(x - 0.8 * k, y - 3 * k, 1.6 * k, 3 * k);
+    const half = (t: number) => W * (0.3 + 0.7 * Math.sin(Math.PI * Math.pow(t, 0.62))) * (1 - Math.pow(t, 3));
+    const N = 12, L: number[] = [], R: number[] = [], C: number[] = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, yy = y - 2 * k - t * H, sway = Math.sin(variant * 1.7 + t * 3) * 0.5 * k * t;
+      L.push(x + sway - half(t), yy);
+      R.push(x + sway + half(t), yy);
+      C.push(x + sway, yy);
+    }
+    const rev = (a: number[]) => { const o: number[] = []; for (let i = a.length - 2; i >= 0; i -= 2) o.push(a[i], a[i + 1]); return o; };
+    const dark = shade('#2f6a3c', -0.12), mid = '#2f6a3c';
+    poly(ctx, [...L, ...rev(R)], dark);
+    poly(ctx, [...L, ...rev(C)], shade(mid, 0.14));
+    for (let i = 2; i < N - 1; i += 2) { // clustered foliage tufts
+      const t = i / N, yy = y - 2 * k - t * H;
+      line(ctx, x - half(t) * 0.7, yy + 0.6 * k, x - half(t) * 0.1, yy - 1 * k, shade(mid, 0.34), 0.7 * k);
+      line(ctx, x + half(t) * 0.1, yy + 1 * k, x + half(t) * 0.7, yy - 0.2 * k, shade(dark, -0.2), 0.6 * k);
+    }
+    return;
+  }
+  if (v === 1) {
+    // plane tree (chinar): a thick trunk of peeling, mottled bark under a broad, layered crown
+    const bark = '#8c7f68';
+    line(ctx, x, y, x + 0.4 * k, y - 10 * k, bark, 3.6 * k);
+    for (const [dx, dy, r] of [[-0.6, -3, 0.9], [0.8, -5, 0.8], [-0.4, -7.4, 0.7], [0.6, -9, 0.6]] as const) ellipse(ctx, x + dx * k, y + dy * k, r * k, r * 0.8 * k, i2c(dy));
+    line(ctx, x + 0.4 * k, y - 8 * k, x - 3.6 * k, y - 13 * k, bark, 1.6 * k);
+    line(ctx, x + 0.4 * k, y - 8 * k, x + 4 * k, y - 12.6 * k, bark, 1.6 * k);
+    ellipse(ctx, x + 0.4 * k, y - 15 * k, 8.8 * k, 6.2 * k, shade(P.forest, -0.28));
+    ellipse(ctx, x + 3.6 * k, y - 14 * k, 5.2 * k, 4 * k, shade(P.forest, -0.12));
+    ellipse(ctx, x - 3.4 * k, y - 16 * k, 5.4 * k, 4.4 * k, shade(P.forest, 0.1));
+    ellipse(ctx, x + 0.2 * k, y - 19.4 * k, 4.6 * k, 3.4 * k, shade(P.forest, 0.22));
+    for (const [dx, dy] of [[-5, -17], [-2, -21], [2, -18], [5, -15], [-1, -14]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1.5 * k, 1 * k, shade(P.forest, 0.42));
+    for (const [dx, dy] of [[3, -12], [-2, -11.6], [6, -13]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1.6 * k, 0.9 * k, shade(P.forest, -0.4));
+    return;
+  }
+  // almond tree: a gnarled trunk under a cloud of leaves scattered with pink blossom
+  ctx.strokeStyle = P.trunk;
+  ctx.lineWidth = 2.2 * k;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.quadraticCurveTo(x - 2 * k, y - 6 * k, x + 0.6 * k, y - 10 * k);
+  ctx.stroke();
+  line(ctx, x + 0.2 * k, y - 7.6 * k, x + 4 * k, y - 11.4 * k, P.trunk, 1.3 * k);
+  ellipse(ctx, x + 0.6 * k, y - 13.6 * k, 7 * k, 5.4 * k, shade(P.forest, -0.16));
+  ellipse(ctx, x - 1.8 * k, y - 14.6 * k, 4.6 * k, 3.6 * k, shade(P.forest, 0.12));
+  for (let i = 0; i < 12; i++) {
+    const a = rand(variant + 7, i) * Math.PI * 2, r = 1.5 + rand(variant + 9, i) * 5;
+    ellipse(ctx, x + 0.6 * k + Math.cos(a) * r * k, y - 13.6 * k + Math.sin(a) * r * 0.72 * k, 1.1 * k, 0.9 * k, i % 3 === 0 ? '#fff0f6' : i % 3 === 1 ? '#f7a8cc' : '#e0559c');
+  }
+}
+const i2c = (dy: number) => (Math.round(-dy) % 2 ? '#c9c2ae' : '#6a5a44'); // alternating patches on plane-tree bark
+
+/** A Persian onion dome: a swelling bulb narrowing to a point, glazed tile with a lit flank, gold rim, ribs and finial. */
+function persianDome(ctx: Ctx, x: number, y: number, r: number, h: number, col: string, flame = false) {
+  const half = (s: number) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y + r * 0.3);
+    ctx.lineTo(x + s * r, y);
+    ctx.bezierCurveTo(x + s * r * 1.3, y - h * 0.48, x + s * r * 0.36, y - h * 0.72, x, y - h);
+    ctx.closePath();
+  };
+  half(-1);
+  ctx.fillStyle = ink(shade(col, 0.14));
+  ctx.fill();
+  half(1);
+  ctx.fillStyle = ink(shade(col, -0.24));
+  ctx.fill();
+  ctx.lineCap = 'round';
+  for (const [s, c] of [[-0.5, shade(col, -0.1)], [0.5, shade(col, -0.4)]] as const) { // glazed ribs
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = Math.max(0.4, r * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(x + s * r * 0.9, y + r * 0.04);
+    ctx.bezierCurveTo(x + s * r * 1.1, y - h * 0.4, x + s * r * 0.2, y - h * 0.7, x, y - h);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = ink('#f0c43a'); // gilded rim at the base
+  ctx.lineWidth = Math.max(0.7, r * 0.13);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.3, 0, 0, Math.PI);
+  ctx.stroke();
+  ellipse(ctx, x - r * 0.38, y - h * 0.4, r * 0.18, r * 0.36, 'rgba(255,255,255,0.4)'); // sheen
+  line(ctx, x, y - h, x, y - h - Math.max(2, h * 0.25), '#f0c43a', Math.max(0.8, r * 0.12));
+  ellipse(ctx, x, y - h - Math.max(2, h * 0.25), Math.max(0.7, r * 0.17), Math.max(0.7, r * 0.17), '#f0c43a');
+  if (flame) { // the sacred fire burning above the fire temple
+    const fy = y - h - Math.max(2, h * 0.25);
+    poly(ctx, [x - 1.6, fy - 0.4, x - 0.2, fy - 5.4, x + 0.6, fy - 3, x + 1.9, fy - 6.4, x + 2, fy - 0.4], '#ff8a2e');
+    poly(ctx, [x - 0.8, fy - 0.4, x + 0.2, fy - 3.8, x + 1.2, fy - 0.4], '#ffe36a');
+  }
+}
+
+/** An arched niche or doorway on the right-hand face of a box at (x, y) of width w and height h. */
+function persianArch(ctx: Ctx, x: number, y: number, w: number, h: number, u0: number, u1: number, v0: number, v1: number, frame: string, inner: string) {
+  const P = (u: number, v: number) => [x + (u * w) / 2, y + (w / 4) * (1 - u) - v * h];
+  const um = (u0 + u1) / 2, vm = v1 - (u1 - u0) * 0.22 * (w / h) * 1.2;
+  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, vm), ...P(um, v1 + (v1 - vm) * 0.2), ...P(u0, vm)], frame);
+  const du = (u1 - u0) * 0.2, dv = (v1 - v0) * 0.08;
+  poly(ctx, [...P(u0 + du, v0), ...P(u1 - du, v0), ...P(u1 - du, vm - dv), ...P(um, v1 - dv * 0.6), ...P(u0 + du, vm - dv)], inner);
+}
+
+/** Persian city buildings: domed houses, wind-tower houses and an iwan house; the grand one is a domed fire temple. */
+function drawPersianBuilding(ctx: Ctx, x: number, y: number, big: boolean, capital: boolean) {
+  const SAND = '#ecd7ad', SAND2 = '#dcc08e', TURQ = '#3fa9c9', GOLD = '#f0c43a', DOOR = '#3a2418';
+  if (big) {
+    // a terraced platform, an arcaded hall, corner turrets and the turquoise dome of the fire temple
+    box(ctx, x, y + 2, 25, 3, '#d9c08f');
+    box(ctx, x, y - 1, 17, 11, SAND);
+    // right face: an arcade of turquoise-framed niches
+    for (const u of [0.1, 0.38, 0.66]) persianArch(ctx, x, y - 1, 17, 11, u, u + 0.24, 0.06, 0.7, TURQ, DOOR);
+    // left face: a tiled panel of turquoise with cream diamonds
+    const P = (u: number, v: number) => [x - 8.5 + (u * 17) / 2, y - 1 + (17 / 4) * u - v * 11];
+    poly(ctx, [...P(0.12, 0.12), ...P(0.88, 0.12), ...P(0.88, 0.7), ...P(0.12, 0.7)], shade(TURQ, -0.05));
+    for (const [u, v] of [[0.28, 0.41], [0.5, 0.41], [0.72, 0.41]] as const) poly(ctx, [...P(u, v - 0.16), ...P(u + 0.1, v), ...P(u, v + 0.16), ...P(u - 0.1, v)], '#f4efe0');
+    for (const [u, v] of [[0.28, 0.41], [0.5, 0.41], [0.72, 0.41]] as const) poly(ctx, [...P(u, v - 0.07), ...P(u + 0.05, v), ...P(u, v + 0.07), ...P(u - 0.05, v)], GOLD);
+    for (const f of ['L', 'R'] as const) {
+      const fq = (u0: number, u1: number, v0: number, v1: number, c: string) => poly(ctx, f === 'R' ? [x + (u0 * 17) / 2, y - 1 + (17 / 4) * (1 - u0) - v0 * 11, x + (u1 * 17) / 2, y - 1 + (17 / 4) * (1 - u1) - v0 * 11, x + (u1 * 17) / 2, y - 1 + (17 / 4) * (1 - u1) - v1 * 11, x + (u0 * 17) / 2, y - 1 + (17 / 4) * (1 - u0) - v1 * 11] : [x - 8.5 + (u0 * 17) / 2, y - 1 + (17 / 4) * u0 - v0 * 11, x - 8.5 + (u1 * 17) / 2, y - 1 + (17 / 4) * u1 - v0 * 11, x - 8.5 + (u1 * 17) / 2, y - 1 + (17 / 4) * u1 - v1 * 11, x - 8.5 + (u0 * 17) / 2, y - 1 + (17 / 4) * u0 - v1 * 11], c);
+      fq(0, 1, 0.86, 1, TURQ);
+      fq(0, 1, 0.84, 0.87, GOLD);
+      fq(0, 1, 0, 0.05, SAND2);
+    }
+    // the turrets on the corners, each under a little dome
+    for (const tx of [-8.4, 8.4]) {
+      box(ctx, x + tx, y + 1, 4, 9, SAND2);
+      ctx.fillStyle = 'rgba(58,36,24,0.85)';
+      ctx.fillRect(x + tx - 0.6, y - 4.6, 1.2, 2.6);
+      persianDome(ctx, x + tx, y - 8.4, 2.6, 4.6, TURQ);
+    }
+    // the drum and the great dome
+    box(ctx, x, y - 12, 9.6, 3.6, '#f3e2bd');
+    band(ctx, x, y - 12, 9.6, 3.6, 0.5, 0.8, TURQ);
+    persianDome(ctx, x, y - 15.6, 6.4, 10.4, TURQ, !capital);
+    return;
+  }
+  const v = Math.abs(Math.round(x * 1.7 + y * 2.9)) % 3;
+  const w = 11, h = 8;
+  const faceR = (u0: number, u1: number, v0: number, v1: number, bh: number, c: string) => poly(ctx, [x + (u0 * w) / 2, y + (w / 4) * (1 - u0) - v0 * bh, x + (u1 * w) / 2, y + (w / 4) * (1 - u1) - v0 * bh, x + (u1 * w) / 2, y + (w / 4) * (1 - u1) - v1 * bh, x + (u0 * w) / 2, y + (w / 4) * (1 - u0) - v1 * bh], c);
+  const faceL = (u0: number, u1: number, v0: number, v1: number, bh: number, c: string) => poly(ctx, [x - w / 2 + (u0 * w) / 2, y + (w / 4) * u0 - v0 * bh, x - w / 2 + (u1 * w) / 2, y + (w / 4) * u1 - v0 * bh, x - w / 2 + (u1 * w) / 2, y + (w / 4) * u1 - v1 * bh, x - w / 2 + (u0 * w) / 2, y + (w / 4) * u0 - v1 * bh], c);
+  if (v === 0) {
+    // a domed house: a glazed dome on a short drum, a pointed arched doorway
+    box(ctx, x, y, w, h - 1, SAND);
+    persianArch(ctx, x, y, w, h - 1, 0.32, 0.68, 0, 0.62, TURQ, DOOR);
+    faceL(0.3, 0.6, 0.35, 0.68, h - 1, DOOR);
+    faceR(0, 1, 0.88, 1, h - 1, TURQ);
+    faceL(0, 1, 0.88, 1, h - 1, shade(TURQ, -0.1));
+    box(ctx, x, y - h + 1, 6.2, 2, '#f3e2bd');
+    persianDome(ctx, x, y - h - 1, 3.6, 6.4, TURQ);
+  } else if (v === 1) {
+    // a house with a badgir wind tower rising over its flat roof: slatted vents, a stepped cap
+    box(ctx, x, y, w, h - 2, SAND);
+    faceR(0, 1, 0.86, 1, h - 2, SAND2);
+    persianArch(ctx, x, y, w, h - 2, 0.6, 0.86, 0, 0.6, TURQ, DOOR);
+    faceL(0.25, 0.5, 0.3, 0.64, h - 2, DOOR);
+    box(ctx, x - 1.2, y - h + 2, 5.4, 10, '#e5cb9a');
+    for (const u of [0.22, 0.58]) for (const [a, b] of [[0.2, 0.42], [0.5, 0.72]] as const) {
+      poly(ctx, [x - 1.2 + (u * 5.4) / 2, y - h + 2 + (5.4 / 4) * (1 - u) - a * 10, x - 1.2 + ((u + 0.2) * 5.4) / 2, y - h + 2 + (5.4 / 4) * (1 - u - 0.2) - a * 10, x - 1.2 + ((u + 0.2) * 5.4) / 2, y - h + 2 + (5.4 / 4) * (1 - u - 0.2) - b * 10, x - 1.2 + (u * 5.4) / 2, y - h + 2 + (5.4 / 4) * (1 - u) - b * 10], DOOR);
+    }
+    box(ctx, x - 1.2, y - h - 8.4, 6.8, 1.4, SAND2);
+    box(ctx, x - 1.2, y - h - 9.6, 4.4, 1.2, TURQ);
+  } else {
+    // an iwan house: a tall tiled arch on the facade beside a small dome
+    box(ctx, x, y, w, h, SAND);
+    persianArch(ctx, x, y, w, h, 0.18, 0.62, 0, 0.92, TURQ, shade(TURQ, -0.45));
+    persianArch(ctx, x, y, w, h, 0.3, 0.5, 0, 0.5, '#f4efe0', DOOR);
+    faceR(0, 1, 0.9, 1, h, '#f4efe0');
+    faceL(0.2, 0.8, 0.28, 0.62, h, TURQ);
+    faceL(0.4, 0.6, 0.36, 0.54, h, '#f4efe0');
+    persianDome(ctx, x - 2.6, y - h + 0.4, 2.6, 4.6, TURQ);
   }
 }
 
