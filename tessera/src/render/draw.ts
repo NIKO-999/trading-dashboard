@@ -7,13 +7,14 @@ import { tileAt } from '../game/grid';
 import { cityById, tileOwnerPlayer } from '../game/rules';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
-import { band, box, drawStar, ellipse, ink, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
+import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
 
 const FISH_ICON = FISH;
+const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
 
 export { drawUnitSprite } from './units';
 export { drawStar } from './prims';
@@ -761,6 +762,51 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
     for (let i = 0; i < 4; i++) ellipse(ctx, x + (rand(variant + 3, i) - 0.5) * 10 * k, y - 14 * k + (rand(variant + 5, i) - 0.5) * 7 * k, 1.3 * k, 1.1 * k, '#fff0f5');
     return;
   }
+  if (biome === 'ethiopia') {
+    if (variant % 3 === 0) {
+      // flat-topped acacia: a slim trunk forking under a broad layered umbrella
+      line(ctx, x, y, x + 0.4 * k, y - 9 * k, P.trunk, 1.8 * k);
+      line(ctx, x + 0.4 * k, y - 8 * k, x + 5.4 * k, y - 13.4 * k, P.trunk, 1.3 * k);
+      line(ctx, x + 0.4 * k, y - 8.6 * k, x - 5 * k, y - 13.6 * k, P.trunk, 1.3 * k);
+      line(ctx, x + 0.4 * k, y - 9 * k, x + 0.6 * k, y - 14 * k, P.trunk, 1.2 * k);
+      for (const [dx, dy, r, c] of [[-4.6, -14.6, 6.2, -0.2], [4.8, -14.2, 6.4, -0.14], [0.4, -16.2, 7.6, -0.08]] as const) {
+        ellipse(ctx, x + dx * k, y + dy * k + 1 * k, r * k, r * 0.34 * k, shade(P.forest, c - 0.2)); // shaded underside
+        ellipse(ctx, x + dx * k, y + dy * k, r * k, r * 0.3 * k, shade(P.forest, c));
+        ellipse(ctx, x + (dx - 0.8) * k, y + (dy - 0.8) * k, r * 0.7 * k, r * 0.16 * k, shade(P.forest, c + 0.24)); // sunlit top
+      }
+      return;
+    }
+    if (variant % 3 === 1) {
+      // juniper (African pencil cedar): a straight red-brown trunk and drooping dark tiers
+      ctx.fillStyle = shade(P.trunk, 0.1);
+      ctx.fillRect(x - 1 * k, y - 5 * k, 2 * k, 5 * k);
+      const jc = shade(P.forest, -0.42);
+      for (let i = 0; i < 5; i++) {
+        const by = y - 3 * k - i * 4.6 * k, w = (9.6 - i * 1.7) * k;
+        poly(ctx, [x, by - 6.4 * k, x - w / 2, by, x - w * 0.15, by + 1.2 * k, x, by + 0.4 * k], shade(jc, 0.14 + i * 0.03));
+        poly(ctx, [x, by - 6.4 * k, x + w / 2, by, x + w * 0.15, by + 1.2 * k, x, by + 0.4 * k], shade(jc, -0.16));
+      }
+      poly(ctx, [x, y - 27 * k, x - 1 * k, y - 22 * k, x + 1 * k, y - 22 * k], shade(jc, 0.2));
+      return;
+    }
+    // candelabra euphorbia: a squat trunk and ribbed, upturned green arms
+    line(ctx, x, y, x, y - 6 * k, shade(P.trunk, 0.05), 2.6 * k);
+    const ec = '#5c9a62';
+    for (const [dx, tx, ty, w] of [[-1, -7, -15, 2.6], [1, 7, -15.6, 2.6], [-0.4, -3, -21, 2.8], [0.4, 3.4, -22, 2.8], [0, 0.4, -24, 3.2]] as const) {
+      ctx.strokeStyle = shade(ec, -0.22);
+      ctx.lineWidth = w * k;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x + dx * k, y - 5 * k); ctx.quadraticCurveTo(x + tx * 0.9 * k, y - 8.6 * k, x + tx * k, y + ty * k); ctx.stroke();
+      ctx.strokeStyle = ec;
+      ctx.lineWidth = w * 0.62 * k;
+      ctx.beginPath(); ctx.moveTo(x + dx * k - 0.3 * k, y - 5.2 * k); ctx.quadraticCurveTo(x + tx * 0.9 * k - 0.3 * k, y - 8.8 * k, x + tx * k - 0.3 * k, y + ty * k); ctx.stroke();
+      ctx.strokeStyle = shade(ec, 0.35);
+      ctx.lineWidth = 0.5 * k;
+      ctx.beginPath(); ctx.moveTo(x + dx * k - 0.8 * k, y - 5.4 * k); ctx.quadraticCurveTo(x + tx * 0.9 * k - 0.8 * k, y - 9 * k, x + tx * k - 0.8 * k, y + ty * k); ctx.stroke(); // a lit rib
+      ellipse(ctx, x + tx * k, y + ty * k - 0.6 * k, 1 * k, 0.8 * k, '#d8c84a'); // a yellow flower cap
+    }
+    return;
+  }
   if (biome === 'zulu') {
     // acacia: slim forked trunk and a flat, wide crown
     line(ctx, x, y, x - 1 * k, y - 10 * k, P.trunk, 1.8 * k);
@@ -1225,7 +1271,7 @@ function drawTundraTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalet
 
 function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boolean, roofC: string, color: string, capital: boolean) {
   const w = big ? 16 : 11;
-  const h = big ? 13 : 8;
+  const h = big ? (tribe === 'ethiopia' ? 19 : 13) : 8;
   switch (tribe) {
     case 'inuit': {
       if (big) {
@@ -1340,6 +1386,101 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'persia':
       drawPersianBuilding(ctx, x, y, big, capital);
       break;
+    case 'ethiopia': {
+      // Aksum: carved granite stelae, stepped stone-and-timber towers with monkey-head beam ends, and round churches
+      const stone = '#c9bfa8', beam = '#4a2e16', G = '#2f9a4a', Y = '#e8c21a', R = '#c8372d';
+      const heads = (cx: number, cy: number, bw: number, bh: number, v: number, n: number) => { // the round beam ends that stick out of both walls
+        for (let i = 0; i < n; i++) {
+          const u = (i + 0.5) / n;
+          for (const [px, py] of [[cx + (u * bw) / 2, cy + (bw / 4) * (1 - u) - v * bh], [cx - bw / 2 + (u * bw) / 2, cy + (bw / 4) * u - v * bh]] as const) {
+            ellipse(ctx, px, py, 0.7, 0.7, '#3a2414');
+            ellipse(ctx, px - 0.12, py - 0.15, 0.4, 0.4, '#9a6a3c');
+          }
+        }
+      };
+      const window_ = (cx: number, cy: number, bw: number, bh: number, u: number, v: number) => {
+        faceQuad(ctx, 'R', cx, cy, bw, bh, u, u + 0.12, v, v + 0.24, '#e8dcb8');
+        faceQuad(ctx, 'R', cx, cy, bw, bh, u + 0.025, u + 0.095, v + 0.04, v + 0.2, '#2a1a10');
+        faceQuad(ctx, 'L', cx, cy, bw, bh, 1 - u - 0.12, 1 - u, v, v + 0.24, '#e8dcb8');
+        faceQuad(ctx, 'L', cx, cy, bw, bh, 1 - u - 0.095, 1 - u - 0.025, v + 0.04, v + 0.2, '#2a1a10');
+      };
+      const v = ((Math.round(x) * 7 + Math.round(y) * 3) % 3 + 3) % 3;
+      if (big) {
+        // a stepped palace of three storeys
+        box(ctx, x, y, 22, 8, stone, '#8a6a3a');
+        band(ctx, x, y, 22, 8, 0.28, 0.4, beam);
+        band(ctx, x, y, 22, 8, 0.8, 0.9, beam);
+        band(ctx, x, y, 22, 8, 0.9, 1, T_LIME_C);
+        heads(x, y, 22, 8, 0.34, 4);
+        faceQuad(ctx, 'R', x, y, 22, 8, 0.18, 0.32, 0, 0.56, '#2a1a10'); // a great doorway
+        faceQuad(ctx, 'R', x, y, 22, 8, 0.2, 0.3, 0.44, 0.6, '#e8dcb8');
+        window_(x, y, 22, 8, 0.58, 0.46);
+        box(ctx, x, y - 8, 16, 7, '#d8cfb8', '#8a6a3a');
+        band(ctx, x, y - 8, 16, 7, 0.28, 0.4, beam);
+        band(ctx, x, y - 8, 16, 7, 0.9, 1, T_LIME_C);
+        heads(x, y - 8, 16, 7, 0.34, 3);
+        window_(x, y - 8, 16, 7, 0.5, 0.5);
+        window_(x, y - 8, 16, 7, 0.22, 0.5);
+        box(ctx, x, y - 15, 10, 6, '#e6ddc6', '#8a6a3a');
+        band(ctx, x, y - 15, 10, 6, 0.3, 0.42, beam);
+        heads(x, y - 15, 10, 6, 0.36, 2);
+        window_(x, y - 15, 10, 6, 0.4, 0.5);
+        box(ctx, x, y - 21, 12, 1.6, roofC, shade(roofC, -0.2)); // a flat dark-timber roof with an overhang
+        for (const [dx, dy] of [[-5.4, -21.8], [5.4, -21.8], [0, -20.3], [0, -24]] as const) box(ctx, x + dx, y + dy + 1.6, 1.6, 1.6, shade(stone, 0.2)); // corner merlons
+        band(ctx, x, y - 21, 12, 1.6, 0.4, 0.6, R);
+      } else if (v === 2) {
+        // a great carved stele: a tapering granite shaft with false windows, a doorway at its foot and a rounded top
+        box(ctx, x, y, 8, 2.4, '#9a9280');
+        poly(ctx, [x - 3.4, y - 1.6, x - 2.4, y - 26, x, y - 27.4, x, y - 0.6], '#bfb6a2');
+        poly(ctx, [x + 3.4, y - 1.6, x + 2.4, y - 26, x, y - 27.4, x, y - 0.6], '#8f8776');
+        ellipse(ctx, x, y - 27, 2.5, 1.4, '#a89f8a'); // the rounded top
+        ellipse(ctx, x + 0.2, y - 28.6, 1.6, 1.6, '#cfc6b0');
+        ellipse(ctx, x + 0.2, y - 28.6, 0.9, 0.9, '#8f8776'); // the carved sun disc
+        for (let i = 0; i < 6; i++) {
+          const wy = y - 5 - i * 3.5;
+          line(ctx, x - 3.2 + i * 0.16, wy + 1.3, x, wy + 2.1, '#8a8270', 0.6); // storey lines
+          line(ctx, x + 3.2 - i * 0.16, wy + 1.3, x, wy + 2.1, '#6a6252', 0.6);
+          ellipse(ctx, x - 1.6 + i * 0.05, wy + 0.8, 0.7, 0.9, '#4a4438');
+          ellipse(ctx, x + 1.6 - i * 0.05, wy + 0.8, 0.7, 0.9, '#33302a');
+          ellipse(ctx, x - 3 + i * 0.1, wy + 1.2, 0.5, 0.5, beam); // a beam end
+          ellipse(ctx, x + 3 - i * 0.1, wy + 1.2, 0.5, 0.5, beam);
+        }
+        poly(ctx, [x - 1.4, y - 0.8, x - 1.4, y - 4.4, x, y - 5.2, x, y - 0.2], '#2a2418'); // a false door
+        poly(ctx, [x + 1.4, y - 0.8, x + 1.4, y - 4.4, x, y - 5.2, x, y - 0.2], '#1a160f');
+      } else if (v === 1) {
+        // a round church: a whitewashed drum with a tibeb band, a conical thatched roof and a cross
+        const r = 6.4;
+        ellipse(ctx, x, y, r + 1.4, (r + 1.4) * 0.5, '#a89f8a'); // stone plinth
+        ctx.fillStyle = '#f3eedd';
+        ctx.fillRect(x - r, y - 8, r * 2, 8);
+        ctx.fillStyle = '#d9d2bc';
+        ctx.fillRect(x, y - 8, r, 8); // the shaded half
+        ellipse(ctx, x, y, r, r * 0.5, '#efe8d2');
+        for (const [dy, c] of [[-2.6, G], [-3.6, Y], [-4.6, R]] as const) { ctx.fillStyle = c; ctx.fillRect(x - r, y + dy, r * 2, 1); }
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(x, y - 4.6, r, 3);
+        for (const wx of [-4, -1.4, 3.4]) ellipse(ctx, x + wx, y - 6.6, 0.75, 1, '#3a2a1a'); // arched windows
+        poly(ctx, [x + 1.4, y - 0.4, x + 1.4, y - 4, x + 2.8, y - 4.8, x + 4.2, y - 4, x + 4.2, y - 0.4 + 0.6], '#2a1a10'); // the doorway
+        ellipse(ctx, x, y - 8, r, r * 0.5, '#d8cfb8');
+        poly(ctx, [x, y - 19, x - r - 1.6, y - 8, x, y - 4.6], shade(roofC, 0.08)); // the conical thatched roof
+        poly(ctx, [x, y - 19, x + r + 1.6, y - 8, x, y - 4.6], shade(roofC, -0.24));
+        for (const f of [0.35, 0.65]) { ctx.strokeStyle = shade(roofC, -0.32); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.ellipse(x, y - 19 + 14.4 * f - 0.2, (r + 1.6) * f, (r + 1.6) * f * 0.5, 0, 0.05 * Math.PI, 0.95 * Math.PI); ctx.stroke(); }
+        ellipse(ctx, x, y - 19.6, 1.1, 1.3, '#f4efe0'); // an ostrich egg
+        line(ctx, x, y - 21, x, y - 25.6, '#e8b830', 1); // a gold cross
+        line(ctx, x - 1.6, y - 23.6, x + 1.6, y - 23.6, '#e8b830', 1);
+      } else {
+        // a stone-and-timber house with monkey-head beams and a flat roof
+        box(ctx, x, y, 11, 8, stone, '#8a6a3a');
+        band(ctx, x, y, 11, 8, 0.36, 0.48, beam);
+        band(ctx, x, y, 11, 8, 0.86, 1, T_LIME_C);
+        heads(x, y, 11, 8, 0.42, 2);
+        faceQuad(ctx, 'R', x, y, 11, 8, 0.28, 0.46, 0, 0.5, '#2a1a10'); // door
+        window_(x, y, 11, 8, 0.6, 0.5);
+        box(ctx, x, y - 8.6, 12.4, 1.2, roofC, shade(roofC, -0.2));
+        band(ctx, x, y - 8.6, 12.4, 1.2, 0.3, 0.6, R);
+      }
+      break;
+    }
     case 'zulu': {
       // woven grass beehive huts
       const r = big ? 9 : 6.5;
