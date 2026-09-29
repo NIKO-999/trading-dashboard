@@ -9,7 +9,7 @@ interface Look { skin: string; hair: string }
 const LOOK: Record<TribeId, Look> = {
   egypt: { skin: '#c98d55', hair: '#1d1a17' },
   aztec: { skin: '#b8743f', hair: '#1a1410' },
-  polynesia: { skin: '#a5673a', hair: '#1b130d' },
+  polynesia: { skin: '#a5673a', hair: '#12121c' },
   rome: { skin: '#e8bf93', hair: '#4a3222' },
   pirates: { skin: '#e5b387', hair: '#3b2616' },
   vikings: { skin: '#f0c8a0', hair: '#d9a441' },
@@ -145,6 +145,19 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     line(ctx, bx - 5.4 * k, by - 22.6 * k, bx - 5.4 * k, by - 11.4 * k, '#f4f1ea', 0.5 * k);
   }
 
+  if (tribe === 'polynesia') {
+    // a korowai flax cloak hangs from the shoulders: taniko border at the hem, feather tufts (kiwi-feather brown for the high ranks)
+    const rank = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender';
+    const cl = rank ? '#7a5a38' : '#c9b27a';
+    const ct = hip - th + 1 * k;
+    poly(ctx, [x - 4 * k, ct, x + 1 * k, ct - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cl, -0.2));
+    poly(ctx, [x - 4 * k, ct, x - 6.5 * k, ct + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], cl);
+    poly(ctx, [x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, x - 2.2 * k, hip + 7 * k, x - 9.3 * k, hip + 5.2 * k], '#b3302a'); // taniko border
+    for (const t of [0.15, 0.4, 0.65, 0.9]) ellipse(ctx, x - 9.4 * k + 7.4 * k * t, hip + 6 * k + 1.9 * k * t, 0.55 * k, 0.55 * k, t > 0.5 ? '#f4efe0' : '#1a1a1e');
+    for (const t of [0.1, 0.45, 0.8]) poly(ctx, [x - 9.4 * k + 7.4 * k * t, hip + 6.6 * k + 1.9 * k * t, x - 8.4 * k + 7.4 * k * t, hip + 6.8 * k + 1.9 * k * t, x - 9 * k + 7.4 * k * t, hip + 8.6 * k + 1.9 * k * t], rank ? '#a88860' : '#e8dcc0'); // hanging feather tufts
+    if (rank) for (const [fx, fy] of [[-6, 0], [-4.5, 3], [-7.5, 3.4]] as const) line(ctx, x + fx * k, hip + fy * k, x + (fx + 1) * k, hip + (fy + 0.8) * k, '#c9a878', 0.5 * k); // kiwi-feather flecks
+  }
+
   // Legs (hidden when riding).
   if (!seated) {
     box(ctx, x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, legs);
@@ -176,6 +189,17 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     if (tribe === 'mongols') for (const [tx, ty] of [[-2.2, -0.3], [2.2, 0.7]] as const) { // gutal boots curl up at the toe
       poly(ctx, [x + tx * k, y + ty * k + 0.9 * k, x + (tx + 2.1) * k, y + ty * k - 0.1 * k, x + (tx + 2.9) * k, y + ty * k - 1.9 * k, x + (tx + 1.5) * k, y + ty * k - 0.5 * k], '#3a2418');
       poly(ctx, [x + (tx + 2.1) * k, y + ty * k - 0.1 * k, x + (tx + 2.9) * k, y + ty * k - 1.9 * k, x + (tx + 2.4) * k, y + ty * k - 0.2 * k], '#c8372d');
+    }
+    if (tribe === 'polynesia') {
+      // koru curls tattooed on the calves and a plaited flax anklet
+      for (const [dx, dy, f] of leg) {
+        faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.36, 0.42, '#141c30');
+        faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.4, 0.5, 0.62, '#141c30');
+        faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.14, 0.18, '#c9b27a');
+      }
+    } else if (tribe === 'rome' && !heavy) {
+      // caligae: leather straps laced up the shin
+      for (const [dx, dy, f] of leg) for (const v of [0.24, 0.38, 0.52]) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, v, v + 0.06, '#5a3a1e');
     }
   }
 
@@ -285,15 +309,31 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       }
       break;
     case 'polynesia':
-      band(ctx, x, y, w, h, 0, 0.4, '#5f9b3a'); // leaf skirt
-      band(ctx, x, y, w, h, 0.36, 0.44, '#8a5a2b');
-      band(ctx, x, y, w, h, 0.58, 0.63, '#2a1a10'); // tattoo lines
-      band(ctx, x, y, w, h, 0.7, 0.74, '#2a1a10');
+      band(ctx, x, y, w, h, 0, 0.36, '#c9b27a'); // piupiu flax skirt
+      for (let i = 0; i < 5; i++) faceQuad(ctx, i % 2 ? 'L' : 'R', x, y, w, h, 0.1 + i * 0.18, 0.15 + i * 0.18, 0, 0.34, '#3a2a1a'); // dark rolled strips
+      band(ctx, x, y, w, h, 0.36, 0.46, '#b3302a'); // taniko belt
       for (let i = 0; i < 4; i++) {
-        const c = ['#ff7aa8', '#ffffff', '#ffd54a', '#ff7aa8'][i];
-        faceQuad(ctx, 'L', x, y, w, h, i * 0.25, i * 0.25 + 0.25, 0.86, 1, c);
-        faceQuad(ctx, 'R', x, y, w, h, i * 0.25, i * 0.25 + 0.25, 0.86, 1, ['#ffffff', '#ffd54a', '#ff7aa8', '#ffffff'][i]);
+        faceQuad(ctx, 'R', x, y, w, h, 0.08 + i * 0.24, 0.16 + i * 0.24, 0.39, 0.43, '#f4efe0');
+        faceQuad(ctx, 'L', x, y, w, h, 0.08 + i * 0.24, 0.16 + i * 0.24, 0.39, 0.43, '#1a1a1e');
       }
+      // tā moko on the bare chest, a hei-tiki on a cord
+      for (let i = 0; i < 2; i++) {
+        faceQuad(ctx, 'R', x, y, w, h, 0.08 + i * 0.66, 0.24 + i * 0.66, 0.52, 0.58, '#141c30');
+        faceQuad(ctx, 'R', x, y, w, h, 0.08 + i * 0.66, 0.24 + i * 0.66, 0.62, 0.68, '#141c30');
+        faceQuad(ctx, 'R', x, y, w, h, 0.08 + i * 0.66, 0.14 + i * 0.66, 0.52, 0.68, '#141c30');
+      }
+      faceQuad(ctx, 'L', x, y, w, h, 0.2, 0.8, 0.55, 0.6, '#141c30');
+      if (armoured) {
+        // a flax mantle over the shoulders with a taniko band and fringe
+        band(ctx, x, y, w, h, 0.8, 1, '#c9b27a');
+        band(ctx, x, y, w, h, 0.8, 0.86, '#b3302a');
+        for (let i = 0; i < 5; i++) faceQuad(ctx, 'R', x, y, w, h, 0.06 + i * 0.2, 0.14 + i * 0.2, 0.7, 0.8, i % 2 ? '#e8dcc0' : '#c9b27a');
+      } else band(ctx, x, y, w, h, 0.88, 0.94, '#c9b27a');
+      faceQuad(ctx, 'R', x, y, w, h, 0.45, 0.55, 0.7, 0.86, '#4a3a22'); // cord
+      faceQuad(ctx, 'R', x, y, w, h, 0.34, 0.66, 0.5, 0.72, '#3f9a6a'); // hei-tiki in pounamu
+      faceQuad(ctx, 'R', x, y, w, h, 0.34, 0.5, 0.6, 0.72, '#8fd6a8');
+      faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.46, 0.62, 0.66, '#1a3a2a');
+      faceQuad(ctx, 'R', x, y, w, h, 0.54, 0.6, 0.62, 0.66, '#1a3a2a');
       break;
     case 'rome':
       band(ctx, x, y, w, h, 0, 0.3, '#b3302a');
@@ -301,7 +341,16 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       band(ctx, x, y, w, h, 0.3, 0.4, '#6b4424'); // belt
       if (armoured || kind === 'defender') {
         for (const v of [0.46, 0.62, 0.78]) band(ctx, x, y, w, h, v, v + 0.13, STEEL); // segmented plates
+        faceQuad(ctx, 'R', x, y, w, h, 0.46, 0.54, 0.46, 0.91, shade(STEEL, -0.35)); // centre seam
+        for (const u of [0.08, 0.86]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, 0.46, 0.91, BRONZE); // buckled straps
+        if (kind === 'knight' || kind === 'giant' || kind === 'swordsman') faceQuad(ctx, 'R', x, y, w, h, 0.28, 0.42, 0.6, 0.78, GOLD); // phalera
       }
+      // cingulum: studded belt with hanging apron straps, and a white neck scarf
+      for (const u of [0.1, 0.34, 0.58, 0.82]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.08, 0.32, 0.38, BRONZE);
+      faceQuad(ctx, 'R', x, y, w, h, 0.42, 0.56, 0.3, 0.4, GOLD);
+      faceQuad(ctx, 'L', x, y, w, h, 0.3, 0.42, 0.3, 0.4, BRONZE);
+      band(ctx, x, y, w, h, 0.94, 1, '#efe6d2');
+      band(ctx, x, y, w, h, 0, 0.05, '#e8c25a'); // gold hem trim
       break;
     case 'pirates':
       for (const v of [0.1, 0.34, 0.58, 0.82]) band(ctx, x, y, w, h, v, v + 0.11, '#253255'); // striped shirt
@@ -457,9 +506,31 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
         if (kind === 'giant' || kind === 'swordsman') faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.06, 0.14, '#1faa9b'); // lip plug
       } else faceQuad(ctx, 'R', x, y, w, h, 0.05, 0.95, 0.22, 0.3, '#3a2410'); // war paint stripe
       break;
-    case 'polynesia':
-      faceQuad(ctx, 'R', x, y, w, h, 0.3, 0.7, 0.08, 0.14, '#2a1a10'); // chin tattoo
-      faceQuad(ctx, 'R', x, y, w, h, 0.4, 0.6, 0.16, 0.22, '#2a1a10');
+    case 'polynesia': {
+      // tā moko: koru spirals on both cheeks, chin lines and a forehead band, in blue-black
+      const mk = '#141c30';
+      for (const u of [0.04, 0.68]) {
+        faceQuad(ctx, 'R', x, y, w, h, u, u + 0.28, 0.18, 0.42, mk);
+        faceQuad(ctx, 'R', x, y, w, h, u + 0.07, u + 0.21, 0.24, 0.36, shade(skin, -0.06));
+        faceQuad(ctx, 'R', x, y, w, h, u + 0.11, u + 0.17, 0.28, 0.32, mk);
+        faceQuad(ctx, 'R', x, y, w, h, u + (u < 0.5 ? 0.16 : 0), u + (u < 0.5 ? 0.28 : 0.12), 0.3, 0.34, shade(skin, -0.06)); // the spiral's open end
+      }
+      faceQuad(ctx, 'R', x, y, w, h, 0.3, 0.7, 0.06, 0.12, mk); // chin
+      for (const u of [0.32, 0.48, 0.64]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.04, 0, 0.2, mk);
+      for (const u of [0.2, 0.4, 0.6]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.06, 0.76, 0.8, mk); // brow curls
+      faceQuad(ctx, 'L', x, y, w, h, 0.45, 0.9, 0.24, 0.3, mk); // side of the cheek
+      faceQuad(ctx, 'L', x, y, w, h, 0.66, 0.84, 0.1, 0.34, '#3f9a6a'); // kuru: a greenstone ear drop
+      faceQuad(ctx, 'L', x, y, w, h, 0.66, 0.74, 0.16, 0.34, '#8fd6a8');
+      if (kind === 'giant' || kind === 'swordsman') for (const u of [0, 0.86]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.14, 0.0, 0.3, hair); // beard along the jaw
+      break;
+    }
+    case 'rome':
+      if (kind !== 'archer' && kind !== 'catapult' && kind !== 'explorer') {
+        faceQuad(ctx, 'R', x, y, w, h, 0.05, 0.95, 0, 0.17, mix(skin, hair, 0.38)); // close-cropped beard stubble
+        faceQuad(ctx, 'L', x, y, w, h, 0.55, 1, 0, 0.17, mix(skin, hair, 0.38));
+      }
+      if (kind === 'legionary' || kind === 'swordsman') faceQuad(ctx, 'R', x, y, w, h, 0.7, 0.75, 0.3, 0.62, '#c98f78'); // a veteran's scar
+      faceQuad(ctx, 'R', x, y, w, h, 0.17, 0.44, 0.76, 0.79, shade(skin, -0.2)); // brow crease under the helmet
       break;
     case 'pirates':
       faceQuad(ctx, 'R', x, y, w, h, 0.05, 1, 0.52, 0.58, '#101010'); // eyepatch strap
@@ -598,12 +669,21 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
     }
     case 'polynesia': {
       box(ctx, x - 1 * k, top + 1.2 * k, 6 * k, 3.5 * k, LOOK.polynesia.hair); // topknot
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2;
-        ellipse(ctx, x + 5.2 * k + Math.cos(a) * 1.9 * k, top + 3.2 * k + Math.sin(a) * 1.6 * k, 1.4 * k, 1.3 * k, '#ffffff');
+      line(ctx, x - 3.6 * k, top + 0.6 * k, x + 1.6 * k, top + 0.6 * k, '#f4efe0', 0.8 * k); // white tie binding the knot
+      // plaited taniko headband painted across the brow
+      faceQuad(ctx, 'R', x, top + 10.5 * k, hw, 10.5 * k, 0, 1, 0.8, 0.95, '#1a1a1e');
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw, 10.5 * k, 0, 1, 0.8, 0.95, '#1a1a1e');
+      for (const u of [0.05, 0.4, 0.75]) faceQuad(ctx, 'R', x, top + 10.5 * k, hw, 10.5 * k, u, u + 0.2, 0.83, 0.92, '#b3302a');
+      for (const u of [0.28, 0.63, 0.98]) faceQuad(ctx, 'R', x, top + 10.5 * k, hw, 10.5 * k, u - 0.02, u + 0.06, 0.83, 0.92, '#f4efe0');
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw, 10.5 * k, 0.1, 0.9, 0.83, 0.92, '#b3302a');
+      if (kind !== 'archer' && kind !== 'explorer' && kind !== 'catapult') {
+        // a white heron (kōtuku) feather tucked into the knot, with a dark huia-tipped one beside it
+        poly(ctx, [x - 2.4 * k, top + 1.4 * k, x - 4.6 * k, top - 6.6 * k, x - 0.4 * k, top + 1 * k], '#f4efe0');
+        poly(ctx, [x - 2.4 * k, top + 1.4 * k, x - 4.6 * k, top - 6.6 * k, x - 3.4 * k, top - 0.4 * k], shade('#f4efe0', -0.15));
+        poly(ctx, [x - 0.4 * k, top + 1 * k, x + 0.6 * k, top - 6.4 * k, x + 1.6 * k, top + 0.8 * k], '#1a1a1e');
+        poly(ctx, [x + 0.6 * k, top - 6.4 * k, x + 1 * k, top - 4.6 * k, x + 0.4 * k, top - 4.6 * k], '#f4efe0');
       }
-      ellipse(ctx, x + 5.2 * k, top + 3.2 * k, 1 * k, 1 * k, '#ffd54a');
-      if (kind === 'giant') for (let i = 0; i < 5; i++) poly(ctx, [x - 5 * k + i * 2.5 * k, top + 1 * k, x - 3.7 * k + i * 2.5 * k, top - 5 * k, x - 2.4 * k + i * 2.5 * k, top + 1 * k], i % 2 ? '#d6453b' : GOLD);
+      if (kind === 'giant') for (let i = 0; i < 5; i++) poly(ctx, [x - 5 * k + i * 2.5 * k, top + 1 * k, x - 3.7 * k + i * 2.5 * k, top - 5 * k, x - 2.4 * k + i * 2.5 * k, top + 1 * k], i % 2 ? '#1a1a1e' : '#f4efe0');
       break;
     }
     case 'rome': {
@@ -611,10 +691,24 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       box(ctx, x, top + 4 * k, hw + 1.2 * k, 4.8 * k, kind === 'giant' ? GOLD : STEEL);
       faceQuad(ctx, 'R', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.82, 1, 0.3, 0.72, STEEL); // cheek guards
       faceQuad(ctx, 'L', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.85, 1, 0.3, 0.72, STEEL);
+      faceQuad(ctx, 'R', x, top + 4 * k, hw + 1.2 * k, 4.8 * k, 0, 1, 0, 0.14, kind === 'giant' ? shade(GOLD, -0.2) : BRONZE); // brow band
+      for (const u of [0.12, 0.86]) faceQuad(ctx, 'R', x, top + 4 * k, hw + 1.2 * k, 4.8 * k, u, u + 0.06, 0.5, 0.65, GOLD); // rivets
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.02, 0.5, 0.28, 0.42, shade(STEEL, -0.18)); // neck guard
+      faceQuad(ctx, 'L', x, top + 10.5 * k, hw + 1.2 * k, 10 * k, 0.02, 0.5, 0.42, 0.45, BRONZE);
+      if (plain) ellipse(ctx, x, top - 0.7 * k, 1.3 * k, 1 * k, BRONZE); // auxiliary's knob
       if (!plain) {
         const c = '#d82a2a';
         poly(ctx, [x - 5.5 * k, top + 0.5 * k, x - 3.5 * k, top - 5 * k, x + 3.5 * k, top - 4 * k, x + 5.5 * k, top + 1.5 * k, x, top + 1.8 * k], c);
         poly(ctx, [x - 3.5 * k, top - 5 * k, x + 3.5 * k, top - 4 * k, x + 2.5 * k, top - 2.5 * k, x - 2.5 * k, top - 3.4 * k], shade(c, 0.2));
+        line(ctx, x - 5.4 * k, top + 0.8 * k, x + 5.4 * k, top + 1.4 * k, BRONZE, 0.9 * k); // crest holder
+        for (const t of [-3, -1, 1, 3]) line(ctx, x + t * k, top + 0.8 * k, x + t * 0.8 * k, top - 3.6 * k, shade(c, -0.3), 0.4 * k); // bristles
+        if (kind === 'swordsman' || kind === 'knight' || kind === 'giant') {
+          // a centurion's transverse crest, ear to ear
+          poly(ctx, [x - 7.4 * k, top - 0.5 * k, x - 6 * k, top - 6.8 * k, x + 6 * k, top - 6.8 * k, x + 7.4 * k, top - 0.5 * k, x, top + 0.6 * k], c);
+          poly(ctx, [x - 6 * k, top - 6.8 * k, x + 6 * k, top - 6.8 * k, x + 6.4 * k, top - 5.4 * k, x - 6.4 * k, top - 5.4 * k], shade(c, 0.3));
+          poly(ctx, [x - 7.4 * k, top - 0.5 * k, x - 7 * k, top - 2.4 * k, x + 7 * k, top - 2.4 * k, x + 7.4 * k, top - 0.5 * k, x, top + 0.6 * k], '#f4efe0');
+          for (let i = -3; i <= 3; i++) line(ctx, x + i * 1.9 * k, top - 2.6 * k, x + i * 1.7 * k, top - 6.6 * k, shade(c, -0.3), 0.4 * k);
+        }
       }
       break;
     }
@@ -872,6 +966,17 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
       ellipse(ctx, x - 3.4 * k, y + 5.8 * k, 0.9 * k, 0.9 * k, '#c8372d');
       break;
     case 'swordsman':
+      if (tribe === 'polynesia') {
+            line(ctx, x, y + 2 * k, x + 1 * k, y - 3 * k, '#6b4424', 1.8 * k);
+      ellipse(ctx, x - 0.1 * k, y + 2.4 * k, 0.9 * k, 0.9 * k, '#141c30');
+      poly(ctx, [x + 1 * k, y - 3 * k, x - 2 * k, y - 8 * k, x - 0.6 * k, y - 13 * k, x + 2.6 * k, y - 13.6 * k, x + 4.4 * k, y - 8 * k, x + 2.4 * k, y - 3 * k], '#3f9a6a');
+      poly(ctx, [x + 1 * k, y - 3 * k, x - 2 * k, y - 8 * k, x - 0.6 * k, y - 13 * k, x + 1.4 * k, y - 13.4 * k, x + 1.4 * k, y - 8 * k], '#8fd6a8');
+      line(ctx, x + 1.4 * k, y - 4 * k, x + 1.4 * k, y - 12.6 * k, '#1f6a48', 0.5 * k); // centre ridge
+      ellipse(ctx, x + 1.6 * k, y - 4.4 * k, 0.5 * k, 0.5 * k, '#1a3a2a');
+      line(ctx, x - 0.2 * k, y + 2.4 * k, x - 3.2 * k, y + 5 * k, '#c9b27a', 0.6 * k);
+      poly(ctx, [x - 3.2 * k, y + 5 * k, x - 4.8 * k, y + 8 * k, x - 2.4 * k, y + 6.4 * k], '#f4efe0');
+        break;
+      }
       blade(ctx, x + 0.2 * k, y - 1 * k, x + 3 * k, y - 14 * k, 2.8 * k, metalOf(tribe));
       hilt(ctx, x + 0.2 * k, y - 1 * k, 0.2, -1, k, tribe === 'egypt' || tribe === 'greeks' ? GOLD : BRONZE);
       if (tribe === 'pirates') { // bell guard and a red ribbon on the pommel
@@ -933,6 +1038,20 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
       break;
     case 'defender':
     case 'hoplite': {
+      if (tribe === 'polynesia') {
+      // taiaha: a carved staff with a flat blade at the foot, a red-tufted neck and a carved tongue (arero) at the head
+      line(ctx, x + 0.8 * k, y + 5 * k, x + 2 * k, y - 18 * k, '#6b4424', 1.7 * k);
+      line(ctx, x + 0.4 * k, y + 5 * k, x + 1.6 * k, y - 18 * k, shade('#6b4424', 0.4), 0.5 * k);
+      poly(ctx, [x - 0.6 * k, y + 8 * k, x + 2.8 * k, y + 8 * k, x + 3 * k, y + 0.5 * k, x + 0.8 * k, y - 1 * k], '#a87a45'); // rango blade
+      poly(ctx, [x - 0.6 * k, y + 8 * k, x + 1.4 * k, y + 8 * k, x + 1.4 * k, y - 0.4 * k, x + 0.8 * k, y - 1 * k], shade('#a87a45', 0.22));
+      line(ctx, x + 1.6 * k, y + 7 * k, x + 1.8 * k, y, '#3a2416', 0.4 * k);
+      ellipse(ctx, x + 2 * k, y - 16.4 * k, 2 * k, 2.3 * k, '#8a5a2b'); // carved face
+      ellipse(ctx, x + 1.3 * k, y - 16.8 * k, 0.6 * k, 0.6 * k, '#f4efe0');
+      ellipse(ctx, x + 2.9 * k, y - 16.6 * k, 0.6 * k, 0.6 * k, '#f4efe0');
+      poly(ctx, [x + 1.4 * k, y - 18.4 * k, x + 2.8 * k, y - 18.4 * k, x + 2.2 * k, y - 23.6 * k], '#b3302a'); // the tongue
+      for (let i = 0; i < 3; i++) poly(ctx, [x + 1.6 * k, y - 14.6 * k, x - 0.8 * k + i * 1.7 * k, y - 10 * k, x + 2.2 * k + i * 0.5 * k, y - 14.4 * k], ['#b3302a', '#f4efe0', '#b3302a'][i]); // red hair and feather tuft
+        break;
+      }
       const tipC = tribe === 'egypt' || tribe === 'greeks' ? BRONZE : STEEL;
       line(ctx, x + 1 * k, y + 5 * k, x + 2 * k, y - 18 * k, WOOD, 1.7 * k);
       line(ctx, x + 0.6 * k, y + 5 * k, x + 1.6 * k, y - 18 * k, shade(WOOD, 0.35), 0.5 * k); // shaft highlight
@@ -1038,13 +1157,19 @@ function meleeWeapon(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: num
       break;
     }
     case 'polynesia': {
-      // paddle club: a carved blade set with shark teeth, cord-wrapped grip
-      line(ctx, x, y + 2 * k, x + 1.5 * k, y - 4 * k, '#6b4424', 1.8 * k);
-      wrap(x, y + 2 * k, x + 1.5 * k, y - 3 * k, 3, '#f4efe0', 0.6 * k);
-      poly(ctx, [x + 1.5 * k, y - 4 * k, x - 1.5 * k, y - 10 * k, x + 2 * k, y - 16 * k, x + 5 * k, y - 10 * k], '#8a5a2b');
-      poly(ctx, [x + 1.5 * k, y - 4 * k, x - 1.5 * k, y - 10 * k, x + 2 * k, y - 16 * k, x + 1.6 * k, y - 10 * k], shade('#8a5a2b', 0.2));
-      for (const [ax, ay, bx, by] of [[0, -8, 2.6, -8.6], [-0.4, -10.6, 3.2, -11.2], [0.2, -13, 3.2, -13.4]] as const) line(ctx, x + ax * k, y + ay * k, x + bx * k, y + by * k, '#2a1a10', 0.6 * k); // carved bands
-      for (let i = 0; i < 3; i++) poly(ctx, [x + 4.2 * k - i * 0.6 * k, y - 8 * k - i * 2.5 * k, x + 6 * k - i * 0.6 * k, y - 9 * k - i * 2.5 * k, x + 4.4 * k - i * 0.6 * k, y - 10 * k - i * 2.5 * k], '#f4efe0');
+      if (kind === 'giant') {
+        drawWeapon(ctx, 'defender', tribe, { hand: { x, y }, off: { x, y }, top: 0 }, k);
+        break;
+      }
+      // mere: a teardrop pounamu club, its butt drilled and hung with a wrist cord and a feather
+      line(ctx, x, y + 2 * k, x + 1 * k, y - 3 * k, '#6b4424', 1.8 * k);
+      ellipse(ctx, x - 0.1 * k, y + 2.4 * k, 0.9 * k, 0.9 * k, '#141c30');
+      poly(ctx, [x + 1 * k, y - 3 * k, x - 2 * k, y - 8 * k, x - 0.6 * k, y - 13 * k, x + 2.6 * k, y - 13.6 * k, x + 4.4 * k, y - 8 * k, x + 2.4 * k, y - 3 * k], '#3f9a6a');
+      poly(ctx, [x + 1 * k, y - 3 * k, x - 2 * k, y - 8 * k, x - 0.6 * k, y - 13 * k, x + 1.4 * k, y - 13.4 * k, x + 1.4 * k, y - 8 * k], '#8fd6a8');
+      line(ctx, x + 1.4 * k, y - 4 * k, x + 1.4 * k, y - 12.6 * k, '#1f6a48', 0.5 * k); // centre ridge
+      ellipse(ctx, x + 1.6 * k, y - 4.4 * k, 0.5 * k, 0.5 * k, '#1a3a2a');
+      line(ctx, x - 0.2 * k, y + 2.4 * k, x - 3.2 * k, y + 5 * k, '#c9b27a', 0.6 * k);
+      poly(ctx, [x - 3.2 * k, y + 5 * k, x - 4.8 * k, y + 8 * k, x - 2.4 * k, y + 6.4 * k], '#f4efe0');
       break;
     }
     case 'rome':
@@ -1174,22 +1299,15 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       line(ctx, x - 4.2 * k, y - 11.6 * k, x - 1 * k, y - 12.8 * k, '#2b5fb8', 0.7 * k);
       break;
     }
-    case 'polynesia':
-      // a lashed timber shield, rimmed and bound with cord
-      poly(ctx, [x - 4 * k, y + 1 * k, x - 3.5 * k, y - 11 * k, x + 2 * k, y - 12 * k, x + 2.5 * k, y + 2.5 * k], '#8a5a2b');
-      poly(ctx, [x - 4 * k, y + 1 * k, x - 3.5 * k, y - 11 * k, x - 0.6 * k, y - 11.5 * k, x - 0.8 * k, y + 1.7 * k], shade('#8a5a2b', 0.18));
-      for (const v of [2, 5, 8]) line(ctx, x - 3.5 * k, y - v * k, x + 2 * k, y - v * k - 0.6 * k, '#2a1a10', 0.9 * k);
-      for (const v of [3.5, 6.5, 9.5]) line(ctx, x - 3.3 * k, y - v * k + 1.5 * k, x + 2 * k, y - v * k - 1.4 * k, '#f4efe0', 0.4 * k); // cross-lashings
-      ctx.strokeStyle = '#4a3016';
-      ctx.lineWidth = 0.8 * k;
-      ctx.beginPath();
-      ctx.moveTo(x - 4 * k, y + 1 * k);
-      ctx.lineTo(x - 3.5 * k, y - 11 * k);
-      ctx.lineTo(x + 2 * k, y - 12 * k);
-      ctx.lineTo(x + 2.5 * k, y + 2.5 * k);
-      ctx.closePath();
-      ctx.stroke();
+    case 'polynesia': {
+      // no shield: a flax cloak hangs from the off arm, with a taniko hem and feather tufts
+      poly(ctx, [x - 3.4 * k, y - 1 * k, x + 2 * k, y - 1 * k, x + 3.2 * k, y + 9 * k, x - 4.4 * k, y + 8 * k], '#c9b27a');
+      poly(ctx, [x - 3.4 * k, y - 1 * k, x - 0.6 * k, y - 1 * k, x - 1 * k, y + 8.6 * k, x - 4.4 * k, y + 8 * k], shade('#c9b27a', 0.15));
+      poly(ctx, [x - 4.4 * k, y + 8 * k, x + 3.2 * k, y + 9 * k, x + 3.1 * k, y + 7.4 * k, x - 4.3 * k, y + 6.4 * k], '#b3302a');
+      for (let i = 0; i < 4; i++) ellipse(ctx, x - 3.4 * k + i * 2 * k, y + 7.3 * k + i * 0.25 * k, 0.5 * k, 0.5 * k, i % 2 ? '#f4efe0' : '#1a1a1e');
+      for (let i = 0; i < 3; i++) poly(ctx, [x - 3.2 * k + i * 2.6 * k, y + 8.4 * k, x - 2 * k + i * 2.6 * k, y + 8.6 * k, x - 2.8 * k + i * 2.6 * k, y + 10 * k], '#e8dcc0');
       break;
+    }
     case 'pirates':
       // a round plank buckler: iron rim and boss, a ring of rivets
       ellipse(ctx, x - 1 * k, y - 5 * k, 4.8 * k, 5.4 * k, '#5a4a3a');
@@ -1425,6 +1543,21 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
     ellipse(ctx, hx0 + 9.4 * kh, hy0 - 18.6 * kh, 0.9 * kh, 0.9 * kh, '#c8372d');
     band(ctx, hx0, hy0 - 6 * kh, 17 * kh, 7 * kh, 0.02, 0.07, '#1a1a22');
   }
+  if (tribe === 'polynesia') {
+    // a pounamu pendant on a cord at the horse's neck and a heron feather between its ears
+    const hx = x - 1 + 10.5 * 0.95, hy = y + 3 - 15 * 0.95;
+    line(ctx, x + 5, y - 9, x + 9, y - 4.6, '#4a3a22', 0.7);
+    ellipse(ctx, x + 7.2, y - 5.8, 1.3, 1.6, '#3f9a6a');
+    ellipse(ctx, x + 6.9, y - 6.2, 0.5, 0.6, '#8fd6a8');
+    poly(ctx, [hx + 0.4, hy - 4, hx - 0.6, hy - 10.4, hx + 2, hy - 4.4], '#f4efe0');
+    poly(ctx, [hx + 1.2, hy - 4, hx + 1.4, hy - 9, hx + 3, hy - 4.2], '#1a1a1e');
+  } else if (tribe === 'rome') {
+    // phalerae: a harness strap across the chest hung with gilded discs, and a bronze frontlet
+    const hx = x - 1 + 10.5 * 0.95, hy = y + 3 - 15 * 0.95;
+    line(ctx, x + 3.5, y - 9.6, x + 8, y - 3.4, '#4a2e16', 0.9);
+    for (const t of [0.15, 0.5, 0.85]) ellipse(ctx, x + 3.5 + 4.5 * t, y - 9.6 + 6.2 * t, 1.1, 1.1, GOLD);
+    faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.45, 0.6, 0.6, 1, BRONZE);
+  }
   const b = figure(ctx, kind, tribe, saddle.x, saddle.y, 0.9, true);
   if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, b, 0.9);
   if (kind === 'knight' || kind === 'rider') drawShield(ctx, tribe, kind, b.off.x - 1.5, b.off.y + 1.5, 0.7);
@@ -1593,19 +1726,34 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
       break;
     }
     case 'polynesia': {
-      // bamboo sling frame with a pile of coconuts
-      box(ctx, x, y - 1, 17, 3, '#d2b56e');
-      for (const ox of [-6, 5]) line(ctx, x + ox, y - 1, x + ox * 0.3, y - 19, '#c9a95a', 2.2);
-      line(ctx, x - 7, y - 19, x + 6, y - 19, '#c9a95a', 2.2);
-      line(ctx, x - 1, y - 19, x + 12, y - 29, '#8a6a3b', 1.4);
+      // carved timber sling frame lashed with flax, rounded stones, tiki post-tops
+      box(ctx, x, y - 1, 17, 3, '#6b4424', '#8a5a2b');
+      band(ctx, x, y - 1, 17, 3, 0.55, 0.8, '#b3302a');
+      for (const ox of [-6, 5]) {
+        line(ctx, x + ox, y - 1, x + ox * 0.3, y - 19, '#5a3320', 2.6);
+        line(ctx, x + ox - 0.8, y - 1, x + ox * 0.3 - 0.8, y - 19, '#8a5a2b', 0.6);
+      }
+      line(ctx, x - 7, y - 19, x + 6, y - 19, '#5a3320', 2.4);
+      line(ctx, x - 1, y - 19, x + 12, y - 29, '#8a5a2b', 1.6);
       ellipse(ctx, x + 12, y - 29, 3, 2.6, '#6b4424');
+      ellipse(ctx, x + 12, y - 30.4, 2.4, 2.2, '#8a8a90'); // the stone in the sling
+      ellipse(ctx, x + 11.4, y - 31, 0.8, 0.6, '#b4b4bc');
       for (const [bx, by] of [[-12, 4], [-9, 5], [-10.5, 2]]) {
-        ellipse(ctx, x + bx, y + by, 2.4, 2.2, '#6b4424');
-        ellipse(ctx, x + bx - 0.6, y + by - 0.6, 0.7, 0.7, '#2a1a10');
+        ellipse(ctx, x + bx, y + by, 2.3, 2.1, '#77777e');
+        ellipse(ctx, x + bx - 0.6, y + by - 0.6, 0.7, 0.6, '#a8a8b0');
       }
       flag(x + 7, y + 1, T.color);
-      for (const [px, py] of [[-6, -1], [-3, -8], [-0.5, -14]] as const) { line(ctx, x + px - 1.6, y + py - 0.6, x + px + 1.8, y + py + 0.8, '#f4efe0', 0.9); line(ctx, x + px - 1.6, y + py + 0.8, x + px + 1.8, y + py - 0.6, '#f4efe0', 0.9); } // cord lashings on the bamboo
+      for (const [px, py] of [[-6, -1], [-3, -8], [-0.5, -14]] as const) { line(ctx, x + px - 1.6, y + py - 0.6, x + px + 1.8, y + py + 0.8, '#c9b27a', 0.9); line(ctx, x + px - 1.6, y + py + 0.8, x + px + 1.8, y + py - 0.6, '#c9b27a', 0.9); } // flax lashings
       line(ctx, x + 4, y - 19, x + 12, y - 29, '#c9b58a', 0.6); // the sling
+      // carved tiki heads on the post tops, and a taniko band with hanging tufts along the top beam
+      for (const tx of [-6.6, 5.4]) {
+        box(ctx, x + tx, y - 19.6, 4.2, 4.4, '#7a4a26', '#a86c38');
+        ellipse(ctx, x + tx - 0.8, y - 18.2, 0.7, 0.7, '#f4efe0');
+        ellipse(ctx, x + tx + 1, y - 17.8, 0.7, 0.7, '#f4efe0');
+        line(ctx, x + tx - 1, y - 16.2, x + tx + 1.2, y - 15.8, '#b3302a', 0.9);
+      }
+      line(ctx, x - 5, y - 15.6, x + 4, y - 15.6, '#b3302a', 1.1);
+      for (let i = 0; i < 4; i++) { ellipse(ctx, x - 4 + i * 2.6, y - 15.6, 0.5, 0.5, i % 2 ? '#f4efe0' : '#1a1a1e'); poly(ctx, [x - 4.6 + i * 2.6, y - 15, x - 3.4 + i * 2.6, y - 15, x - 4 + i * 2.6, y - 12], '#c9b27a'); }
       break;
     }
     case 'vikings': {
@@ -1701,6 +1849,16 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
       for (const ox of [-3, 3]) line(ctx, x + ox - 1.6, y - 1.5 + (ox > 0 ? 1.5 : 0), x + ox + 1.6, y - 1.5 + (ox > 0 ? 1.5 : 0), '#5a5a64', 1.1); // iron straps on the uprights
       for (const [nx, ny] of [[-6, -2], [-2, -2.5], [2, -1.8], [6, -1.4]] as const) ellipse(ctx, x + nx, y + ny, 0.5, 0.5, shade(BRONZE, 0.4));
       ellipse(ctx, x + 11, y - 29.8, 1.3, 0.8, shade('#8a8a90', 0.5));
+      if (tribe === 'rome') {
+        // torsion skeins of sinew rope bound around each upright, gilded bands and a legion plaque
+        for (const [cx0, cy0] of [[-1.5, -1.5], [4.5, 0]] as const) {
+          ellipse(ctx, x + cx0, y + cy0, 3, 1.5, '#d8c8a0');
+          line(ctx, x + cx0 - 2.4, y + cy0 - 0.4, x + cx0 + 2.4, y + cy0 + 0.4, '#8a7a56', 0.5);
+        }
+        line(ctx, x - 9, y - 2.6, x + 9, y - 2.6, GOLD, 0.7);
+        box(ctx, x + 5, y - 6.2, 2.6, 2.6, GOLD);
+        line(ctx, x + 5.4, y - 7, x + 6.6, y - 8.4, '#6b1c18', 0.6);
+      }
       break;
     }
   }
@@ -1718,26 +1876,41 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
   const s = 1 + tier * 0.14;
   if (kind === 'waka') {
-    // twin hulls, a lashed deck and a claw-shaped sail
-    for (const oy of [-3.5, 4]) {
-      poly(ctx, [x - 18, y + oy - 4, x + 19, y + oy - 4, x + 14, y + oy + 1, x - 14, y + oy + 1], '#7a4a22');
-      poly(ctx, [x - 18, y + oy - 4, x + 19, y + oy - 4, x + 16, y + oy - 6, x - 16, y + oy - 6], '#a86c38');
+    // waka taua: a long dark carved war canoe, paddled; red-painted tauihu prow and tall taurapa sternpost
+    const wa = 22;
+    poly(ctx, [x - wa, y - 5, x + wa - 1, y - 6, x + wa - 7, y + 3.5, x - wa + 5, y + 3.5], '#2a1a12'); // hull
+    poly(ctx, [x - wa, y - 5, x + wa - 1, y - 6, x + wa - 2, y - 8.6, x - wa + 1, y - 8], '#4a2c1a'); // upper strake
+    // taurapa: a tall openwork stern post with spirals and a white plume
+    poly(ctx, [x - wa + 1, y - 6, x - wa - 1, y - 24, x - wa - 5.6, y - 26, x - wa - 4, y - 18, x - wa - 3, y - 6], '#b3302a');
+    poly(ctx, [x - wa + 1, y - 6, x - wa - 1, y - 24, x - wa - 2.6, y - 23, x - wa - 1.6, y - 6], shade('#b3302a', 0.25));
+    ring(ctx, x - wa - 2.2, y - 17, 1.4, 1.5, '#f4efe0', 0.7);
+    ring(ctx, x - wa - 1.6, y - 11, 1.2, 1.3, '#f4efe0', 0.7);
+    poly(ctx, [x - wa - 1, y - 24, x - wa - 5.6, y - 26, x - wa - 6, y - 32, x - wa - 2, y - 27], '#f4efe0');
+    // tauihu: the carved prow board, with a tiki face, a koru and a tongue
+    poly(ctx, [x + wa - 3, y - 7, x + wa + 6, y - 10, x + wa + 7, y - 18, x + wa + 2, y - 14], '#b3302a');
+    poly(ctx, [x + wa - 3, y - 7, x + wa + 6, y - 10, x + wa + 6, y - 12, x + wa - 2, y - 9], shade('#b3302a', -0.25));
+    ellipse(ctx, x + wa + 4, y - 14, 1.7, 1.7, '#f4efe0');
+    ellipse(ctx, x + wa + 4.2, y - 14, 0.7, 0.7, '#3f9a6a');
+    ring(ctx, x + wa + 2.6, y - 10, 1.3, 1.2, '#f4efe0', 0.7);
+    poly(ctx, [x + wa + 5.6, y - 16.4, x + wa + 8.6, y - 13, x + wa + 6, y - 13], '#b3302a');
+    poly(ctx, [x + wa + 2, y - 14, x + wa + 7, y - 18, x + wa + 6, y - 22], '#f4efe0'); // feather plume
+    // paddlers, one paddle each, and a row of paddle blades on the water
+    for (const px of [-11, -1, 9]) {
+      line(ctx, x + px + 2, y - 8, x + px - 4, y + 5, '#6b4424', 0.9);
+      ellipse(ctx, x + px - 4.4, y + 5.6, 1.1, 1.9, '#8a5a2b');
     }
-    box(ctx, x - 1, y - 4, 16, 2, '#c9974a');
-    for (const ox of [-8, -1, 6, 13]) line(ctx, x + ox, y - 3.4, x + ox + 1.4, y - 0.4, '#f4efe0', 0.8); // lashings between the hulls
-    for (const ox of [-4, 3, 10]) line(ctx, x + ox, y - 4, x + ox + 1, y - 2.2, '#8a5a2b', 0.6); // deck planks
-    for (const oy of [-3.5, 4]) {
-      line(ctx, x - 16, y + oy - 3.4, x + 16, y + oy - 3.4, shade('#a86c38', -0.25), 0.6); // gunwale line
-      ellipse(ctx, x + 18.5, y + oy - 5, 1.2, 1.2, '#f4efe0'); // a shell on each prow
-    }
-    poly(ctx, [x - 2, y - 6, x - 12, y - 34, x + 1, y - 26, x + 10, y - 35, x + 3, y - 6], T.color);
-    poly(ctx, [x - 2, y - 6, x - 7, y - 25, x + 1, y - 22, x + 5, y - 26, x + 3, y - 6], shade(T.color, 0.25));
-    for (const [tx, ty] of [[-12, -34], [1, -26], [10, -35]] as const) line(ctx, x, y - 6, x + tx, y + ty, shade(T.color, -0.35), 0.6); // sail ribs
-    poly(ctx, [x + 10, y - 35, x + 15, y - 37, x + 12.4, y - 33.4], '#f4efe0'); // streamer
-    figure(ctx, 'warrior', tribe, x + 8, y - 5, 0.55, true);
+    for (const px of [-11, -1, 9]) figure(ctx, 'warrior', tribe, x + px, y - 7, 0.44, true);
+    poly(ctx, [x - wa + 1, y - 8, x + wa - 2, y - 8.6, x + wa - 3, y - 6.6, x - wa + 2, y - 6], '#b3302a'); // red rail over the paddlers' laps
+    for (let i = 0; i < 10; i++) poly(ctx, [x - wa + 4 + i * 4.2, y - 5, x - wa + 7.2 + i * 4.2, y - 5.2, x - wa + 5.6 + i * 4.2, y - 2.2], i % 2 ? '#f4efe0' : '#b3302a'); // taniko triangles down the hull
+    line(ctx, x - wa + 4, y + 1.6, x + wa - 6, y + 1.2, '#f4efe0', 0.5); // white pinstripe
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 3.6, wa * 0.75, 2.2, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
     return;
   }
-  const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
+  const hull = tribe === 'polynesia' ? '#4a2c1a' : tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
     // papyrus boat with curled ends
@@ -1766,6 +1939,24 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
     ctx.beginPath();
     ctx.ellipse(x, y + 3.4, w * 0.8, 2.3, 0, 0.08 * Math.PI, 0.92 * Math.PI);
     ctx.stroke();
+  }
+  if (tribe === 'polynesia') {
+    // carved tauihu prow with a koru spiral, a white-feathered stern post and a taniko frieze along the rail
+    poly(ctx, [x + w + 1, y - 6, x + w + 7, y - 9, x + w + 6, y - 16, x + w + 3, y - 14], '#b3302a');
+    ring(ctx, x + w + 5.2, y - 12.6, 1.5, 1.4, '#f4efe0', 0.8);
+    ellipse(ctx, x + w + 5.2, y - 12.6, 0.5, 0.5, '#1a1a1e');
+    poly(ctx, [x + w + 3, y - 14, x + w + 6, y - 16, x + w + 5, y - 19], '#f4efe0');
+    line(ctx, x - w, y - 5, x - w - 2.4, y - 14, '#b3302a', 2);
+    poly(ctx, [x - w - 2.4, y - 14, x - w - 5, y - 19, x - w - 1.6, y - 16], '#f4efe0');
+    for (let i = 0; i < 6; i++) poly(ctx, [x - w * 0.8 + i * w * 0.3, y - 4.6, x - w * 0.8 + i * w * 0.3 + 3, y - 4.6, x - w * 0.8 + i * w * 0.3 + 1.5, y - 1.6], i % 2 ? '#f4efe0' : '#b3302a');
+  }
+  if (tribe === 'rome') {
+    // bronze ram at the waterline, a gilded eagle standard and a painted eye on the bow
+    poly(ctx, [x + w * 0.7, y + 0.6, x + w + 6, y + 2.6, x + w * 0.7, y + 3.4], BRONZE);
+    poly(ctx, [x + w * 0.7, y + 0.6, x + w + 6, y + 2.6, x + w * 0.9, y + 1.8], shade(BRONZE, 0.35));
+    ellipse(ctx, x + w - 1, y - 3, 1.5, 1.1, '#f4efe0');
+    ellipse(ctx, x + w - 0.8, y - 3, 0.6, 0.6, '#101010');
+    if (tier < 2) for (let i = 0; i < 4; i++) { box(ctx, x - w * 0.5 + i * 7, y - 6.4, 3.2, 3, '#b3302a', GOLD); }
   }
   if (tribe === 'vikings') {
     // carved dragon prow and a row of shields
@@ -1853,6 +2044,11 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
     line(ctx, x + 2.2, top - 4, x + 5.2, top - 3.4, '#ffffff', 0.5);
     line(ctx, x + 2.2, top - 3.4, x + 5.2, top - 4, '#ffffff', 0.5);
   }
+  if (tribe === 'rome') { // aquila atop the mast
+    ellipse(ctx, x, top - 4.4, 1.4, 1.4, GOLD);
+    poly(ctx, [x, top - 3.4, x - 4.2, top - 6.6, x - 2.4, top - 3.6], GOLD);
+    poly(ctx, [x, top - 3.4, x + 4.2, top - 6.6, x + 2.4, top - 3.6], shade(GOLD, -0.2));
+  }
   poly(ctx, [x, top - 2, x + 9, top, x, top + 2], T.color); // pennant
   poly(ctx, [x, top - 2, x + 9, top, x + 7.6, top - 0.8, x, top - 1.2], shade(T.color, 0.35));
   for (const f of [0.3, 0.62]) { // battens across the sails
@@ -1914,10 +2110,10 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
 
 // ---------------------------------------------------------------- wildlife (map resources)
 
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' }> = {
+const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' }> = {
   egypt: { body: '#d0a45e', feature: 'hump' },
   aztec: { body: '#9c6236', feature: 'antlers' },
-  polynesia: { body: '#e99aa2', feature: 'snout' },
+  polynesia: { body: '#7a5a3a', feature: 'kiwi' },
   rome: { body: '#34343b', feature: 'horns' },
   pirates: { body: '#5a4235', feature: 'tusks' },
   vikings: { body: '#8a7a66', feature: 'antlers' },
@@ -1931,6 +2127,19 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   const spec = CRITTER[biome];
   const body = spec.body;
   ellipse(ctx, x + 2 * k, y + 1, 11 * k, 3 * k, 'rgba(0,0,0,0.2)');
+  if (spec.feature === 'kiwi') {
+    // a kiwi: round shaggy brown body, no wings, a long thin curved beak and sturdy legs
+    for (const lx of [-1, 4]) line(ctx, x + lx * k, y - 3 * k, x + (lx + 0.4) * k, y, '#c9a06a', 1.4 * k);
+    ellipse(ctx, x + 1 * k, y - 8 * k, 9 * k, 6.6 * k, shade(body, -0.15));
+    ellipse(ctx, x + 0 * k, y - 9 * k, 8.2 * k, 5.8 * k, body);
+    ellipse(ctx, x - 2 * k, y - 11 * k, 4 * k, 2.4 * k, shade(body, 0.14));
+    for (const [fx, fy] of [[-5, -8], [-2, -6], [1, -9], [3, -6.4], [-6, -11]] as const) line(ctx, x + fx * k, y + fy * k, x + (fx + 2.6) * k, y + (fy + 1.4) * k, shade(body, -0.35), 0.6 * k); // feather streaks
+    ellipse(ctx, x + 7.2 * k, y - 11 * k, 3 * k, 2.8 * k, shade(body, 0.05));
+    line(ctx, x + 9 * k, y - 10.8 * k, x + 17 * k, y - 5.6 * k, '#e8d9a8', 1.3 * k);
+    line(ctx, x + 9 * k, y - 11.4 * k, x + 16.6 * k, y - 6.4 * k, '#fff6d0', 0.4 * k);
+    ellipse(ctx, x + 8 * k, y - 11.8 * k, 0.7 * k, 0.7 * k, '#101010');
+    return;
+  }
   for (const lx of [-6, -2.5, 3, 6.5]) box(ctx, x + lx * k, y + (lx > 0 ? 0.5 : -0.5) * k, 2 * k, 6 * k, shade(body, -0.3));
   box(ctx, x, y - 5 * k, 16 * k, 7 * k, body);
   if (spec.feature === 'hump') box(ctx, x - 1 * k, y - 12 * k, 6 * k, 4 * k, shade(body, 0.05));
