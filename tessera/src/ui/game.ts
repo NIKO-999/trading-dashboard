@@ -331,8 +331,11 @@ export class GameView {
     let { x, y } = under;
     let asTile = false;
     // a unit you touch wins (attack it if you can, else select it); otherwise the tile or label under the finger
-    if (figure) ({ x, y } = figure);
-    else if (mine && this.ov.moves.some((m) => m.x === under.x && m.y === under.y)) ({ x, y } = under);
+    // (a tall figure reaches up into the tile above it, so a tile you can step to or hit wins over
+    // any figure that only overlaps it, unless the figure itself is something you can attack)
+    const canGo = (a: { x: number; y: number }) => this.ov.moves.some((m) => m.x === a.x && m.y === a.y) || this.ov.attacks.some((m) => m.x === a.x && m.y === a.y);
+    if (figure && !(mine && canGo(under) && !this.ov.attacks.some((a) => a.x === figure.x && a.y === figure.y))) ({ x, y } = figure);
+    else if (mine && canGo(under)) ({ x, y } = under);
     else if (labelCity !== null) {
       const c = cityById(this.s, labelCity)!;
       ({ x, y } = c);
