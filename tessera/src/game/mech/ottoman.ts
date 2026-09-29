@@ -25,7 +25,8 @@ import { hookStat } from './index';
 import type { City, GameState, TribeId, UnitKind } from '../types';
 import type { Mechanic } from './types';
 
-export const TRIBUTE_CAP = 8; // stars per turn, whole empire
+export const TRIBUTE_CAP = 8;
+export const PORTE_PER_CITY = 2; // the Porte's own revenue per city // stars per turn, whole empire
 export const TRIBUTE_PER_CITY = 4;
 export const LEVY_CAP = 6; // Population levies per empire
 
@@ -77,7 +78,7 @@ export const mech: Mechanic = {
     addPop(s, near, 1);
   },
 
-  income(s, owner) { return tributeTotal(s, owner); },
+  income(s, owner) { return tributeTotal(s, owner) + PORTE_PER_CITY * s.cities.filter((c) => c.owner === owner).length; },
 
   combat(s, owner, a, d, ctx) {
     if (a.owner !== owner || !isBombard(s, a) || d.owner === owner) return;
@@ -128,7 +129,7 @@ export const mech: Mechanic = {
     const p = s.players[owner];
     for (const c of conqueredCities(s, owner)) {
       const k = eliteOf(c);
-      if (!k || p.stars < UNITS[k].cost + 2) continue; // keep a small reserve for the ordinary economy
+      if (!k || p.stars < UNITS[k].cost) continue; // keep a small reserve for the ordinary economy
       const t = tileAt(s, c.x, c.y)!;
       if (tileActions(s, owner, t).find((a) => a.id === 'mech:train-elite')?.enabled && doAction(s, owner, t, 'mech:train-elite')) return true;
     }

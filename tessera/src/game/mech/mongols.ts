@@ -10,12 +10,15 @@ import { dist, tileAt } from '../grid';
 import { MOUNTED_KINDS } from '../perks';
 import { attackOptions, def, moveOptions, moveUnit, previewCombat, removeUnit } from '../rules';
 import type { GameState, Unit } from '../types';
+import { citiesOf } from '../rules';
 import type { Mechanic } from './types';
 
 /** How far a unit may pull back after attacking. */
 export const RETREAT_TILES = 2;
 /** How far (in tiles) an AI archer looks for enemies before it digs in and waits. */
 const WATCH_RANGE = 7;
+/** Stars plundered for each enemy unit a Mongol unit kills. */
+export const PLUNDER = 3;
 
 const isMongol = (s: GameState, pid: number) => s.players[pid].tribe === 'mongols';
 
@@ -49,6 +52,11 @@ export const mech: Mechanic = {
   },
 
   // ---- feigned retreat
+  // Plunder & horde tribute: kills fill the coffers, and the steppe pays a tribute per city.
+  income(s, owner) { return 3 + citiesOf(s, owner).length; },
+  unitDied(s, owner, u, killer) {
+    if (killer && killer.owner === owner && u.owner !== owner) s.players[owner].stars += PLUNDER;
+  },
   afterAttack(s, owner, a) {
     if (a.owner !== owner || !MOUNTED_KINDS.includes(a.kind)) return;
     (a.data ??= {}).retreat = s.turn;

@@ -20,10 +20,10 @@ import type { Mechanic } from './types';
 // The core already charges `act.cost` for human `mech:` actions, so the checks below ignore stars; the AI pays by hand.
 
 export const SEASON = 4; // turns per wind
-export const LIGHTHOUSE_COST = 6;
+export const LIGHTHOUSE_COST = 3;
 export const WIND_COST = 3;
 export const TRADE_CAP = 20;
-export const DHOW_COST = 4;
+export const DHOW_COST = 2;
 export const DIRS = [
   { name: 'North', arrow: '↑', dx: 0, dy: -1 },
   { name: 'East', arrow: '→', dx: 1, dy: 0 },
@@ -177,7 +177,7 @@ export const mech: Mechanic = {
     u.data = { ...(u.data ?? {}), trade: { turn: s.turn, al } };
   },
 
-  income(s, owner) { return tradeReport(s, owner).total; },
+  income(s, owner) { return tradeReport(s, owner).total + 3 * s.cities.filter((c) => c.owner === owner).length; },
 
   turnStart(s, owner) {
     if (s.turn === 0) return;
@@ -241,7 +241,7 @@ export const mech: Mechanic = {
     const cities = s.cities.filter((c) => c.owner === owner);
 
     // 1. A lighthouse or two once the treasury allows.
-    if (lighthouses(s, owner).length < Math.min(2, cities.length) && p.stars >= LIGHTHOUSE_COST + 2) {
+    if (lighthouses(s, owner).length < Math.min(2, cities.length) && p.stars >= LIGHTHOUSE_COST) {
       const sites = s.tiles.filter((t) => !buildCheck(s, owner, t))
         .map((t) => ({ t, v: neighbors(s, t.x, t.y, 2).filter((n) => baseOf(n) && tileOwnerPlayer(s, n) === owner).length }))
         .sort((a, b) => b.v - a.v || a.t.y - b.t.y || a.t.x - b.t.x);

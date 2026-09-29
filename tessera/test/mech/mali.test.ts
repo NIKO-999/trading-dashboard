@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { aiTurn } from '../../src/game/ai';
-import { doAction, income, tileActions, trainCost } from '../../src/game/rules';
+import { citiesOf, doAction, income, tileActions, trainCost } from '../../src/game/rules';
 import { hookIncome } from '../../src/game/mech';
 import { tileAt } from '../../src/game/grid';
 import { createGame } from '../../src/game/mapgen';
@@ -58,7 +58,7 @@ test('caravan tolls: paid from foreign/neutral tiles only, via income', () => {
   mech.afterMove!(s, 0, u, { x: spot.x - 2, y: spot.y }, spot);
   const before = payout(u);
   assert.ok(before >= 1);
-  assert.equal(hookIncome(s, 0), before);
+  assert.equal(hookIncome(s, 0), before + 2 * citiesOf(s, 0).length);
   const st = s.players[0].stars;
   s.current = 0; s.turn = 1;
   const inc = income(s, 0) + hookIncome(s, 0);

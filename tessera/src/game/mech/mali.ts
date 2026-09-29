@@ -19,7 +19,7 @@ import type { Mechanic } from './types';
 //      reconstructed as a straight line from -> to (afterMove has no path), an accepted simplification.
 
 export const FLOOD_COST = 8;
-export const CARAVAN_COST = 5;
+export const CARAVAN_COST = 3;
 export const PAUSE_TURNS = 2;
 export const INFLATION_TURNS = 4;
 export const TOLL_CAP = 5; // stars per caravan per turn
@@ -102,7 +102,7 @@ export const mech: Mechanic = {
   },
 
   income(s, owner) {
-    return caravansOf(s, owner).reduce((n, u) => n + payout(u), 0);
+    return caravansOf(s, owner).reduce((n, u) => n + payout(u), 0) + 2 * citiesOf(s, owner).length;
   },
 
   afterMove(s, owner, u, from, to) {
@@ -169,7 +169,7 @@ export const mech: Mechanic = {
   ai(s, owner) {
     const p = s.players[owner];
     // 1. flood the richest rival whose city we have seen
-    if (s.turn >= 3 && p.stars >= FLOOD_COST + 6) {
+    if (s.turn >= 3 && p.stars >= FLOOD_COST + 3) {
       let best: { t: Tile; score: number } | null = null;
       for (const c of s.cities) {
         if (c.owner === owner || !s.players[c.owner].alive || inflationOf(s, c.owner)) continue;
@@ -181,7 +181,7 @@ export const mech: Mechanic = {
       if (best && coreDoAction(s, owner, best.t, 'mech:flood-market')) return true;
     }
     // 2. keep a couple of caravans on the road
-    if (caravansOf(s, owner).length < 2 && p.stars >= CARAVAN_COST + 3) {
+    if (caravansOf(s, owner).length < 3 && p.stars >= CARAVAN_COST) {
       const c = freeCity(s, owner);
       if (c && coreDoAction(s, owner, tileAt(s, c.x, c.y)!, 'mech:caravan')) return true;
     }

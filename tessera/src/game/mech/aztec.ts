@@ -15,7 +15,7 @@
 // Simplifications: no rivers/hills exist, so nothing terrain-based is needed; tile growth is expressed as city pop.
 import { emit } from '../events';
 import { area, dist } from '../grid';
-import { addPop, cityById, def, maxHp, moveOptions, moveUnit } from '../rules';
+import { addPop, citiesOf, cityById, def, maxHp, moveOptions, moveUnit } from '../rules';
 import type { Action } from '../rules';
 import type { City, GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
@@ -138,6 +138,7 @@ function offerAt(s: GameState, owner: number, c: City) {
 // ------------------------------------------------------------------ the mechanic
 
 export const mech: Mechanic = {
+  income(s, owner) { return 2 * citiesOf(s, owner).length; }, // tribute of the Triple Alliance
   name: 'Blood Altar Ascension',
   blurb: 'Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.',
 

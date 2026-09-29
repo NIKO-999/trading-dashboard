@@ -5,7 +5,7 @@ import { aiTurn } from '../../src/game/ai';
 import { doAction, income, previewCombat, tileActions } from '../../src/game/rules';
 import { endTurn } from '../../src/game/turn';
 import { dist, tileAt } from '../../src/game/grid';
-import { LEVY_CAP, TRIBUTE_CAP, eliteOf, elitesTrained, levies, originOf, tributeTotal } from '../../src/game/mech/ottoman';
+import { LEVY_CAP, PORTE_PER_CITY, TRIBUTE_CAP, eliteOf, elitesTrained, levies, originOf, tributeTotal } from '../../src/game/mech/ottoman';
 import { hookIncome } from '../../src/game/mech';
 import type { City, GameState } from '../../src/game/types';
 
@@ -91,14 +91,14 @@ test('Devshirme: tribute scales with level and is capped; the first capture levi
   assert.ok(home.pop + home.level * 100 > beforePop, 'nearest Ottoman city grew');
   assert.equal(c.data?.levied, true);
   assert.equal(tributeTotal(s, me), Math.ceil(c.level / 2));
-  assert.equal(hookIncome(s, me), tributeTotal(s, me));
+  assert.equal(hookIncome(s, me), tributeTotal(s, me) + PORTE_PER_CITY * s.cities.filter((k) => k.owner === me).length);
   c.level = 3;
   assert.equal(tributeTotal(s, me), 2);
   s.current = 2;
   s.players[me].stars = 10;
   endTurn(s); // the tribute is paid at the start of the Ottoman turn with the ordinary income
   assert.equal(s.current, me);
-  assert.equal(s.players[me].stars, 10 + income(s, me) + 2);
+  assert.equal(s.players[me].stars, 10 + income(s, me) + 2 + PORTE_PER_CITY * s.cities.filter((k) => k.owner === me).length);
   // capturing the same city again does not levy twice
   c.owner = foe; c.data!.conquered = false;
   conquer(s, me, c);

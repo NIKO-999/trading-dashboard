@@ -27,6 +27,8 @@ import type { Mechanic } from './types';
 
 export const WALL_COST = 1;
 export const WALL_PER_CITY = 8;
+/** Stars per turn per city from the Imperial treasury while the Mandate is not lost. */
+export const TREASURY = 4;
 export const MOURNING_TURNS = 2;
 export const SIEGE: readonly string[] = ['catapult', 'hwacha'];
 const PRODUCTIVE = ['farm', 'mine', 'lumber', 'port'];
@@ -150,9 +152,14 @@ export const mech: Mechanic = {
     chinaState(s, owner).breached++;
   },
 
+  // Imperial prestige: a blessed Mandate and a standing Great Wall add to the empire's glory each turn.
+  turnStart(s, owner) {
+    if (mandate(s, owner) === 'blessed') s.players[owner].bonusScore += 16 + 4 * Math.min(10, activeWalls(s, owner).length);
+  },
+
   cityCaptured(s, owner, _c, from) { if (from === owner) dynasticShift(s, owner); },
 
-  income(s, owner) { return mandateIncome(s, owner); },
+  income(s, owner) { return mandateIncome(s, owner) + (mandate(s, owner) === 'invaded' ? 0 : TREASURY * citiesOf(s, owner).length); },
 
   actions(s, owner, t): Action[] {
     if (tileOwnerPlayer(s, t) !== owner || !isLand(t) || t.cityId !== null || t.improvement || !isBorder(s, owner, t)) return [];
@@ -170,7 +177,7 @@ export const mech: Mechanic = {
 
   ai(s, owner) {
     const p = s.players[owner];
-    if (p.stars < WALL_COST + 4 || wallCount(s, owner) >= wallCap(s, owner)) return false;
+    if (p.stars < WALL_COST + 1 || wallCount(s, owner) >= wallCap(s, owner)) return false;
     const foes = s.cities.filter((c) => c.owner !== owner);
     const walls = activeWalls(s, owner);
     let best: { t: Tile; score: number } | null = null;

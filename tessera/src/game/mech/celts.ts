@@ -128,7 +128,7 @@ export const mech: Mechanic = {
 
   setup(s, owner) { s.players[owner].mech = { planted: 0, grown: 0, rooted: 0 }; },
 
-  income(s, owner) { return vowIncome(s, owner); },
+  income(s, owner) { return vowIncome(s, owner) + citiesOf(s, owner).length; },
   turnStart(s, owner) { spread(s, owner); vowGrowth(s, owner); },
 
   // an entangled unit cannot move at all (it may still fight)
@@ -167,7 +167,7 @@ export const mech: Mechanic = {
 
   ai(s, owner) {
     const p = s.players[owner];
-    if (p.stars < GROVE_COST + 1 || !citiesOf(s, owner).length) return false;
+    if (p.stars < GROVE_COST || !citiesOf(s, owner).length) return false;
     let best: { t: Tile; v: number } | null = null;
     for (const t of s.tiles) {
       if (tileOwnerPlayer(s, t) !== owner || t.terrain !== 'forest' || groveCheck(s, owner, t)) continue;

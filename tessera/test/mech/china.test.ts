@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { aiTurn } from '../../src/game/ai';
-import { doAction, income, moveOptions, moveUnit, techCost, tileActions } from '../../src/game/rules';
+import { citiesOf, doAction, income, moveOptions, moveUnit, techCost, tileActions } from '../../src/game/rules';
 import { tileAt } from '../../src/game/grid';
 import { createGame, spawnUnit } from '../../src/game/mapgen';
 import { hookCityCaptured, hookIncome } from '../../src/game/mech';
 import { endTurn, startTurn } from '../../src/game/turn';
-import { MOURNING_TURNS, WALL_COST, activeWall, chinaState, improvedTiles, isBorder, isWall, mandate, mandateIncome } from '../../src/game/mech/china';
+import { MOURNING_TURNS, TREASURY, WALL_COST, activeWall, chinaState, improvedTiles, isBorder, isWall, mandate, mandateIncome } from '../../src/game/mech/china';
 import type { GameState, Tile } from '../../src/game/types';
 
 function setup() {
@@ -85,7 +85,7 @@ test('Mandate of Heaven: +1 star per improved tile, none when mourning, half inc
   assert.equal(improvedTiles(s, 0), 3); // walls do not count
   assert.equal(mandate(s, 0), 'blessed');
   assert.equal(mandateIncome(s, 0), 3);
-  assert.equal(hookIncome(s, 0), 3);
+  assert.equal(hookIncome(s, 0), 3 + TREASURY * citiesOf(s, 0).length);
   const base = income(s, 0);
   spawnUnit(s, 'explorer', 1, 4, 14, null); // explorers do not invade
   assert.equal(mandate(s, 0), 'blessed');

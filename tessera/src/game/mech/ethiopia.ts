@@ -20,14 +20,15 @@ import type { Mechanic } from './types';
 //     hem it in). Income = ceil(points / 2), capped at TARIFF_CAP a turn. No improvements needed. Population is not
 //     touched: this economy is Stars only.
 
-export const STELE_COST = 5;
-export const STELE_PER_CITY = 3;
+export const STELE_COST = 3;
+export const STELE_PER_CITY = 4;
 export const RAY_RANGE = 3;
 export const RAY_DAMAGE = 2;
 export const RAY_CAP = 4;
 export const LINK_RANGE = 6;
 export const GRID_DAMAGE = 1;
-export const TARIFF_CAP = 5;
+export const TARIFF_CAP = 8;
+export const CARAVAN_PER_CITY = 1; // a flat road-tax per city
 export const CHOKE_OPEN = 4;
 
 export const isStele = (t: Tile) => t.improvement === 'stele' && typeof t.data?.stele === 'number';
@@ -159,7 +160,7 @@ export const mech: Mechanic = {
     if (!seen.includes(u.id)) seen.push(u.id);
   },
 
-  income(s, owner) { return tariff(s, owner); },
+  income(s, owner) { return tariff(s, owner) + CARAVAN_PER_CITY * citiesOf(s, owner).length; },
 
   // income was paid just before this hook runs: start counting travellers afresh
   turnStart(s, owner) { s.players[owner].mech = { seen: [] }; },
@@ -186,7 +187,7 @@ export const mech: Mechanic = {
 
   ai(s, owner) {
     const p = s.players[owner];
-    if (p.stars < STELE_COST + 2 || steleCount(s, owner) >= steleCap(s, owner)) return false;
+    if (p.stars < STELE_COST || steleCount(s, owner) >= steleCap(s, owner)) return false;
     const enemies = s.units.filter((u) => u.owner !== owner);
     const enemyCities = s.cities.filter((c) => c.owner !== owner);
     const mine = activeSteles(s, owner);
