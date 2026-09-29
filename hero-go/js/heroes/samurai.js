@@ -837,13 +837,20 @@
   <g clip-path="url(#${I('pclip')})">
     <rect width="120" height="120" fill="url(#${I('pbg')})"/>
     <circle cx="60" cy="52" r="46" fill="#ffffff" opacity="0.15"/>
+    <circle cx="60" cy="52" r="34" fill="none" stroke="#fff" stroke-opacity="0.18" stroke-width="1"/>
+    <path d="M60,52 L-10,0 L14,-10 Z M60,52 L40,-14 L70,-14 Z M60,52 L100,-14 L130,-4 Z M60,52 L130,30 L130,56 Z" fill="#fff" opacity="0.07"/>
     <path d="M0,104 L30,90 L60,104 L90,90 L120,104 L120,120 L0,120 Z" fill="#8e1f18" opacity="0.35"/>
+    <rect x="0" y="92" width="120" height="28" fill="url(#${I('seiga')})" opacity="0.7"/>
+    <path d="M12,24 q3,-3 5,0 q-2,3 -5,0 z M104,40 q3,-3 5,0 q-2,3 -5,0 z M20,60 q3,-3 5,0 q-2,3 -5,0 z M100,14 q3,-3 5,0 q-2,3 -5,0 z" fill="#ffd1d6" opacity="0.8"/>
+    <path d="M14,24 l1.4,0.4 M106,40 l1.4,0.4" stroke="#e8708a" stroke-width="0.4"/>
+    <circle cx="10" cy="40" r="1" fill="#fff" opacity="0.6"/><circle cx="110" cy="70" r="1.2" fill="#fff" opacity="0.5"/><circle cx="16" cy="80" r="0.8" fill="#fff" opacity="0.6"/>
     <g transform="translate(-6,-1) scale(0.72)">
       <g transform="translate(52,118) rotate(8)">${sode(I, 22, 30)}</g>
       ${torso(I)}
       <g transform="translate(112,117) rotate(-10)">${sode(I, 23, 31)}</g>
       ${head(I, false)}
     </g>
+    <rect x="1" y="1" width="118" height="118" rx="13" fill="none" stroke="#fff" stroke-opacity="0.25" stroke-width="1.2"/>
   </g>
 </svg>`;
   }
