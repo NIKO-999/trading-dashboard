@@ -30,7 +30,12 @@ const perkCost = (s: GameState, pid: number, k: UnitKind) => {
   const naval = UNITS[k].naval ? 'naval' : null;
   return Math.min(UNITS[k].cost - 1, perkSum(s, pid, 'cost', (p) => p.of === naval || (of as readonly string[]).includes(p.of)));
 };
-export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k);
+/** Salt & Gold Inflation (Mali): a flooded empire's markets are hyper-inflated, so everything it trains costs double. */
+export const inflationOf = (s: GameState, pid: number): { until: number; pauseUntil: number } | null => {
+  const i = (s.mech?.inflation as Record<string, { until: number; pauseUntil: number }> | undefined)?.[pid];
+  return i && s.turn <= i.until ? i : null;
+};
+export const trainCost = (s: GameState, pid: number, k: UnitKind) => (inflationOf(s, pid) ? 2 : 1) * (UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k));
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
 /** Tibetans scale mountains without Climbing. */

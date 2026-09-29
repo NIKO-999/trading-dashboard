@@ -655,7 +655,7 @@ export class GameView {
           h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id)), p.tribe);
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id === 'mech:flood-market'), p.tribe);
       return;
     }
 
@@ -695,6 +695,7 @@ export class GameView {
     this.panel.append(close, head(city.name, info,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
     if (mine) this.renderActions(acts, owner.tribe);
+    else this.renderActions(acts.filter((a) => a.id.startsWith('mech:')), this.s.players[this.me].tribe); // e.g. Mali's market flood
   }
 
   private renderActions(acts: Action[], tribe: GameState['players'][number]['tribe']) {
