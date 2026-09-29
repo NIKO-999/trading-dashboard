@@ -9,7 +9,7 @@ import {
   moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
-import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
+import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
 import { renderDpr, setSharpness } from '../render/common';
@@ -1015,8 +1015,45 @@ export class GameView {
     }
   }
 
-  private async onEndTurn() {
+  /** My units that could still move or strike this turn but have done neither. */
+  private idleUnits() {
+    return this.s.units
+      .filter((u) => u.owner === this.me && !u.moved && !u.attacked && u.kind !== 'explorer' && (moveOptions(this.s, u).length > 0 || attackOptions(this.s, u).length > 0))
+      .sort((a, b) => a.y - b.y || a.x - b.x);
+  }
+
+  /** Ask before ending the turn while some units haven't moved: list them, and jump to one on tap. */
+  private confirmEndTurn(idle: Unit[]) {
+    const where = (u: Unit) => {
+      const near = citiesOf(this.s, this.me).sort((a, b) => Math.abs(a.x - u.x) + Math.abs(a.y - u.y) - (Math.abs(b.x - u.x) + Math.abs(b.y - u.y)))[0];
+      return near ? `near ${near.name}` : `at ${u.x},${u.y}`;
+    };
+    const goTo = (u: Unit) => {
+      close();
+      this.cam.glideTo(u.x, u.y, this.vw, this.vh * 0.85, 450);
+      this.select({ x: u.x, y: u.y, mode: 'unit' });
+    };
+    const rows = idle.slice(0, 8).map((u) => h('button', { class: 'idle-row', onclick: () => goTo(u) },
+      h('b', {}, `${u.veteran ? '★ ' : ''}${UNITS[u.kind].name}`),
+      h('span', {}, where(u)),
+      attackOptions(this.s, u).length ? h('em', {}, 'can attack') : null));
+    const close = modal({
+      title: idle.length === 1 ? '1 unit hasn’t moved' : `${idle.length} units haven’t moved`,
+      body: [h('p', {}, 'Tap one to go to it, or end your turn anyway.'), h('div', { class: 'idle-list' }, ...rows), idle.length > 8 ? h('p', {}, `…and ${idle.length - 8} more.`) : ''],
+      buttons: [
+        { label: 'Show me', primary: true, onClick: () => goTo(idle[0]) },
+        { label: 'End turn anyway', onClick: () => void this.onEndTurn(true) },
+      ],
+      dismissable: true,
+    });
+  }
+
+  private async onEndTurn(force = false) {
     if (this.busy || !this.myTurn()) return;
+    if (!force) {
+      const idle = this.idleUnits();
+      if (idle.length) return this.confirmEndTurn(idle);
+    }
     this.select(null);
     sfx.play('endturn');
     endTurn(this.s);
