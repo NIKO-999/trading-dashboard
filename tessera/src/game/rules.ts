@@ -18,12 +18,15 @@ export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) =
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
 export const isExplored = (s: GameState, pid: number, x: number, y: number) => s.players[pid].explored[y * s.size + x];
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
-const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider'];
+const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa'];
 
 /** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
 export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0);
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
+/** Tibetans scale mountains without Climbing. */
+const canClimb = (s: GameState, pid: number) => hasTech(s, pid, 'climbing') || s.players[pid].tribe === 'tibet';
+
 export const seaBonus = (s: GameState, u: Unit) => (def(u).naval && s.players[u.owner].tribe === 'pirates' ? 1 : 0);
 const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pirates' ? 4 : 7);
 
@@ -33,6 +36,8 @@ export function cityIncome(s: GameState, c: City) {
   let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0) + c.parks;
   const tribe = s.players[c.owner].tribe;
   inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length * (tribe === 'china' ? 2 : 1); // Silk Road
+  if (tribe === 'maya') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'temple').length; // Sky Watchers
+  if (tribe === 'khmer') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'farm').length; // Baray Reservoirs
   if (tribe === 'mali') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'mine').length; // Gold of the Sahel
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
@@ -75,6 +80,10 @@ export function research(s: GameState, pid: number, tech: string) {
   if (researchStatus(s, pid, tech) !== 'available' || p.stars < cost) return false;
   p.stars -= cost;
   p.techs.push(tech);
+  if (p.tribe === 'korea') { // Scholars
+    const cap = citiesOf(s, pid).find((c) => c.capital) ?? citiesOf(s, pid)[0];
+    if (cap) addPop(s, cap, 1);
+  }
   return true;
 }
 
@@ -483,7 +492,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const range = d.move + seaBonus(s, u) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0); // Horse Nation
+  const range = d.move + seaBonus(s, u) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {
@@ -499,7 +508,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       let stop = false;
       if (naval) {
         if (isLand(to)) {
-          if (to.terrain === 'mountain' && !hasTech(s, pid, 'climbing')) continue;
+          if (to.terrain === 'mountain' && !canClimb(s, pid)) continue;
           opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;
         } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship') continue;
@@ -514,7 +523,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
           } else continue;
         } else {
           if (to.terrain === 'mountain') {
-            if (!hasTech(s, pid, 'climbing')) continue;
+            if (!canClimb(s, pid)) continue;
             stop = true;
           }
           if (to.terrain === 'forest' && !d.skills.includes('forestwalk') && !(hasRoad(from) && hasRoad(to))) stop = true;
@@ -671,7 +680,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     }
     // Melee attackers advance into the tile they cleared.
     const t = tileAt(s, d.x, d.y)!;
-    if (def(a).range === 1 && isWater(t) === def(a).naval && (t.terrain !== 'mountain' || hasTech(s, a.owner, 'climbing'))) {
+    if (def(a).range === 1 && isWater(t) === def(a).naval && (t.terrain !== 'mountain' || canClimb(s, a.owner))) {
       emit({ type: 'move', unitId: a.id, owner: a.owner, path: [{ x: a.x, y: a.y }, { x: d.x, y: d.y }], embark: false, disembark: false });
       a.x = d.x;
       a.y = d.y;

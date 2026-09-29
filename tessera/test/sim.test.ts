@@ -4,7 +4,7 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
 import { createGame, foundCity } from '../src/game/mapgen.ts';
-import { popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -68,10 +68,10 @@ test('every capital and village starts with enough resources to level up', () =>
   assert.ok(checked > 500, `checked ${checked} settlements`);
 });
 
-test('a 21-empire game runs 30 AI turns cleanly', () => {
+test('a 26-empire game runs 30 AI turns cleanly', () => {
   const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
-  assert.equal(s.players.length, 21);
-  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 21, 'every empire gets its own capital');
+  assert.equal(s.players.length, 26);
+  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 26, 'every empire gets its own capital');
   startTurn(s);
   let guard = 0;
   while (!s.over && guard++ < 2000) {
@@ -567,3 +567,25 @@ test('the last five empires\' bonuses', () => {
 function s_open(s: GameState) {
   s.players[0].explored.fill(true);
 }
+
+test('the newest five empires\' bonuses', () => {
+  const g = (tribe: 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet') => createGame({ seed: 31, human: tribe, opponents: ['rome'], mode: 'domination' });
+  // Maya: temples earn 1★; Khmer: farms earn 1★
+  for (const [tribe, imp] of [['maya', 'temple'], ['khmer', 'farm']] as const) {
+    const s = g(tribe), city = s.cities[0], base = cityIncome(s, city);
+    s.tiles.find((t) => t.owner === city.id && t.cityId === null && t.improvement === null)!.improvement = imp;
+    assert.equal(cityIncome(s, city), base + 1, tribe);
+  }
+  // Korea: researching a tech grows the capital by 1
+  const k = g('korea'), cap = k.cities[0], pop = cap.pop + cap.level * 100;
+  k.players[0].stars = 20;
+  assert.ok(research(k, 0, 'hunting'));
+  assert.ok(cap.pop + cap.level * 100 > pop);
+  // Tibet: mountains are open without Climbing
+  const t = g('tibet'), u = t.units.find((v) => v.owner === 0 && v.kind === 'warrior')!, cc = t.cities.find((c) => c.owner === 0)!;
+  t.players[0].techs = [];
+  t.units = [u]; u.moved = false; u.attacked = false;
+  const mt = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([dx, dy]) => tileAt(t, u.x + dx, u.y + dy)).find((x) => x && x.cityId === null)!;
+  mt.terrain = 'mountain'; t.players[0].explored.fill(true);
+  assert.ok(moveOptions(t, u).some((m) => m.x === mt.x && m.y === mt.y));
+});

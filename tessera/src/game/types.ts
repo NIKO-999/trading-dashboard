@@ -1,7 +1,7 @@
 export type Terrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
 export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market';
-export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman';
+export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
 export type Biome = TribeId;
 export type UnitKind =
   | 'warrior' | 'rider' | 'archer' | 'defender' | 'swordsman' | 'catapult' | 'knight' | 'giant'
@@ -10,7 +10,8 @@ export type UnitKind =
   | 'legionary' | 'chariot' | 'jaguar' | 'buccaneer' | 'waka'
   | 'berserker' | 'samurai' | 'horsearcher' | 'hoplite' | 'impi'
   | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai' | 'woomera'
-  | 'crossbowman' | 'elephant' | 'sofa' | 'buffalorider' | 'janissary';
+  | 'crossbowman' | 'elephant' | 'sofa' | 'buffalorider' | 'janissary'
+  | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa';
 
 export interface Tile {
   x: number;

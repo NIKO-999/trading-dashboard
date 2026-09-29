@@ -28,6 +28,11 @@ const LOOK: Record<TribeId, Look> = {
   mali: { skin: '#5e3a22', hair: '#120d0a' },
   lakota: { skin: '#a8683a', hair: '#141012' },
   ottoman: { skin: '#dcae82', hair: '#1c1410' },
+  maya: { skin: '#b06a3c', hair: '#120e0c' },
+  korea: { skin: '#e8c8a0', hair: '#141214' },
+  khmer: { skin: '#b8763c', hair: '#141010' },
+  swahili: { skin: '#6a4028', hair: '#120c08' },
+  tibet: { skin: '#c9905a', hair: '#141010' },
 };
 
 const GOLD = '#f0c43a';
@@ -11017,6 +11022,11 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   mali: { body: '#c9a06a', feature: 'zebu' }, // a long-horned Sahelian zebu
   lakota: { body: '#4a3428', feature: 'bison' },
   ottoman: { body: '#d8b884', feature: 'kangal' }, // an Anatolian shepherd dog
+  maya: { body: '#a06a3a', feature: 'stripes' },
+  korea: { body: '#c9903a', feature: 'stripes' },
+  khmer: { body: '#7a7a80', feature: 'tusks' },
+  swahili: { body: '#e8e0d0', feature: 'horns' },
+  tibet: { body: '#3a2a22', feature: 'horns' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

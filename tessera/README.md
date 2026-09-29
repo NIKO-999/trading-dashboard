@@ -3,7 +3,7 @@
 A turn-based 4X strategy game for phones, built as an installable, offline-capable PWA.
 It is separate from the rest of this repo, with its own `package.json` and build.
 
-Lead one of twenty-one empires, each with its own biome, starting tech, unique unit and bonus:
+Lead one of twenty-six empires, each with its own biome, starting tech, unique unit and bonus:
 
 | Empire | Biome | Starts with | Unique unit | Bonus |
 |---|---|---|---|---|
@@ -28,6 +28,11 @@ Lead one of twenty-one empires, each with its own biome, starting tech, unique u
 | Malian | Sahel savanna | Riding | Sofa (replaces Warrior) | Every mine earns +1★ a turn |
 | Lakota | prairie | Hunting | Horse Warrior (replaces Rider) | Mounted units move 1 further |
 | Ottoman | domes and two seas | Climbing | Janissary (replaces Archer) | Catapults cost 3★ less |
+| Maya | jungle pyramids | Gathering | Holcan (replaces Warrior) | Every temple earns +1★ a turn |
+| Korean | pine mountains and terraces | Climbing | Hwacha (replaces Catapult) | Every tech grows the capital by 1 |
+| Khmer | flooded paddies and temple-mountains | Fishing | Temple Guardian (replaces Defender) | Every farm earns +1★ a turn |
+| Swahili | coral coast and dhows | Fishing | Askari (replaces Warrior) | Boats and ships move 1 further |
+| Tibetan | high plateau | Climbing | Khampa Rider (replaces Rider) | Cross mountains without Climbing |
 
 Features:
 - A seeded isometric map with fog of war.

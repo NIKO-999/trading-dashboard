@@ -200,6 +200,11 @@ export const FISH: Record<TribeId, [string, string]> = {
   mali: ['#8ad0c4', '#2a6a7a'],
   lakota: ['#c9d6a0', '#5a7a3a'],
   ottoman: ['#8ad4f0', '#2a5f9a'],
+  maya: ['#7ae0c0', '#2a6a5a'],
+  korea: ['#ffb08a', '#c94a2a'],
+  khmer: ['#c9d6a0', '#5a7a3a'],
+  swahili: ['#ffd06a', '#2a7ab8'],
+  tibet: ['#8ad0f0', '#5a6a8a'],
 };
 
 /** Fish, whales and glints, drawn between the ground and scenery layers. */
