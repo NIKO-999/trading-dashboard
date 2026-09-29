@@ -1274,6 +1274,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'china') return drawChinaTree(ctx, x, y, k, P, variant);
   if (biome === 'mali') return mlTree(ctx, x, y, k, P, variant);
+  if (biome === 'swahili') return swTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
       // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
@@ -2082,6 +2083,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'mali':
       mlBuilding(ctx, x, y, big, roofC, capital);
       break;
+    case 'swahili':
+      swBuilding(ctx, x, y, big, roofC, color, capital);
+      break;
     case 'zulu': {
       // woven grass beehive huts
       const r = big ? 9 : 6.5;
@@ -2103,7 +2107,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : 0; // the flag rides on the dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : 0; // the flag rides on the dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -3685,6 +3689,373 @@ function mlBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string,
   }
 }
 
+// ---------------------------------------------------------------- Swahili Coast trees and buildings
+// Kilwa, Mombasa, Zanzibar, Lamu: coconut palms and mangroves along the shore, whitewashed coral-stone houses with carved
+// doors, mosques with pillar tombs, traders' warehouses, and dhows drawn up on the beach.
+
+const SW_WALL = '#f2eadb', SW_DOOR = '#4a2814', SW_BRASS_C = '#d9a83a', SW_TEAL_C = '#1f8a8a', SW_RED_C = '#b8322a', SW_SAND = '#e6d3a4';
+const SW_THATCH_D = '#8a6a2a';
+
+function swTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 5;
+  const leaf = P.forest, bark = P.trunk;
+  ctx.lineCap = 'round';
+  const curve = (x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, c: string) => {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
+    ctx.stroke();
+  };
+  const clump = (cx: number, cy: number, r: number, c: string) => {
+    ellipse(ctx, cx + 0.5 * k, cy + 0.8 * k, r * 1.02, r * 0.8, shade(c, -0.32));
+    ellipse(ctx, cx, cy, r, r * 0.8, shade(c, -0.08));
+    ellipse(ctx, cx - r * 0.22, cy - r * 0.26, r * 0.66, r * 0.5, shade(c, 0.1));
+    ellipse(ctx, cx - r * 0.38, cy - r * 0.42, r * 0.3, r * 0.2, shade(c, 0.28));
+  };
+  if (v === 0) {
+    // a coconut palm: a slender ringed trunk leaning with the sea wind, a crown of long arching fronds and a cluster of nuts
+    const b = shade(bark, 0.15), top = { x: x + 4.4 * k, y: y - 24 * k };
+    curve(x, y, x - 1.4 * k, y - 12 * k, top.x, top.y, 2.4 * k, b);
+    curve(x - 0.5 * k, y, x - 1.9 * k, y - 12 * k, top.x - 0.5 * k, top.y, 0.7 * k, shade(b, 0.3));
+    for (let i = 0; i < 9; i++) { const t = 0.08 + i * 0.1, px = x + (top.x - x) * t * t * 0.9 - 0.8 * k * (1 - t), py = y + (top.y - y) * t; line(ctx, px - 1.3 * k, py + 0.4 * k, px + 1.3 * k, py - 0.4 * k, shade(b, -0.4), 0.5 * k); }
+    ellipse(ctx, x, y + 0.6 * k, 3.4 * k, 1.1 * k, shade(bark, -0.3));
+    const fr = [[-15, 8, 2], [-11, -1, 1], [-5.6, -6, 0], [1, -8, 1], [7, -6.6, 0], [12, -1.4, 2], [15.4, 7, 1], [-3, 6, 2], [6, 7, 0]] as const;
+    for (const [dx, dy, s] of fr) {
+      const ex = top.x + dx * k, ey = top.y + (dy + 4) * k;
+      const c = s === 0 ? shade(leaf, 0.12) : s === 1 ? leaf : shade(leaf, -0.14);
+      curve(top.x, top.y, top.x + dx * 0.5 * k, top.y + (dy - 5) * k, ex, ey, 3.2 * k, shade(c, -0.1));
+      curve(top.x, top.y - 0.4 * k, top.x + dx * 0.5 * k, top.y + (dy - 5.6) * k, ex - dx * 0.05 * k, ey - 0.6 * k, 0.6 * k, shade(c, 0.34));
+      for (const t of [0.35, 0.55, 0.75]) { // leaflets
+        const u = 1 - t, lx = u * u * top.x + 2 * u * t * (top.x + dx * 0.5 * k) + t * t * ex, ly = u * u * top.y + 2 * u * t * (top.y + (dy - 5) * k) + t * t * ey;
+        line(ctx, lx, ly, lx + (dx > 0 ? 1 : -1) * 1.2 * k, ly + 2.4 * k, shade(c, -0.25), 0.5 * k);
+      }
+    }
+    for (const [dx, dy] of [[-1.4, 1.6], [0.8, 2.2], [-0.2, 3.2]] as const) { ellipse(ctx, top.x + dx * k, top.y + dy * k, 1.2 * k, 1.3 * k, '#7a5a2a'); ellipse(ctx, top.x + (dx - 0.3) * k, top.y + (dy - 0.3) * k, 0.4 * k, 0.4 * k, '#b8945a'); }
+    return;
+  }
+  if (v === 1) {
+    // a baobab: a fat, fluted grey trunk, a few thick limbs and a ragged leafy crown with long hanging pods
+    const g = '#9a8670';
+    poly(ctx, [x - 6.2 * k, y + 0.6 * k, x - 6 * k, y - 5 * k, x - 4 * k, y - 11 * k, x - 4.4 * k, y - 15.6 * k, x, y - 16.2 * k, x, y + 2 * k], shade(g, 0.1));
+    poly(ctx, [x + 6.2 * k, y + 0.6 * k, x + 6 * k, y - 5 * k, x + 4 * k, y - 11 * k, x + 4.4 * k, y - 15.6 * k, x, y - 16.2 * k, x, y + 2 * k], shade(g, -0.24));
+    ellipse(ctx, x, y + 0.8 * k, 6.4 * k, 2 * k, shade(g, -0.3));
+    for (const [dx, l] of [[-4, 10], [-1.8, 12], [1.6, 11], [4, 9]] as const) line(ctx, x + dx * k, y - 1.4 * k, x + (dx + 0.3) * k, y - l * k, shade(g, -0.36), 0.5 * k); // fluting
+    ellipse(ctx, x + 1.8 * k, y - 6 * k, 1 * k, 1.6 * k, '#3a2a1e'); // a hollow
+    const top = { x, y: y - 16 * k };
+    for (const [ex, ey, w] of [[-9, -6, 2.2], [-3, -9, 1.9], [4, -9.4, 1.9], [9.6, -5.4, 2.2], [0.6, -5.6, 1.6]] as const) {
+      curve(top.x, top.y, top.x + ex * 0.5 * k, top.y + ey * 0.4 * k - 1 * k, top.x + ex * k, top.y + ey * k, w * k, shade(g, -0.1));
+    }
+    for (const [ex, ey, r] of [[-9.6, -7.4, 3.6], [-3.4, -10.6, 3.2], [4, -11, 3.2], [9.8, -7, 3.6], [0.4, -8.6, 3]] as const) clump(top.x + ex * k, top.y + ey * k, r * k, leaf);
+    for (const [ex, ey] of [[-8, -3.6], [7.6, -3.2], [-1, -6]] as const) { line(ctx, top.x + ex * k, top.y + ey * k, top.x + ex * k, top.y + (ey + 2.4) * k, '#4a3a2a', 0.4 * k); ellipse(ctx, top.x + ex * k, top.y + (ey + 4.2) * k, 0.9 * k, 1.8 * k, '#8a7248'); }
+    return;
+  }
+  if (v === 2) {
+    // a mangrove: a dark dome of glossy leaves held up on a tangle of arching stilt roots standing in the shallows
+    ellipse(ctx, x, y + 1 * k, 9 * k, 2.6 * k, 'rgba(70,110,110,0.35)');
+    for (const [rx, sx, th] of [[-8, -1.6, 1.3], [-5, -0.6, 1.5], [-1.6, 0.4, 1.6], [2.4, 0.8, 1.5], [6, 1.4, 1.5], [9, 1.8, 1.2]] as const) {
+      curve(x + rx * 0.4 * k, y - 8 * k, x + (rx + sx * 4) * k, y - 4 * k, x + (rx + sx) * k, y + 0.6 * k, th * k, shade(bark, rx % 2 ? -0.05 : -0.22));
+    }
+    for (const rx of [-3.4, 0.6, 4.2, -6.4]) line(ctx, x + rx * k, y - 7.4 * k, x + (rx + 0.3) * k, y - 3 * k, shade(bark, 0.1), 0.5 * k);
+    const d = shade(leaf, -0.14);
+    clump(x - 4.6 * k, y - 11.4 * k, 5.4 * k, d);
+    clump(x + 4.6 * k, y - 11.6 * k, 5.6 * k, d);
+    clump(x, y - 14 * k, 6.4 * k, shade(leaf, -0.06));
+    clump(x - 1 * k, y - 16.4 * k, 3.6 * k, shade(leaf, 0.06));
+    for (const [dx, dy] of [[-6.6, -6.6], [3.4, -6.4], [7.6, -7.4]] as const) { line(ctx, x + dx * k, y + dy * k, x + dx * k, y + (dy + 3) * k, '#5a7a3a', 0.6 * k); ellipse(ctx, x + dx * k, y + (dy + 3.4) * k, 0.4 * k, 1.1 * k, '#7a9a4a'); } // hanging propagules
+    return;
+  }
+  if (v === 3) {
+    // a mango: a short thick trunk under a huge, dense, dark, lopsided crown flecked with ripening fruit
+    ctx.fillStyle = shade(bark, -0.08);
+    ctx.fillRect(x - 1.8 * k, y - 8 * k, 3.6 * k, 8 * k);
+    ctx.fillStyle = shade(bark, -0.36);
+    ctx.fillRect(x, y - 8 * k, 1.8 * k, 8 * k);
+    line(ctx, x - 1.6 * k, y - 8 * k, x - 5.4 * k, y - 11 * k, bark, 1.4 * k);
+    line(ctx, x + 1.6 * k, y - 8 * k, x + 5 * k, y - 11 * k, bark, 1.4 * k);
+    const d = shade(leaf, -0.2);
+    clump(x - 6.4 * k, y - 12.6 * k, 5.6 * k, d);
+    clump(x + 6.4 * k, y - 12.6 * k, 5.6 * k, d);
+    clump(x - 2.6 * k, y - 17.4 * k, 6.6 * k, shade(leaf, -0.12));
+    clump(x + 3.6 * k, y - 16.6 * k, 6 * k, shade(leaf, -0.08));
+    clump(x - 0.4 * k, y - 12 * k, 6.4 * k, shade(leaf, -0.16));
+    clump(x + 0.4 * k, y - 21.4 * k, 3.6 * k, shade(leaf, 0.02));
+    for (const [dx, dy] of [[-6, -10], [-1.6, -12.4], [4, -13.6], [7.4, -10.6], [-3.4, -17.6], [2.6, -19.4], [0.4, -9]] as const) { line(ctx, x + dx * k, y + (dy - 1.6) * k, x + dx * k, y + dy * k, '#4a5a2a', 0.4 * k); ellipse(ctx, x + dx * k, y + (dy + 1) * k, 1 * k, 1.3 * k, dx > 0 ? '#e8823a' : '#e8b23a'); ellipse(ctx, x + (dx - 0.3) * k, y + (dy + 0.6) * k, 0.3 * k, 0.4 * k, '#fff2c0'); }
+    return;
+  }
+  // a frangipani: gnarled, blunt, forking pale branches tipped with leaf rosettes and clusters of pink and white blossom
+  const g = '#9a8a76';
+  curve(x, y, x - 0.4 * k, y - 6 * k, x + 0.6 * k, y - 9 * k, 3.2 * k, g);
+  curve(x + 0.6 * k, y - 8 * k, x - 3 * k, y - 11 * k, x - 6.6 * k, y - 15 * k, 2 * k, g);
+  curve(x + 0.6 * k, y - 8 * k, x + 3.6 * k, y - 11 * k, x + 6.8 * k, y - 14.6 * k, 2 * k, g);
+  curve(x + 0.6 * k, y - 8 * k, x + 0.6 * k, y - 13 * k, x + 0.2 * k, y - 17.4 * k, 1.8 * k, g);
+  line(ctx, x - 0.8 * k, y, x - 0.6 * k, y - 8 * k, shade(g, 0.3), 0.6 * k);
+  for (const [dx, dy] of [[-6.6, -15], [6.8, -14.6], [0.2, -17.4]] as const) {
+    for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + (i - 3.5) * 0.46; poly(ctx, [x + dx * k, y + dy * k, x + dx * k + Math.cos(a) * 7.6 * k - 1.1 * k, y + dy * k + Math.sin(a) * 5 * k, x + dx * k + Math.cos(a) * 7.6 * k + 1.1 * k, y + dy * k + Math.sin(a) * 5 * k - 0.6 * k], i % 2 ? leaf : shade(leaf, 0.14)); }
+    for (const [fx, fy, c] of [[-1.6, -4.6, '#f7d6e4'], [1.4, -5.6, '#ffffff'], [0, -3.2, '#f2a0c0'], [2.6, -3.4, '#ffffff']] as const) {
+      const px = x + (dx + fx) * k, py = y + (dy + fy) * k;
+      for (let j = 0; j < 5; j++) { const a = (j / 5) * Math.PI * 2; ellipse(ctx, px + Math.cos(a) * 0.9 * k, py + Math.sin(a) * 0.7 * k, 0.6 * k, 0.5 * k, c); }
+      ellipse(ctx, px, py, 0.45 * k, 0.4 * k, '#f2c53a');
+    }
+  }
+}
+
+
+/** A bale of striped kikoi cloth, corded. */
+function swStoreBale(ctx: Ctx, x: number, y: number, w: number, h: number, c: string) {
+  box(ctx, x, y, w, h, c);
+  const st = ['#7a4a2a', SW_RED_C, '#f6f0e0', '#2a3f7a'];
+  for (let i = 0; i < 4; i++) { faceQuad(ctx, 'R', x, y, w, h, 0.05 + i * 0.24, 0.16 + i * 0.24, 0.05, 0.95, st[(i + 1) % 4]); faceQuad(ctx, 'L', x, y, w, h, 0.08 + i * 0.24, 0.18 + i * 0.24, 0.05, 0.95, st[i % 4]); }
+  band(ctx, x, y, w, h, 0.4, 0.5, '#4a2c16');
+}
+
+/** A round-bellied clay water jar. */
+function swStoreJar(ctx: Ctx, x: number, y: number, r: number, c = '#b8703a') {
+  ellipse(ctx, x, y - r * 0.9, r, r * 1.05, c);
+  ellipse(ctx, x - r * 0.3, y - r * 1.2, r * 0.35, r * 0.4, shade(c, 0.32));
+  ellipse(ctx, x, y - r * 2, r * 0.5, r * 0.28, shade(c, -0.2));
+}
+
+/** A small arched doorway or window opening set into a wall face, given in the face's (u, v) coordinates. */
+function swFacePoly(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, pts: [number, number][], color: string) {
+  const P = (u: number, v: number) => face === 'R'
+    ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h]
+    : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+  poly(ctx, pts.flatMap(([u, v]) => P(u, v)), color);
+}
+
+/** An arch: straight jambs up to `vs`, then a semicircle of radius that fits between u0 and u1. */
+function swArch(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u0: number, u1: number, v0: number, vs: number, color: string) {
+  const um = (u0 + u1) / 2, rx = (u1 - u0) / 2, rv = ((u1 - u0) * w / 4) / h;
+  const pts: [number, number][] = [[u0, v0], [u0, vs]];
+  for (let i = 1; i < 8; i++) { const a = Math.PI - (i / 8) * Math.PI; pts.push([um + Math.cos(a) * rx, vs + Math.sin(a) * rv]); }
+  pts.push([u1, vs], [u1, v0]);
+  swFacePoly(ctx, face, cx, cy, w, h, pts, color);
+}
+
+/** A carved wooden door: a dark frame, panels studded with brass and a carved lintel band. */
+function swDoor(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u0: number, u1: number, v1: number) {
+  faceQuad(ctx, face, cx, cy, w, h, u0 - 0.035, u1 + 0.035, 0, v1 + 0.1, '#cbbf9c'); // a plastered surround
+  faceQuad(ctx, face, cx, cy, w, h, u0, u1, 0, v1, SW_DOOR);
+  faceQuad(ctx, face, cx, cy, w, h, u0 - 0.02, u1 + 0.02, v1, v1 + 0.08, '#7a4a1e'); // the carved lintel with its chain motif
+  const n = 4;
+  for (let i = 0; i < n; i++) faceQuad(ctx, face, cx, cy, w, h, u0 + ((u1 - u0) * (i + 0.2)) / n, u0 + ((u1 - u0) * (i + 0.7)) / n, v1 + 0.02, v1 + 0.06, '#d9b77a');
+  const um = (u0 + u1) / 2;
+  faceQuad(ctx, face, cx, cy, w, h, um - 0.006, um + 0.006, 0, v1, '#2a180a'); // the leaves meet
+  for (const [u, v] of [[0.25, 0.28], [0.75, 0.28], [0.25, 0.62], [0.75, 0.62], [0.25, 0.9], [0.75, 0.9]] as const) faceQuad(ctx, face, cx, cy, w, h, u0 + (u1 - u0) * u - 0.008, u0 + (u1 - u0) * u + 0.008, v1 * v - 0.03, v1 * v + 0.03, SW_BRASS_C); // brass studs
+}
+
+/** A shuttered window with a small wooden balcony rail. */
+function swWindow(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u: number, v: number, sz = 0.16) {
+  faceQuad(ctx, face, cx, cy, w, h, u - 0.02, u + sz + 0.02, v - 0.02, v + sz * 1.7 + 0.03, '#cbbf9c');
+  faceQuad(ctx, face, cx, cy, w, h, u, u + sz, v, v + sz * 1.7, '#3a2210');
+  faceQuad(ctx, face, cx, cy, w, h, u + 0.01, u + sz / 2 - 0.005, v + 0.02, v + sz * 1.7 - 0.02, '#6a4020'); // the two shutters
+  faceQuad(ctx, face, cx, cy, w, h, u + sz / 2 + 0.005, u + sz - 0.01, v + 0.02, v + sz * 1.7 - 0.02, '#5a3418');
+  for (const t of [0.35, 0.55, 0.75]) faceQuad(ctx, face, cx, cy, w, h, u + 0.01, u + sz - 0.01, v + sz * 1.7 * t, v + sz * 1.7 * t + 0.014, '#2a180a'); // louvres
+}
+
+/** A shallow domed roof: a lit and a shaded half, ribs and a finial. */
+function swDome(ctx: Ctx, x: number, y: number, r: number, hgt: number, c: string, ribs = true) {
+  ctx.fillStyle = ink(shade(c, -0.2));
+  ctx.beginPath(); ctx.ellipse(x, y, r, hgt, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = ink(shade(c, 0.06));
+  ctx.beginPath(); ctx.ellipse(x, y, r, hgt, 0, Math.PI, Math.PI * 1.55); ctx.lineTo(x, y); ctx.closePath(); ctx.fill();
+  ellipse(ctx, x - r * 0.3, y - hgt * 0.62, r * 0.28, hgt * 0.16, shade(c, 0.4));
+  if (ribs) for (const t of [-0.55, 0, 0.55]) { ctx.strokeStyle = ink(shade(c, -0.34)); ctx.lineWidth = 0.4; ctx.beginPath(); ctx.ellipse(x, y, Math.abs(t) * r + 0.001, hgt, 0, Math.PI, 0); if (t !== 0) { ctx.stroke(); } }
+  line(ctx, x, y - hgt, x, y - hgt - 2.6, '#7a5a2a', 0.7);
+  ellipse(ctx, x, y - hgt - 2.8, 0.8, 0.8, SW_BRASS_C);
+}
+
+/** A whitewashed coral-stone house: a flat parapeted roof, a carved door, shuttered windows, plastered niches and, when tall, a second storey with a balcony. */
+function swHouse(ctx: Ctx, x: number, y: number, w: number, h: number, tall: boolean) {
+  box(ctx, x, y + 1, w + 1.4, 1.2, '#c9bd9c', '#dccfae'); // a low plinth
+  box(ctx, x, y, w, h, SW_WALL, '#f8f1e2');
+  swDoor(ctx, 'R', x, y, w, h, 0.2, 0.42, 0.58);
+  swWindow(ctx, 'R', x, y, w, h, 0.6, 0.36, 0.2);
+  swWindow(ctx, 'L', x, y, w, h, 0.28, 0.36, 0.2);
+  for (const u of [0.62, 0.78]) swArch(ctx, 'L', x, y, w, h, u, u + 0.12, 0.3, 0.56, '#d4c8a6'); // zidaka: plastered niches
+  faceQuad(ctx, 'R', x, y, w, h, 0, 1, 0.9, 1, '#dccfae');
+  faceQuad(ctx, 'L', x, y, w, h, 0, 1, 0.9, 1, '#dccfae');
+  box(ctx, x, y - h, w + 1.2, 1.2, '#e6dbbf', '#f6efdc'); // the roof parapet
+  for (const dx of [-w * 0.42, w * 0.42]) box(ctx, x + dx, y - h - 0.6 + Math.abs(dx) * 0.1, 1.6, 1.6, '#e6dbbf'); // corner posts
+  if (tall) {
+    const w2 = w * 0.62, y2 = y - h - 0.4;
+    box(ctx, x - 1, y2, w2, h * 0.72, SW_WALL, '#f8f1e2');
+    swWindow(ctx, 'R', x - 1, y2, w2, h * 0.72, 0.3, 0.3, 0.26);
+    swWindow(ctx, 'L', x - 1, y2, w2, h * 0.72, 0.3, 0.3, 0.26);
+    box(ctx, x - 1, y2 - h * 0.72, w2 + 1.2, 1.1, '#e6dbbf', '#f6efdc');
+    // a wooden balcony rail across the front of the first floor
+    line(ctx, x + 0.4, y - h + 3.2 - 0.6, x + w / 2 - 0.4, y - h + 3.2 - 0.6 - w * 0.25 + 0.4, '#5a3418', 0.8);
+  }
+}
+
+/** A trader's warehouse: a long flat-roofed store with a big double door under a striped awning, bales of cloth and ivory tusks stacked outside. */
+function swWarehouse(ctx: Ctx, x: number, y: number) {
+  const W = 20, H = 6.4;
+  box(ctx, x, y + 0.8, W + 1.2, 1, '#c9bd9c', '#dccfae');
+  box(ctx, x, y, W, H, '#ead9b6', '#f2e6cc');
+  for (const u of [0.1, 0.34, 0.58, 0.82]) faceQuad(ctx, 'L', x, y, W, H, u, u + 0.03, 0.06, 0.94, '#dccfae'); // buttress strips
+  swDoor(ctx, 'R', x, y, W, H, 0.2, 0.5, 0.66);
+  for (const u of [0.6, 0.76]) swArch(ctx, 'R', x, y, W, H, u, u + 0.1, 0.44, 0.62, '#4a2c14'); // ventilation arches
+  swArch(ctx, 'L', x, y, W, H, 0.42, 0.62, 0.06, 0.5, '#4a2c14'); // a side loading door
+  box(ctx, x, y - H, W + 1.2, 1.2, '#dccfae', '#eee2c4');
+  for (let i = 0; i < 6; i++) box(ctx, x - W * 0.42 + i * (W * 0.84 / 5), y - H - 0.8 + Math.abs(i - 2.5) * 0.04, 1.5, 1.2, '#dccfae');
+  // a striped awning over the door
+  swFacePoly(ctx, 'R', x, y, W, H, [[0.12, 0.72], [0.58, 0.72], [0.62, 0.56], [0.08, 0.56]], SW_RED_C);
+  for (let i = 0; i < 4; i++) { const u0 = 0.12 + i * 0.115; swFacePoly(ctx, 'R', x, y, W, H, [[u0 - 0.03 + 0.0, 0.56], [u0 + 0.05, 0.56], [u0 + 0.055, 0.72], [u0 + 0.0, 0.72]], i % 2 ? '#f6f0e0' : '#7a4a2a'); }
+  // stock in the yard: cloth bales, a pair of ivory tusks and a jar
+  swStoreBale(ctx, x - 7, y + 4.4, 4.6, 2.6, '#f6f0e0');
+  swStoreBale(ctx, x - 7, y + 2, 4, 2.4, '#e6d9b8');
+  ctx.lineCap = 'round';
+  for (const [dx, lean] of [[8.6, 0.55], [10.2, 0.3]] as const) { // ivory tusks leaning on the wall
+    const bx = x + dx, by = y + 5.6;
+    poly(ctx, [bx - 0.9, by, bx + 0.9, by, bx + lean * 5 + 0.3, by - 8], '#f4ecd6');
+    poly(ctx, [bx, by, bx + 0.9, by, bx + lean * 5 + 0.3, by - 8], '#c9bc9a');
+  }
+  swStoreJar(ctx, x + 12.4, y + 6.4, 1.6);
+}
+
+/** A makuti hut: wattle-and-daub walls under a deep hipped roof of plaited palm thatch. */
+function swHut(ctx: Ctx, x: number, y: number, roofC: string) {
+  box(ctx, x, y, 9.4, 5.2, '#d9c49a', '#eadab8');
+  faceQuad(ctx, 'R', x, y, 9.4, 5.2, 0.28, 0.5, 0, 0.7, '#2a180a');
+  faceQuad(ctx, 'L', x, y, 9.4, 5.2, 0.4, 0.64, 0.3, 0.68, '#3a2210');
+  for (const v of [0.24, 0.5]) faceQuad(ctx, 'L', x, y, 9.4, 5.2, 0, 1, v, v + 0.03, '#b89e70');
+  // the deep thatched roof with its eaves fringe and a plaited ridge
+  const rw = 14.4;
+  poly(ctx, [x - rw / 2, y - 5.2, x, y - 5.2 + rw / 4, x, y - 13.4], shade(roofC, 0.1));
+  poly(ctx, [x + rw / 2, y - 5.2, x, y - 5.2 + rw / 4, x, y - 13.4], shade(roofC, -0.24));
+  for (const t of [0.3, 0.55, 0.78]) {
+    const f = 1 - t;
+    line(ctx, x - (rw / 2) * f, y - 5.2 - (13.4 - 5.2) * t + 0.3, x, y - 5.2 + (rw / 4) * f - (13.4 - 5.2) * t * 0.0 - (8.2 * t) + 0.4, shade(roofC, -0.32), 0.5);
+    line(ctx, x + (rw / 2) * f, y - 5.2 - (13.4 - 5.2) * t + 0.3, x, y - 5.2 + (rw / 4) * f - (8.2 * t) + 0.4, shade(roofC, -0.5), 0.5);
+  }
+  for (let i = 0; i < 9; i++) { const t = i / 8, ex = x - rw / 2 + t * rw / 2, ey = y - 5.2 + t * rw / 4; line(ctx, ex, ey, ex - 0.1, ey + 1.2, shade(roofC, -0.42), 0.55); }
+  for (let i = 1; i < 9; i++) { const t = i / 8, ex = x + t * rw / 2, ey = y - 5.2 + rw / 4 - t * rw / 4; line(ctx, ex, ey, ex + 0.1, ey + 1.2, shade(roofC, -0.58), 0.55); }
+  ellipse(ctx, x, y - 13.6, 1, 1.2, SW_BRASS_C);
+}
+
+/** A dhow drawn up on the beach: careened on the sand with poles propping it, a thatched shade over the stern, the furled sail and a net on the hull. */
+function swBeachDhow(ctx: Ctx, x: number, y: number, roofC: string) {
+  ellipse(ctx, x, y + 3.6, 16, 6.4, SW_SAND); // a patch of sand
+  ellipse(ctx, x + 1, y + 3, 12, 4.4, shade(SW_SAND, 0.12));
+  // the hull, heeled over toward the viewer with its bow up the slope
+  poly(ctx, [x - 13, y - 5.6, x + 11, y - 9, x + 14.6, y - 12.6, x + 15.6, y - 11, x + 10.6, y - 3, x + 4, y + 1.6, x - 8, y + 2.6], '#4a2a14');
+  poly(ctx, [x - 13, y - 5.6, x + 11, y - 9, x + 10.2, y - 5.4, x - 11.6, y - 2.4], '#8a5a2e');
+  poly(ctx, [x - 11.6, y - 2.4, x + 10.2, y - 5.4, x + 9.8, y - 4.2, x - 11, y - 1.2], '#efe4c8');
+  poly(ctx, [x - 11, y - 1.2, x + 9.8, y - 4.2, x + 9.4, y - 3.2, x - 10.4, y - 0.2], SW_RED_C);
+  for (let i = 0; i < 10; i++) { const bx = x - 10 + i * 2.1; line(ctx, bx, y - 4.4 - i * 0.14, bx + 0.6, y - 2.8 - i * 0.14, '#e8d8a8', 0.5); }
+  poly(ctx, [x - 13, y - 5.6, x - 16.6, y - 10.4, x - 15.2, y - 11, x - 11, y - 6], '#a8784a'); // stern post
+  ellipse(ctx, x + 10.4, y - 7, 1.1, 0.9, '#f4efe0'); ellipse(ctx, x + 10.7, y - 7, 0.5, 0.5, '#101010'); // the painted eye
+  ellipse(ctx, x + 15.4, y - 12.2, 0.9, 0.9, SW_BRASS_C);
+  // props under the keel, the furled lateen sail lashed along the rail, and a net hung to dry
+  for (const dx of [-8, 3]) line(ctx, x + dx, y + 1.4, x + dx - 3, y + 6, '#5a3a1e', 1);
+  line(ctx, x - 13, y - 8, x + 11, y - 11.4, '#3a2412', 1.3);
+  poly(ctx, [x - 12, y - 8, x + 10, y - 11, x + 10, y - 10, x - 12, y - 6.8], '#efe6cc');
+  for (let i = 0; i < 6; i++) { const nx = x - 3 + i * 1.7; line(ctx, nx, y - 2.6, nx + 0.2, y + 0.6, '#c9b58a', 0.4); }
+  line(ctx, x - 3, y - 2.2, x + 6.6, y - 3.4, '#c9b58a', 0.5);
+  // a makuti shade on four poles over the stern where the crew rests
+  for (const [px, py] of [[-19, 1], [-9, 4], [-19, -4], [-9, -1.4]] as const) line(ctx, x + px, py + y, x + px, py + y - 10, '#5a3a1e', 0.9);
+  poly(ctx, [x - 21, y - 9, x - 14, y - 12.2, x - 7, y - 8.8, x - 14, y - 5.4], roofC);
+  poly(ctx, [x - 14, y - 12.2, x - 7, y - 8.8, x - 14, y - 5.4], shade(roofC, -0.25));
+  for (let i = 0; i < 6; i++) line(ctx, x - 20 + i * 2.4, y - 8.6 - Math.abs(i - 2.5) * 0.3 * 0, x - 20 + i * 2.4 + 0.2, y - 7.4, SW_THATCH_D, 0.5);
+  swStoreJar(ctx, x - 6, y + 6.6, 1.4, '#a3622c');
+}
+
+/** A coral-stone pillar tomb: a square plinth, a tall tapering shaft set with porcelain bowls, a stepped crown and a pointed cap. */
+function swPillarTomb(ctx: Ctx, x: number, y: number, sc = 1) {
+  box(ctx, x, y + 1 * sc, 8 * sc, 1.6 * sc, '#c9bd9c', '#dccfae');
+  box(ctx, x, y, 6 * sc, 4.6 * sc, '#eee4cc', '#f8f1e2');
+  faceQuad(ctx, 'R', x, y, 6 * sc, 4.6 * sc, 0.2, 0.8, 0.3, 0.7, '#cbbf9c');
+  const H = 11 * sc;
+  poly(ctx, [x - 1.8 * sc, y - 4.4 * sc, x - 1.4 * sc, y - 4.4 * sc - H, x, y - 4.4 * sc - H + 0.5 * sc, x, y - 3.6 * sc], '#f6efdc');
+  poly(ctx, [x + 1.8 * sc, y - 4.4 * sc, x + 1.4 * sc, y - 4.4 * sc - H, x, y - 4.4 * sc - H + 0.5 * sc, x, y - 3.6 * sc], '#cbbf9c');
+  for (const [t, c] of [[0.3, SW_TEAL_C], [0.52, '#3a6ab8'], [0.74, SW_TEAL_C]] as const) { // Chinese porcelain bowls set into the shaft
+    ellipse(ctx, x - 0.5 * sc, y - 4.4 * sc - H * t, 0.9 * sc, 0.8 * sc, '#f4efe0');
+    ellipse(ctx, x - 0.5 * sc, y - 4.4 * sc - H * t, 0.55 * sc, 0.5 * sc, c);
+  }
+  box(ctx, x, y - 4.6 * sc - H + 1.4 * sc, 3.4 * sc, 1.4 * sc, '#eee4cc');
+  poly(ctx, [x - 1.5 * sc, y - 4.6 * sc - H, x, y - 4.6 * sc - H - 4 * sc, x, y - 4 * sc - H], '#f6efdc');
+  poly(ctx, [x + 1.5 * sc, y - 4.6 * sc - H, x, y - 4.6 * sc - H - 4 * sc, x, y - 4 * sc - H], '#cbbf9c');
+  ellipse(ctx, x, y - 4.9 * sc - H - 4 * sc, 0.6 * sc, 0.6 * sc, SW_BRASS_C);
+}
+
+/** A short stone minaret: a tapering shaft, a balcony ring and a little domed lantern. */
+function swMinaret(ctx: Ctx, x: number, y: number, hgt: number, wd: number) {
+  const hb = wd / 2, ht = wd * 0.36;
+  poly(ctx, [x - hb, y, x, y + wd / 4, x, y + wd * 0.26 - hgt, x - ht, y - hgt], '#f6efdc');
+  poly(ctx, [x + hb, y, x, y + wd / 4, x, y + wd * 0.26 - hgt, x + ht, y - hgt], '#c9bd9c');
+  for (const t of [0.3, 0.6]) { const half = hb + (ht - hb) * t, yy = y + wd / 4 + (wd * 0.26 - wd / 4 - hgt) * t; line(ctx, x - half, yy - wd / 4, x, yy, '#d4c8a6', 0.5); line(ctx, x + half, yy - wd / 4, x, yy, '#a89e82', 0.5); }
+  poly(ctx, [x - ht, y - hgt + 1.6, x - 0.6, y - hgt + 1.6 + wd * 0.1, x - 0.6, y - hgt + 3.2 + wd * 0.1, x - ht, y - hgt + 3.2], '#2a180a'); // a slit window
+  box(ctx, x, y - hgt + 0.6, wd * 0.9, 0.9, '#e6dbbf', '#f6efdc'); // the balcony ring
+  box(ctx, x, y - hgt - 0.2, wd * 0.5, 2.6, '#eee4cc');
+  swDome(ctx, x, y - hgt - 2.8, wd * 0.32, wd * 0.34, '#e6dbbf', false);
+}
+
+/** The mosque: a low arcaded prayer hall with shallow domes, a short minaret behind and a pillar tomb beside it. */
+function swMosque(ctx: Ctx, x: number, y: number) {
+  const W = 18, H = 7;
+  box(ctx, x, y + 1.6, W + 3, 1.6, '#c9bd9c', '#dccfae'); // plinth
+  swMinaret(ctx, x - 5.4, y - 3.4, 15, 4.6);
+  box(ctx, x, y, W, H, SW_WALL, '#f8f1e2');
+  for (let i = 0; i < 3; i++) { swArch(ctx, 'L', x, y, W, H, 0.12 + i * 0.28, 0.32 + i * 0.28, 0.06, 0.5, '#3a2a1a'); swArch(ctx, 'L', x, y, W, H, 0.15 + i * 0.28, 0.29 + i * 0.28, 0.1, 0.48, '#5a4a3a'); }
+  faceQuad(ctx, 'L', x, y, W, H, 0, 1, 0.82, 0.9, '#dccfae');
+  swDoor(ctx, 'R', x, y, W, H, 0.3, 0.52, 0.62);
+  swArch(ctx, 'R', x, y, W, H, 0.62, 0.74, 0.34, 0.6, '#3a2a1a');
+  swArch(ctx, 'R', x, y, W, H, 0.8, 0.92, 0.34, 0.6, '#3a2a1a');
+  box(ctx, x, y - H, W + 1.2, 1.2, '#e6dbbf', '#f6efdc');
+  for (const [dx, dy] of [[-3.6, -3.8], [3.6, 1.6]] as const) swDome(ctx, x + dx, y - H + dy + 0.4, 4.4, 3.6, '#e9dfc4');
+  swPillarTomb(ctx, x + 14, y + 7.4, 0.9);
+}
+
+/** The grand complex: a terraced palace-mosque on a stepped coral plinth, an arcaded court, a great ribbed dome and a pillar tomb (after Husuni Kubwa and the Great Mosque of Kilwa). */
+function swPalace(ctx: Ctx, x: number, y: number, color: string) {
+  box(ctx, x, y + 2.4, 32, 2.4, '#c9bd9c', '#dccfae'); // the stepped plinth
+  box(ctx, x, y + 0.6, 29, 2, '#d8cbaa', '#e6dbbf');
+  swMinaret(ctx, x - 11, y - 2, 20, 5.4);
+  // the great hall, with an arcade along both fronts
+  const W = 24, H = 8.4;
+  box(ctx, x, y - 1, W, H, SW_WALL, '#f8f1e2');
+  for (let i = 0; i < 5; i++) { swArch(ctx, 'L', x, y - 1, W, H, 0.06 + i * 0.185, 0.2 + i * 0.185, 0.06, 0.5, '#3a2a1a'); swArch(ctx, 'L', x, y - 1, W, H, 0.09 + i * 0.185, 0.17 + i * 0.185, 0.1, 0.46, '#5a4a3a'); }
+  for (let i = 0; i < 4; i++) swArch(ctx, 'R', x, y - 1, W, H, 0.5 + i * 0.12, 0.6 + i * 0.12, 0.06, 0.5, '#3a2a1a');
+  swDoor(ctx, 'R', x, y - 1, W, H, 0.14, 0.34, 0.6); // the great carved door
+  faceQuad(ctx, 'L', x, y - 1, W, H, 0, 1, 0.86, 0.94, SW_TEAL_C);
+  faceQuad(ctx, 'R', x, y - 1, W, H, 0, 1, 0.86, 0.94, SW_TEAL_C);
+  for (const f of ['L', 'R'] as const) for (let i = 0; i < 12; i++) faceQuad(ctx, f, x, y - 1, W, H, 0.02 + i * 0.082, 0.05 + i * 0.082, 0.9, 0.94, '#f4efe0');
+  box(ctx, x, y - 1 - H, W + 1.4, 1.4, '#e6dbbf', '#f6efdc');
+  // an upper storey with a central drum and the great dome
+  const y2 = y - 1 - H - 0.4;
+  box(ctx, x + 1, y2, 13, 5.4, '#f0e6d0', '#f8f1e2');
+  for (const [u, side] of [[0.22, 'L'], [0.55, 'L']] as const) swArch(ctx, side, x + 1, y2, 13, 5.4, u, u + 0.2, 0.1, 0.5, '#3a2a1a');
+  swArch(ctx, 'R', x + 1, y2, 13, 5.4, 0.3, 0.5, 0.1, 0.5, '#3a2a1a');
+  box(ctx, x + 1, y2 - 5.4, 14.2, 1, '#e6dbbf', '#f6efdc');
+  swDome(ctx, x + 1, y2 - 5.4, 6.6, 7.4, '#e9dfc4');
+  swDome(ctx, x - 8.4, y - 1 - H + 0.8, 3.6, 3, '#e9dfc4');
+  swDome(ctx, x + 10.4, y - 1 - H + 3.2, 3.4, 2.8, '#e9dfc4');
+  // a band of the empire's colour on the drum, and the pillar tomb
+  faceQuad(ctx, 'R', x + 1, y2, 13, 5.4, 0, 1, 0.02, 0.12, color);
+  faceQuad(ctx, 'L', x + 1, y2, 13, 5.4, 0, 1, 0.02, 0.12, color);
+  swPillarTomb(ctx, x + 19, y + 8, 1);
+  // an octagonal pool at the front court, after Husuni Kubwa, with steps down to it
+  ellipse(ctx, x - 6, y + 9.4, 6.4, 2.6, '#c9bd9c');
+  ellipse(ctx, x - 6, y + 9.6, 5.4, 2.1, '#3fa6b0');
+  ellipse(ctx, x - 7.2, y + 9, 2.2, 0.7, '#7fd0d6');
+}
+
+function swBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, color: string, capital: boolean) {
+  if (big) return capital ? swPalace(ctx, x, y, color) : swMosque(ctx, x, y);
+  const spot: Record<string, number> = { '-10,2': 0, '10,2': 1, '0,8': 4, '-6,-8': 2, '7,-7': 3, '-14,-3': 0, '14,-2': 2 };
+  const v = spot[`${Math.round(x)},${Math.round(y)}`] ?? ((Math.round(x) * 7 + Math.round(y) * 3) % 5 + 5) % 5;
+  switch (v) {
+    case 1: return swHouse(ctx, x, y, 10, 7, true);
+    case 2: return swWarehouse(ctx, x, y);
+    case 3: return swBeachDhow(ctx, x, y, roofC);
+    case 4: return swHut(ctx, x, y, roofC);
+    default: return swHouse(ctx, x, y, 11, 7, false);
+  }
+}
+
 // ---------------------------------------------------------------- UI icons
 
 /** Draws a small scene for an action button / info panel, centred at (x, y). */
@@ -3772,3 +4143,4 @@ export function drawCityIcon(ctx: Ctx, tribe: TribeId, x: number, y: number, cap
   drawBuilding(ctx, tribe, x - 8, y + 2, false, T.roof, T.color, false);
   drawBuilding(ctx, tribe, x + 4, y + 6, true, T.roof, T.color, capital);
 }
+
