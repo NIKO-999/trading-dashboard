@@ -293,5 +293,6 @@ ul.traits .why { opacity: 0.7; font-weight: 300; }
 ul.traits .effect { display: block; font-weight: 600; }
 
 /* a live readout from the empire's own mechanic, under the score bar */
-.mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.55); font-size: 0.95rem; white-space: nowrap; }
+.mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
+.mech-hud > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .mech-hud:empty { display: none; }
