@@ -49,6 +49,11 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   horsearcher: U({ kind: 'horsearcher', name: 'Horse Archer', cost: 4, hp: 10, atk: 2, def: 1, move: 2, range: 2, skills: ['dash', 'escape'], tech: 'archery', blurb: 'Mongol mounted bowman. Shoots and rides away.' }),
   hoplite: U({ kind: 'hoplite', name: 'Hoplite', cost: 3, hp: 15, atk: 2, def: 3, move: 1, range: 1, skills: ['fortify'], tech: 'tactics', blurb: 'Greek spearman behind a bronze shield. Hits back harder.' }),
   impi: U({ kind: 'impi', name: 'Impi', cost: 2, hp: 10, atk: 2.5, def: 1.5, move: 1, range: 1, skills: ['dash', 'fortify'], tech: null, blurb: 'Zulu warrior with a stabbing spear. Strikes harder than a warrior.' }),
+  immortal: U({ kind: 'immortal', name: 'Immortal', cost: 5, hp: 15, atk: 3, def: 2.5, move: 1, range: 1, skills: ['dash', 'persist'], tech: 'smithing', blurb: 'Persian elite spearman in scale armour. Presses on after a kill.' }),
+  clansman: U({ kind: 'clansman', name: 'Clansman', cost: 2, hp: 12, atk: 2, def: 1.5, move: 1, range: 1, skills: ['dash', 'forestwalk'], tech: null, blurb: 'Celtic warrior of the oak groves. Slips through forest.' }),
+  harpooner: U({ kind: 'harpooner', name: 'Harpooner', cost: 3, hp: 10, atk: 2, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inuit hunter with a barbed harpoon. Hits from two tiles.' }),
+  slinger: U({ kind: 'slinger', name: 'Slinger', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inca sling-warrior. Hurls stones harder than an archer shoots.' }),
+  shotelai: U({ kind: 'shotelai', name: 'Shotelai', cost: 5, hp: 15, atk: 3.5, def: 2.5, move: 1, range: 1, skills: ['dash'], tech: 'smithing', blurb: 'Ethiopian sickle-sword fighter that cuts around shields.' }),
 };
 
 export const NAVAL_UPGRADE: Partial<Record<UnitKind, UnitKind>> = { boat: 'ship', waka: 'ship', ship: 'warship' };

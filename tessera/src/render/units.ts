@@ -17,6 +17,11 @@ const LOOK: Record<TribeId, Look> = {
   mongols: { skin: '#d6a676', hair: '#1a1612' },
   greeks: { skin: '#dcae80', hair: '#3a2616' },
   zulu: { skin: '#7a4a2a', hair: '#1a120c' },
+  persia: { skin: '#d9a877', hair: '#1a1410' },
+  celts: { skin: '#f0c8a8', hair: '#b5541f' },
+  inuit: { skin: '#c99a6e', hair: '#141416' },
+  inca: { skin: '#b5754a', hair: '#141012' },
+  ethiopia: { skin: '#8a5a36', hair: '#15100c' },
 };
 
 const GOLD = '#f0c43a';
@@ -2641,6 +2646,11 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   mongols: { body: '#4a3628', feature: 'horns' },
   greeks: { body: '#e6e0d0', feature: 'horns' },
   zulu: { body: '#f4f1ea', feature: 'stripes' },
+  persia: { body: '#c9a06a', feature: 'horns' },
+  celts: { body: '#8a4a2a', feature: 'antlers' },
+  inuit: { body: '#dfe6ea', feature: 'antlers' },
+  inca: { body: '#e8dcc0', feature: 'hump' },
+  ethiopia: { body: '#6a4a34', feature: 'horns' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

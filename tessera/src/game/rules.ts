@@ -358,10 +358,10 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
       if (r === 'animal' && p.tribe === 'zulu') return grow(2); // Great Hunt
-      return grow(r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
+      return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1); // Sea Hunters
     }
     case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
-    case 'mine': t.improvement = 'mine'; return grow(2);
+    case 'mine': t.improvement = 'mine'; return grow(p.tribe === 'inca' ? 3 : 2); // Terraces
     case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b); }
     case 'clear': t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); return true;
     case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b); }
@@ -398,6 +398,10 @@ function capture(s: GameState, u: Unit, t: Tile) {
     claimTerritory(s, c.id);
     emit({ type: 'capture', player: pid, cityId: c.id, from });
     checkElimination(s, from, pid);
+    if (s.players[pid].tribe === 'persia') { // Royal Tribute
+      s.players[pid].stars += 3;
+      emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 3 });
+    }
   }
   u.moved = u.attacked = true;
   // a captured city may already sit on your road network: count what it has as already paid, so taking it
@@ -603,8 +607,10 @@ export function defenseBonus(s: GameState, u: Unit) {
   const t = tileAt(s, u.x, u.y)!;
   const c = cityById(s, t.cityId);
   if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return c.walls ? 4 : 1.5;
+  const tribe = s.players[u.owner].tribe;
+  if (t.terrain === 'forest' && tribe === 'celts') return 2; // Sacred Groves
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
-  if (t.terrain === 'mountain') return MOUNTAIN_DEFENSE; // high ground: the best cover on the map
+  if (t.terrain === 'mountain') return tribe === 'ethiopia' ? MOUNTAIN_DEFENSE + 0.5 : MOUNTAIN_DEFENSE; // Highland Fortress // high ground: the best cover on the map
   if (isWater(t) && hasTech(s, u.owner, 'aquaculture')) return 1.5;
   return 1;
 }

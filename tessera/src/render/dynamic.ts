@@ -189,6 +189,11 @@ export const FISH: Record<TribeId, [string, string]> = {
   mongols: ['#c9b27a', '#6a7a4a'],
   greeks: ['#8ad0f0', '#2a5f9a'],
   zulu: ['#f2a24a', '#6a3a1a'],
+  persia: ['#f4d05a', '#2a7ab8'],
+  celts: ['#c9d6d0', '#4a7a6a'],
+  inuit: ['#e8f0f4', '#3a6a8a'],
+  inca: ['#ffb45a', '#2a8a7a'],
+  ethiopia: ['#9ad4c0', '#2a6a5a'],
 };
 
 /** Fish, whales and glints, drawn between the ground and scenery layers. */
