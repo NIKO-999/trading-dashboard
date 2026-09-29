@@ -1266,6 +1266,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'ottoman') return drawOttomanTree(ctx, x, y, k, P, variant);
+  if (biome === 'india') return indianTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
@@ -1972,6 +1973,8 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'ottoman':
       drawOttomanBuilding(ctx, x, y, big, capital);
+    case 'india':
+      indianBuilding(ctx, x, y, big, roofC, color, capital);
       break;
     case 'ethiopia': {
       // Aksum: carved granite stelae, stepped stone-and-timber towers with monkey-head beam ends, and round churches
@@ -2097,7 +2100,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : 0; // the flag rides on the fire temple's or mosque's dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : 0; // the flag rides on the dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -2106,6 +2109,307 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     ctx.stroke();
     poly(ctx, [x - 1, y - h - 26 - fo, x + 11, y - h - 23 - fo, x - 1, y - h - 19 - fo], tribe === 'pirates' ? '#15151a' : color);
     if (tribe === 'pirates') ellipse(ctx, x + 3.5, y - h - 23 - fo, 1.6, 1.6, '#fff');
+  }
+}
+
+// ---------------------------------------------------------------- Indian trees and buildings
+
+/**
+ * The trees of the Indian plains and jungle: a banyan with aerial roots that drop from its boughs into pillars,
+ * a round dark mango heavy with fruit, a tall coconut palm, a buttressed jungle fig hung with vines, and a
+ * feathery neem in flower.
+ */
+function indianTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 5;
+  const leaf = P.forest, bark = P.trunk;
+  const clump = (cx: number, cy: number, r: number, c: string, lit = 0) => {
+    ellipse(ctx, cx + 0.5 * k, cy + 0.8 * k, r * 1.02, r * 0.8, shade(c, -0.32));
+    ellipse(ctx, cx, cy, r, r * 0.8, shade(c, -0.1 + lit));
+    ellipse(ctx, cx - r * 0.2, cy - r * 0.26, r * 0.66, r * 0.5, shade(c, 0.1 + lit));
+    ellipse(ctx, cx - r * 0.36, cy - r * 0.42, r * 0.3, r * 0.2, shade(c, 0.28 + lit));
+  };
+  ctx.lineCap = 'round';
+  if (v === 0) {
+    // banyan: a broad flat crown, its prop roots hanging down and rooting as extra trunks
+    ctx.fillStyle = shade(bark, 0.05);
+    ctx.fillRect(x - 1.6 * k, y - 9 * k, 3.2 * k, 9 * k);
+    for (const [rx, sw, th] of [[-9.6, 1.4, 1.1], [-5, -0.8, 1.5], [4.6, 0.6, 1.6], [9.4, -1.2, 1.1], [0.8, 0, 1]] as const) { // aerial roots
+      ctx.strokeStyle = ink(rx % 2 ? shade(bark, 0.12) : shade(bark, -0.05));
+      ctx.lineWidth = th * k;
+      ctx.beginPath();
+      ctx.moveTo(x + rx * k, y - 12 * k);
+      ctx.quadraticCurveTo(x + (rx + sw * 3) * k, y - 6 * k, x + (rx + sw) * k, y);
+      ctx.stroke();
+    }
+    for (const rx of [-7.6, -2.6, 2.8, 7.2, -11.4, 11]) line(ctx, x + rx * k, y - 11.4 * k, x + (rx + 0.4) * k, y - (rx % 2 ? 6.6 : 5.2) * k, shade(bark, 0.2), 0.45 * k); // thin hanging roots
+    clump(x - 7.4 * k, y - 15.6 * k, 6.6 * k, leaf);
+    clump(x + 7.2 * k, y - 15.4 * k, 6.8 * k, leaf, -0.04);
+    clump(x - 0.4 * k, y - 18 * k, 8.4 * k, leaf, 0.04);
+    clump(x - 3.6 * k, y - 21 * k, 5 * k, leaf, 0.1);
+    clump(x + 4.4 * k, y - 20.6 * k, 4.6 * k, leaf, 0.06);
+    for (const [fx, fy] of [[-8, -13.6], [-1, -14.6], [5.4, -13], [9.6, -15]] as const) ellipse(ctx, x + fx * k, y + fy * k, 0.7 * k, 0.55 * k, '#d8503a'); // red figs
+    return;
+  }
+  if (v === 1) {
+    // mango: a short trunk under a dense round crown, new leaves coppery, golden fruit hanging
+    ctx.fillStyle = bark;
+    ctx.fillRect(x - 1.5 * k, y - 8 * k, 3 * k, 8 * k);
+    line(ctx, x, y - 6 * k, x - 4.6 * k, y - 10.6 * k, bark, 1.3 * k);
+    line(ctx, x, y - 6.4 * k, x + 4.6 * k, y - 10.2 * k, bark, 1.3 * k);
+    const mc = shade(leaf, -0.14);
+    clump(x - 4.6 * k, y - 12.6 * k, 5.6 * k, mc);
+    clump(x + 4.6 * k, y - 12.4 * k, 5.8 * k, mc, -0.03);
+    clump(x, y - 15.6 * k, 7 * k, mc, 0.05);
+    for (const [fx, fy] of [[-5, -18], [-1, -20.2], [3.6, -18.6], [6, -14.4]] as const) ellipse(ctx, x + fx * k, y + fy * k, 1.4 * k, 0.9 * k, '#c9782a'); // copper flush of new leaves
+    for (const [fx, fy, c] of [[-4.2, -9.6, '#f2b33a'], [-1.4, -10.4, '#e8862a'], [3.2, -9.8, '#f2b33a'], [5.8, -11, '#e8862a'], [0.8, -12.6, '#f2b33a']] as const) {
+      line(ctx, x + fx * k, y + (fy - 2.6) * k, x + fx * k, y + (fy - 0.6) * k, shade(leaf, -0.4), 0.4 * k);
+      ellipse(ctx, x + fx * k, y + fy * k, 0.95 * k, 1.2 * k, c);
+      ellipse(ctx, x + (fx - 0.3) * k, y + (fy - 0.4) * k, 0.3 * k, 0.4 * k, shade(c, 0.5));
+    }
+    return;
+  }
+  if (v === 2) {
+    // coconut palm: a tall curved, ringed trunk and a crown of long arching fronds over a knot of nuts
+    const lean = (variant % 2 ? 1 : -1) * 3.4 * k;
+    ctx.strokeStyle = ink(shade(bark, 0.14));
+    ctx.lineWidth = 2.6 * k;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x + lean * 0.4, y - 13 * k, x + lean, y - 26 * k);
+    ctx.stroke();
+    ctx.strokeStyle = ink(shade(bark, 0.42));
+    ctx.lineWidth = 0.8 * k;
+    ctx.beginPath();
+    ctx.moveTo(x - 0.8 * k, y);
+    ctx.quadraticCurveTo(x + lean * 0.4 - 0.8 * k, y - 13 * k, x + lean - 0.8 * k, y - 26 * k);
+    ctx.stroke();
+    for (let i = 1; i < 9; i++) { // the growth rings
+      const t = i / 9.6, bx = x + lean * (2 * t * (1 - t) * 0.4 + t * t), by = y - 26 * k * t;
+      line(ctx, bx - 1.5 * k, by + 0.2 * k, bx + 1.5 * k, by - 0.4 * k, shade(bark, -0.36), 0.5 * k);
+    }
+    const tx = x + lean, ty = y - 26 * k;
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI / 2 + (i - 4) * 0.5 + (i % 2 ? 0.08 : -0.08);
+      const ex = tx + Math.cos(a) * 12 * k, ey = ty + Math.sin(a) * 5.4 * k + 6 * k + Math.abs(i - 4) * 0.6 * k;
+      const mx = tx + Math.cos(a) * 6.4 * k, my = ty + Math.sin(a) * 6.6 * k - 1.4 * k;
+      ctx.strokeStyle = ink(i % 2 ? leaf : shade(leaf, 0.2));
+      ctx.lineWidth = 2.3 * k;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(mx, my, ex, ey);
+      ctx.stroke();
+      ctx.strokeStyle = ink(shade(leaf, -0.4));
+      ctx.lineWidth = 0.4 * k;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(mx, my, ex, ey);
+      ctx.stroke();
+    }
+    for (const [dx, dy] of [[-1.2, 1.6], [0.8, 2], [1.8, 1]] as const) ellipse(ctx, tx + dx * k, ty + dy * k, 1.3 * k, 1.3 * k, '#7a5a2a'); // the nuts
+    ellipse(ctx, tx + 0.4 * k, ty + 1.6 * k, 0.5 * k, 0.5 * k, '#a98a4a');
+    return;
+  }
+  if (v === 3) {
+    // jungle fig: a huge buttressed trunk, buttress roots flaring out, a tall untidy crown hung with vines
+    ctx.fillStyle = shade(bark, -0.05);
+    ctx.fillRect(x - 2.2 * k, y - 12 * k, 4.4 * k, 12 * k);
+    poly(ctx, [x - 2.2 * k, y - 10 * k, x - 6.4 * k, y + 0.4 * k, x - 1.4 * k, y], shade(bark, 0.12)); // buttresses
+    poly(ctx, [x + 2.2 * k, y - 9 * k, x + 6.8 * k, y + 0.4 * k, x + 1.4 * k, y], shade(bark, -0.22));
+    line(ctx, x - 1 * k, y - 11 * k, x - 1.2 * k, y - 1 * k, shade(bark, 0.4), 0.6 * k);
+    clump(x - 4.6 * k, y - 16 * k, 5.6 * k, leaf, 0.04);
+    clump(x + 5 * k, y - 15.6 * k, 5.4 * k, leaf, -0.04);
+    clump(x - 0.6 * k, y - 20 * k, 7 * k, leaf, 0.1);
+    clump(x + 1.4 * k, y - 25 * k, 4.4 * k, leaf, 0.16);
+    for (const [vx, vy, l] of [[-7, -13, 8], [-3.4, -12.6, 6], [2.4, -13.4, 7], [7, -12.6, 8], [4.4, -12.6, 5]] as const) { // hanging vines
+      line(ctx, x + vx * k, y + vy * k, x + (vx + 0.4) * k, y + (vy + l) * k, '#4a7a34', 0.5 * k);
+    }
+    for (const [fx, fy] of [[-6, -17], [2, -18], [7, -15.6], [-1, -23]] as const) ellipse(ctx, x + fx * k, y + fy * k, 0.75 * k, 0.75 * k, '#d8503a');
+    return;
+  }
+  // neem: a slender trunk, a light feathery crown of small leaflets and sprays of tiny white flowers
+  ctx.fillStyle = shade(bark, 0.05);
+  ctx.fillRect(x - 1.1 * k, y - 9 * k, 2.2 * k, 9 * k);
+  line(ctx, x, y - 7 * k, x - 4 * k, y - 11.4 * k, bark, 1 * k);
+  line(ctx, x, y - 7.4 * k, x + 4 * k, y - 11 * k, bark, 1 * k);
+  const nc = shade(leaf, 0.2);
+  for (const [cx, cy, r] of [[-5, -13, 4.4], [5, -12.6, 4.6], [-1, -16, 5.4], [-4.4, -17.6, 3.4], [3.6, -18, 3.8], [0, -20.6, 3.2]] as const) {
+    ellipse(ctx, x + cx * k + 0.4 * k, y + cy * k + 0.7 * k, r * k, r * 0.78 * k, shade(nc, -0.3));
+    ellipse(ctx, x + cx * k, y + cy * k, r * k, r * 0.78 * k, shade(nc, -0.06));
+    for (let i = 0; i < 7; i++) { // leaflets
+      const a = (i / 7) * Math.PI * 2 + variant;
+      line(ctx, x + cx * k, y + cy * k, x + cx * k + Math.cos(a) * r * 0.9 * k, y + cy * k + Math.sin(a) * r * 0.66 * k, shade(nc, i % 2 ? 0.2 : -0.22), 0.55 * k);
+    }
+    ellipse(ctx, x + (cx - r * 0.3) * k, y + (cy - r * 0.34) * k, r * 0.5 * k, r * 0.28 * k, shade(nc, 0.28));
+  }
+  for (const [fx, fy] of [[-6, -13.6], [-2, -19], [4, -16], [6.4, -12], [0.6, -22.4], [-4.6, -18.4]] as const) ellipse(ctx, x + fx * k, y + fy * k, 0.6 * k, 0.5 * k, '#fdfaf0'); // the white blossom
+}
+
+/** A half-dome on a base of radius r and height h, plastered and lit on the left, with a curved ridge line. */
+function indDome(ctx: Ctx, x: number, y: number, r: number, h: number, col: string) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, h, 0, Math.PI, 0);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(col, -0.2));
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, h, 0, Math.PI, Math.PI * 1.5);
+  ctx.lineTo(x, y);
+  ctx.closePath();
+  ctx.fillStyle = ink(shade(col, 0.06));
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.42, 0, 0, Math.PI);
+  ctx.fillStyle = ink(shade(col, -0.32));
+  ctx.fill();
+  ellipse(ctx, x - r * 0.4, y - h * 0.5, r * 0.16, h * 0.32, 'rgba(255,255,255,0.4)');
+  ctx.strokeStyle = ink(shade(col, -0.4));
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.98, h * 0.98, 0, Math.PI * 1.02, Math.PI * 1.98);
+  ctx.stroke();
+}
+
+/** A cusped (ogee) arch on the right-hand face of a box at (x, y): a frame colour and a dark inner. */
+function indArch(ctx: Ctx, x: number, y: number, w: number, h: number, u0: number, u1: number, v0: number, v1: number, frame: string, inner: string) {
+  const P = (u: number, v: number) => [x + (u * w) / 2, y + (w / 4) * (1 - u) - v * h];
+  const um = (u0 + u1) / 2, vs = v1 - (v1 - v0) * 0.28;
+  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, vs), ...P(um + (u1 - u0) * 0.2, vs + (v1 - vs) * 0.5), ...P(um, v1), ...P(um - (u1 - u0) * 0.2, vs + (v1 - vs) * 0.5), ...P(u0, vs)], frame);
+  const du = (u1 - u0) * 0.2, dv = (v1 - v0) * 0.08;
+  poly(ctx, [...P(u0 + du, v0), ...P(u1 - du, v0), ...P(u1 - du, vs - dv), ...P(um, v1 - dv * 2.2), ...P(u0 + du, vs - dv)], inner);
+}
+
+/** A little four-pillared chhatri kiosk under an ochre dome and a gold finial, standing at (x, y) with pillars `h` high. */
+function indKiosk(ctx: Ctx, x: number, y: number, w: number, h: number, dome: string) {
+  box(ctx, x, y, w, 1, '#d3b27a');
+  for (const [px, py] of [[-w * 0.36, 0.2], [w * 0.36, 0.2], [0, w * 0.18 + 0.2]] as const) line(ctx, x + px, y + py, x + px, y + py - h, '#f0e4c4', Math.max(0.8, w * 0.1));
+  box(ctx, x, y - h, w, 0.9, '#e8d6a8');
+  indDome(ctx, x, y - h - 0.6, w * 0.5, w * 0.42, dome);
+  line(ctx, x, y - h - 0.6 - w * 0.42, x, y - h - w * 0.42 - 2.4, '#f0c43a', 0.7);
+  ellipse(ctx, x, y - h - w * 0.42 - 2.8, 0.6, 0.7, '#f0c43a');
+}
+
+/**
+ * Indian city buildings: stupa-domed shrines under a chhatra mast, hipped-roof houses with cusped doorways and
+ * a corner kiosk, striped market stalls; the great building is a stepped temple tower (a gopuram), and the
+ * capital a tiered palace with an arcaded hall, corner kiosks and its own tower.
+ */
+function indianBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, color: string, capital: boolean) {
+  const SAND = '#ecd5a4', SAND2 = '#d3b27a', SAND3 = '#b98f58', PLASTER = '#f6efdc', GOLDC = '#f0c43a', DOOR = '#3a2418', TERRA = '#b8683e', MAROON = '#8c2a3a';
+  if (big) {
+    const S = capital ? 1 : 0;
+    // the terraced platform
+    box(ctx, x, y + 3.2 + S * 1.4, 22 + S * 8, 2.6, SAND3);
+    box(ctx, x, y + 1.2 + S * 0.8, 19 + S * 6, 2.6, SAND2);
+    for (const f of ['L', 'R'] as const) for (let i = 0; i < 5 + S * 2; i++) { // the balustrade of little posts
+      const u = 0.1 + i * (0.8 / (4 + S * 2));
+      faceQuad(ctx, f, x, y + 1.2 + S * 0.8, 19 + S * 6, 2.6, u, u + 0.04, 0.5, 1, SAND);
+    }
+    const hw = 15 + S * 5, hh = 8 + S * 1;
+    const hy = y - 0.4 - S * 0.2;
+    box(ctx, x, hy, hw, hh, SAND);
+    // right face: an arcade of cusped arches; left face: carved panels
+    const nA = capital ? 4 : 3;
+    for (let i = 0; i < nA; i++) {
+      const u0 = 0.08 + i * (0.86 / nA), u1 = u0 + (0.86 / nA) * 0.72;
+      indArch(ctx, x, hy, hw, hh, u0, u1, 0.06, 0.74, capital ? '#2fb8a0' : TERRA, DOOR);
+      faceQuad(ctx, 'R', x, hy, hw, hh, u0 - 0.02, u1 + 0.02, 0.76, 0.8, SAND3);
+    }
+    for (let i = 0; i < 3; i++) {
+      const u0 = 0.1 + i * 0.3, u1 = u0 + 0.22;
+      faceQuad(ctx, 'L', x, hy, hw, hh, u0, u1, 0.16, 0.72, SAND3);
+      faceQuad(ctx, 'L', x, hy, hw, hh, u0 + 0.03, u1 - 0.03, 0.2, 0.68, capital ? color : MAROON);
+      faceQuad(ctx, 'L', x, hy, hw, hh, u0 + 0.08, u1 - 0.08, 0.36, 0.52, GOLDC);
+    }
+    for (const f of ['L', 'R'] as const) { // a carved cornice: teal frieze and gold line under the roof edge
+      faceQuad(ctx, f, x, hy, hw, hh, 0, 1, 0.84, 0.94, capital ? color : MAROON);
+      faceQuad(ctx, f, x, hy, hw, hh, 0, 1, 0.94, 1, GOLDC);
+      faceQuad(ctx, f, x, hy, hw, hh, 0, 1, 0, 0.05, SAND3);
+    }
+    let ty = hy - hh;
+    if (capital) {
+      // corner chhatri kiosks on the hall's roof edge, and the great tower rising between them
+      for (const [kx, ky] of [[-hw / 2, 0.4], [hw / 2, 0.4], [0, hw / 4 + 0.6]] as const) indKiosk(ctx, x + kx * 0.86, ty + ky + 0.6, 3.6, 3.4, roofC);
+    }
+    // the tower: shrinking tiers, each with a row of little niches under a projecting eave, a barrel-vaulted crest
+    const tiers = capital ? 3 : 4;
+    for (let i = 0; i < tiers; i++) {
+      const tw = (capital ? 11 : 12.4) - i * (capital ? 2.6 : 2.5), th = capital ? 3.6 : 3.4;
+      box(ctx, x, ty, tw, th, i % 2 ? SAND : SAND2);
+      const nn = Math.max(1, 3 - Math.floor(i * 0.7));
+      for (let j = 0; j < nn; j++) {
+        const u0 = 0.14 + j * (0.72 / nn), u1 = u0 + (0.72 / nn) * 0.66;
+        indArch(ctx, x, ty, tw, th, u0, u1, 0.16, 0.86, TERRA, '#5a2a1e');
+      }
+      band(ctx, x, ty, tw, th, 0.9, 1, i % 2 ? roofC : MAROON);
+      band(ctx, x, ty, tw, th, 0, 0.06, SAND3);
+      for (const f of ['L', 'R'] as const) faceQuad(ctx, f, x, ty, tw, th, 0.02, 0.98, 0.82, 0.9, shade(GOLDC, -0.1));
+      ty -= th;
+    }
+    // the crest: a barrel roof (a sala) with its gilded finial pots
+    box(ctx, x, ty, (capital ? 5 : 6.4), 2.2, roofC);
+    ellipse(ctx, x, ty - 2.2, (capital ? 2.5 : 3.2), 1.4, shade(roofC, 0.2));
+    faceQuad(ctx, 'R', x, ty, capital ? 5 : 6.4, 2.2, 0.1, 0.9, 0.3, 0.6, GOLDC);
+    for (const dx of capital ? [0] : [-2.2, 0, 2.2]) {
+      ellipse(ctx, x + dx, ty - 2.8, 0.9, 1.1, GOLDC);
+      line(ctx, x + dx, ty - 3.6, x + dx, ty - 5, GOLDC, 0.7);
+    }
+    ellipse(ctx, x, ty - 5.6, 0.7, 0.9, shade(GOLDC, 0.2));
+    return;
+  }
+  const v = Math.abs(Math.round(x * 1.7 + y * 2.9)) % 3;
+  if (v === 0) {
+    // a stupa shrine: a railed sandstone drum under a white dome, a square harmika and a mast of stacked parasols
+    box(ctx, x, y, 11, 2.6, SAND2);
+    for (const f of ['L', 'R'] as const) for (let i = 0; i < 6; i++) faceQuad(ctx, f, x, y, 11, 2.6, 0.06 + i * 0.16, 0.12 + i * 0.16, 0.2, 0.9, SAND3);
+    band(ctx, x, y, 11, 2.6, 0.9, 1, SAND);
+    indDome(ctx, x, y - 2.6, 4.9, 5.8, PLASTER);
+    ctx.strokeStyle = ink(TERRA); // a painted band around the drum of the dome
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 4.2, 4.3, 1.8, 0, 0.05 * Math.PI, 0.95 * Math.PI);
+    ctx.stroke();
+    box(ctx, x, y - 8.4, 3, 1.4, SAND);
+    band(ctx, x, y - 8.4, 3, 1.4, 0.7, 1, SAND3);
+    line(ctx, x, y - 9.8, x, y - 16, '#7a5230', 0.9);
+    for (const [yy, rr, c] of [[-11, 2.6, GOLDC], [-13.2, 2, roofC], [-15.2, 1.4, GOLDC]] as const) {
+      ellipse(ctx, x, y + yy + 0.5, rr, rr * 0.4, shade(c, -0.25));
+      ellipse(ctx, x, y + yy, rr, rr * 0.4, c);
+    }
+    faceQuad(ctx, 'R', x, y, 11, 2.6, 0.4, 0.6, 0, 0.7, DOOR); // a low gate
+    return;
+  }
+  if (v === 1) {
+    // a house: whitewashed walls, a cusped doorway framed in teal, latticed window, a hipped tile roof with a little kiosk on the ridge
+    box(ctx, x, y, 10.6, 5.6, PLASTER);
+    indArch(ctx, x, y, 10.6, 5.6, 0.3, 0.66, 0, 0.78, color, DOOR);
+    faceQuad(ctx, 'L', x, y, 10.6, 5.6, 0.3, 0.7, 0.3, 0.72, DOOR);
+    for (const u of [0.42, 0.5, 0.58]) faceQuad(ctx, 'L', x, y, 10.6, 5.6, u, u + 0.02, 0.3, 0.72, GOLDC);
+    faceQuad(ctx, 'L', x, y, 10.6, 5.6, 0.3, 0.7, 0.5, 0.52, GOLDC);
+    for (const f of ['L', 'R'] as const) { faceQuad(ctx, f, x, y, 10.6, 5.6, 0, 1, 0.9, 1, TERRA); faceQuad(ctx, f, x, y, 10.6, 5.6, 0, 1, 0, 0.08, SAND3); }
+    roof(ctx, x, y - 5.6, 13, 5.2, roofC);
+    line(ctx, x - 6.4, y - 5.6, x, y - 3, shade(roofC, -0.4), 0.6);
+    line(ctx, x, y - 3, x + 6.4, y - 5.6, shade(roofC, -0.5), 0.6);
+    indKiosk(ctx, x, y - 8.6, 3.2, 2.2, roofC);
+    return;
+  }
+  // a market stall: a shop under a striped awning, baskets of spice and fruit at the front
+  box(ctx, x - 1, y - 0.6, 8.6, 6.4, PLASTER);
+  faceQuad(ctx, 'R', x - 1, y - 0.6, 8.6, 6.4, 0.16, 0.7, 0, 0.66, DOOR);
+  for (const f of ['L', 'R'] as const) faceQuad(ctx, f, x - 1, y - 0.6, 8.6, 6.4, 0, 1, 0.92, 1, TERRA);
+  const P = (u: number, vv: number) => [x - 1 + (u * 8.6) / 2, y - 0.6 + (8.6 / 4) * (1 - u) - vv * 6.4];
+  const A = P(0.02, 0.76), B = P(0.98, 0.76);
+  for (let i = 0; i < 4; i++) { // the awning: alternating stripes, sloping down and out over the counter
+    const t0 = i / 4, t1 = (i + 1) / 4;
+    const a0 = [A[0] + (B[0] - A[0]) * t0, A[1] + (B[1] - A[1]) * t0], a1 = [A[0] + (B[0] - A[0]) * t1, A[1] + (B[1] - A[1]) * t1];
+    poly(ctx, [a0[0], a0[1], a1[0], a1[1], a1[0] + 3.6, a1[1] + 4.6, a0[0] + 3.6, a0[1] + 4.6], i % 2 ? color : '#e8a02a');
+    ellipse(ctx, (a0[0] + a1[0]) / 2 + 3.6, (a0[1] + a1[1]) / 2 + 4.8, (B[0] - A[0]) / 8, 1, i % 2 ? color : '#e8a02a');
+  }
+  for (const [px, py] of [[A[0] + 3.6, A[1] + 5.4], [B[0] + 3.6, B[1] + 5.4]] as const) line(ctx, px, py, px, py + 5.2, '#7a5230', 0.9);
+  box(ctx, x + 1.4, y + 5.6, 7, 1.6, '#c9a56f'); // the counter
+  for (const [bx, c1, c2] of [[-0.8, '#c8372d', '#e8862a'], [1.8, '#e8a02a', '#f2c53a'], [4, '#5a9a3a', '#c8372d']] as const) {
+    ellipse(ctx, x + bx + 0.6, y + 4.4, 1.5, 0.7, '#8a5a2b');
+    ellipse(ctx, x + bx + 0.6, y + 3.8, 1.3, 0.8, c1);
+    ellipse(ctx, x + bx + 0.2, y + 3.5, 0.6, 0.4, c2);
   }
 }
 
