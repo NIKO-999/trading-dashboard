@@ -5,6 +5,7 @@ import { startTurn } from './game/turn';
 import type { GameState } from './game/types';
 import { sfx } from './audio/sfx';
 import { setSharpness } from './render/common';
+import { setCrispArt } from './render/prims';
 import { clearSave, loadGame, loadSettings, saveGame } from './save';
 import { GameView } from './ui/game';
 import { showTitle, type NewGameChoice } from './ui/menu';
@@ -19,6 +20,7 @@ import './style.css';
 registerSW({ immediate: true });
 sfx.enabled = loadSettings().sound;
 setSharpness(loadSettings().sharp);
+setCrispArt(loadSettings().crisp);
 // Browsers only allow audio after a user gesture; unlock on the first touch anywhere.
 window.addEventListener('pointerdown', () => sfx.unlock());
 // iOS Safari ignores user-scalable=no; block its page-zoom gestures so a pinch only zooms the map.

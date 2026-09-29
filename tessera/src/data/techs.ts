@@ -31,7 +31,7 @@ export const TECHS: TechDef[] = [
   T('aquaculture', 'Aquaculture', 3, 'whaling', 0, 'Fish harvests grant +2 pop.'),
 
   T('riding', 'Riding', 1, null, 0, 'Train Riders.'),
-  T('roads', 'Roads', 2, 'riding', 0, 'Build roads: faster travel.'),
+  T('roads', 'Roads', 2, 'riding', 0, 'Build roads: faster travel. Roads joined to cities grow them.'),
   T('trade', 'Trade', 3, 'roads', 0, 'Cities earn +1★ each turn.'),
   T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence.'),
   T('chivalry', 'Chivalry', 3, 'horsemanship', 0, 'Train Knights.'),

@@ -59,6 +59,13 @@ export function unitSprite(kind: UnitKind, tribe: TribeId, pxScale: number, vari
   return sprite;
 }
 
+/** Forgets every drawn unit (the art style changed), giving the memory back. */
+export function clearSpriteCache() {
+  for (const s of cache.values()) s.canvas.width = s.canvas.height = 0;
+  cache.clear();
+  cachedPixels = 0;
+}
+
 /** Opaque extent of a figure in unit-art units around its feet: x0..x1 across, y0 (top)..y1. */
 export interface FigureBounds { x0: number; y0: number; x1: number; y1: number }
 interface FigureShape extends FigureBounds { mask: Uint8Array | null; w: number; h: number; ox: number; oy: number; q: number }

@@ -1,5 +1,6 @@
 import { UNITS } from '../data/units';
 import { dist, isLand, neighbors, tileAt } from './grid';
+import { roadNetwork } from './network';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt,
@@ -58,6 +59,49 @@ export function aiTurn(s: GameState, maxSteps = 500) {
   for (let i = 0; i < maxSteps && aiStep(s); i++);
 }
 
+/** Builds the next missing road tile on the cheapest route between two of the empire's unlinked cities. */
+function roadStep(s: GameState, pid: number): boolean {
+  if (!s.players[pid].techs.includes('roads')) return false;
+  const cities = citiesOf(s, pid);
+  let pair: { a: (typeof cities)[number]; b: (typeof cities)[number]; d: number } | null = null;
+  for (const a of cities) {
+    const linked = roadNetwork(s, a).linked;
+    for (const b of cities) {
+      if (b.id <= a.id || linked.includes(b.id)) continue;
+      const d = dist(a.x, a.y, b.x, b.y);
+      if (d <= 8 && (!pair || d < pair.d)) pair = { a, b, d };
+    }
+  }
+  if (!pair) return false;
+  // cheapest route over land we may build on: finished roads and our own cities cost nothing
+  const cost = (t: Tile) => (t.road || (t.cityId !== null && tileOwnerPlayer(s, t) === pid) ? 0 : 1);
+  const ok = (t: Tile) => (t.cityId === pair!.b.id || (isLand(t) && t.terrain !== 'mountain' && !t.village && isExplored(s, pid, t.x, t.y)
+    && (t.cityId === null ? tileOwnerPlayer(s, t) === null || tileOwnerPlayer(s, t) === pid : tileOwnerPlayer(s, t) === pid)));
+  const dist0 = new Map<Tile, number>([[tileAt(s, pair.a.x, pair.a.y)!, 0]]);
+  const from = new Map<Tile, Tile>();
+  const open: Tile[] = [tileAt(s, pair.a.x, pair.a.y)!];
+  while (open.length) {
+    open.sort((x, y) => dist0.get(x)! - dist0.get(y)!);
+    const cur = open.shift()!;
+    if (cur.cityId === pair.b.id) break;
+    for (const n of neighbors(s, cur.x, cur.y)) {
+      if (!ok(n)) continue;
+      const nd = dist0.get(cur)! + cost(n);
+      if (nd < (dist0.get(n) ?? Infinity)) {
+        dist0.set(n, nd);
+        from.set(n, cur);
+        open.push(n);
+      }
+    }
+  }
+  const goal = tileAt(s, pair.b.x, pair.b.y)!;
+  if (!from.has(goal) || (dist0.get(goal) ?? 99) > 8) return false;
+  const path: Tile[] = [];
+  for (let t: Tile | undefined = from.get(goal); t && t.cityId !== pair.a.id; t = from.get(t)) path.unshift(t);
+  const next = path.find((t) => !t.road && t.cityId === null);
+  return !!next && tileActions(s, pid, next).some((a) => a.id === 'road' && a.enabled) && doAction(s, pid, next, 'road');
+}
+
 function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
@@ -93,6 +137,9 @@ function economyStep(s: GameState, pid: number): boolean {
     if (doAction(s, pid, h.t, h.id)) return true;
   }
 
+  // Link two of our cities by road: the network pays population and stars.
+  if (p.stars >= 9 && roadStep(s, pid)) return true;
+
   // Research: prefer techs that unlock resources we own, then military.
   const options = researchable(s, pid);
   if (options.length) {
@@ -110,7 +157,7 @@ function economyStep(s: GameState, pid: number): boolean {
         case 'forestry': return has((t) => t.terrain === 'forest') ? 4 : 1;
         case 'riding': return 6;
         case 'archery': return 5;
-        case 'roads': return 1;
+        case 'roads': return cities.length >= 2 ? 5 : 1;
         case 'tactics': return 3;
         case 'smithing': return 5;
         case 'chivalry': return 4;

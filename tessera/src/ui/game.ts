@@ -11,7 +11,10 @@ import {
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
+import { roadNetwork, ROAD_MILESTONES } from '../game/network';
 import { renderDpr, setSharpness } from '../render/common';
+import { setCrispArt } from '../render/prims';
+import { clearSpriteCache } from '../render/sprites';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { cityLabelAt, unitAtScreen } from '../render/dynamic';
 import { sfx, type SoundName } from '../audio/sfx';
@@ -584,12 +587,20 @@ export class GameView {
     return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}, taking ${best.ret}.`;
   }
 
+  /** " · roads 5 (next bonus at 6) · linked to 2 cities" for the city panel. */
+  private roadLine(city: City) {
+    const net = roadNetwork(this.s, city);
+    const next = ROAD_MILESTONES.find((m) => m.roads > net.roads);
+    if (!net.roads && !net.linked.length && !hasTech(this.s, this.me, 'roads')) return '';
+    return ` · roads ${net.roads}${next ? ` (+${next.pop} pop at ${next.roads})` : ''}${net.linked.length ? ` · linked to ${net.linked.length} ${net.linked.length === 1 ? 'city' : 'cities'}` : ''}`;
+  }
+
   private cityPanel(city: City, close: Node, head: (title: string, ...desc: (Node | string | null)[]) => HTMLElement, acts: Action[]) {
     const owner = this.s.players[city.owner];
     const T = TRIBES[owner.tribe];
     const mine = city.owner === this.me;
     const info = mine
-      ? `Level ${city.level} · population ${city.pop}/${city.level + 1} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}`
+      ? `Level ${city.level} · population ${city.pop}/${city.level + 1} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     this.panel.append(close, head(city.name, info,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
@@ -729,6 +740,9 @@ export class GameView {
             this.burst(e.x, e.y, now, 8, ['#ffcf33'], 'star', 95);
             sfx.play(e.pop >= 2 || e.pop === 0 ? 'build' : 'harvest');
           }
+          break;
+        case 'toast':
+          if (e.player === this.me) toast(e.text, myColor);
           break;
         case 'stars':
           if (e.player === this.me) {
@@ -1025,6 +1039,8 @@ export class GameView {
     const SHARP = [[1, 'Auto'], [4, 'High'], [5, 'Max']] as const;
     const sharpText = () => `Sharpness: ${SHARP.find(([v]) => v === this.settings.sharp)?.[1] ?? 'Auto'}`;
     const sharpLabel = h('span', {}, sharpText());
+    const artText = () => `Art style: ${this.settings.crisp ? 'Crisp' : 'Soft'}`;
+    const artLabel = h('span', {}, artText());
     modal({
       title: 'Menu',
       body: [
@@ -1043,6 +1059,14 @@ export class GameView {
           saveSettings(this.settings);
           setSharpness(this.settings.sharp); // the game loop notices the new density and redraws
           sharpLabel.textContent = sharpText();
+        } },
+        { label: artLabel, keepOpen: true, onClick: () => {
+          this.settings.crisp = !this.settings.crisp;
+          saveSettings(this.settings);
+          setCrispArt(this.settings.crisp);
+          clearSpriteCache();
+          this.version++; // redraw the whole map in the new style
+          artLabel.textContent = artText();
         } },
         { label: 'Sharpness test', onClick: () => showSharpnessTest() },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
-import { createGame } from '../src/game/mapgen.ts';
-import { applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { createGame, foundCity } from '../src/game/mapgen.ts';
+import { payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -357,4 +357,129 @@ test('every empire gets its starting tech, unique unit and capital', () => {
     assert.equal(tileAt(s, cap.x, cap.y)!.terrain, 'field');
     assert.equal(s.units.filter((u) => u.owner === 0).length, 1);
   }
+});
+
+// ---------------------------------------------------------------- growth bonuses
+
+function growthSetup(tribe: 'rome' | 'egypt' = 'rome') {
+  const s = createGame({ seed: 8, human: tribe, opponents: [tribe === 'rome' ? 'egypt' : 'rome'], mode: 'domination' });
+  const p = s.players[0];
+  p.stars = 200;
+  p.techs.push('roads', 'forestry', 'gathering', 'farming', 'fishing', 'masonry', 'carpentry');
+  const city = citiesOf(s, 0)[0];
+  const ring = s.tiles.filter((t) => t.owner === city.id && t.cityId === null).map((t) => { Object.assign(t, { terrain: 'field', resource: null, improvement: null, road: false, village: false, ruin: false }); return t; });
+  s.units = []; // nothing standing in the way
+  const total = () => city.pop + Array.from({ length: city.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0);
+  return { s, p, city, ring, total };
+}
+
+test('lumber huts next to each other give bonus population', () => {
+  const { s, city, ring, total } = growthSetup();
+  const [a] = ring;
+  const b = ring.find((t) => t !== a && Math.max(Math.abs(t.x - a.x), Math.abs(t.y - a.y)) === 1)!;
+  a.terrain = b.terrain = 'forest';
+  let before = total();
+  assert.ok(doAction(s, 0, a, 'lumber'));
+  assert.equal(total() - before, 1, 'the first hut has no neighbours');
+  before = total();
+  assert.ok(tileActions(s, 0, b).find((x) => x.id === 'lumber')!.desc.startsWith('+2 population'), 'the card promises the bonus');
+  assert.ok(doAction(s, 0, b, 'lumber'));
+  assert.equal(total() - before, 2, 'the second hut is next to one');
+  assert.ok(city.level >= 1);
+});
+
+test('ports, temples and markets cluster too, but farms and mines do not need to', () => {
+  const { s, ring, total } = growthSetup();
+  const [a] = ring;
+  const b = ring.find((t) => t !== a && Math.max(Math.abs(t.x - a.x), Math.abs(t.y - a.y)) === 1)!;
+  const c = ring.find((t) => t !== a && t !== b && Math.max(Math.abs(t.x - a.x), Math.abs(t.y - a.y)) === 1 && Math.max(Math.abs(t.x - b.x), Math.abs(t.y - b.y)) === 1)!;
+  for (const [id, kind] of [['temple', 'temple'], ['market', 'market']] as const) {
+    for (const t of [a, b, c]) t.improvement = null;
+    let before = total();
+    assert.ok(doAction(s, 0, a, id));
+    const first = total() - before;
+    before = total();
+    assert.ok(doAction(s, 0, b, id));
+    const second = total() - before;
+    assert.equal(second - first, 1, `${kind}: a neighbour adds one`);
+    before = total();
+    assert.ok(doAction(s, 0, c, id));
+    assert.equal(total() - before - first, 2, `${kind}: two neighbours add two`);
+    for (const t of [a, b, c]) t.improvement = null;
+  }
+  // a farm already gives 2, so an adjacent farm adds nothing
+  for (const t of [a, b]) { t.resource = 'crop'; t.improvement = null; }
+  const before = total();
+  assert.ok(doAction(s, 0, a, 'farm'));
+  assert.ok(doAction(s, 0, b, 'farm'));
+  assert.equal(total() - before, 4);
+});
+
+test('harvesting next to a road brings one more population', () => {
+  const { s, ring, total } = growthSetup();
+  const [a] = ring;
+  const b = ring.find((t) => t !== a && Math.max(Math.abs(t.x - a.x), Math.abs(t.y - a.y)) === 1)!;
+  a.resource = b.resource = 'fruit';
+  let before = total();
+  assert.ok(doAction(s, 0, a, 'harvest'));
+  assert.equal(total() - before, 1, 'no road nearby');
+  const r = ring.find((t) => t !== a && t !== b && Math.max(Math.abs(t.x - b.x), Math.abs(t.y - b.y)) === 1)!;
+  r.road = true;
+  assert.ok(tileActions(s, 0, b).find((x) => x.id === 'harvest')!.desc.startsWith('+2 population'));
+  before = total();
+  assert.ok(doAction(s, 0, b, 'harvest'));
+  assert.equal(total() - before, 2, 'a road beside it');
+});
+
+test('roads joined to a city pay milestones and stars, once each', () => {
+  const { s, city, ring, total } = growthSetup();
+  const chain = ring.slice(0, 8).sort((p, q) => Math.atan2(p.y - city.y, p.x - city.x) - Math.atan2(q.y - city.y, q.x - city.x));
+  const base = total();
+  const inc0 = cityIncome(s, city), level0 = city.level;
+  for (let i = 0; i < 3; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  assert.equal(total() - base, 1, '3 connected roads: +1');
+  for (let i = 3; i < 6; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  assert.equal(total() - base, 2, '6 connected roads: +1 more');
+  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 1, 'every 6 roads pay a star (on top of what a higher level pays)');
+  payRoadBonuses(s, 0);
+  assert.equal(total() - base, 2, 'nothing is paid twice');
+});
+
+test('linking two of your cities by road gives both population and income', () => {
+  const { s, city, total } = growthSetup();
+  // a second city three tiles away, joined to the capital by a line of roads
+  const spot = s.tiles.find((t) => isLand(t) && Math.abs(t.x - city.x) === 3 && t.y === city.y && t.cityId === null)!;
+  const dx = Math.sign(spot.x - city.x);
+  spot.terrain = 'field';
+  spot.village = false;
+  const other = foundCity(s, spot.x, spot.y, 0, false);
+  const inc = [cityIncome(s, city), cityIncome(s, other)]; // road income is live: measure before the roads exist
+  const level0 = city.level, otherLevel0 = other.level;
+  const before = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0)];
+  for (let i = 1; i <= 2; i++) Object.assign(tileAt(s, city.x + dx * i, city.y)!, { terrain: 'field', road: true, village: false, ruin: false, resource: null });
+  payRoadBonuses(s, 0);
+  const after = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0)];
+  assert.equal(after[0] - before[0], 3);
+  assert.equal(after[1] - before[1], 3);
+  assert.equal(cityIncome(s, city) - inc[0] - (city.level - level0), 1);
+  assert.equal(cityIncome(s, other) - inc[1] - (other.level - otherLevel0), 1);
+  payRoadBonuses(s, 0);
+  assert.equal(total() - before[0], 3, 'a link pays once');
+});
+
+test('rival empires build roads to link their own cities', () => {
+  let linked = 0;
+  for (const seed of [3, 7, 21, 42]) {
+    const s = createGame({ seed, human: null, opponents: TRIBE_IDS.slice(0, 4), mode: 'perfection', mapSize: 'large' });
+    startTurn(s);
+    let guard = 0;
+    while (!s.over && guard++ < 1000) {
+      aiTurn(s);
+      checkInvariants(s);
+      endTurn(s);
+      drain();
+    }
+    linked += s.cities.filter((c) => (c.linked?.length ?? 0) > 0).length;
+  }
+  assert.ok(linked > 0, 'at least one AI city ends up linked by road');
 });

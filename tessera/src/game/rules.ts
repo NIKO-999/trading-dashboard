@@ -2,6 +2,7 @@ import { TECH_BY_ID, TECHS } from '../data/techs';
 import { unitFor } from '../data/tribes';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
+import { clusterBonus, clusterHint, LINK_POP, networkIncome, roadHarvestBonus, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
@@ -33,6 +34,7 @@ export function cityIncome(s: GameState, c: City) {
   inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length;
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
+  inc += networkIncome(roadNetwork(s, c));
   return inc;
 }
 
@@ -230,38 +232,75 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
 
   if (!mine || !city) {
     if (isLand(t) && t.terrain !== 'mountain' && !t.road && !t.village && t.cityId === null && tileOwnerPlayer(s, t) === null && isExplored(s, pid, t.x, t.y))
-      add('road', 'Build Road', 'Units move twice as fast along roads.', roadCost(s, pid), 'roads', 'road');
+      add('road', 'Build Road', ROAD_DESC, roadCost(s, pid), 'roads', 'road');
     return acts;
   }
 
   const tribe = p.tribe;
+  const roadHint = roadHarvestBonus(s, t) ? '' : ' +1 more next to a road.';
   // a resource can be developed once: a farm or mine keeps its crop or ore but can't be rebuilt
   if (!t.improvement) switch (t.resource) {
-    case 'fruit': add('harvest', 'Harvest Fruit', '+1 population.', 2, 'gathering', 'fruit'); break;
-    case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1} population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
-    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;
+    case 'fruit': add('harvest', 'Harvest Fruit', `+${1 + roadHarvestBonus(s, t)} population.${roadHint}`, 2, 'gathering', 'fruit'); break;
+    case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1 + roadHarvestBonus(s, t)} population.${tribe === 'zulu' ? '' : roadHint}${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
+    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1 + roadHarvestBonus(s, t)} population.${hasTech(s, pid, 'aquaculture') ? '' : roadHint}`, 2, 'fishing', 'fish'); break;
     case 'whale': add('harvest', 'Whaling', 'Gain 10★.', 2, 'whaling', 'whale'); break;
     case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' ? 3 : 2} population.`, 5, 'farming', 'farm'); break;
     case 'ore': add('mine', 'Build Mine', '+2 population.', 5, 'mining', 'mine'); break;
   }
   if (!t.improvement && !t.resource) {
     if (t.terrain === 'forest') {
-      add('lumber', 'Lumber Hut', '+1 population.', 3, 'forestry', 'lumber');
+      add('lumber', 'Lumber Hut', `+${1 + clusterBonus(s, t, 'lumber')} population. ${clusterHint('lumber')}.`, 3, 'forestry', 'lumber');
       add('clear', 'Clear Forest', 'Turn forest into a field and gain 1★.', 0, 'forestry', 'axe');
-      add('shrine', 'Grove Shrine', '+1 population, +100 score.', 8, 'spiritualism', 'temple');
+      add('shrine', 'Grove Shrine', `+${1 + clusterBonus(s, t, 'temple')} population, +100 score. ${clusterHint('temple')}.`, 8, 'spiritualism', 'temple');
     }
     if (t.terrain === 'shallow') {
-      const desc = p.tribe === 'pirates' ? '+1 population and +1★ income. Units can board boats here.' : '+1 population. Units can board boats here.';
+      const gain = 1 + clusterBonus(s, t, 'port');
+      const desc = `+${gain} population${p.tribe === 'pirates' ? ' and +1★ income' : ''}. ${clusterHint('port')}. Units can board boats here.`;
       add('port', 'Port', desc, PORT_COST(s, pid), 'fishing', 'port');
     }
-    if (t.terrain === 'mountain') add('shrine', 'Mountain Shrine', '+1 population, +100 score.', 8, 'meditation', 'temple');
+    if (t.terrain === 'mountain') add('shrine', 'Mountain Shrine', `+${1 + clusterBonus(s, t, 'temple')} population, +100 score. ${clusterHint('temple')}.`, 8, 'meditation', 'temple');
     if (t.terrain === 'field' && !t.village && !t.ruin) {
-      add('temple', 'Temple', '+1 population, +100 score.', 10, 'masonry', 'temple');
-      add('market', 'Market', '+1★ city income each turn.', 8, 'carpentry', 'market');
+      add('temple', 'Temple', `+${1 + clusterBonus(s, t, 'temple')} population, +100 score. ${clusterHint('temple')}.`, 10, 'masonry', 'temple');
+      add('market', 'Market', `+1★ city income each turn${clusterBonus(s, t, 'market') ? `, +${clusterBonus(s, t, 'market')} population` : ''}. ${clusterHint('market')}.`, 8, 'carpentry', 'market');
     }
   }
-  if (isLand(t) && t.terrain !== 'mountain' && !t.road) add('road', 'Build Road', 'Units move twice as fast along roads.', roadCost(s, pid), 'roads', 'road');
+  if (isLand(t) && t.terrain !== 'mountain' && !t.road) add('road', 'Build Road', ROAD_DESC, roadCost(s, pid), 'roads', 'road');
   return acts;
+}
+
+const ROAD_DESC = `Units move twice as fast. Roads joined to a city grow it: ${ROAD_MILESTONES.map((m) => m.roads).join('/')} connected roads give +${ROAD_MILESTONES.map((m) => m.pop).join('/+')} population, linking two of your cities gives +${LINK_POP} each, and every link and every ${ROADS_PER_STAR} roads pay +1★ a turn.`;
+
+/**
+ * Pays out what a city's road network has earned: one-off population at each milestone of
+ * connected roads, and a bigger one-off for each of the player's other cities it is now linked to.
+ */
+export function payRoadBonuses(s: GameState, pid: number) {
+  for (const c of citiesOf(s, pid)) {
+    const net = roadNetwork(s, c);
+    let pop = 0;
+    const notes: string[] = [];
+    const stage = c.roadStage ?? 0;
+    let reached = stage;
+    for (let i = stage; i < ROAD_MILESTONES.length; i++) {
+      if (net.roads < ROAD_MILESTONES[i].roads) break;
+      pop += ROAD_MILESTONES[i].pop;
+      reached = i + 1;
+      notes.push(`${ROAD_MILESTONES[i].roads} connected roads`);
+    }
+    c.roadStage = reached;
+    const linked = c.linked ?? (c.linked = []);
+    for (const id of net.linked) {
+      if (linked.includes(id)) continue;
+      linked.push(id);
+      pop += LINK_POP;
+      notes.push(`a road to ${cityById(s, id)?.name ?? 'a city'}`);
+    }
+    if (pop > 0) {
+      addPop(s, c, pop);
+      emit({ type: 'harvest', player: pid, x: c.x, y: c.y, pop });
+      emit({ type: 'toast', player: pid, text: `${c.name} grows +${pop} from ${notes.join(' and ')}!` });
+    }
+  }
 }
 
 const roadCost = (s: GameState, pid: number) => (s.players[pid].tribe === 'rome' ? 2 : 3);
@@ -300,23 +339,24 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       emit({ type: 'heal', unitId: u!.id, x: u!.x, y: u!.y, amount: u!.hp - before });
       return true;
     }
-    case 'road': t.road = true; return true;
+    case 'road': t.road = true; payRoadBonuses(s, pid); return true;
     case 'harvest': {
       const r = t.resource;
       t.resource = null;
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
       if (r === 'animal' && p.tribe === 'zulu') return grow(2); // Great Hunt
-      return grow(r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
+      if (r === 'fish' && hasTech(s, pid, 'aquaculture')) return grow(2);
+      return grow(1 + roadHarvestBonus(s, t)); // goods carried along a road
     }
     case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
     case 'mine': t.improvement = 'mine'; return grow(2);
-    case 'lumber': t.improvement = 'lumber'; return grow(1);
+    case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b); }
     case 'clear': t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); return true;
-    case 'port': t.improvement = 'port'; return grow(1);
+    case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b); }
     case 'shrine':
-    case 'temple': t.improvement = 'temple'; p.bonusScore += 100; return grow(1);
-    case 'market': t.improvement = 'market'; emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }); return true;
+    case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b); }
+    case 'market': { const b = clusterBonus(s, t, 'market'); t.improvement = 'market'; return b ? grow(b) : (emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }), true); }
   }
   return false;
 }
@@ -349,6 +389,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
     checkElimination(s, from, pid);
   }
   u.moved = u.attacked = true;
+  payRoadBonuses(s, pid); // a captured city may already sit on your road network
   revealAround(s, pid);
   return true;
 }

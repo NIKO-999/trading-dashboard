@@ -4,6 +4,10 @@ export interface Pt { x: number; y: number }
 
 let tint: { color: string; amount: number } | null = null;
 
+let crisp = false;
+/** Crisp art: flat colour faces and hard-edged shadows instead of smooth gradients and feathered blobs. */
+export const setCrispArt = (on: boolean) => { crisp = on; };
+
 /** While set, every colour drawn through these helpers is blended toward `color` (hit flashes, spent units). */
 export function setTint(color: string | null, amount = 0) {
   tint = color && amount > 0.01 ? { color, amount: Math.min(1, amount) } : null;
@@ -55,7 +59,9 @@ export function polyGrad(ctx: Ctx, pts: number[], a: string, b: string, y0: numb
   ctx.moveTo(pts[0], pts[1]);
   for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
   ctx.closePath();
-  if (Math.abs(y1 - y0) < 0.5) {
+  if (crisp) {
+    ctx.fillStyle = ink(mix(a, b, 0.4));
+  } else if (Math.abs(y1 - y0) < 0.5) {
     ctx.fillStyle = ink(a);
   } else {
     const g = ctx.createLinearGradient(0, y0, 0, y1);
@@ -92,6 +98,13 @@ export function box(ctx: Ctx, cx: number, cy: number, w: number, h: number, colo
 /** A soft round contact shadow (darkest in the middle, fading out). */
 export function softShadow(ctx: Ctx, x: number, y: number, rx: number, ry: number, alpha = 0.3) {
   if (rx <= 0 || ry <= 0) return;
+  if (crisp) {
+    ctx.fillStyle = `rgba(0,0,0,${alpha * 0.6})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx * 0.8, ry * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1, ry / rx);

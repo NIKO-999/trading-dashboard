@@ -40,6 +40,8 @@ export interface City {
   borderRadius: number;
   pendingRewards: number[]; // levels whose reward still needs to be picked
   units: number; // units currently supported
+  roadStage?: number; // road-network milestones already paid out (missing in older saves)
+  linked?: number[]; // cities this one has already been paid for linking to by road
 }
 
 export interface Unit {
