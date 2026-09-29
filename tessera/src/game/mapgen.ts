@@ -134,6 +134,9 @@ function placeCapitals(rng: Rng, size: number, n: number) {
   return best;
 }
 
+/** Mountains are rarer than each homeland's raw weights suggest: the land is meant to be rich in resources, not rock. */
+const MOUNTAIN_SHARE = 0.45;
+
 function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: number }[], tribes: TribeId[], style: Style) {
   const { size } = state;
   // Land-ness field: a few random blobs plus a strong bump around each capital.
@@ -176,7 +179,7 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
       landVals.push(land);
 
       let terrain: Terrain;
-      if (isLandTile) terrain = weighted(rng, { field: w.field * style.field, forest: w.forest * style.forest, mountain: w.mountain * style.mountain });
+      if (isLandTile) terrain = weighted(rng, { field: w.field * style.field, forest: w.forest * style.forest, mountain: w.mountain * style.mountain * MOUNTAIN_SHARE });
       else terrain = 'ocean';
 
       state.tiles.push({
@@ -231,10 +234,12 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
     const mult = TRIBES[t.biome].resources;
     const roll = (r: Resource, base: number) => rng.chance(base * (mult[r] ?? 1));
     if (t.terrain === 'field') {
-      if (roll('fruit', 0.17)) t.resource = 'fruit';
-      else if (roll('crop', 0.12)) t.resource = 'crop';
+      if (roll('fruit', 0.22)) t.resource = 'fruit';
+      else if (roll('crop', 0.17)) t.resource = 'crop';
+      else if (roll('ore', 0.045)) t.resource = 'ore'; // ore in the hills of the plain
     } else if (t.terrain === 'forest') {
-      if (roll('animal', 0.2)) t.resource = 'animal';
+      if (roll('animal', 0.27)) t.resource = 'animal';
+      else if (roll('ore', 0.04)) t.resource = 'ore';
     } else if (t.terrain === 'desert') {
       if (roll('ore', 0.16)) t.resource = 'ore';
       else if (rng.chance(0.05)) t.resource = 'fruit'; // an oasis
@@ -244,11 +249,11 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
       if (roll('animal', 0.16)) t.resource = 'animal';
       else if (roll('ore', 0.1)) t.resource = 'ore';
     } else if (t.terrain === 'mountain') {
-      if (roll('ore', 0.14)) t.resource = 'ore';
+      if (roll('ore', 0.3)) t.resource = 'ore';
     } else if (t.terrain === 'shallow') {
-      if (roll('fish', 0.22)) t.resource = 'fish';
+      if (roll('fish', 0.3)) t.resource = 'fish';
     } else if (t.terrain === 'ocean') {
-      if (roll('whale', 0.06)) t.resource = 'whale';
+      if (roll('whale', 0.09)) t.resource = 'whale';
     }
   }
 }
