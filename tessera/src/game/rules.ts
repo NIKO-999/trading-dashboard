@@ -514,6 +514,8 @@ export interface MoveOption {
   y: number;
   embark?: boolean;
   disembark?: boolean;
+  /** A ship that lands but stays a ship (Viking beach landing): `disembark` is set for the AI, but the unit is not swapped. */
+  beach?: boolean;
   path?: { x: number; y: number }[]; // tiles walked through, ending at (x, y)
 }
 
@@ -614,7 +616,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
 export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   const opt = moveOptions(s, u).find((o) => o.x === x && o.y === y);
   if (!opt) return false;
-  emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark, before: u.kind });
+  emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark && !opt.beach, before: u.kind });
   const from = { x: u.x, y: u.y };
   u.x = x;
   u.y = y;
@@ -625,7 +627,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
     u.carrying = u.kind;
     u.kind = s.players[u.owner].tribe === 'polynesia' ? 'waka' : 'boat';
     u.attacked = true;
-  } else if (opt.disembark && u.carrying) {
+  } else if (opt.disembark && !opt.beach && u.carrying) {
     const hpRatio = u.hp / maxHp(u);
     u.kind = u.carrying;
     u.carrying = null;
