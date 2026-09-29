@@ -6,7 +6,13 @@ let tint: { color: string; amount: number } | null = null;
 
 let crisp = false;
 /** Crisp art: flat colour faces and hard-edged shadows instead of smooth gradients and feathered blobs. */
-export const setCrispArt = (on: boolean) => { crisp = on; };
+export const setCrispArt = (on: boolean) => {
+  crisp = on;
+  if (typeof document !== 'undefined') document.documentElement.classList.toggle('flat', on);
+};
+/** How much lighter the left face and darker the right face of a block are: bolder when crisp. */
+const faceLight = () => (crisp ? 0.11 : 0.06);
+const faceDark = () => (crisp ? -0.3 : -0.2);
 
 /** While set, every colour drawn through these helpers is blended toward `color` (hit flashes, spent units). */
 export function setTint(color: string | null, amount = 0) {
@@ -79,7 +85,7 @@ export function polyGrad(ctx: Ctx, pts: number[], a: string, b: string, y0: numb
  */
 export function box(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string, top?: string) {
   const hw = w / 2, hh = w / 4;
-  const left = shade(color, 0.06), right = shade(color, -0.2), lid = top ?? shade(color, 0.22);
+  const left = shade(color, faceLight()), right = shade(color, faceDark()), lid = top ?? shade(color, crisp ? 0.3 : 0.22);
   polyGrad(ctx, [cx - hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx - hw, cy], shade(left, 0.05), shade(left, -0.12), cy - h, cy + hh);
   polyGrad(ctx, [cx + hw, cy - h, cx, cy + hh - h, cx, cy + hh, cx + hw, cy], shade(right, 0.04), shade(right, -0.14), cy - h, cy + hh);
   poly(ctx, [cx, cy - hh - h, cx + hw, cy - h, cx, cy + hh - h, cx - hw, cy - h], lid);
@@ -129,7 +135,7 @@ export function faceQuad(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: n
   const P = (u: number, v: number) => face === 'R'
     ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h]
     : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
-  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, v1), ...P(u0, v1)], face === 'L' ? shade(color, 0.06) : shade(color, -0.2));
+  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, v1), ...P(u0, v1)], face === 'L' ? shade(color, faceLight()) : shade(color, faceDark()));
 }
 
 /** The same band on both visible sides of a box (belts, stripes, collars). */
@@ -140,8 +146,8 @@ export function band(ctx: Ctx, cx: number, cy: number, w: number, h: number, v0:
 
 export function roof(ctx: Ctx, cx: number, cy: number, w: number, h: number, color: string) {
   const hw = w / 2, hh = w / 4;
-  poly(ctx, [cx - hw, cy, cx, cy + hh, cx, cy - h], shade(color, 0.1));
-  poly(ctx, [cx + hw, cy, cx, cy + hh, cx, cy - h], shade(color, -0.2));
+  poly(ctx, [cx - hw, cy, cx, cy + hh, cx, cy - h], shade(color, crisp ? 0.16 : 0.1));
+  poly(ctx, [cx + hw, cy, cx, cy + hh, cx, cy - h], shade(color, crisp ? -0.3 : -0.2));
 }
 
 export function ellipse(ctx: Ctx, x: number, y: number, rx: number, ry: number, fill: string) {

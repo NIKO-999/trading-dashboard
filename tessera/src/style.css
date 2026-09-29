@@ -117,6 +117,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 #ui > .game-ui { position: absolute; inset: 0; pointer-events: none; }
 .game-ui > * { pointer-events: auto; }
 .game-ui > .build-tag { position: absolute; top: calc(6px + var(--safe-top)); left: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; color: rgba(255,255,255,0.42); pointer-events: none; font-variant-numeric: tabular-nums; }
+.flat .game-ui > .vignette { display: none; }
 .game-ui > .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 80% at 50% 45%, transparent 45%, rgba(0,0,0,0.3) 100%); }
 .game-ui::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(110px + var(--safe-top)); background: linear-gradient(rgba(4,6,16,0.55), rgba(4,6,16,0.18) 60%, transparent); pointer-events: none; }
 .hud { position: absolute; top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: clamp(20px, 8vw, 48px); pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }

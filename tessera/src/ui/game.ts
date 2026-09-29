@@ -1078,7 +1078,7 @@ export class GameView {
     const SHARP = [[1, 'Auto'], [4, 'High'], [5, 'Max']] as const;
     const sharpText = () => `Sharpness: ${SHARP.find(([v]) => v === this.settings.sharp)?.[1] ?? 'Auto'}`;
     const sharpLabel = h('span', {}, sharpText());
-    const artText = () => `Art style: ${this.settings.crisp ? 'Crisp' : 'Soft'}`;
+    const artText = () => `Art style: ${this.settings.flat ? 'Crisp' : 'Soft'}`;
     const artLabel = h('span', {}, artText());
     modal({
       title: 'Menu',
@@ -1100,9 +1100,9 @@ export class GameView {
           sharpLabel.textContent = sharpText();
         } },
         { label: artLabel, keepOpen: true, onClick: () => {
-          this.settings.crisp = !this.settings.crisp;
+          this.settings.flat = !this.settings.flat;
           saveSettings(this.settings);
-          setCrispArt(this.settings.crisp);
+          setCrispArt(this.settings.flat);
           clearSpriteCache();
           this.version++; // redraw the whole map in the new style
           artLabel.textContent = artText();

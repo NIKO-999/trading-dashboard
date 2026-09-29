@@ -298,7 +298,7 @@ function showSettings(handlers: MenuHandlers) {
     const group = h('div', { class: 'seg' });
     const draw = () => {
       group.innerHTML = '';
-      for (const [v, text] of opts) group.append(h('button', { class: st.crisp === v ? 'on' : '', onclick: () => { st.crisp = v; saveSettings(st); setCrispArt(v); clearSpriteCache(); draw(); } }, text));
+      for (const [v, text] of opts) group.append(h('button', { class: st.flat === v ? 'on' : '', onclick: () => { st.flat = v; saveSettings(st); setCrispArt(v); clearSpriteCache(); draw(); } }, text));
     };
     draw();
     row.append(group);

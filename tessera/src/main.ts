@@ -20,7 +20,7 @@ import './style.css';
 registerSW({ immediate: true });
 sfx.enabled = loadSettings().sound;
 setSharpness(loadSettings().sharp);
-setCrispArt(loadSettings().crisp);
+setCrispArt(loadSettings().flat);
 // Browsers only allow audio after a user gesture; unlock on the first touch anywhere.
 window.addEventListener('pointerdown', () => sfx.unlock());
 // iOS Safari ignores user-scalable=no; block its page-zoom gestures so a pinch only zooms the map.
