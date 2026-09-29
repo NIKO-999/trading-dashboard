@@ -1333,7 +1333,7 @@
     const canRevive = (!R.revived || save.unlimited) && save.gems >= 50;
     const choice = await new Promise(res => {
       const m = modal(`<div class="bigicon">${ICONS.skull}</div><div class="ribbon stroke">${timeout ? 'Out of Time' : 'Defeated'}</div>
-        <div class="panel"><p>${timeout ? 'You ran out of rounds!' : 'Your hero has fallen…'}</p><p style="font-size:13px;color:#7a6a5a">Revive once per journey with full HP.</p>
+        <div class="panel"><p>${timeout ? 'You ran out of rounds!' : 'Your hero has fallen…'}</p><p style="font-size:13px;color:#7a6a5a">${save.unlimited ? 'Revive with full HP as often as you like.' : 'Revive once per journey with full HP.'}</p>
         <div class="actions"><button class="btn yellow" id="rv" ${canRevive ? '' : 'disabled'}>Revive ${ICONS.gem.replace('<svg', '<svg class="ico"')} 50</button><button class="btn red" id="gu">Give up</button></div></div>`);
       $('#rv', m).onclick = () => { m.remove(); res(true); };
       $('#gu', m).onclick = () => { m.remove(); res(false); };
