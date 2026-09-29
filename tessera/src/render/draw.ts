@@ -11,6 +11,7 @@ import { box, drawStar, ellipse, line, mix, poly, polyGrad, rand, roof, shade, s
 import { drawCritter, drawUnitSprite } from './units';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
+import { isDirectDraw } from './sprites';
 
 const FISH_ICON = FISH;
 
@@ -106,6 +107,15 @@ export class WorldRenderer {
   private size = { vw: 0, vh: 0, mx: 0, my: 0, dpr: 0 };
 
   render(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, vw: number, vh: number, dpr: number, version: number, interacting = false) {
+    if (isDirectDraw()) {
+      // no hidden layers: paint the whole map straight onto the screen every frame
+      drawSky(ctx, cam, vw, vh, ov.now);
+      drawStaticGround(ctx, s, viewer, cam, ov, vw, vh);
+      drawWaterLife(ctx, s, viewer, cam, ov, vw, vh);
+      drawStaticTop(ctx, s, viewer, cam, ov, vw, vh);
+      drawDynamic(ctx, s, viewer, cam, ov, vw, vh, dpr);
+      return;
+    }
     const mx = Math.round(Math.min(LAYER_MARGIN_MAX, vw * LAYER_MARGIN)), my = Math.round(Math.min(LAYER_MARGIN_MAX, vh * LAYER_MARGIN));
     const W = vw + mx * 2, H = vh + my * 2;
     const L = this.cam;

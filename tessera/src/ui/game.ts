@@ -14,7 +14,7 @@ import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
 import { renderDpr, setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
-import { clearSpriteCache } from '../render/sprites';
+import { clearSpriteCache, setDirectDraw } from '../render/sprites';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { sfx, type SoundName } from '../audio/sfx';
@@ -1078,6 +1078,8 @@ export class GameView {
     const SHARP = [[1, 'Auto'], [4, 'High'], [5, 'Max']] as const;
     const sharpText = () => `Sharpness: ${SHARP.find(([v]) => v === this.settings.sharp)?.[1] ?? 'Auto'}`;
     const sharpLabel = h('span', {}, sharpText());
+    const directText = () => `Map drawing: ${this.settings.direct ? 'Direct' : 'Cached'}`;
+    const directLabel = h('span', {}, directText());
     const artText = () => `Art style: ${this.settings.flat ? 'Crisp' : 'Soft'}`;
     const artLabel = h('span', {}, artText());
     modal({
@@ -1106,6 +1108,13 @@ export class GameView {
           clearSpriteCache();
           this.version++; // redraw the whole map in the new style
           artLabel.textContent = artText();
+        } },
+        { label: directLabel, keepOpen: true, onClick: () => {
+          this.settings.direct = !this.settings.direct;
+          saveSettings(this.settings);
+          setDirectDraw(this.settings.direct);
+          this.version++;
+          directLabel.textContent = directText();
         } },
         { label: 'Sharpness test', onClick: () => showSharpnessTest() },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },

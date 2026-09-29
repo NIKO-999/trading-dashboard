@@ -8,7 +8,7 @@ import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/typ
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
 import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
-import { drawSprite, figureHit, unitSprite } from './sprites';
+import { drawFigure, figureHit } from './sprites';
 
 interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -122,9 +122,9 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     if (k < 0 || k > 1) continue;
     const c = tileCenter(g.x, g.y);
     const y = c.y + 5 + k * 8;
-    drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'base', exact), c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
+    drawFigure(ctx, g.kind, g.tribe, pxScale, 'base', exact, c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
     const white = Math.max(0, 0.9 - k * 2.5);
-    if (white > 0) drawSprite(ctx, unitSprite(g.kind, g.tribe, pxScale, 'white', exact), c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
+    if (white > 0) drawFigure(ctx, g.kind, g.tribe, pxScale, 'white', exact, c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, white);
   }
 
   for (const p of fx.projectiles) drawProjectile(ctx, p, now);
@@ -172,8 +172,8 @@ function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewe
   const before = ov.fx.moves.get(u.id)?.before;
   const fits = (k: UnitKind) => !!UNITS[k].naval === m.water;
   const kind = before && !fits(u.kind) && fits(before) ? before : u.kind;
-  drawSprite(ctx, unitSprite(kind, tribe, pxScale, spent ? 'spent' : 'base', exact), x, y, us, m.sx, m.sy, m.facing < 0);
-  if (flashing) drawSprite(ctx, unitSprite(kind, tribe, pxScale, 'white', exact), x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
+  drawFigure(ctx, kind, tribe, pxScale, spent ? 'spent' : 'base', exact, x, y, us, m.sx, m.sy, m.facing < 0);
+  if (flashing) drawFigure(ctx, kind, tribe, pxScale, 'white', exact, x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
 }
 
 // ---------------------------------------------------------------- water life

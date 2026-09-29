@@ -6,7 +6,7 @@ import { drawUnitSprite } from '../render/draw';
 import { sfx } from '../audio/sfx';
 import { setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
-import { clearSpriteCache } from '../render/sprites';
+import { clearSpriteCache, setDirectDraw } from '../render/sprites';
 import { showSharpnessTest } from './diag';
 import { loadGame, loadScores, loadSettings, saveSettings } from '../save';
 import { $ui, h, iconEl, paint } from './dom';
@@ -304,6 +304,18 @@ function showSettings(handlers: MenuHandlers) {
     row.append(group);
     return row;
   };
+  const directRow = () => {
+    const opts: [boolean, string][] = [[false, 'Cached'], [true, 'Direct']];
+    const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Map drawing'));
+    const group = h('div', { class: 'seg' });
+    const draw = () => {
+      group.innerHTML = '';
+      for (const [v, text] of opts) group.append(h('button', { class: st.direct === v ? 'on' : '', onclick: () => { st.direct = v; saveSettings(st); setDirectDraw(v); draw(); } }, text));
+    };
+    draw();
+    row.append(group);
+    return row;
+  };
   const sharpRow = () => {
     const opts: [1 | 4 | 5, string][] = [[1, 'Auto'], [4, 'High'], [5, 'Max']];
     const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Map sharpness'));
@@ -319,6 +331,6 @@ function showSettings(handlers: MenuHandlers) {
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
+    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), directRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
   );
 }
