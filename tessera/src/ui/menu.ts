@@ -1,8 +1,9 @@
 import { music } from '../audio/music';
-import { POWERS } from '../data/powers';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
+import { TRAITS } from '../data/traits';
+import { describePerk } from '../game/perks';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
@@ -147,6 +148,21 @@ export function unitPortrait(kind: keyof typeof UNITS, tribe: TribeId, size = 64
 const SEAT_LABEL: Record<Seat, string> = { human: 'Player', ai: 'AI', off: 'Off' };
 const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
 
+/** An empire's strengths and weaknesses, each with the history behind it. */
+function traitLists(id: TribeId): Node[] {
+  const t = TRIBES[id];
+  const item = (cls: string, name: string, why: string, effect: string) => h('li', { class: cls }, h('b', {}, name), ' ', h('span', { class: 'why' }, why), h('span', { class: 'effect' }, effect));
+  return [
+    h('h5', { class: 'pros' }, 'Strengths'),
+    h('ul', { class: 'traits' },
+      item('pro', 'Signature', '', t.bonus),
+      ...TRAITS[id].pros.map((p) => item('pro', p.name, p.why, p.perks.map(describePerk).join(' '))),
+    ),
+    h('h5', { class: 'cons' }, 'Weaknesses'),
+    h('ul', { class: 'traits' }, ...TRAITS[id].cons.map((p) => item('con', p.name, p.why, p.perks.map(describePerk).join(' ')))),
+  ];
+}
+
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
     tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat,
@@ -197,8 +213,8 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
     const detail = h('div', { class: 'tribe-detail' },
       h('h4', {}, t.name),
       h('p', {}, t.blurb),
-      h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
       h('p', {}, h('b', {}, `${UNITS[t.unique].name}: `), UNITS[t.unique].blurb),
+      ...traitLists(choice.tribe),
     );
     const start = h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START');
     if (problem) start.disabled = true;
@@ -261,9 +277,8 @@ function showEmpires(handlers: MenuHandlers) {
             h('h3', {}, `${t.people} — ${t.name}`),
             h('p', {}, t.blurb),
             h('p', {}, h('b', {}, 'Starts with: '), t.startTech[0].toUpperCase() + t.startTech.slice(1)),
-            h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
+            ...traitLists(id),
             h('p', {}, h('b', {}, 'Skill line: '), UNIQUE_TECHS.filter((u) => u.tribe === id).map((u) => u.name).join(' → ')),
-            h('p', {}, h('b', {}, `Power — ${POWERS[id].name}: `), POWERS[id].blurb, ` (every ${POWERS[id].cooldown} turns)`),
             h('p', {}, h('b', {}, `${UNITS[t.unique].name}`), ` (replaces ${UNITS[t.replaces].name}): ${UNITS[t.unique].blurb}`),
           ),
         );

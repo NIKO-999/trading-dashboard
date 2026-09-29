@@ -281,23 +281,13 @@ button:disabled { opacity: 0.45; cursor: default; }
 .idle-row em { font-style: normal; font-size: 0.85rem; color: #ffb4a8; }
 .idle-row:active { background: #2a2a34; }
 
-/* five dock buttons: a little narrower so they all fit a phone */
-.bottom-bar .dock-btn { width: 68px; }
-.bottom-bar .dock-btn .round { width: 58px; height: 58px; }
-.dock-btn.power .round { background: radial-gradient(circle at 38% 28%, #b5a4ff 0%, #6d4ce0 50%, #3a239a 100%); }
-.dock-btn.power:not(.ready) .round { filter: grayscale(0.85) brightness(0.75); }
-.dock-btn.power.ready .round { animation: power-pulse 1.6s ease-in-out infinite; }
-@keyframes power-pulse { 0%, 100% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 0 rgba(150,120,255,0.7); } 50% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 9px rgba(150,120,255,0); } }
-.bottom-bar.waiting .dock-btn.power { opacity: 0.4; pointer-events: none; }
-
-/* an empire's own skill line on the tech tree */
-.tt-node.unique { box-shadow: 0 0 0 3px #f0c43a, 0 0 14px rgba(240,196,58,0.55); }
-.tt-node.unique.locked { box-shadow: 0 0 0 2px #8a7a3a; }
-.tt-node.unique.owned { box-shadow: 0 0 0 3px #f0c43a, 0 0 18px rgba(240,196,58,0.8); }
-
-/* map terrain choice: a wrapping row of pills with a one-line description */
-.seg-block { margin: 14px 0; }
-.seg-block .seg-label { margin-bottom: 8px; }
-.seg.wrap { flex-wrap: wrap; gap: 2px; }
-.seg.wrap button { padding: 8px 11px 5px; font-size: 0.95rem; }
-.terrain-note { margin: 8px 2px 0; }
+/* an empire's strengths and weaknesses */
+.tribe-detail h5, .empire-row h5 { margin: 12px 0 4px; font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; font-style: normal; }
+h5.pros { color: #7be08a; }
+h5.cons { color: #ff8f7a; }
+ul.traits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+ul.traits li { font-size: 1rem; line-height: 1.25; padding-left: 12px; border-left: 3px solid #555; }
+ul.traits li.pro { border-left-color: #4fcf62; }
+ul.traits li.con { border-left-color: #ff6a55; }
+ul.traits .why { opacity: 0.7; font-weight: 300; }
+ul.traits .effect { display: block; font-weight: 600; }

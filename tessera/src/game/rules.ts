@@ -1,5 +1,4 @@
 import { TECH_BY_ID, techsFor } from '../data/techs';
-import { POWERS, type PowerFx } from '../data/powers';
 import { unitFor } from '../data/tribes';
 import { perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
@@ -51,13 +50,13 @@ export function cityIncome(s: GameState, c: City) {
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
   inc += networkIncome(roadNetwork(s, c));
-  if (s.players[c.owner].techs.length) {
+  {
     for (const pk of perksOf(s, c.owner)) {
       if (pk.k !== 'income') continue;
       if (pk.per === 'city') inc += pk.n;
       else if (pk.per === 'capital') inc += c.capital ? pk.n : 0;
       else if (pk.per === 'road') inc += Math.floor(pk.n * (s.tiles.filter((t) => t.owner === c.id && t.road).length / 4));
-      else inc += Math.floor(pk.n * s.tiles.filter((t) => t.owner === c.id && t.improvement === pk.per).length);
+      else inc += Math.trunc(pk.n * s.tiles.filter((t) => t.owner === c.id && t.improvement === pk.per).length);
     }
   }
   return inc;
@@ -82,7 +81,7 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const t = TECH_BY_ID[tech];
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base) - perkSum(s, pid, 'cost', (p) => p.of === 'tech'));
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base) - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
@@ -240,8 +239,12 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const acts: Action[] = [];
   const mine = tileOwnerPlayer(s, t) === pid;
   const city = cityById(s, t.owner);
-  const add = (id: string, label: string, desc: string, cost: number, tech: string | null, icon: string, extra?: string) => {
+  const add = (id: string, label: string, desc: string, baseCost: number, tech: string | null, icon: string, extra?: string) => {
     const hasT = hasTech(s, pid, tech);
+    // historical strengths and weaknesses can make building cheaper or dearer
+    const cat = id === 'road' ? 'road' : id === 'temple' || id === 'shrine' ? 'temple' : ['farm', 'mine', 'lumber', 'port', 'market'].includes(id) ? 'build' : null;
+    const adj = cat ? perkSum(s, pid, 'cost', (pk) => pk.of === cat || (cat !== 'road' && pk.of === 'build')) : 0;
+    const cost = baseCost > 0 ? Math.max(1, baseCost - adj) : baseCost;
     acts.push({
       id, label, desc, cost, icon,
       enabled: hasT && p.stars >= cost && !extra,
@@ -359,7 +362,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   const city = cityById(s, t.owner);
   const u = unitAt(s, t.x, t.y);
   const grow = (n: number, ...tags: string[]) => {
-    if (tags.length && p.techs.length) n += perkSum(s, pid, 'grow', (pk) => tags.includes(pk.on)); // skill-line perks
+    if (tags.length) n = Math.max(0, n + perkSum(s, pid, 'grow', (pk) => tags.includes(pk.on))); // traits and skill-line perks
     emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: n });
     addPop(s, city!, n);
     return true;
@@ -522,7 +525,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const range = Math.max(1, d.move + fxBonus(s, u, 'move') + perkUnit(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
+  const range = Math.max(1, d.move + perkUnit(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {
@@ -650,11 +653,11 @@ export const MOUNTAIN_DEFENSE = 2;
 export function defenseBonus(s: GameState, u: Unit) {
   const t = tileAt(s, u.x, u.y)!;
   let extra = 0; // terrain perks from the empire's skill line
-  if (s.players[u.owner].techs.length) {
+  {
     const inCity = t.cityId !== null && cityById(s, t.cityId)?.owner === u.owner;
-    extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity));
+    extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity) || (p.on === 'away' && tileOwnerPlayer(s, t) !== u.owner));
   }
-  return baseDefense(s, u, t) + extra;
+  return Math.max(0.5, baseDefense(s, u, t) + extra);
 }
 
 function baseDefense(s: GameState, u: Unit, t: Tile) {
@@ -675,13 +678,13 @@ const unitDef = (s: GameState, u: Unit) => def(u).def
 
 export function attackOptions(s: GameState, u: Unit): Unit[] {
   const d = def(u);
-  if (u.attacked || d.atk <= 0 || s.players[u.owner].effects?.some((e) => e.stat === 'strike' && e.left > 0)) return [];
+  if (u.attacked || d.atk <= 0) return [];
   return s.units.filter((e) => e.owner !== u.owner && dist(e.x, e.y, u.x, u.y) <= d.range && isExplored(s, u.owner, e.x, e.y));
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + fxBonus(s, a, 'atk') + perkUnit(s, a, 'atk'));
-  const dd = Math.max(0, unitDef(s, d) + fxBonus(s, d, 'def') + perkUnit(s, d, 'def'));
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk'));
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def'));
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
   const total = aForce + dForce || 1;
@@ -755,165 +758,3 @@ export function removeUnit(s: GameState, u: Unit) {
 }
 
 export const livingPlayers = (s: GameState): Player[] => s.players.filter((p) => p.alive);
-
-
-// ---------------------------------------------------------------- empire powers
-
-const fxApplies = (u: Unit, who?: 'all' | 'ranged' | 'mounted' | 'naval') =>
-  !who || who === 'all' || (who === 'ranged' ? def(u).range > 1 : who === 'mounted' ? MOUNTED.includes(u.kind) : def(u).naval);
-
-/** The combined boost (or curse) an Empire Power currently gives this unit for a stat. */
-export function fxBonus(s: GameState, u: Unit, stat: 'atk' | 'def' | 'move'): number {
-  const fx = s.players[u.owner].effects;
-  if (!fx?.length) return 0;
-  let n = 0;
-  for (const e of fx) if (e.stat === stat && e.left > 0 && fxApplies(u, e.who)) n += e.n;
-  return n;
-}
-
-export const powerOf = (s: GameState, pid: number) => POWERS[s.players[pid].tribe];
-export const powerCooldown = (s: GameState, pid: number) => s.players[pid].powerCd ?? 3;
-export const powerReady = (s: GameState, pid: number) => s.players[pid].alive && powerCooldown(s, pid) <= 0;
-
-/** Counts down cooldowns and boosts; called when a player's turn begins. */
-export function tickPower(s: GameState, pid: number) {
-  const p = s.players[pid];
-  p.powerCd = Math.max(0, (p.powerCd ?? 3) - 1);
-  if (p.effects) {
-    for (const e of p.effects) e.left--;
-    p.effects = p.effects.filter((e) => e.left > 0);
-  }
-}
-
-const freeSpotFor = (s: GameState, c: City, naval = false): Tile | null => {
-  const ok = (t: Tile | undefined) => !!t && isLand(t) !== naval && !unitAt(s, t.x, t.y) && t.terrain !== 'mountain';
-  const home = tileAt(s, c.x, c.y);
-  if (ok(home)) return home!;
-  return neighbors(s, c.x, c.y).find(ok) ?? null;
-};
-
-/** Would using the power now be worth it? (for the AI, and to grey the button out) */
-export function powerUseful(s: GameState, pid: number): boolean {
-  if (!powerReady(s, pid)) return false;
-  const mine = s.units.filter((u) => u.owner === pid);
-  const cities = citiesOf(s, pid);
-  const foeNear = () => {
-    const foes = s.units.filter((e) => e.owner !== pid);
-    return mine.some((u) => foes.some((e) => dist(e.x, e.y, u.x, u.y) <= 4)) || cities.some((c) => foes.some((e) => dist(e.x, e.y, c.x, c.y) <= 4));
-  };
-  return powerOf(s, pid).fx.some((f) => {
-    switch (f.t) {
-      case 'buff': case 'refresh': case 'curse': case 'convert': return foeNear();
-      case 'heal': return mine.some((u) => u.hp < maxHp(u) * 0.75);
-      case 'levy': return cities.some((c) => c.units < unitCap(c));
-      case 'reveal': return s.players[pid].explored.filter(Boolean).length < s.size * s.size * 0.7;
-      case 'raid': return s.players.some((o) => o.id !== pid && o.alive && o.stars >= 3);
-      case 'tech': return researchable(s, pid).length > 0;
-      case 'walls': return cities.some((c) => !c.walls);
-      default: return cities.length > 0;
-    }
-  });
-}
-
-function applyFx(s: GameState, pid: number, f: PowerFx): void {
-  const p = s.players[pid];
-  const cities = citiesOf(s, pid);
-  const mineOf = (c: City, imp: string) => s.tiles.filter((t) => t.owner === c.id && t.improvement === imp).length;
-  switch (f.t) {
-    case 'grow':
-      for (const c of cities) {
-        const n = f.per ? Math.min(f.max ?? 9, mineOf(c, f.per)) * f.n : f.n;
-        if (n > 0) { addPop(s, c, n); emit({ type: 'harvest', player: pid, x: c.x, y: c.y, pop: n }); }
-      }
-      break;
-    case 'stars': {
-      let n = (f.base ?? 0) + (f.perCity ?? 0) * cities.length;
-      if (f.per) n += f.per[1] * cities.reduce((a, c) => a + mineOf(c, f.per![0]), 0);
-      if (f.perRoads) n += Math.floor(f.perRoads * s.tiles.filter((t) => t.road && t.owner !== null && cityById(s, t.owner)?.owner === pid).length);
-      n = Math.round(n);
-      p.stars += n;
-      const cap = cities.find((c) => c.capital) ?? cities[0];
-      if (cap) emit({ type: 'stars', player: pid, x: cap.x, y: cap.y, amount: n });
-      break;
-    }
-    case 'heal':
-      for (const u of s.units) if (u.owner === pid && u.hp < maxHp(u)) {
-        const before = u.hp;
-        u.hp = Math.min(maxHp(u), u.hp + f.n);
-        emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
-      }
-      break;
-    case 'buff':
-      (p.effects ??= []).push({ stat: f.stat, n: f.n, left: f.turns, who: f.who });
-      break;
-    case 'curse':
-      for (const o of s.players) if (o.id !== pid && o.alive) (o.effects ??= []).push({ stat: f.stat, n: f.n, left: f.turns });
-      break;
-    case 'reveal': {
-      const mark = (x: number, y: number) => { for (const t of area(s, x, y, f.r)) p.explored[t.y * s.size + t.x] = true; };
-      if (f.from !== 'units') for (const c of cities) mark(c.x, c.y);
-      if (f.from !== 'cities') for (const u of s.units) if (u.owner === pid) mark(u.x, u.y);
-      break;
-    }
-    case 'levy': {
-      let made = 0;
-      for (const c of cities) {
-        if (made >= (f.max ?? 99) || c.units >= unitCap(c)) continue;
-        const at = freeSpotFor(s, c);
-        if (!at) continue;
-        const kind = f.kind === 'warrior' ? unitFor(p.tribe, 'warrior') : f.kind;
-        const u = spawnUnit(s, kind, pid, at.x, at.y, c.id);
-        u.moved = u.attacked = false; // ready at once
-        made++;
-      }
-      break;
-    }
-    case 'refresh':
-      for (const u of s.units) if (u.owner === pid && fxApplies(u, f.who)) u.moved = u.attacked = false;
-      break;
-    case 'raid': {
-      let got = 0;
-      for (const o of s.players) if (o.id !== pid && o.alive) { const n = Math.min(f.n, o.stars); o.stars -= n; got += n; }
-      p.stars += got;
-      const cap = cities.find((c) => c.capital) ?? cities[0];
-      if (cap && got) emit({ type: 'stars', player: pid, x: cap.x, y: cap.y, amount: got });
-      break;
-    }
-    case 'tech': {
-      const t = researchable(s, pid).sort((a, b) => a.tier - b.tier)[0];
-      if (t) p.techs.push(t.id);
-      break;
-    }
-    case 'forest':
-      for (const c of cities) {
-        const fields = s.tiles.filter((t) => t.owner === c.id && t.terrain === 'field' && !t.improvement && !t.resource && t.cityId === null && !t.village && !t.road && !unitAt(s, t.x, t.y));
-        for (const t of fields.slice(0, f.per)) t.terrain = 'forest';
-      }
-      break;
-    case 'walls':
-      for (const c of cities) c.walls = true;
-      break;
-    case 'convert':
-      for (const e of [...s.units]) {
-        if (e.owner === pid || e.hp > f.hp) continue;
-        if (!s.units.some((u) => u.owner === pid && dist(u.x, u.y, e.x, e.y) <= 1)) continue;
-        const old = cityById(s, e.homeCity);
-        if (old) old.units = Math.max(0, old.units - 1);
-        e.owner = pid;
-        e.homeCity = null;
-        e.moved = e.attacked = true;
-      }
-      break;
-  }
-}
-
-/** Uses the empire's power if it is ready. Returns false when it is still recharging. */
-export function usePower(s: GameState, pid: number): boolean {
-  if (!powerReady(s, pid)) return false;
-  const pw = powerOf(s, pid);
-  for (const f of pw.fx) applyFx(s, pid, f);
-  s.players[pid].powerCd = pw.cooldown;
-  revealAround(s, pid);
-  emit({ type: 'power', player: pid, name: pw.name, text: pw.blurb });
-  return true;
-}

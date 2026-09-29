@@ -420,9 +420,9 @@ export function spawnUnit(state: GameState, kind: UnitKind, owner: number, x: nu
 
 export function revealAround(state: GameState, playerId: number) {
   const p = state.players[playerId];
-  const extra = p.techs.length > 1 ? perkSum(state, playerId, 'vision') : 0; // skill-line perks
+  const extra = perkSum(state, playerId, 'vision'); // traits and skill-line perks
   const mark = (x: number, y: number, r: number) => {
-    for (const t of area(state, x, y, r + extra)) p.explored[t.y * state.size + t.x] = true;
+    for (const t of area(state, x, y, Math.max(1, r + extra))) p.explored[t.y * state.size + t.x] = true;
   };
   for (const c of state.cities) if (c.owner === playerId) mark(c.x, c.y, c.borderRadius + 1);
   for (const u of state.units) {

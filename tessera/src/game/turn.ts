@@ -1,7 +1,7 @@
 import { emit } from './events';
 import { revealAround } from './mapgen';
 import { perkSum } from './perks';
-import { tickPower, checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
+import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
 import type { GameState } from './types';
 
@@ -37,7 +37,6 @@ export function startTurn(s: GameState) {
       emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
     }
   }
-  tickPower(s, p.id);
   revealAround(s, p.id);
 }
 

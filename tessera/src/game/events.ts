@@ -14,7 +14,6 @@ export type GameEvent =
   | { type: 'heal'; unitId: number; x: number; y: number; amount: number }
   | { type: 'capture'; player: number; cityId: number; from: number | null }
   | { type: 'eliminated'; player: number; by: number }
-  | { type: 'power'; player: number; name: string; text: string }
   | { type: 'stars'; player: number; x: number; y: number; amount: number };
 
 const queue: GameEvent[] = [];

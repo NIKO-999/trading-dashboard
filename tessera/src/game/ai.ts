@@ -3,7 +3,7 @@ import { dist, isLand, neighbors, tileAt } from './grid';
 import { roadNetwork } from './network';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
-  previewCombat, powerUseful, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt, usePower,
+  previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
 
@@ -26,9 +26,6 @@ export function aiStep(s: GameState): boolean {
     economyDone = false;
   }
   const p = s.players[pid];
-
-  // 0. The empire's own power, when it is ready and worth using.
-  if (powerUseful(s, pid) && usePower(s, pid)) return true;
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {

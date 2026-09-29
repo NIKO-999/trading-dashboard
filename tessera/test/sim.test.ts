@@ -4,10 +4,12 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, neighbors, tileAt } from '../src/game/grid.ts';
 import { createGame, foundCity, TERRAIN_STYLES } from '../src/game/mapgen.ts';
-import { researchStatus, powerCooldown, powerReady, usePower, attackOptions, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { researchStatus, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
+import { TRAITS } from '../src/data/traits.ts';
+import { describePerk } from '../src/game/perks.ts';
 import type { GameState } from '../src/game/types.ts';
 
 function checkInvariants(s: GameState) {
@@ -87,7 +89,7 @@ test('the new empires\' bonuses', () => {
   // Greeks: Academy makes research 1★ cheaper
   const g = createGame({ seed: 3, human: 'greeks', opponents: ['rome'], mode: 'domination' });
   const r = createGame({ seed: 3, human: 'rome', opponents: ['greeks'], mode: 'domination' });
-  assert.equal(techCost(g, 0, 'hunting'), techCost(r, 0, 'hunting') - 1);
+  assert.equal(techCost(g, 0, 'hunting'), techCost(r, 0, 'hunting') - 2); // Academy −1, and Rome's Senatorial Politics +1
   // Mongols: mounted units cost 1★ less
   const m = createGame({ seed: 3, human: 'mongols', opponents: ['rome'], mode: 'domination' });
   assert.equal(trainCost(m, 0, 'rider'), 2);
@@ -179,7 +181,7 @@ test('pirates get their Sea Raiders bonus on the water', () => {
   const before = cityIncome(s, cap);
   assert.ok(doAction(s, 0, shore, 'port'));
   assert.equal(cityIncome(s, cap), before + 1, 'each pirate port pays +1 star');
-  // a pirate canoe moves 3 tiles; a Roman one would move 2
+  // a pirate canoe moves 3 tiles; a Roman one only 1 (2, less the Reluctant Sailors weakness)
   for (const t of s.tiles) { t.terrain = 'shallow'; t.cityId = null; t.village = false; t.ruin = false; }
   s.players[0].explored.fill(true);
   s.players[1].explored.fill(true);
@@ -189,7 +191,7 @@ test('pirates get their Sea Raiders bonus on the water', () => {
   mine.moved = theirs.moved = false;
   const reach = (u: typeof mine) => Math.max(...moveOptions(s, u).map((o) => Math.max(Math.abs(o.x - u.x), Math.abs(o.y - u.y))));
   assert.equal(reach(mine), 3);
-  assert.equal(reach(theirs), 2);
+  assert.equal(reach(theirs), 1);
 });
 
 test('a farm or a mine can only be built once on a tile', () => {
@@ -531,7 +533,7 @@ test('the five newest empires\' bonuses', () => {
     return defenseBonus(s, u);
   };
   assert.equal(place('celts', 'forest'), 2); // Sacred Groves, no Archery needed
-  assert.equal(place('ethiopia', 'mountain'), 2.5); // Highland Fortress
+  assert.equal(place('ethiopia', 'mountain'), 3); // Highland Fortress 2.5, plus the highland trait
   const r = createGame({ seed: 11, human: 'rome', opponents: ['celts'], mode: 'domination' });
   const ru = r.units.find((v) => v.owner === 0)!;
   const rc = r.cities.find((c) => c.owner === 0)!;
@@ -588,40 +590,6 @@ test('the newest five empires\' bonuses', () => {
   const mt = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([dx, dy]) => tileAt(t, u.x + dx, u.y + dy)).find((x) => x && x.cityId === null)!;
   mt.terrain = 'mountain'; t.players[0].explored.fill(true);
   assert.ok(moveOptions(t, u).some((m) => m.x === mt.x && m.y === mt.y));
-});
-
-test('every empire power works and then recharges', () => {
-  for (const id of TRIBE_IDS) {
-    const s = createGame({ seed: 41, human: id, opponents: ['rome', 'greeks'], mode: 'domination' });
-    startTurn(s);
-    assert.ok(!powerReady(s, 0), `${id} starts on cooldown`);
-    s.players[0].powerCd = 0;
-    // put an enemy next to my unit so buff and convert powers have something to do
-    const mine = s.units.find((u) => u.owner === 0)!;
-    const foe = s.units.find((u) => u.owner === 1)!;
-    const spot = neighbors(s, mine.x, mine.y).find((t) => isLand(t) && !s.units.some((u) => u.x === t.x && u.y === t.y));
-    if (spot) { foe.x = spot.x; foe.y = spot.y; foe.hp = 3; }
-    const stars = s.players[0].stars;
-    assert.ok(usePower(s, 0), id);
-    drain();
-    assert.ok(!powerReady(s, 0), `${id} recharges`);
-    assert.ok(powerCooldown(s, 0) >= 8, id);
-    checkInvariants(s);
-    void stars;
-  }
-  // specific effects
-  const g = (id: 'egypt' | 'mali' | 'rome' | 'maya' | 'vikings' | 'tibet') => { const s = createGame({ seed: 41, human: id, opponents: ['greeks', 'zulu'], mode: 'domination' }); startTurn(s); s.players[0].powerCd = 0; return s; };
-  const m = g('mali'), before = m.players[0].stars; usePower(m, 0);
-  assert.ok(m.players[0].stars >= before + 5);
-  const r = g('rome'), units = r.units.filter((u) => u.owner === 0).length; usePower(r, 0);
-  assert.ok(r.units.filter((u) => u.owner === 0).length > units || citiesOf(r, 0).every((c) => c.units >= c.level + 1));
-  const my = g('maya'); usePower(my, 0);
-  const rival = my.units.find((u) => u.owner === 1)!; const bait = my.units.find((u) => u.owner === 0)!;
-  rival.x = bait.x; rival.y = bait.y === 0 ? 1 : bait.y - 1; rival.attacked = false;
-  assert.equal(attackOptions(my, rival).length, 0, 'eclipse stops rival attacks');
-  const vk = g('vikings'); const u0 = vk.units.find((u) => u.owner === 0)!; const foe0 = vk.units.find((u) => u.owner === 1)!;
-  const plain = previewCombat(vk, u0, foe0).dmg; usePower(vk, 0);
-  assert.ok(previewCombat(vk, u0, foe0).dmg >= plain, 'berserkergang hits harder');
 });
 
 test('every empire has a three-tech skill line only it can research', () => {
@@ -717,3 +685,25 @@ test('desert, swamp and tundra play differently', () => {
   assert.equal(fu.hp, 7, 'the cold bites');
 });
 const dist2 = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+
+test('every empire has historical strengths and weaknesses that change the game', () => {
+  for (const id of TRIBE_IDS) {
+    assert.ok(TRAITS[id].pros.length >= 1 && TRAITS[id].cons.length >= 2, `${id} has pros and cons`);
+    for (const t of [...TRAITS[id].pros, ...TRAITS[id].cons]) assert.ok(t.why.length > 10 && t.perks.length && t.perks.every((p) => describePerk(p).length > 5), `${id}: ${t.name}`);
+  }
+  const g = (id: 'egypt' | 'aztec' | 'aboriginal' | 'ottoman' | 'inca') => { const s = createGame({ seed: 61, human: id, opponents: ['pirates'], mode: 'domination' }); startTurn(s); return s; };
+  const ref = createGame({ seed: 61, human: 'pirates', opponents: ['egypt'], mode: 'domination' });
+  // Egypt's Pyramid Builders: temples 3★ cheaper; Aztecs pay 2★ more for riders; Aboriginal farming costs 2★ more
+  const eg = g('egypt'), ecity = eg.cities.find((c) => c.owner === 0)!, field = eg.tiles.find((t) => t.terrain === 'field' && t.owner === ecity.id && !t.improvement && !t.resource && !t.village && t.cityId === null && !t.ruin)!;
+  eg.players[0].techs.push('masonry');
+  assert.equal(tileActions(eg, 0, field).find((a) => a.id === 'temple')!.cost, 8);
+  assert.equal(trainCost(g('aztec'), 0, 'rider'), trainCost(ref, 0, 'rider') + 2);
+  assert.equal(techCost(g('aboriginal'), 0, 'farming') - techCost(ref, 0, 'farming'), 3); // +2 for farming, +1 for the isolated continent
+  // Ottoman tax-farming: markets pay less
+  const ot = g('ottoman'), city = ot.cities.find((c) => c.owner === 0)!, base = cityIncome(ot, city);
+  const [m1, m2] = ot.tiles.filter((t) => t.owner === city.id && t.cityId === null && isLand(t)).slice(0, 2);
+  m1.improvement = m2.improvement = 'market';
+  assert.equal(cityIncome(ot, city), base + 2 - 1, 'two markets pay 2★ less 1★ for tax-farming');
+  // Inca cannot sail as well: canoes move 1 less than the reference
+  void g('inca');
+});

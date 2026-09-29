@@ -1,5 +1,6 @@
 // Perks: the lasting effects of an empire's unique skill line (see data/uniqueTechs.ts). Kept free of game rules so
 // both the rules and the map code can ask "how much of X does this empire have?".
+import { TRAITS } from '../data/traits';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
@@ -12,8 +13,9 @@ export type Perk =
   | { k: 'atk' | 'def' | 'move'; n: number; who?: PerkWho }
   | { k: 'income'; per: 'city' | 'capital' | 'road' | PerkImp; n: number } // road: per 4 road tiles inside your borders
   | { k: 'grow'; on: PerkImp | 'harvest' | 'fish' | 'animal' | 'fruit'; n: number } // extra population when you do it
-  | { k: 'cost'; of: 'melee' | 'ranged' | 'mounted' | 'naval' | 'siege' | 'tech'; n: number } // ★ cheaper
-  | { k: 'terrain'; on: 'forest' | 'mountain' | 'own' | 'city'; n: number } // added to the defence multiplier
+  | { k: 'cost'; of: 'melee' | 'ranged' | 'mounted' | 'naval' | 'siege' | 'tech' | 'build' | 'temple' | 'road'; n: number } // ★ cheaper (negative: dearer)
+  | { k: 'techcost'; tech: string; n: number } // this one tech costs n★ more
+  | { k: 'terrain'; on: 'forest' | 'mountain' | 'own' | 'city' | 'away'; n: number } // added to the defence multiplier (away: outside your borders)
   | { k: 'heal'; n: number } // HP every unit on your land recovers at the start of your turn
   | { k: 'kill'; n: number } // ★ for every kill
   | { k: 'vision'; n: number } // see one tile further around every unit and city
@@ -25,7 +27,9 @@ const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha'];
 
 /** All perks an empire has earned so far. */
 export function perksOf(s: GameState, pid: number): Perk[] {
+  const tribe = s.players[pid].tribe;
   const out: Perk[] = [];
+  for (const t of [...TRAITS[tribe].pros, ...TRAITS[tribe].cons]) out.push(...t.perks); // the empire's historical strengths and weaknesses
   for (const id of s.players[pid].techs) {
     const t = UNIQUE_BY_ID[id];
     if (t) out.push(...t.perks);
@@ -64,19 +68,34 @@ export function perkSum<K extends Perk['k']>(s: GameState, pid: number, k: K, ma
 /** One line of plain English for a perk. */
 export function describePerk(p: Perk): string {
   const who = (w?: PerkWho) => ({ all: 'all units', ranged: 'ranged units', mounted: 'mounted units', naval: 'boats and ships', melee: 'foot soldiers', siege: 'siege engines', unique: 'your unique unit' })[w ?? 'all'];
-  const sgn = (n: number) => (n > 0 ? `+${n}` : String(n));
+  const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
+  const abs = (n: number) => Math.abs(n);
   const imp = (i: string) => ({ farm: 'farm', mine: 'mine', temple: 'temple', port: 'port', market: 'market', lumber: 'lumber hut' })[i] ?? i;
   switch (p.k) {
-    case 'atk': return `${who(p.who)[0].toUpperCase()}${who(p.who).slice(1)} hit ${sgn(p.n)} harder.`;
-    case 'def': return `${who(p.who)[0].toUpperCase()}${who(p.who).slice(1)} defend ${sgn(p.n)} better.`;
-    case 'move': return `${who(p.who)[0].toUpperCase()}${who(p.who).slice(1)} move ${sgn(p.n)}.`;
-    case 'income': return p.per === 'city' ? `+${p.n}★ a turn from every city.` : p.per === 'capital' ? `+${p.n}★ a turn from your capital.` : p.per === 'road' ? `+${p.n}★ a turn for every 4 road tiles in your borders.` : `+${p.n}★ a turn for every ${imp(p.per)}${p.n < 1 ? ' pair' : ''}.`.replace(/\+0\.5★ a turn for every (\w+) pair/, '+1★ a turn for every 2 $1s');
-    case 'grow': return p.on === 'harvest' ? `Every harvest grows the city by ${p.n} more.` : `Every ${p.on === 'fish' || p.on === 'animal' || p.on === 'fruit' ? `${p.on} harvest` : imp(p.on)} grows the city by ${p.n} more.`;
-    case 'cost': return p.of === 'tech' ? `Research costs ${p.n}★ less.` : `${p.of === 'melee' ? 'Foot soldiers' : p.of === 'ranged' ? 'Ranged units' : p.of === 'mounted' ? 'Mounted units' : p.of === 'naval' ? 'Ships' : 'Siege engines'} cost ${p.n}★ less.`;
-    case 'terrain': return p.on === 'city' ? `Units in your cities defend ${sgn(p.n)} better.` : p.on === 'own' ? `Units on your own land defend ${sgn(p.n)} better.` : `Units in ${p.on === 'forest' ? 'forests' : 'the mountains'} defend ${sgn(p.n)} better.`;
+    case 'atk': return p.n >= 0 ? `${cap(who(p.who))} hit ${p.n} harder.` : `${cap(who(p.who))} hit ${abs(p.n)} weaker.`;
+    case 'def': return p.n >= 0 ? `${cap(who(p.who))} defend ${p.n} better.` : `${cap(who(p.who))} defend ${abs(p.n)} worse.`;
+    case 'move': return p.n >= 0 ? `${cap(who(p.who))} move ${p.n} further.` : `${cap(who(p.who))} move ${abs(p.n)} less.`;
+    case 'income': {
+      const sign = p.n >= 0 ? '+' : '−';
+      const n = abs(p.n);
+      return p.per === 'city' ? `${sign}${n}★ a turn from every city.` : p.per === 'capital' ? `${sign}${n}★ a turn from your capital.` : p.per === 'road' ? `${sign}${n}★ a turn for every 4 road tiles in your borders.` : n < 1 ? `${sign}1★ a turn for every 2 ${imp(p.per)}s.` : `${sign}${n}★ a turn for every ${imp(p.per)}.`;
+    }
+    case 'grow': {
+      const what = p.on === 'harvest' ? 'harvest' : p.on === 'fish' || p.on === 'animal' || p.on === 'fruit' ? `${p.on} harvest` : imp(p.on);
+      return p.n >= 0 ? `Every ${what} grows the city by ${p.n} more.` : `Every ${what} grows the city by ${abs(p.n)} less.`;
+    }
+    case 'cost': {
+      const thing = ({ tech: 'Research', melee: 'Foot soldiers', ranged: 'Ranged units', mounted: 'Mounted units', naval: 'Ships', siege: 'Siege engines', build: 'Buildings', temple: 'Temples and shrines', road: 'Roads' })[p.of];
+      return p.n >= 0 ? `${thing} cost ${p.n}★ less.` : `${thing} cost ${abs(p.n)}★ more.`;
+    }
+    case 'techcost': return `${p.tech[0].toUpperCase()}${p.tech.slice(1)} costs ${p.n}★ more to research.`;
+    case 'terrain': {
+      const where = p.on === 'city' ? 'in your cities' : p.on === 'own' ? 'on your own land' : p.on === 'away' ? 'outside your borders' : p.on === 'forest' ? 'in forests' : 'in the mountains';
+      return p.n >= 0 ? `Units ${where} defend ${p.n} better.` : `Units ${where} defend ${abs(p.n)} worse.`;
+    }
     case 'heal': return `Units on your land heal ${p.n} HP every turn.`;
     case 'kill': return `+${p.n}★ for every enemy you defeat.`;
-    case 'vision': return `See ${p.n} tile further around every unit and city.`;
+    case 'vision': return p.n >= 0 ? `See ${p.n} tile further around every unit and city.` : `See ${abs(p.n)} tile less around every unit and city.`;
     case 'levelstar': return `+${p.n}★ whenever a city levels up.`;
     case 'harvestStar': return `+${p.n}★ whenever you harvest a resource.`;
   }

@@ -34,7 +34,7 @@ Lead one of twenty-six empires, each with its own biome, starting tech, unique u
 | Swahili | coral coast and dhows | Fishing | Askari (replaces Warrior) | Boats and ships move 1 further |
 | Tibetan | high plateau | Climbing | Khampa Rider (replaces Rider) | Cross mountains without Climbing |
 
-Every empire also has an **Empire Power**, an active move only that people can make (tap the purple Power button; it starts on cooldown and recharges 8-15 turns after each use, and rivals use theirs too). A few: Egypt's *Flood of the Nile* grows every city by its farms, Rome's *Levy of the Legions* raises a free soldier in every city, the Maya's *Eclipse* stops all rival attacks for a turn, Japan's *Way of the Sword* gives a free tech, the Inuit's *Whiteout* slows and weakens every rival army, and Tibet's *Compassion of the Plateau* wins over weakened enemy units next to yours. The Empires screen lists all 26.
+Every empire has **historical strengths and weaknesses** on top of its signature bonus: for example the Aztecs take captives (+1★ per kill) but had no horses (riders cost 2★ more) and no iron (Smithing costs 2★ more), Rome's legions defend better but its Senate slows research and it was a reluctant sea power, and the Inuit hunt for extra stars but have no agriculture and no metal. Each is listed with its history on the empire screens.
 
 Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 26.
 
