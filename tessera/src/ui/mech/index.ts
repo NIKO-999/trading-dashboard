@@ -2,4 +2,6 @@
 import type { MechUiRegistry } from './types';
 export type { MechUi, MechView } from './types';
 
-export const MECH_UI: MechUiRegistry = {};
+import { ui as india } from './india';
+
+export const MECH_UI: MechUiRegistry = { india };
