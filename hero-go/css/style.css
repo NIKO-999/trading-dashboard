@@ -483,6 +483,7 @@ svg { display: block; }
 .gitem.huge { width: 116px; height: 116px; padding: 10px; margin: 0 auto; border-width: 4px; border-radius: 18px; }
 .gitem.huge .glv { font-size: 15px; }
 
+.row.cheat { background: linear-gradient(#eaffd8, #cdf3a8); }
 .gtot { margin-top: 10px; }
 .gtot .hstat span { display: flex; flex-direction: column; line-height: 1.05; font-size: 15px; }
 .gtot em { font-style: normal; font-size: 11px; color: #8ef060; }

@@ -43,6 +43,7 @@
   ];
 
   const BAG_MAX = 60;
+  const bagMax = save => (save.unlimited ? 999 : BAG_MAX);
 
   // Drop weights per source: [common, rare, epic, legendary, mythic]
   const SOURCES = {
@@ -113,7 +114,7 @@
 
   // Adds to the bag. A full bag turns the new piece straight into coins.
   function addItem(save, it) {
-    if (save.gear.length >= BAG_MAX) { const c = salvageValue(it); save.gold += c; return { kept: false, coins: c }; }
+    if (save.gear.length >= bagMax(save)) { const c = salvageValue(it); save.gold += c; return { kept: false, coins: c }; }
     save.gear.push(it);
     return { kept: true };
   }
@@ -172,7 +173,7 @@
   }
 
   window.GEAR = {
-    SLOTS, SLOT_NAME, RARITY, NAMES, BASE, PERKS, BAG_MAX, SOURCES, DROP_CHANCE,
+    SLOTS, SLOT_NAME, RARITY, NAMES, BASE, PERKS, BAG_MAX, bagMax, SOURCES, DROP_CHANCE,
     rollRarity, makeItem, perkDef, stats, maxLv, upgradeCost, salvageValue, totals, perks,
     byId, isEquipped, addItem, equip, unequip, upgrade, salvage, autoMerge, giveStarter,
   };

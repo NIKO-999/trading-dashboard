@@ -55,7 +55,7 @@
     gold: 800, gems: 600, energy: 30, energyTs: Date.now(), speed: 1,
     hero: HERO_KEYS[0] || 'samurai', heroLv: {}, talents: {}, unlocked: 1, best: {},
     pets: {}, team: [], freeEggs: 3, bonusEggs: 0, eggDay: today(), hatches: 0, giftDay: '', runs: 0, music: true, sfx: true,
-    gear: [], equipped: {}, gearId: 0,
+    gear: [], equipped: {}, gearId: 0, unlimited: false, pre: null,
     };
     G.giveStarter(s);
     return s;
@@ -67,9 +67,15 @@
   const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {} };
   SND.setMusic(save.music); SND.setSfx(save.sfx);
   const snd = n => { if (!(R && R.skip)) SND.play(n); };
-  function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
+  const UNL = 999999999;
+  const money = v => (save.unlimited ? '∞' : fmt(v));
+  const energyText = () => (save.unlimited ? '∞' : `${save.energy}/${ENERGY_MAX}`);
+  // Unlimited mode: every spend is topped back up the moment it is saved.
+  function topUp() { save.gold = Math.max(save.gold, UNL); save.gems = Math.max(save.gems, UNL); save.energy = ENERGY_MAX; save.freeEggs = 3; }
+  function persist() { if (save.unlimited) topUp(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
   const ENERGY_MAX = 30, ENERGY_MS = 5 * 60 * 1000, RUN_COST = 5;
   function tickEnergy() {
+    if (save.unlimited) { save.energy = ENERGY_MAX; save.energyTs = Date.now(); return; }
     if (save.energy >= ENERGY_MAX) { save.energyTs = Date.now(); return; }
     const gained = Math.floor((Date.now() - save.energyTs) / ENERGY_MS);
     if (gained > 0) { save.energy = Math.min(ENERGY_MAX, save.energy + gained); save.energyTs += gained * ENERGY_MS; }
@@ -111,7 +117,7 @@
   function toast(msg) { const t = el(`<div class="toast">${msg}</div>`); app.append(t); setTimeout(() => t.remove(), 1800); }
   function modal(html, cls = '') { const m = el(`<div class="modal ${cls}">${html}</div>`); app.append(m); return m; }
   function chip(icon, val, id) { return `<div class="chip" ${id ? `id="${id}"` : ''}>${ICONS[icon]}<span>${val}</span></div>`; }
-  function resChips() { tickEnergy(); return chip('energy', `${save.energy}/${ENERGY_MAX}`, 'energy') + chip('gem', fmt(save.gems)) + chip('coin', fmt(save.gold)); }
+  function resChips() { tickEnergy(); return chip('energy', energyText(), 'energy') + chip('gem', money(save.gems)) + chip('coin', money(save.gold)); }
 
   // ---------------------------------------------------------------- navigation
   let tab = 'battle';
@@ -194,7 +200,7 @@
     const eTimer = setInterval(() => {
       const c = $('#energy span');
       if (!c || !document.body.contains(scr)) return clearInterval(eTimer);
-      tickEnergy(); c.textContent = `${save.energy}/${ENERGY_MAX}`;
+      tickEnergy(); c.textContent = energyText();
     }, 10000);
     $('.ch-nav.l', scr).onclick = () => { viewCh--; show('battle'); };
     $('.ch-nav.r', scr).onclick = () => { viewCh++; show('battle'); };
@@ -213,7 +219,7 @@
     const k = heroView, H = HEROES[k] || { name: k, title: '', lore: '', signature: { name: '', desc: '' }, color: '#888' };
     const st = heroStats(k), lv = heroLv(k), cost = heroUpCost(k);
     const scr = el(`<div class="screen">
-      <div class="page-h"><div class="t stroke">Heroes</div>${chip('coin', fmt(save.gold))}</div>
+      <div class="page-h"><div class="t stroke">Heroes</div>${chip('coin', money(save.gold))}</div>
       <div class="hero-scroll">
       <div class="hero-show"><div class="scene">${art.scene(HERO_SCENE[k] || 'forest')}</div><div class="ped"></div><div class="big">${art.hero(k)}</div></div>
       <div class="hero-row">${HERO_KEYS.map(h => `<button class="hcard ${h === k ? 'on' : ''}" data-h="${h}"><span class="lv">Lv.${heroLv(h)}</span>${art.portrait(h)}<div class="n">${HEROES[h].name}</div></button>`).join('')}</div>
@@ -247,7 +253,7 @@
     const owned = Object.keys(save.pets).filter(k => PETS[k]);
     const campLv = 1 + Math.floor(save.hatches / 10), campXp = save.hatches % 10;
     const scr = el(`<div class="screen">
-      <div class="pets-top"><div class="t stroke-sm">Pets</div>${chip('gem', fmt(save.gems))}${chip('coin', fmt(save.gold))}</div>
+      <div class="pets-top"><div class="t stroke-sm">Pets</div>${chip('gem', money(save.gems))}${chip('coin', money(save.gold))}</div>
       <div class="camp"><div class="scene">${SCENES.camp ? SCENES.camp.svg() : art.scene('forest')}</div>
         <div class="platforms">${[0, 1, 2].map(i => `<button class="platform" data-i="${i}">${save.team[i] ? `<div class="pet-art">${art.pet(save.team[i])}</div>` : '<div class="empty">+</div>'}</button>`).join('')}</div>
         <div class="battle-sign">Battle</div>
@@ -255,7 +261,7 @@
         <div class="roamers"></div>
       </div>
       <div class="eggs">
-        <button class="egg-slot" data-e="free"><div class="eg">${art.egg('common')}</div><span class="cnt stroke">x${save.freeEggs + save.bonusEggs}</span><span class="cost">${save.freeEggs ? `Free ${save.freeEggs}/3` : save.bonusEggs ? 'Reward' : 'Tomorrow'}</span></button>
+        <button class="egg-slot" data-e="free"><div class="eg">${art.egg('common')}</div><span class="cnt stroke">${save.unlimited ? '∞' : 'x' + (save.freeEggs + save.bonusEggs)}</span><span class="cost">${save.unlimited ? 'Free ∞' : save.freeEggs ? `Free ${save.freeEggs}/3` : save.bonusEggs ? 'Reward' : 'Tomorrow'}</span></button>
         <button class="egg-slot rare" data-e="r1"><div class="eg">${art.egg('rare')}</div><span class="cnt stroke">x1</span><span class="cost">${ICONS.gem}${RARE_EGG_COST}</span></button>
         <button class="egg-slot rare" data-e="r10"><div class="eg">${art.egg('rare')}</div><span class="cnt stroke">x10</span><span class="cost">${ICONS.gem}${RARE_EGG10_COST}</span></button>
       </div>
@@ -334,7 +340,7 @@
 
   // ---------------------------------------------------------------- talents
   function renderTalents() {
-    const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Talents</div>${chip('coin', fmt(save.gold))}</div>
+    const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Talents</div>${chip('coin', money(save.gold))}</div>
       <div class="list">${TALENTS.map(t => { const lv = talentLv(t.id), c = talentCost(t.id); return `<div class="row"><div class="ri" style="background:linear-gradient(#fff5,${t.color})">${ICONS[t.icon]}</div><div class="rb"><div class="rn">${t.name} <span style="font-size:14px;color:#8a6a4a">Lv.${lv}</span></div><div class="rd">${t.desc(lv)} → ${t.desc(lv + 1)}</div></div><button class="btn small yellow" data-t="${t.id}" ${save.gold < c ? 'disabled' : ''}>${fmt(c)}</button></div>`; }).join('')}</div></div>`);
     scr.append(tabbar()); app.append(scr);
     $$('[data-t]', $('.list', scr)).forEach(b => b.onclick = () => { const id = b.dataset.t, c = talentCost(id); if (save.gold < c) return; save.gold -= c; save.talents[id] = talentLv(id) + 1; persist(); SND.play('buy'); show('talents'); });
@@ -437,7 +443,7 @@
   // ---- gear screen
   let gearFilter = 'all', gearScr = null;
   function renderGear() {
-    const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Gear</div>${chip('coin', fmt(save.gold), 'gcoin')}</div><div class="gear-scroll"></div></div>`);
+    const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Gear</div>${chip('coin', money(save.gold), 'gcoin')}</div><div class="gear-scroll"></div></div>`);
     scr.append(tabbar()); app.append(scr);
     gearScr = scr; fillGear();
   }
@@ -450,7 +456,7 @@
     if (!gearScr || !document.body.contains(gearScr)) return;
     const box = $('.gear-scroll', gearScr);
     const keepScroll = box.scrollTop;
-    const cc = $('#gcoin span', gearScr); if (cc) cc.textContent = fmt(save.gold);
+    const cc = $('#gcoin span', gearScr); if (cc) cc.textContent = money(save.gold);
     const g = G.totals(save), st = heroStats(), H = HEROES[save.hero] || {};
     const slotBtn = s => {
       const it = G.byId(save, save.equipped[s]);
@@ -478,25 +484,77 @@
         <button class="btn small blue" id="gmerge" ${mergeGroups() ? '' : 'disabled'}>Auto Merge${mergeGroups() ? ` (${mergeGroups()})` : ''}</button>
         <button class="btn small red" id="gsalv" ${commons.length ? '' : 'disabled'}>Salvage Commons${commons.length ? ` (${commons.length})` : ''}</button>
       </div>
-      <div class="bag-head"><b>Bag</b> <span>${save.gear.length}/${G.BAG_MAX}</span></div>
+      <div class="bag-head"><b>Bag</b> <span>${save.gear.length}/${save.unlimited ? '∞' : G.BAG_MAX}</span></div>
       <div class="gfilters">${['all', ...G.SLOTS].map(f => `<button class="gf ${gearFilter === f ? 'on' : ''}" data-f="${f}">${f === 'all' ? 'All' : `<span class="gfi">${art.gear(f, 0)}</span>`}</button>`).join('')}</div>
       <div class="bag">${list.length ? list.map(i => itemCell(i)).join('') : `<div class="bag-empty">No ${gearFilter === 'all' ? '' : G.SLOT_NAME[gearFilter].toLowerCase() + ' '}gear yet. Win battles, open chests and visit the Shop!</div>`}</div>`;
     box.scrollTop = keepScroll;
     $$('.gslot', box).forEach(b => b.onclick = () => { if (b.dataset.id) itemModal(+b.dataset.id); else { gearFilter = b.dataset.slot; fillGear(); } });
     $$('.gitem', box).forEach(b => b.onclick = () => itemModal(+b.dataset.id));
     $$('.gf', box).forEach(b => b.onclick = () => { gearFilter = b.dataset.f; fillGear(); });
-    $('#gmerge', box).onclick = () => {
+    const doMerge = () => {
       const r = G.autoMerge(save); if (!r.merged) return;
       persist(); SND.play('upgrade');
       const best = r.made.reduce((a, b) => (b.rarity > a.rarity ? b : a), r.made[0]);
       toast(`Merged ${r.merged} time${r.merged > 1 ? 's' : ''}! Best: ${best.name}${r.refund ? ` · +${fmt(r.refund)} coins back` : ''}`);
       fillGear();
     };
+    $('#gmerge', box).onclick = () => {
+      // pieces that would be used up and are upgraded or carry a perk deserve a second look
+      let precious = 0;
+      for (const slot of G.SLOTS) for (let r = 0; r < G.RARITY.length - 1; r++) {
+        const pool = save.gear.filter(g => g.slot === slot && g.rarity === r && !G.isEquipped(save, g)).sort((a, b) => a.lv - b.lv);
+        pool.slice(0, Math.floor(pool.length / 3) * 3).forEach(g => { if (g.lv > 1 || g.perk) precious++; });
+      }
+      if (!precious) return doMerge();
+      const m = modal(`<div class="ribbon stroke">Merge?</div><div class="panel"><p>This will use up ${precious} upgraded or perk item${precious > 1 ? 's' : ''}.</p><div class="actions"><button class="btn grey" id="no">Cancel</button><button class="btn" id="yes">Merge</button></div></div>`);
+      $('#no', m).onclick = () => m.remove();
+      $('#yes', m).onclick = () => { m.remove(); doMerge(); };
+    };
     $('#gsalv', box).onclick = () => {
       const m = modal(`<div class="ribbon stroke">Salvage?</div><div class="panel"><p>Turn ${commons.length} unequipped common item${commons.length > 1 ? 's' : ''} into coins?</p><div class="actions"><button class="btn grey" id="no">Keep</button><button class="btn red" id="yes">Salvage</button></div></div>`);
       $('#no', m).onclick = () => m.remove();
       $('#yes', m).onclick = () => { let c = 0; commons.forEach(i => { c += G.salvage(save, i); }); persist(); SND.play('coin'); toast(`+${fmt(c)} coins`); m.remove(); fillGear(); };
     };
+  }
+
+  // ---------------------------------------------------------------- sandbox
+  function setUnlimited(on) {
+    if (on && !save.unlimited) { save.pre = { gold: save.gold, gems: save.gems, freeEggs: save.freeEggs }; save.unlimited = true; }
+    else if (!on && save.unlimited) {
+      save.unlimited = false;
+      if (save.pre) { save.gold = save.pre.gold; save.gems = save.pre.gems; save.freeEggs = save.pre.freeEggs; }
+      save.pre = null; save.energy = ENERGY_MAX; save.energyTs = Date.now();
+    }
+    persist();
+  }
+  // Every hero, chapter, pet and piece of gear, all maxed out. Gear: one of every item, and every perk variant of Legendary/Mythic pieces.
+  function unlockEverything() {
+    setUnlimited(true);
+    save.unlocked = CHAPTERS.length;
+    HERO_KEYS.forEach(k => { save.heroLv[k] = 30; });
+    TALENTS.forEach(t => { save.talents[t.id] = Math.max(talentLv(t.id), 30); });
+    Object.keys(PETS).forEach(k => { save.pets[k] = { lv: 10 }; });
+    const bestPets = ['babydragon', 'iceprincess', 'kingling'].filter(k => PETS[k]);
+    if (bestPets.length) save.team = bestPets;
+    save.gear = []; save.equipped = {};
+    for (const slot of G.SLOTS) {
+      for (let r = 0; r < G.RARITY.length; r++) {
+        const variants = r >= 3 ? G.PERKS : [null];
+        for (const perk of variants) {
+          const it = G.makeItem(save, slot, r);
+          it.lv = G.maxLv(it);
+          if (perk) it.perk = { id: perk.id, v: perk.vals[r - 3] };
+          save.gear.push(it);
+        }
+      }
+    }
+    // Wear the best set: a Mythic in every slot, with perks that cover crit, lifesteal, damage reduction, EXP and coins.
+    const wear = { weapon: 'crit', helmet: 'vamp', armor: 'guard', boots: 'wisdom', ring: 'greed', amulet: 'crit' };
+    for (const slot of G.SLOTS) {
+      const it = save.gear.find(g => g.slot === slot && g.rarity === 4 && g.perk && g.perk.id === wear[slot]);
+      if (it) G.equip(save, it);
+    }
+    persist();
   }
 
   // ---------------------------------------------------------------- shop
@@ -512,8 +570,10 @@
       { id: 'gchestP', name: 'Royal Chest', icon: 'armor', desc: '1 piece of gear, Rare or better.', btn: '💎 150', ok: save.gems >= 150 },
       { id: 'gchestP10', name: 'Royal Chest x10', icon: 'armor', desc: '10 pieces, Rare or better, with an Epic or better guaranteed.', btn: '💎 1,350', ok: save.gems >= 1350 },
     ];
+    const sandbox = `<div class="row cheat"><div class="ri" style="background:linear-gradient(#fff6,#8ef060)">${ICONS.talent}</div><div class="rb"><div class="rn">Unlimited Mode</div><div class="rd">Endless coins, gems, energy, eggs and revives.</div></div><button class="btn small ${save.unlimited ? '' : 'grey'}" data-i="unl">${save.unlimited ? 'ON' : 'OFF'}</button></div>
+      <div class="row cheat"><div class="ri" style="background:linear-gradient(#fff6,#8ef060)">${ICONS.armor}</div><div class="rb"><div class="rn">Unlock Everything</div><div class="rd">Every chapter, hero, pet and talent maxed, plus every piece of gear at max level. Turns Unlimited Mode on.</div></div><button class="btn small yellow" data-i="unlockall">Unlock</button></div>`;
     const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Shop</div>${resChips()}</div>
-      <div class="list">${items.map(i => `<div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ffb03a)">${ICONS[i.icon]}</div><div class="rb"><div class="rn">${i.name}</div><div class="rd">${i.desc}</div></div><button class="btn small ${i.id === 'gift' ? '' : 'blue'}" data-i="${i.id}" ${i.ok ? '' : 'disabled'}>${i.btn}</button></div>`).join('')}
+      <div class="list">${sandbox}${items.map(i => `<div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ffb03a)">${ICONS[i.icon]}</div><div class="rb"><div class="rn">${i.name}</div><div class="rd">${i.desc}</div></div><button class="btn small ${i.id === 'gift' ? '' : 'blue'}" data-i="${i.id}" ${i.ok ? '' : 'disabled'}>${i.btn}</button></div>`).join('')}
       <div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ff6b6b)">${ICONS.gear}</div><div class="rb"><div class="rn">Reset progress</div><div class="rd">Start over from scratch</div></div><button class="btn small red" data-i="reset">Reset</button></div>
       </div></div>`);
     scr.append(tabbar()); app.append(scr);
@@ -521,6 +581,8 @@
       const id = b.dataset.i;
       if (id === 'gift') { save.gems += 120; save.gold += 300; save.giftDay = today(); toast('+120 Gems, +300 Coins!'); }
       if (id === 'energy') { save.gems -= 60; save.energy = ENERGY_MAX; toast('Energy refilled!'); }
+      if (id === 'unl') { setUnlimited(!save.unlimited); toast(save.unlimited ? 'Unlimited Mode on' : 'Unlimited Mode off'); return show('shop'); }
+      if (id === 'unlockall') { unlockEverything(); SND.play('levelup'); toast('Everything unlocked!'); return show('shop'); }
       if (id === 'gold') { save.gems -= 100; save.gold += 2000; toast('+2,000 Coins'); }
       if (id === 'gold2') { save.gems -= 500; save.gold += 12000; toast('+12,000 Coins'); }
       if (id === 'gchest') { save.gold -= 1500; persist(); return openChests('shop', 1, false); }
@@ -802,7 +864,7 @@
       log('A travelling <b>merchant</b> waves you over. "Finest skills, cheap cheap!"');
       const price = Math.round(60 + R.day * 8);
       const offers = skillPool(3).map(id => ({ id, price: SKILLS[id].rarity === 'legendary' ? price * 2 : SKILLS[id].rarity === 'epic' ? Math.round(price * 1.5) : price }));
-      const opts = offers.map(o => ({ ...skillCard(o.id), desc: `<b>Price: ${fmt(o.price)} coins</b><br>` + skillCard(o.id).desc, disabled: R.coins < o.price, fn: () => { R.coins -= o.price; SND.play('buy'); learn(o.id); } }));
+      const opts = offers.map(o => ({ ...skillCard(o.id), desc: `<b>Price: ${fmt(o.price)} coins</b><br>` + skillCard(o.id).desc, disabled: !save.unlimited && R.coins < o.price, fn: () => { if (!save.unlimited) R.coins -= o.price; SND.play('buy'); learn(o.id); } }));
       opts.push({ icon: 'wind', rarity: 'common', name: 'No thanks', desc: 'Keep your coins.', fn: () => { } });
       const c = await choiceModal('Merchant', ICONS.chest, opts);
       log(c.name === 'No thanks' ? 'You politely decline.' : `You bought <b>${c.name}</b>.`);
@@ -1182,7 +1244,7 @@
 
   async function defeat(timeout) {
     SND.play('defeat'); R.sadPlayed = true;
-    const canRevive = !R.revived && save.gems >= 50;
+    const canRevive = (!R.revived || save.unlimited) && save.gems >= 50;
     const choice = await new Promise(res => {
       const m = modal(`<div class="bigicon">${ICONS.skull}</div><div class="ribbon stroke">${timeout ? 'Out of Time' : 'Defeated'}</div>
         <div class="panel"><p>${timeout ? 'You ran out of rounds!' : 'Your hero has fallen…'}</p><p style="font-size:13px;color:#7a6a5a">Revive once per journey with full HP.</p>
