@@ -3,7 +3,7 @@
 A turn-based 4X strategy game for phones, built as an installable, offline-capable PWA.
 It is separate from the rest of this repo, with its own `package.json` and build.
 
-Lead one of fifteen empires, each with its own biome, starting tech, unique unit and bonus:
+Lead one of sixteen empires, each with its own biome, starting tech, unique unit and bonus:
 
 | Empire | Biome | Starts with | Unique unit | Bonus |
 |---|---|---|---|---|
@@ -22,6 +22,7 @@ Lead one of fifteen empires, each with its own biome, starting tech, unique unit
 | Inuit | tundra and ice | Fishing | Harpooner (replaces Archer) | Fish harvests give +1 extra population |
 | Inca | terraced mountains | Climbing | Slinger (replaces Archer) | Mines give +1 extra population |
 | Aksumite | highland plateaus | Climbing | Shotelai (replaces Swordsman) | Units on mountains defend at ×2.5 |
+| Aboriginal | red desert and gum trees | Hunting | Woomera Hunter (replaces Archer) | Clearing a forest also grows the city by 1 |
 
 Features:
 - A seeded isometric map with fog of war.

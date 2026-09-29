@@ -1,7 +1,7 @@
 export type Terrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
 export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market';
-export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia';
+export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal';
 export type Biome = TribeId;
 export type UnitKind =
   | 'warrior' | 'rider' | 'archer' | 'defender' | 'swordsman' | 'catapult' | 'knight' | 'giant'
@@ -9,7 +9,7 @@ export type UnitKind =
   | 'boat' | 'ship' | 'warship'
   | 'legionary' | 'chariot' | 'jaguar' | 'buccaneer' | 'waka'
   | 'berserker' | 'samurai' | 'horsearcher' | 'hoplite' | 'impi'
-  | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai';
+  | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai' | 'woomera';
 
 export interface Tile {
   x: number;

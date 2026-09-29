@@ -363,7 +363,9 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
     case 'mine': t.improvement = 'mine'; return grow(p.tribe === 'inca' ? 3 : 2); // Terraces
     case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b); }
-    case 'clear': t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); return true;
+    case 'clear':
+      t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 });
+      return p.tribe === 'aboriginal' ? grow(1) : true; // Firestick Farming
     case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b); }
     case 'shrine':
     case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b); }

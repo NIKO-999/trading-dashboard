@@ -286,9 +286,26 @@ export const TRIBES: Record<TribeId, TribeDef> = {
     palette: { field: '#c6c65a', fieldSide: '#8a6a3a', forest: '#6f9a3a', trunk: '#5a3f26', mountain: '#a58a6a', mountainShade: '#75604a', snow: '#f8f0e0', shallow: '#6fdac0', ocean: '#2688b8' },
     cityNames: ['Aksum', 'Yeha', 'Adulis', 'Lalibela', 'Gondar', 'Axum Tsion', 'Debre Damo', 'Matara', 'Qohaito', 'Harar', 'Adwa', 'Mekelle'],
   },
+  aboriginal: {
+    id: 'aboriginal',
+    name: 'Nations of the Red Country',
+    people: 'Aboriginal',
+    color: '#b8502e',
+    colorDark: '#5e2412',
+    roof: '#c9b48a',
+    startTech: 'hunting',
+    unique: 'woomera',
+    replaces: 'archer',
+    bonus: 'Firestick Farming — clearing a forest also grows the city by 1.',
+    blurb: 'Red earth, white-trunked gums, bark shelters and a land read by those who have walked it for millennia.',
+    terrain: { field: 44, forest: 18, mountain: 12, shallow: 14, ocean: 12 },
+    resources: { animal: 1.7, fruit: 1.3, fish: 1.1, crop: 0.4, ore: 0.8 },
+    palette: { field: '#d2a35c', fieldSide: '#a9552f', forest: '#8fa24a', trunk: '#d6cfbe', mountain: '#b5643c', mountainShade: '#7d3f22', snow: '#f6e6d0', shallow: '#5fd6cc', ocean: '#1f7fb8' },
+    cityNames: ['Uluru', 'Kata Tjuta', 'Kakadu', 'Nitmiluk', 'Mutawintji', 'Karijini', 'Wilpena', 'Warrumbungle', 'Gariwerd', 'Booderee', 'Kuku Yalanji', 'Ngunnawal'],
+  },
 };
 
-export const TRIBE_IDS: TribeId[] = ['egypt', 'aztec', 'polynesia', 'rome', 'pirates', 'vikings', 'japan', 'mongols', 'greeks', 'zulu', 'persia', 'celts', 'inuit', 'inca', 'ethiopia'];
+export const TRIBE_IDS: TribeId[] = ['egypt', 'aztec', 'polynesia', 'rome', 'pirates', 'vikings', 'japan', 'mongols', 'greeks', 'zulu', 'persia', 'celts', 'inuit', 'inca', 'ethiopia', 'aboriginal'];
 
 /** The unit used as an empire's face in menus: its unique unit, or its warrior when that unit is a boat. */
 export function portraitKind(tribe: TribeId): UnitKind {

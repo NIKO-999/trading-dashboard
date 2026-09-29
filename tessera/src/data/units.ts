@@ -53,6 +53,7 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   clansman: U({ kind: 'clansman', name: 'Clansman', cost: 2, hp: 12, atk: 2, def: 1.5, move: 1, range: 1, skills: ['dash', 'forestwalk'], tech: null, blurb: 'Celtic warrior of the oak groves. Slips through forest.' }),
   harpooner: U({ kind: 'harpooner', name: 'Harpooner', cost: 3, hp: 10, atk: 2, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inuit hunter with a barbed harpoon. Hits from two tiles.' }),
   slinger: U({ kind: 'slinger', name: 'Slinger', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inca sling-warrior. Hurls stones harder than an archer shoots.' }),
+  woomera: U({ kind: 'woomera', name: 'Woomera Hunter', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'forestwalk'], tech: 'archery', blurb: 'Aboriginal hunter with a spear-thrower. Throws far and moves freely through forest.' }),
   shotelai: U({ kind: 'shotelai', name: 'Shotelai', cost: 5, hp: 15, atk: 3.5, def: 2.5, move: 1, range: 1, skills: ['dash'], tech: 'smithing', blurb: 'Ethiopian sickle-sword fighter that cuts around shields.' }),
 };
 

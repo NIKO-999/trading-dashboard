@@ -22,6 +22,7 @@ const LOOK: Record<TribeId, Look> = {
   inuit: { skin: '#c99a6e', hair: '#141416' },
   inca: { skin: '#b5754a', hair: '#141012' },
   ethiopia: { skin: '#8a5a36', hair: '#15100c' },
+  aboriginal: { skin: '#6e4229', hair: '#17110d' },
 };
 
 const GOLD = '#f0c43a';
@@ -6022,6 +6023,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   inuit: { body: '#8a6a4c', feature: 'caribou' },
   inca: { body: '#e8dcc0', feature: 'llama' },
   ethiopia: { body: '#7a4530', feature: 'ibex' },
+  aboriginal: { body: '#a8683a', feature: 'hump' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {
