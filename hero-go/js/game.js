@@ -682,7 +682,7 @@
     milestones().forEach(m => track.append(el(`<div class="ms ${m.boss ? 'boss' : ''}" data-d="${m.d}" style="left:${m.d / ch.days * 100}%">${m.boss ? ICONS.devil : ICONS.swords}<span class="d">${m.d}</span></div>`)));
     track.append(el(`<div class="cur" style="left:0%">0</div>`));
     // hero + pet actors
-    S.hero = el(`<div class="actor hero"><div class="art">${art.hero(R.heroKey, 'run')}</div><div class="status"></div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
+    S.hero = el(`<div class="actor hero" style="--asp:${(HEROES[R.heroKey] && HEROES[R.heroKey].aspect) || 1.2}"><div class="art">${art.hero(R.heroKey, 'run')}</div><div class="status"></div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
     S.actors.append(S.hero);
     if (R.pet) { S.pet = el(`<div class="actor pet"><div class="art">${art.pet(R.pet, 'runpet')}</div></div>`); S.actors.append(S.pet); }
     S.speed.classList.toggle('x1', save.speed === 1);

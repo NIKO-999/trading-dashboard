@@ -167,7 +167,7 @@ svg { display: block; }
 .actor .art { width: 100%; }
 .actor .art svg { width: 100%; height: auto; overflow: visible; }
 /* usable height = stage minus top HUD (~118px) minus the 9% floor; hero art is 200x240, enemies 200x200 */
-.actor.hero { left: 6%; width: min(34%, calc((91cqh - 118px) / 1.2)); }
+.actor.hero { left: 6%; width: min(34%, calc((91cqh - 118px) / var(--asp, 1.2))); }
 .actor.pet { left: 1%; width: 16%; bottom: 5%; z-index: 4; }
 .actor.enemy { width: min(26%, calc(91cqh - 118px)); }
 .actor.enemy.trio { width: min(22%, calc(91cqh - 118px)); }
@@ -290,7 +290,7 @@ svg { display: block; }
 .ribbon::before, .ribbon::after { content: ''; position: absolute; top: 12px; width: 26px; height: 100%; background: #d0801a; border: 3px solid var(--ink); z-index: -1; }
 .ribbon::before { left: -18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 40% 50%); }
 .ribbon::after { right: -18px; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
-.modal-hero { width: 150px; margin-bottom: -18px; filter: drop-shadow(0 0 30px rgba(255,190,80,.7)); animation: floaty 2s ease-in-out infinite; }
+.modal-hero { height: 180px; margin-bottom: -18px; filter: drop-shadow(0 0 30px rgba(255,190,80,.7)); animation: floaty 2s ease-in-out infinite; }
 @keyframes floaty { 50% { transform: translateY(-6px); } }
 .cards { width: 100%; display: flex; flex-direction: column; gap: 12px; padding-top: 16px; }
 .card {
@@ -434,14 +434,14 @@ svg { display: block; }
 .splash .lineup > div:nth-child(3n) { animation-delay: .8s; }
 /* centre heroes stand in front and a touch larger */
 .splash .lineup > div:nth-child(3), .splash .lineup > div:nth-child(4) { flex-grow: 1.3; max-width: 30%; z-index: 2; }
-.splash .lineup svg { width: 100%; overflow: visible; }
+.splash .lineup svg { width: 100%; height: auto; overflow: visible; }
 .splash .logo { position: relative; font-size: 64px; line-height: .9; text-align: center; transform: rotate(-4deg); margin-bottom: 6px; }
 .splash .sub { position: relative; font-size: 18px; margin-bottom: 24px; }
 .splash .tap { position: relative; animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { transform: scale(1.06); } }
 
 @media (max-height: 700px) {
-  .modal-hero { width: 110px; }
+  .modal-hero { height: 132px; }
   .bigicon { width: 80px; height: 80px; }
   .result-title { font-size: 40px; }
   .card { min-height: 80px; }
@@ -532,3 +532,5 @@ svg { display: block; }
 .loot { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 8px 0; }
 .loot .gitem { width: 54px; padding: 4px; }
 @media (max-height: 700px) { .doll { height: 210px; } .gslot { width: 50px; height: 50px; } .gitem.huge { width: 92px; height: 92px; } }
+
+.modal-hero svg { height: 100%; width: auto; margin: 0 auto; }
