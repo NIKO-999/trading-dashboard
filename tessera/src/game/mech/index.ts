@@ -59,6 +59,7 @@ export function hookSpare(s: GameState, a: Unit, d: Unit): boolean {
   each(s, (m, o) => { if (!spared && m.spare?.(s, o, a, d)) spared = true; });
   return spared;
 }
+export function hookAfterMove(s: GameState, u: Unit, from: { x: number; y: number }, to: Tile) { each(s, (m, o) => m.afterMove?.(s, o, u, from, to)); }
 export function hookAfterAttack(s: GameState, a: Unit, d: Unit, info: AttackInfo) { each(s, (m, o) => m.afterAttack?.(s, o, a, d, info)); }
 export function hookUnitDied(s: GameState, u: Unit, killer: Unit | null) { each(s, (m, o) => m.unitDied?.(s, o, u, killer)); }
 export function hookCityCaptured(s: GameState, c: City, from: number) { each(s, (m, o) => m.cityCaptured?.(s, o, c, from)); }

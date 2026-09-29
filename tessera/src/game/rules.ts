@@ -1,6 +1,6 @@
 import { TECH_BY_ID, techsFor } from '../data/techs';
 import { unitFor } from '../data/tribes';
-import { hookActions, hookAfterAttack, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
+import { hookActions, hookAfterAttack, hookAfterMove, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
 import { perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
@@ -615,6 +615,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   const opt = moveOptions(s, u).find((o) => o.x === x && o.y === y);
   if (!opt) return false;
   emit({ type: 'move', unitId: u.id, owner: u.owner, path: [{ x: u.x, y: u.y }, ...(opt.path ?? [{ x, y }])], embark: !!opt.embark, disembark: !!opt.disembark, before: u.kind });
+  const from = { x: u.x, y: u.y };
   u.x = x;
   u.y = y;
   u.moved = true;
@@ -633,6 +634,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   }
   if (t.ruin) openRuin(s, u, t);
   revealAround(s, u.owner);
+  hookAfterMove(s, u, from, t); // ambushes and other reactions to a finished move
   return true;
 }
 

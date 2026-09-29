@@ -56,6 +56,8 @@ export interface Mechanic {
   combat?(s: GameState, owner: number, a: Unit, d: Unit, ctx: CombatCtx): void;
   /** Return true to spare a defender who would die (a captive is taken, a unit is spared...): it keeps 1 HP and lives. */
   spare?(s: GameState, owner: number, a: Unit, d: Unit): boolean;
+  /** After a unit has finished a move (called for all empires' mechanics; `u` may die here, e.g. to an ambush). */
+  afterMove?(s: GameState, owner: number, u: Unit, from: { x: number; y: number }, to: Tile): void;
   /** After an attack has been applied. */
   afterAttack?(s: GameState, owner: number, a: Unit, d: Unit, info: AttackInfo): void;
   /** After a unit has been removed from the game (`killer` is null when it did not die in combat). */
