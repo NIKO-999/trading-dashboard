@@ -703,7 +703,7 @@ function baseDefense(s: GameState, u: Unit, t: Tile) {
   return 1;
 }
 
-const unitDef = (s: GameState, u: Unit) => def(u).def
+export const unitDef = (s: GameState, u: Unit) => def(u).def
   + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0)
   + (s.players[u.owner].tribe === 'japan' && tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) === u.owner ? 1 : 0); // Home Ground
 
