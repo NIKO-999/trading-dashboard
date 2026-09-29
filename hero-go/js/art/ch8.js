@@ -504,6 +504,8 @@
       b += P('M96 94L80 114L90 114L84 132L104 108L93 108Z', '#ffd84a', 2.6);
       b += P('M95 98L86 112L92 112Z', '#fffbd0', 0, 'opacity=".9"');
       b += hl(76, 92, 10, 3.4, -25, 0.7);
+      // battle scars
+      b += '<path d="M104 120l14 10M107 114l14 10M110 108l12 9" stroke="#0c1a66" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><path d="M70 130l8 6M74 126l8 6" stroke="#8fb0e0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>';
       // gold torc
       b += P('M62 96Q80 104 100 84L104 92Q82 116 60 106Z', 'url(#' + I('gold') + ')', 3);
       b += '<path d="M66 100l4 -2M74 102l4 -3M82 100l4 -4M90 96l4 -5" stroke="#8a5a10" stroke-width="1.6" stroke-linecap="round"/>';
@@ -535,7 +537,6 @@
       b += '</g>';
       // head shape
       b += '<ellipse cx="70" cy="58" rx="27" ry="24" transform="rotate(-8 70 58)" fill="url(#' + I('body') + ')" ' + S(4.5) + '/>';
-      b += P('M88 42Q100 60 92 80Q80 68 84 50Z', '#0c1a66', 0, 'opacity=".5"');
       // white face/cheek feathers
       for (i = 0; i < 5; i++) b += feather(96 - i * 3, 64 + i * 3, 22, 6.5, 118 + i * 12, CW, '#5a86d0', '#3a5a9a', 2);
       for (i = 0; i < 4; i++) b += feather(64 + i * 7, 40, 16, 5.5, -18 + i * 16, CV, '#0c1e70', '#08123e', 1.8);
@@ -559,7 +560,7 @@
       // eye
       b += '<circle cx="70" cy="60" r="17" fill="url(#' + I('eye') + ')"/>';
       b += '<g class="part-eyes" style="transform-origin: 68px 62px"><path d="M56 58Q66 52 82 62Q76 74 62 72Q54 68 56 58Z" fill="#fff37a" ' + S(3) + '/><ellipse cx="66" cy="63" rx="3" ry="7.5" fill="' + O + '"/><path d="M58 60Q68 55 80 62" stroke="#ff9a1a" stroke-width="2.2" fill="none" opacity=".7"/><ellipse cx="62.5" cy="59.5" rx="2.6" ry="1.8" fill="#fff"/><circle cx="72" cy="68" r="1.4" fill="#fff" opacity=".9"/></g>';
-      b += hl(60, 40, 9, 2.6, -18, 0.7) + hl(96, 60, 3, 8, 20, 0.35);
+      b += hl(60, 40, 9, 2.6, -18, 0.7);
       b += '</g>';
 
       // bolts arcing off the bird, drawn on top
