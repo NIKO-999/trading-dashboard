@@ -20,7 +20,7 @@ function checkInvariants(s: GameState) {
     seen.add(k);
     const t = tileAt(s, u.x, u.y)!;
     assert.ok(t, 'unit off the map');
-    if (def(u).naval) assert.ok(isWater(t) || s.players[u.owner].tribe === 'vikings' /* longships may beach */, `${u.kind} on land at ${k}`);
+    if (def(u).naval) assert.ok(isWater(t) || s.players[u.owner].tribe === 'vikings' /* longships may beach */ || (s.players[u.owner].tribe === 'pirates' && t.terrain === 'platform') /* pirate ships sail over platforms */, `${u.kind} on land at ${k}`);
     else if (!def(u).skills.includes('amphibious')) assert.ok(isLand(t) || t.improvement === 'port', `${u.kind} in water at ${k}`);
     assert.ok(u.hp > 0, 'dead unit left on the board');
   }
@@ -356,8 +356,8 @@ test('every empire gets its starting tech, unique unit and capital', () => {
     assert.equal(citiesOf(s, 0).length, 1);
     assert.equal(me.techs.length, 1);
     const cap = citiesOf(s, 0)[0];
-    assert.equal(tileAt(s, cap.x, cap.y)!.terrain, 'field');
-    assert.equal(s.units.filter((u) => u.owner === 0).length, 1);
+    assert.equal(tileAt(s, cap.x, cap.y)!.terrain, tribe === 'pirates' ? 'platform' : 'field'); // the Flotilla's capital floats
+    assert.equal(s.units.filter((u) => u.owner === 0).length, tribe === 'pirates' ? 2 : 1); // (plus its starting galley)
   }
 });
 

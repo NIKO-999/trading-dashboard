@@ -655,7 +655,7 @@ export class GameView {
           h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id === 'mech:flood-market'), p.tribe);
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:')), p.tribe); // empire actions on a unit's tile (launch, board...)
       return;
     }
 
