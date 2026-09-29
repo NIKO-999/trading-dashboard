@@ -4,7 +4,7 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, tileAt } from '../src/game/grid.ts';
 import { createGame, foundCity } from '../src/game/mapgen.ts';
-import { payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -99,7 +99,7 @@ test('the new empires\' bonuses', () => {
   const game = [...z.tiles].find((t) => t.owner === cap.id && t.resource === 'animal')!;
   assert.ok(game, 'zulu start with game nearby');
   z.players[0].stars = 10;
-  const grown = () => cap.pop + Array.from({ length: cap.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0);
+  const grown = () => cap.pop + Array.from({ length: cap.level - 1 }, (_, i) => popNeeded(i + 1)).reduce((a, b) => a + b, 0);
   const before = grown();
   assert.ok(doAction(z, 0, game, 'harvest'));
   assert.equal(grown() - before, 2);
@@ -369,7 +369,7 @@ function growthSetup(tribe: 'rome' | 'egypt' = 'rome') {
   const city = citiesOf(s, 0)[0];
   const ring = s.tiles.filter((t) => t.owner === city.id && t.cityId === null).map((t) => { Object.assign(t, { terrain: 'field', resource: null, improvement: null, road: false, village: false, ruin: false }); return t; });
   s.units = []; // nothing standing in the way
-  const total = () => city.pop + Array.from({ length: city.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0);
+  const total = () => city.pop + Array.from({ length: city.level - 1 }, (_, i) => popNeeded(i + 1)).reduce((a, b) => a + b, 0);
   return { s, p, city, ring, total };
 }
 
@@ -431,13 +431,13 @@ test('roads joined to a city pay milestones and stars, once each', () => {
   const chain = ring.slice(0, 8).sort((p, q) => Math.atan2(p.y - city.y, p.x - city.x) - Math.atan2(q.y - city.y, q.x - city.x));
   const base = total();
   const inc0 = cityIncome(s, city), level0 = city.level;
-  for (let i = 0; i < 4; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
-  assert.equal(total() - base, 0, 'four roads pay nothing yet');
-  assert.ok(doAction(s, 0, chain[4], 'road'));
-  assert.equal(total() - base, 1, '5 connected roads: +1');
-  for (let i = 5; i < 8; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  for (let i = 0; i < 5; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  assert.equal(total() - base, 0, 'five roads pay nothing yet');
+  assert.ok(doAction(s, 0, chain[5], 'road'));
+  assert.equal(total() - base, 1, '6 connected roads: +1');
+  for (let i = 6; i < 8; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
   assert.equal(total() - base, 1, '8 roads: still just the first milestone');
-  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 0, 'no road income below 10 roads');
+  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 0, 'no road income below 15 roads');
   payRoadBonuses(s, 0);
   assert.equal(total() - base, 1, 'nothing is paid twice');
 });
@@ -452,10 +452,10 @@ test('linking two of your cities by road gives both population and income', () =
   const other = foundCity(s, spot.x, spot.y, 0, false);
   const inc = [cityIncome(s, city), cityIncome(s, other)]; // road income is live: measure before the roads exist
   const level0 = city.level, otherLevel0 = other.level;
-  const before = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0)];
+  const before = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => popNeeded(i + 1)).reduce((a, b) => a + b, 0)];
   for (let i = 1; i <= 2; i++) Object.assign(tileAt(s, city.x + dx * i, city.y)!, { terrain: 'field', road: true, village: false, ruin: false, resource: null });
   payRoadBonuses(s, 0);
-  const after = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0)];
+  const after = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => popNeeded(i + 1)).reduce((a, b) => a + b, 0)];
   assert.equal(after[0] - before[0], 1);
   assert.equal(after[1] - before[1], 1);
   assert.equal(cityIncome(s, city) - inc[0] - (city.level - level0), 1);
@@ -496,4 +496,27 @@ test('units on a mountain get a x2 defence bonus and take less damage', () => {
   spot.terrain = 'mountain';
   assert.equal(defenseBonus(s, defender), 2, 'mountain: x2, no matter the tech');
   assert.ok(previewCombat(s, attacker, defender).dmg < flat, 'the same attack hurts less on a mountain');
+});
+
+test('a level costs more population as a city grows, and Colossi are rarer', () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 6].map(popNeeded), [2, 4, 6, 8, 10, 12]);
+  const giantAt = (l: number) => rewardOptions(l).some((o) => o.id === 'giant');
+  assert.deepEqual([2, 3, 4, 5, 6, 7, 8, 9].map(giantAt), [false, false, false, true, false, false, true, false]);
+  assert.ok(rewardOptions(6).some((o) => o.id === 'resources'), 'in between, gold instead');
+});
+
+test('claiming a city that already sits on your road network is not a windfall', () => {
+  const { s, city, total } = growthSetup();
+  const spot = s.tiles.find((t) => isLand(t) && Math.abs(t.x - city.x) === 3 && t.y === city.y && t.cityId === null)!;
+  const dx = Math.sign(spot.x - city.x);
+  Object.assign(spot, { terrain: 'field', village: true, ruin: false, resource: null, owner: null });
+  for (let i = 1; i <= 2; i++) Object.assign(tileAt(s, city.x + dx * i, city.y)!, { terrain: 'field', road: true, village: false, ruin: false, resource: null });
+  const before = total();
+  const claimer = spawnUnit(s, 'warrior', 0, spot.x, spot.y, city.id);
+  claimer.moved = claimer.attacked = false;
+  assert.ok(doAction(s, 0, spot, 'capture'));
+  const founded = citiesOf(s, 0).find((c) => c.x === spot.x && c.y === spot.y)!;
+  assert.equal(founded.pop + 0, 0, 'the new city starts empty');
+  assert.ok(total() - before <= 1, 'the old city gets at most the one-pop link reward, nothing more');
+  assert.equal(founded.level, 1);
 });

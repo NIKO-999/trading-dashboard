@@ -3,7 +3,7 @@
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
-import { cityIncome, maxHp } from '../game/rules';
+import { cityIncome, maxHp, popNeeded } from '../game/rules';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
@@ -861,8 +861,8 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
 
 /** The bar under a city's name: one pip per population needed for the next level. */
 function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, snap: (v: number) => number, color: string) {
-  const segs = c.level + 1;
-  const bw = Math.max(40 * k, segs * 11 * k), bh = 9 * k;
+  const segs = popNeeded(c.level);
+  const bw = Math.max(40 * k, Math.min(segs * 11 * k, 96 * k)), bh = 9 * k; // wide levels squeeze their pips rather than the label
   const bx = snap(x - bw / 2);
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   roundRect(ctx, bx, by + 1.5, bw, bh, bh / 2);

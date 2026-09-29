@@ -5,7 +5,7 @@ import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
-  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, hasTech, income, isExplored, maxHp,
+  applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
   moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
@@ -650,7 +650,7 @@ export class GameView {
     const T = TRIBES[owner.tribe];
     const mine = city.owner === this.me;
     const info = mine
-      ? `Level ${city.level} · population ${city.pop}/${city.level + 1} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
+      ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     this.panel.append(close, head(city.name, info,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));

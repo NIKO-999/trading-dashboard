@@ -2,7 +2,7 @@ import { TECH_BY_ID, TECHS } from '../data/techs';
 import { unitFor } from '../data/tribes';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
-import { clusterBonus, clusterHint, LINK_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
+import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
@@ -80,17 +80,21 @@ export const researchable = (s: GameState, pid: number) => TECHS.filter((t) => r
 
 // ---------------------------------------------------------------- cities
 
+/** Population a city of this level needs to reach the next one: it grows steeper from level 3. */
+export const popNeeded = (level: number) => level + 1 + Math.max(0, level - POP_STEEP_FROM);
+const POP_STEEP_FROM = 1;
+
 export function addPop(s: GameState, c: City, n: number) {
   c.pop += n;
-  while (c.pop >= c.level + 1) {
-    c.pop -= c.level + 1;
+  while (c.pop >= popNeeded(c.level)) {
+    c.pop -= popNeeded(c.level);
     c.level++;
     c.pendingRewards.push(c.level);
     emit({ type: 'levelup', player: c.owner, cityId: c.id, level: c.level });
   }
   while (c.pop < 0 && c.level > 1) {
     c.level--;
-    c.pop += c.level + 1;
+    c.pop += popNeeded(c.level);
   }
   if (c.pop < 0) c.pop = 0;
 }
@@ -100,6 +104,9 @@ export interface RewardOption {
   name: string;
   desc: string;
 }
+
+/** City levels whose reward can be a Colossus. */
+export const GIANT_LEVELS = [5, 8];
 
 export function rewardOptions(level: number): [RewardOption, RewardOption] {
   if (level === 2) return [
@@ -114,9 +121,14 @@ export function rewardOptions(level: number): [RewardOption, RewardOption] {
     { id: 'growth', name: 'Harvest Festival', desc: '+3 population.' },
     { id: 'borders', name: 'Border Growth', desc: 'City territory expands to 5×5.' },
   ];
-  return [
+  // a Colossus is a once-in-a-while prize (levels 5 and 8); the levels between offer a garden or gold
+  if (GIANT_LEVELS.includes(level)) return [
     { id: 'park', name: 'Grand Garden', desc: '+1★ income and +250 score.' },
     { id: 'giant', name: 'Colossus', desc: 'A 40-HP champion joins your army.' },
+  ];
+  return [
+    { id: 'park', name: 'Grand Garden', desc: '+1★ income and +250 score.' },
+    { id: 'resources', name: 'Treasury', desc: 'Receive 8★ right now.' },
   ];
 }
 
@@ -127,7 +139,7 @@ export function applyReward(s: GameState, c: City, id: RewardOption['id']) {
     case 'workshop': c.workshop = true; break;
     case 'explorer': explore(s, c.owner, c.x, c.y, 18); break;
     case 'walls': c.walls = true; break;
-    case 'resources': p.stars += 5; break;
+    case 'resources': p.stars += c.level >= 6 ? 8 : 5; break;
     case 'growth': addPop(s, c, 3); break;
     case 'borders': c.borderRadius = 2; claimTerritory(s, c.id); revealAround(s, c.owner); break;
     case 'park': c.parks++; p.bonusScore += 250; break;
@@ -267,7 +279,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   return acts;
 }
 
-const ROAD_DESC = `Units move twice as fast. Roads joined to a city grow it: ${ROAD_MILESTONES.map((m) => m.roads).join('/')} connected roads give +${ROAD_MILESTONES.map((m) => m.pop).join('/+')} population, linking two of your cities gives +${LINK_POP} each, and each link (up to ${MAX_PAYING_LINKS}) and every ${ROADS_PER_STAR} roads pay +1★ a turn.`;
+const ROAD_DESC = `Units move twice as fast. Roads joined to a city grow it: ${ROAD_MILESTONES.map((m) => m.roads).join('/')} connected roads give +${ROAD_MILESTONES.map((m) => m.pop).join('/+')} population, linking two of your cities gives +${LINK_POP} each (a city's first ${MAX_LINKS_PAID_POP} links), and each link (up to ${MAX_PAYING_LINKS}) and every ${ROADS_PER_STAR} roads pay +1★ a turn.`;
 
 /**
  * Pays out what a city's road network has earned: one-off population at each milestone of
@@ -291,6 +303,7 @@ export function payRoadBonuses(s: GameState, pid: number) {
     for (const id of net.linked) {
       if (linked.includes(id)) continue;
       linked.push(id);
+      if (linked.length > MAX_LINKS_PAID_POP) continue; // only a city's first links grow it
       pop += LINK_POP;
       notes.push(`a road to ${cityById(s, id)?.name ?? 'a city'}`);
     }
@@ -387,7 +400,15 @@ function capture(s: GameState, u: Unit, t: Tile) {
     checkElimination(s, from, pid);
   }
   u.moved = u.attacked = true;
-  payRoadBonuses(s, pid); // a captured city may already sit on your road network
+  // a captured city may already sit on your road network: count what it has as already paid, so taking it
+  // is never a windfall, then pay whatever the capture newly connects
+  const taken = cityById(s, t.cityId);
+  if (taken) {
+    const net = roadNetwork(s, taken);
+    taken.roadStage = ROAD_MILESTONES.filter((m) => net.roads >= m.roads).length;
+    taken.linked = [...net.linked];
+  }
+  payRoadBonuses(s, pid);
   revealAround(s, pid);
   return true;
 }

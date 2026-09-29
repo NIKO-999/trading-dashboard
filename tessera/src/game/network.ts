@@ -36,21 +36,21 @@ export function roadNetwork(s: GameState, c: City): RoadNetwork {
 
 /** Connected road tiles needed for each one-off population reward, cumulative. */
 export const ROAD_MILESTONES: readonly { roads: number; pop: number }[] = [
-  { roads: 5, pop: 1 },
-  { roads: 10, pop: 1 },
-  { roads: 15, pop: 2 },
+  { roads: 6, pop: 1 },
+  { roads: 12, pop: 1 },
 ];
-/** Population both cities gain the first time a road links them. */
+/** Population both cities gain the first time a road links them, for a city's first few links only. */
 export const LINK_POP = 1;
+export const MAX_LINKS_PAID_POP = 2;
 /** Every this many connected road tiles pays +1★ a turn. */
-export const ROADS_PER_STAR = 10;
+export const ROADS_PER_STAR = 15;
 /** Only this many links per city pay income. */
-export const MAX_PAYING_LINKS = 2;
+export const MAX_PAYING_LINKS = 1;
 
-/** Stars per turn a city earns from its road network: one per link (up to two) plus one per 10 connected tiles. */
+/** Stars per turn a city earns from its road network: one per link (up to one) plus one per 15 connected tiles. */
 export const networkIncome = (n: RoadNetwork) => Math.min(MAX_PAYING_LINKS, n.linked.length) + Math.floor(n.roads / ROADS_PER_STAR);
 
-const CLUSTER_MAX = 4;
+const CLUSTER_MAX = 2;
 const CLUSTER_NAME: Partial<Record<Improvement, string>> = { lumber: 'Lumber Hut', port: 'Port', temple: 'Temple or Shrine', market: 'Market' };
 
 /** Extra population for building `kind` on `t`: one per neighbouring improvement of the same kind. */

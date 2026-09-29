@@ -22,8 +22,9 @@ Features:
 - A seeded isometric map with fog of war.
 - Harvestable resources: fruit, animals, fish, crops, ore and whales.
 - Buildings: farms, mines, lumber huts, ports, shrines and markets.
-- Roads that grow the cities they connect (milestones at 5, 10 and 15 connected roads, plus links between your own cities), villages to claim, and ruins to explore.
-- Neighbouring lumber huts, ports, temples and markets give bonus population.
+- Roads that grow the cities they connect (+1 population at 6 and at 12 connected roads, +1 for a city's first two links to your other cities, and a little star income), villages to claim, and ruins to explore.
+- Cities need 2, 4, 6, 8, 10… population per level. A Colossus is a prize at levels 5 and 8 only; the levels in between offer a garden or gold.
+- Neighbouring lumber huts, ports, temples and markets give +1 bonus population each (up to +2).
 - Units on mountains defend at ×2.
 - Cities that level up, with a choice of reward at each level.
 - A 25-node radial tech tree.
