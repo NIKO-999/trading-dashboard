@@ -5,7 +5,8 @@ export type { MechRender } from './types';
 import { render as japan } from './japan';
 import { render as korea } from './korea';
 import { render as mongols } from './mongols';
+import { render as persia } from './persia';
 import { render as rome } from './rome';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { japan, korea, mongols, rome, zulu };
+export const MECH_RENDER: MechRenderRegistry = { japan, korea, mongols, persia, rome, zulu };
