@@ -44,6 +44,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
     case 'rider':
+    case 'buffalorider':
     case 'horsearcher':
     case 'knight': return drawRider(ctx, kind, tribe, x, y);
     case 'chariot': return drawChariot(ctx, tribe, x, y);
@@ -116,7 +117,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   const L = LOOK[tribe];
   const T = TRIBES[tribe];
   const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'immortal' || kind === 'shotelai';
-  const heavy = isHeavy(kind) && !isAbo(tribe); // no metal here: rank is shown in paint, feathers and cloaks
+  const heavy = isHeavy(kind) && !isAbo(tribe) && !isLk(tribe); // no metal here: rank is shown in paint, feathers and cloaks
   const metal = metalOf(tribe);
   let torso = T.color, legs = shade(T.colorDark, 0.1), sleeves = L.skin;
   switch (tribe) {
@@ -138,6 +139,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'aboriginal': torso = L.skin; legs = L.skin; break; // bare skin, painted in ochre and clay
     case 'china': torso = kind === 'explorer' ? '#dcd3b8' : armoured || kind === 'defender' ? '#2b3266' : T.color; legs = kind === 'explorer' ? '#33418f' : '#d9d1ba'; sleeves = torso; break; // indigo hanfu over pale trousers
     case 'ottoman': torso = kind === 'janissary' ? OT_NAVY : T.color; legs = kind === 'janissary' ? OT_NAVYD : '#8c1836'; sleeves = torso; break; // crimson entari (navy cafan for the janissary) over baggy şalvar
+    case 'lakota': torso = kind === 'swordsman' ? L.skin : T.color; legs = '#cdbb94'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'swordsman' || kind === 'buffalorider' ? L.skin : T.color; break; // fringed buckskin
     case 'celts': torso = kind === 'explorer' ? '#e6e0cc' : '#b07a3a'; legs = kind === 'explorer' ? '#d8d2b8' : '#3f6a34'; sleeves = torso; break;
   }
   const hip = seated ? y : y - 5 * k;
@@ -145,7 +147,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
 
   // A cloak hangs behind the tallest ranks, in the empire's colour with a darker lining.
   if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal' || kind === 'shotelai') {
-    const cape = tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : isAbo(tribe) ? (kind === 'giant' ? '#7a5a3c' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' ? GOLD : T.color;
+    const cape = isLk(tribe) ? LK_FUR : tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : isAbo(tribe) ? (kind === 'giant' ? '#7a5a3c' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' ? GOLD : T.color;
     const top = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cape, -0.22));
     poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(cape, 0.02));
@@ -171,6 +173,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     if (tribe === 'china') cnCloak(ctx, x, top, hip, k); // an embroidered red hem with gold clouds
     if (tribe === 'ottoman') otCloak(ctx, x, top, hip, k);
     if (isAbo(tribe)) aboCloak(ctx, x, top, hip, k); // a possum-skin cloak, stitched and incised
+    if (isLk(tribe)) lkRobe(ctx, x, top, hip, k, kind); // a shaggy buffalo robe
     if (tribe === 'aztec') for (let i = 0; i < 3; i++) poly(ctx, [x - 9.3 * k + i * 2.4 * k, hip + 6.6 * k - i * 0.5 * k, x - 8.3 * k + i * 2.4 * k, hip + 10 * k - i * 0.5 * k, x - 7 * k + i * 2.4 * k, hip + 6.3 * k - i * 0.5 * k], ['#1faa6b', '#d6453b', '#1faa9b'][i]); // feather fringe
   }
 
@@ -205,7 +208,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     box(ctx, x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, legs);
     box(ctx, x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, legs);
     const boots = tribe === 'pirates' || tribe === 'mongols' || tribe === 'vikings' || tribe === 'inuit';
-    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'inuit' ? '#3a2a20' : tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? L.skin : tribe === 'japan' ? '#e2dccb' : tribe === 'china' ? '#22222c' : '#6b4424';
+    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'inuit' ? '#3a2a20' : tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? L.skin : tribe === 'japan' ? '#e2dccb' : tribe === 'china' ? '#22222c' : tribe === 'lakota' ? '#b89660' : '#6b4424';
     const sv = boots ? 0.45 : 0.2;
     const leg = [[-2.2, -0.3, 'L'], [2.2, 0.7, 'R'], [2.2, 0.7, 'L']] as const;
     for (const [dx, dy, f] of leg) {
@@ -234,6 +237,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
       if (tribe === 'mali') mlLeg(ctx, f, x + dx * k, y + dy * k, k, heavy);
       if (tribe === 'celts') celtTrews(ctx, f, x + dx * k, y + dy * k, k, legs, sv, kind === 'explorer');
       if (tribe === 'aboriginal') aboLeg(ctx, f, x + dx * k, y + dy * k, k, kind);
+      if (tribe === 'lakota') lkLeg(ctx, f, x + dx * k, y + dy * k, k, dx);
       if (tribe === 'zulu') {
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.27, 0.4, '#f4efe0'); // cow-tail anklet
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.22, 0.27, '#2a1a10');
@@ -287,6 +291,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (tribe === 'china') cnSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, sleeves);
   if (tribe === 'aboriginal') aboArm(ctx, x - 5.9 * k, hip - 1 * k, k, false, kind);
   if (tribe === 'mali') mlSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
+  if (tribe === 'lakota') lkArm(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
   if (tribe === 'mongols') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a'); // fur cuff
   if (tribe === 'zulu') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.64, '#d9a441'); // brass arm ring
   if (tribe === 'inuit') { faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, '#f4f8fb'); faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.6, '#c8372d'); } // fur cuff and a red band
@@ -314,6 +319,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (tribe === 'china') cnSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, sleeves);
   if (tribe === 'aboriginal') aboArm(ctx, x + 6 * k, hip + 0.6 * k, k, true, kind);
   if (tribe === 'mali') mlSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
+  if (tribe === 'lakota') lkArm(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
   if (tribe === 'mongols') { // fur cuff and a gold armband
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a');
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.72, GOLD);
@@ -413,6 +419,7 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
     case 'inca': incaTorso(ctx, kind, x, y, w, h); break;
     case 'aboriginal': aboTorso(ctx, kind, x, y, w, h); break;
     case 'mali': mlTorso(ctx, kind, x, y, w, h); break;
+    case 'lakota': lkTorso(ctx, kind, x, y, w, h); break;
     case 'egypt':
       band(ctx, x, y, w, h, 0, 0.42, '#f4efe0'); // linen kilt
       for (const u of [0.12, 0.3, 0.7, 0.88]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.05, 0, 0.38, '#d9d0b8'); // pleats
@@ -733,6 +740,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
     case 'inca': incaFace(ctx, kind, x, y, w, h); break;
     case 'aboriginal': aboFace(ctx, kind, x, y, w, h); break;
     case 'mali': mlFace(ctx, kind, x, y, w, h); break;
+    case 'lakota': lkFace(ctx, kind, x, y, w, h); break;
     case 'egypt':
       faceQuad(ctx, 'R', x, y, w, h, 0.18, 0.86, 0.62, 0.67, '#101010'); // kohl line
       faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.98, 0.52, 0.58, '#101010'); // the kohl wing at the outer corner
@@ -900,6 +908,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
     case 'inca': incaHeadgear(ctx, kind, x, top, k, hw); break;
     case 'aboriginal': aboHead(ctx, kind, x, top, k, hw); break;
     case 'mali': mlHead(ctx, kind, x, top, k, hw); break;
+    case 'lakota': lkHead(ctx, kind, x, top, k, hw); break;
     case 'egypt': {
       if (kind === 'giant') {
         // tall white crown with a red rim
@@ -1332,7 +1341,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       break;
     }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' ? 16 : tribe === 'china' ? 7 : tribe === 'mali' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'china' ? 7 : tribe === 'mali' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
@@ -1348,6 +1357,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
   if (isAbo(tribe) && (kind === 'archer' || kind === 'explorer' || kind === 'woomera')) aboBack(ctx, kind, x, y, k);
   else if (tribe === 'china' && (kind === 'archer' || kind === 'explorer' || kind === 'crossbowman')) cnBack(ctx, kind, x, y, k);
   else if (tribe === 'ottoman' && (kind === 'archer' || kind === 'explorer' || kind === 'janissary')) otBack(ctx, kind, x, y, k);
+  else if (isLk(tribe) && (kind === 'archer' || kind === 'explorer')) lkBack(ctx, kind, x, y, k);
   else if (kind === 'archer' || kind === 'explorer') {
     box(ctx, x - (kind === 'archer' ? 7 : 4.5) * k, y - 8 * k, 4 * k, 8 * k, kind === 'explorer' ? '#8a5a2b' : '#6b4424');
     if (kind === 'archer' && tribe === 'polynesia') {
@@ -1541,6 +1551,7 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
   if (tribe === 'china' && cnWeapon(ctx, kind, b, k)) return;
   if (tribe === 'aboriginal' && aboWeapon(ctx, kind, b, k)) return;
   if (tribe === 'mali' && mlWeapon(ctx, kind, b, k)) return;
+  if (tribe === 'lakota' && lkWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
   if (tribe === 'inuit') {
     if (kind === 'harpooner') return inuitHarpoon(ctx, x, y, k);
@@ -1968,6 +1979,7 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   if (tribe === 'china') return cnShield(ctx, kind, x, y, k);
   if (tribe === 'aboriginal') return aboShield(ctx, kind, x, y, k);
   if (tribe === 'mali') return mlShield(ctx, kind, x, y, k);
+  if (tribe === 'lakota') return lkShield(ctx, kind, x, y, k);
   const T = TRIBES[tribe];
   const rivets = (cx: number, cy: number, rx: number, ry: number, n: number, color: string) => {
     for (let i = 0; i < n; i++) {
@@ -4300,6 +4312,7 @@ function lance(ctx: Ctx, hx: number, hy: number, color: string, thick: number, p
 
 function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number) {
   if (tribe === 'inca') return drawIncaRider(ctx, kind, x, y);
+  if (tribe === 'lakota') return lkRider(ctx, kind, x, y);
   const knight = kind === 'knight';
   if (tribe === 'inuit') {
     // the Inuit ride caribou, hung with white fur pads and beaded harness
@@ -4548,6 +4561,7 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   if (tribe === 'inuit') return inuitCatapult(ctx, x, y);
   if (tribe === 'aboriginal') return aboCatapult(ctx, x, y);
   if (tribe === 'mali') return mlCatapult(ctx, x, y);
+  if (tribe === 'lakota') return lkCatapult(ctx, x, y);
   const T = TRIBES[tribe];
   const wheels = (hub: string) => {
     for (const [wx, wy] of [[-7, 1], [6, 3]]) {
@@ -5158,6 +5172,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   if (tribe === 'china') return drawChinaBoat(ctx, kind, x, y);
   if (tribe === 'aboriginal') return drawAboriginalCanoe(ctx, kind, x, y);
   if (tribe === 'mali') return drawMaliBoat(ctx, kind, x, y);
+  if (tribe === 'lakota') return lkBoat(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
@@ -8772,6 +8787,481 @@ function otWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
   return false;
 }
 
+// ---------------------------------------------------------------- Lakota: the Great Plains Nations
+// Everyday hunting and war dress only: fringed buckskin shirts and leggings with beaded and quilled bands, moccasins,
+// wrapped braids, feathered headbands, hair-pipe breastplates, painted hide shields, clubs, lances and bows.
+// Nothing sacred or ceremonial (pipes, bundles, dance regalia) is shown; the war bonnet is kept for the highest rank only.
+
+const LK_BUCK = '#e6dcc6', LK_TAN = '#c9b07a', LK_RED = '#b8402e', LK_BLUE = '#2f5f9a', LK_YEL = '#e2b43a';
+const LK_BLK = '#1c1614', LK_WHITE = '#f6f1e4', LK_BONE = '#efe6cf', LK_FUR = '#5a3f2c', LK_FUR_D = '#33241a';
+const LK_WOOD = '#8a5a34', LK_WOOD_D = '#4f2f18', LK_ROPE = '#dccfa8', LK_STEEL = '#aeb6be', LK_HIDE = '#d9c9a0';
+
+const isLk = (t: TribeId) => t === 'lakota';
+
+/** Strands of buckskin fringe hanging from points along the line (x0, y0)-(x1, y1). */
+function lkFringe(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, n: number, len: number, color: string, w: number) {
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t;
+    line(ctx, px, py, px + (i % 2 ? 0.12 : -0.12) * len, py + len * (0.85 + (i % 3) * 0.12), color, w);
+  }
+}
+
+/** A row of seed beads along a line. */
+function lkBeads(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, n: number, r: number, colors: string[]) {
+  for (let i = 0; i < n; i++) {
+    const t = n > 1 ? i / (n - 1) : 0.5;
+    ellipse(ctx, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r, r, colors[i % colors.length]);
+  }
+}
+
+/** A point on one visible side of a box, in the (u, v) coordinates of faceQuad. */
+function lkPt(face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u: number, v: number): [number, number] {
+  return face === 'R' ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h] : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+}
+
+/** An eagle feather: white, black-tipped, with a tuft of red at its root. */
+function lkEagle(ctx: Ctx, x: number, y: number, tx: number, ty: number, w: number, tip = LK_BLK) {
+  feather(ctx, x, y, tx, ty, w, LK_WHITE, tip);
+  ellipse(ctx, x, y, w * 0.5, w * 0.45, LK_RED);
+}
+
+/** Shirt, breechcloth and breastplate details on the torso. */
+function lkTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const k = w / 10;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  const Lf = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, y, w, h, u0, u1, v0, v1, c);
+  const B = (v0: number, v1: number, c: string) => band(ctx, x, y, w, h, v0, v1, c);
+  const bare = kind === 'swordsman';
+  const pipes = kind === 'defender' || kind === 'giant';
+  // a beaded breechcloth flap hangs in front, and the shirt's hem is cut into fringe
+  R(0.3, 0.7, -0.4, 0.14, bare ? LK_RED : '#3b5a86');
+  R(0.3, 0.7, -0.4, -0.26, bare ? LK_BLUE : LK_RED);
+  R(0.4, 0.6, -0.36, -0.3, LK_WHITE);
+  if (!bare) {
+    lkFringe(ctx, x, y + w / 4, x + w / 2, y, 7, 2 * k, shade(LK_BUCK, -0.34), 0.5 * k);
+    lkFringe(ctx, x - w / 2, y, x, y + w / 4, 7, 2 * k, shade(LK_BUCK, -0.3), 0.5 * k);
+  }
+  B(0.22, 0.31, '#5a3a22'); // belt, with a bright concho at the buckle
+  R(0.44, 0.56, 0.22, 0.31, '#d5d9de');
+  if (pipes) {
+    // a breastplate of long bone hair-pipes, strung in rows between leather spacers and blue beads
+    for (let i = 0; i < 6; i++) {
+      const u = 0.05 + i * 0.16;
+      R(u, u + 0.1, 0.34, 0.86, LK_BONE);
+      Lf(u, u + 0.1, 0.34, 0.86, LK_BONE);
+      R(u + 0.02, u + 0.04, 0.4, 0.8, '#ffffff');
+    }
+    B(0.6, 0.64, '#4a3626');
+    B(0.4, 0.44, '#4a3626');
+    B(0.86, 0.91, LK_BLUE);
+    if (kind === 'giant') for (const u of [0.02, 0.3, 0.6, 0.86]) R(u, u + 0.06, 0.06, 0.2, LK_WHITE); // ermine drops below the plate
+  } else if (bare) {
+    // bare-chested for the fight: a red hand painted on the chest, a white lightning stroke on the shoulder, a bone choker
+    R(0.36, 0.64, 0.4, 0.62, LK_RED);
+    for (let i = 0; i < 4; i++) R(0.36 + i * 0.075, 0.41 + i * 0.075, 0.62, 0.76, LK_RED);
+    R(0.24, 0.34, 0.5, 0.58, LK_RED);
+    facePoly(ctx, 'L', x, y, w, h, [[0.15, 0.95], [0.34, 0.95], [0.26, 0.62], [0.46, 0.62], [0.2, 0.15], [0.3, 0.5], [0.08, 0.5]], LK_WHITE);
+    B(0.86, 0.95, LK_BONE);
+    for (const u of [0.1, 0.3, 0.5, 0.7, 0.9]) R(u, u + 0.08, 0.87, 0.94, LK_BLUE);
+    facePoly(ctx, 'R', x, y, w, h, [[0.05, 0.86], [0.26, 0.86], [0.98, 0.14], [0.74, 0.12]], '#6b4424'); // a cross-belt
+    for (const t of [0.2, 0.45, 0.7]) R(0.18 + t * 0.6, 0.24 + t * 0.6, 0.66 - t * 0.6, 0.72 - t * 0.6, LK_YEL);
+  } else if (kind === 'archer' || kind === 'explorer') {
+    // porcupine quillwork: flattened quills in red, yellow and white rows
+    B(0.6, 0.72, LK_RED);
+    for (let i = 0; i < 6; i++) { R(0.05 + i * 0.16, 0.11 + i * 0.16, 0.62, 0.7, LK_YEL); Lf(0.02 + i * 0.16, 0.08 + i * 0.16, 0.62, 0.7, LK_YEL); }
+    B(0.78, 0.86, LK_WHITE);
+    for (let i = 0; i < 5; i++) { R(0.08 + i * 0.2, 0.16 + i * 0.2, 0.79, 0.85, LK_BLUE); Lf(0.06 + i * 0.2, 0.14 + i * 0.2, 0.79, 0.85, LK_BLUE); }
+  } else {
+    // a beaded yoke across the shoulders: blue with white blocks, red edging and triangle drops
+    B(0.7, 0.9, LK_BLUE);
+    B(0.66, 0.7, LK_RED);
+    for (let i = 0; i < 5; i++) { R(0.08 + i * 0.2, 0.18 + i * 0.2, 0.72, 0.84, LK_WHITE); Lf(0.04 + i * 0.2, 0.14 + i * 0.2, 0.72, 0.84, LK_WHITE); }
+    for (let i = 0; i < 4; i++) {
+      facePoly(ctx, 'R', x, y, w, h, [[0.1 + i * 0.24, 0.62], [0.28 + i * 0.24, 0.62], [0.19 + i * 0.24, 0.44]], i % 2 ? LK_YEL : LK_RED);
+      facePoly(ctx, 'L', x, y, w, h, [[0.06 + i * 0.24, 0.62], [0.24 + i * 0.24, 0.62], [0.15 + i * 0.24, 0.44]], i % 2 ? LK_YEL : LK_RED);
+    }
+  }
+}
+
+/** Beadwork, fringe and sleeves on an arm. `front` is the arm on the viewer's right. */
+function lkArm(ctx: Ctx, ax: number, ay: number, k: number, kind: UnitKind, front: boolean) {
+  const w = 2.8 * k, h = 7 * k;
+  const A = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', ax, ay, w, h, u0, u1, v0, v1, c);
+  const sleeved = !(kind === 'warrior' || kind === 'archer' || kind === 'swordsman' || kind === 'buffalorider');
+  if (sleeved) {
+    A(0, 1, 0.62, 0.78, LK_BLUE);
+    A(0.15, 0.45, 0.66, 0.74, LK_WHITE);
+    A(0.55, 0.85, 0.66, 0.74, LK_YEL);
+    A(0, 1, 0.58, 0.62, LK_RED);
+    const ex = front ? ax + w / 2 : ax - w / 2;
+    lkFringe(ctx, ex, ay - h * 0.92, ex, ay - h * 0.14, 5, 1.5 * k, shade(LK_BUCK, -0.32), 0.45 * k);
+  } else {
+    A(0, 1, 0.66, 0.78, kind === 'archer' ? LK_RED : LK_BLUE); // a beaded armband
+    A(0.2, 0.8, 0.7, 0.74, LK_WHITE);
+    if (front) A(0, 1, 0.3, 0.38, LK_BONE); // a bone bracelet
+  }
+}
+
+/** Beaded strips, fringe and moccasin beadwork on a leg. */
+function lkLeg(ctx: Ctx, f: 'L' | 'R', cx: number, cy: number, k: number, dx: number) {
+  const w = 3.6 * k, h = 5.2 * k;
+  const q = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, cx, cy, w, h, u0, u1, v0, v1, c);
+  const outer = f === 'R' || dx < 0;
+  if (outer) {
+    const [a, b] = f === 'R' ? [0.72, 1] : [0, 0.28];
+    q(a, b, 0.24, 1, LK_BLUE);
+    for (let i = 0; i < 4; i++) q(a + 0.06, b - 0.06, 0.32 + i * 0.17, 0.38 + i * 0.17, i % 2 ? LK_WHITE : LK_RED);
+    const ex = f === 'R' ? cx + w / 2 : cx - w / 2;
+    lkFringe(ctx, ex, cy - h * 0.94, ex, cy - h * 0.3, 4, 1.3 * k, shade('#c9b58a', -0.3), 0.42 * k);
+  }
+  q(0.08, 0.92, 0.09, 0.15, LK_RED); // beaded moccasin band
+  q(0.3, 0.7, 0.09, 0.15, LK_WHITE);
+}
+
+/** The buffalo robe worn over the shoulders of the higher ranks: shaggy hair on the edge and a painted hem stripe. */
+function lkRobe(ctx: Ctx, x: number, top: number, hip: number, k: number, kind: UnitKind) {
+  const fur = LK_FUR;
+  lkFringe(ctx, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, 8, 1.7 * k, shade(fur, -0.3), 0.6 * k);
+  lkFringe(ctx, x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, 8, 2.2 * k, shade(fur, -0.25), 0.6 * k);
+  for (let i = 0; i < 9; i++) { // pale tufts of winter hair
+    const t = i / 8, px = x - 8.6 * k + t * 5.6 * k + (i % 3) * 0.5 * k, py = top + 5 * k + t * 5 * k + (i % 2) * 2.4 * k;
+    line(ctx, px, py, px + 0.7 * k, py + 1.7 * k, shade(fur, 0.28), 0.5 * k);
+  }
+  if (kind === 'knight' || kind === 'giant') { // a stripe of quillwork along the hem
+    poly(ctx, [x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, x - 2.1 * k, hip + 7 * k, x - 9.4 * k, hip + 5 * k], LK_RED);
+    poly(ctx, [x - 9.4 * k, hip + 5 * k, x - 2.1 * k, hip + 7 * k, x - 2.15 * k, hip + 6.3 * k, x - 9.3 * k, hip + 4.3 * k], LK_YEL);
+  }
+}
+
+/** Painted faces: everyday war paint, different for each rank. */
+function lkFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  switch (kind) {
+    case 'warrior':
+      R(0.04, 0.4, 0.26, 0.33, LK_RED); R(0.62, 0.96, 0.26, 0.33, LK_RED); // a red band across the cheeks
+      R(0.04, 0.4, 0.2, 0.24, LK_BLK); R(0.62, 0.96, 0.2, 0.24, LK_BLK);
+      break;
+    case 'archer':
+      R(0.28, 0.34, 0.08, 0.4, LK_BLK); R(0.7, 0.76, 0.08, 0.4, LK_BLK); // a stripe down from each eye
+      R(0.04, 0.12, 0.3, 0.36, LK_YEL); R(0.9, 0.98, 0.3, 0.36, LK_YEL);
+      break;
+    case 'defender':
+      R(0.02, 0.98, 0.02, 0.2, LK_BLK); // a black jaw
+      R(0.06, 0.94, 0.8, 0.9, LK_RED);
+      break;
+    case 'swordsman':
+      facePoly(ctx, 'R', x, y, w, h, [[0.72, 0.4], [0.9, 0.4], [0.82, 0.28], [0.96, 0.28], [0.74, 0.06], [0.8, 0.24], [0.68, 0.24]], LK_WHITE); // lightning on the cheek
+      R(0.04, 0.4, 0.26, 0.32, LK_RED);
+      R(0.05, 0.95, 0.82, 0.9, LK_RED);
+      break;
+    case 'giant':
+      R(0.02, 0.98, 0.76, 1, LK_RED); // a red brow with a black line under the eyes
+      R(0.04, 0.96, 0.34, 0.38, LK_BLK);
+      for (const u of [0.1, 0.3, 0.5, 0.7, 0.86]) R(u, u + 0.06, 0.78, 0.86, LK_WHITE);
+      R(0.42, 0.58, 0.02, 0.1, LK_RED);
+      break;
+    case 'knight':
+    case 'buffalorider':
+    case 'rider':
+      R(0.04, 0.96, 0.78, 0.87, LK_BLK); // a black brow band, red chin and yellow dots
+      R(0.3, 0.7, 0.02, 0.1, LK_RED);
+      R(0.06, 0.14, 0.26, 0.34, LK_YEL); R(0.86, 0.94, 0.26, 0.34, LK_YEL);
+      break;
+    case 'explorer':
+      R(0.42, 0.6, 0.78, 0.88, LK_RED);
+      break;
+  }
+}
+
+/** Braids wrapped in fur and cloth, and the headdress each rank wears. */
+function lkHead(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  const hair = LOOK.lakota.hair, hy = top + 10.5 * k;
+  const braid = (bx: number, by: number, n: number, sx: number, sy: number, r: number) => {
+    for (let i = 0; i < n; i++) ellipse(ctx, bx + i * sx, by + i * sy, r, r * 1.2, i % 2 ? shade(hair, 0.32) : shade(hair, 0.08));
+    const wrap = (i: number, c: string) => ellipse(ctx, bx + i * sx, by + i * sy, r * 1.15, r * 0.7, c);
+    wrap(1, LK_RED); wrap(n * 0.55, '#8a6a4a'); wrap(n - 1.4, LK_RED);
+    ellipse(ctx, bx + (n - 0.6) * sx, by + (n - 0.6) * sy, r * 0.9, r * 1.2, '#8a6a4a'); // the fur-wrapped end
+    line(ctx, bx + (n - 0.2) * sx, by + (n - 0.2) * sy, bx + (n + 0.2) * sx, by + (n + 1.2) * sy + r, LK_RED, r * 0.7);
+  };
+  if (kind !== 'explorer') braid(x - 5.3 * k, hy - 4.6 * k, 6, -0.16 * k, 1.9 * k, 1 * k);
+  braid(x + 5.1 * k, hy - 3 * k, 5, 0.05 * k, 1.7 * k, 0.8 * k);
+  if (kind === 'explorer') {
+    // a wolf-skin cap with pricked ears, worn by scouts
+    box(ctx, x, top + 4.4 * k, hw + 1.4 * k, 4.6 * k, '#8a8478', '#a39d8e');
+    for (const s of [-1, 1]) poly(ctx, [x + s * 3.8 * k, top - 0.6 * k, x + s * 3.2 * k, top - 4.4 * k, x + s * 1.2 * k, top - 0.6 * k], s > 0 ? '#7a7468' : '#a39d8e');
+    lkFringe(ctx, x - hw / 2 - 0.7 * k, top + 4.6 * k, x, top + 4.6 * k + hw / 4, 5, 1.6 * k, '#6a655a', 0.6 * k);
+    for (let i = 0; i < 7; i++) line(ctx, x - 5 * k + i * 1.5 * k, top + (2.6 + (i % 2) * 1.6) * k + i * 0.35 * k, x - 4.4 * k + i * 1.5 * k, top + (4.6 + (i % 2)) * k + i * 0.35 * k, i % 2 ? '#6a655a' : '#c4beb0', 0.45 * k);
+    return;
+  }
+  const bandColor = kind === 'archer' ? LK_RED : LK_BLUE;
+  if (kind === 'swordsman') {
+    // a roach of dyed deer and porcupine hair standing along the crown
+    for (let i = 0; i < 12; i++) {
+      const t = i / 11, px = x + (hw / 4) * (1 - 2 * t), py = top + (hw / 8) * (1 - 2 * t);
+      const hgt = (1.6 + Math.sin(Math.PI * t) * 3.4) * k;
+      line(ctx, px, py, px + 0.3 * k, py - hgt, i % 2 ? '#a8382a' : '#d9c9a0', 0.9 * k);
+    }
+  }
+  box(ctx, x, top + 3 * k, hw + 0.8 * k, 1.9 * k, bandColor, hair);
+  for (let i = 0; i < 4; i++) {
+    faceQuad(ctx, 'R', x, top + 3.2 * k, hw + 0.8 * k, 2 * k, 0.08 + i * 0.24, 0.2 + i * 0.24, 0.25, 0.75, i % 2 ? LK_YEL : LK_WHITE);
+    faceQuad(ctx, 'L', x, top + 3.2 * k, hw + 0.8 * k, 2 * k, 0.06 + i * 0.24, 0.18 + i * 0.24, 0.25, 0.75, i % 2 ? LK_WHITE : LK_YEL);
+  }
+  if (kind !== 'swordsman' && kind !== 'giant') { const q = hw / 4; line(ctx, x + q, top + 1.1 * k + q / 2, x - q, top + 1.1 * k - q / 2, LK_RED, 0.6 * k); } // the red-painted part in the hair
+  switch (kind) {
+    case 'warrior':
+      lkEagle(ctx, x - 2 * k, top + 2.4 * k, x - 3.4 * k, top - 8.4 * k, 1.2 * k);
+      break;
+    case 'archer':
+      feather(ctx, x - 1.8 * k, top + 2.4 * k, x - 5.4 * k, top - 4.6 * k, 1.1 * k, '#8a6a4a', LK_WHITE);
+      break;
+    case 'defender':
+      lkEagle(ctx, x - 1.4 * k, top + 2.4 * k, x - 2 * k, top - 9 * k, 1.2 * k, LK_RED);
+      lkEagle(ctx, x - 2.6 * k, top + 2.6 * k, x - 5.4 * k, top - 7 * k, 1.2 * k);
+      break;
+    case 'swordsman':
+      lkEagle(ctx, x - 3 * k, top + 1.6 * k, x - 6.4 * k, top - 8 * k, 1.2 * k);
+      break;
+    case 'knight':
+    case 'buffalorider':
+    case 'rider': {
+      lkEagle(ctx, x - 1.4 * k, top + 2.4 * k, x - 1.8 * k, top - 9.4 * k, 1.25 * k);
+      lkEagle(ctx, x - 2.6 * k, top + 2.6 * k, x - 6.4 * k, top - 6.6 * k, 1.25 * k, LK_RED);
+      feather(ctx, x - 3.4 * k, top + 3 * k, x - 9 * k, top - 1 * k, 1.1 * k, '#8a6a4a', LK_WHITE);
+      if (kind === 'knight') for (let i = 0; i < 3; i++) lkEagle(ctx, x - 5.6 * k, top + (7 + i * 2.4) * k, x - (8.2 + (i % 2) * 0.6) * k, top + (10.4 + i * 2.6) * k, 0.9 * k, LK_BLK); // a short trailer of feathers down the back
+      break;
+    }
+    case 'giant': {
+      // the war bonnet, worn only by the highest rank: eagle feathers in a fan, a beaded brow, ermine drops and a trailer
+      const bx = x, by = top + 3.6 * k;
+      for (let i = 0; i < 11; i++) {
+        const t = i / 10, th = (t * 2 - 1) * 1.3, L = (8.4 + Math.cos(th) * 2.4) * k;
+        const px = bx + Math.sin(th) * 4.8 * k, py = by - Math.cos(th) * 1.2 * k;
+        lkEagle(ctx, px, py, px + Math.sin(th) * L, py - Math.cos(th) * L * 0.92, 1.3 * k, i % 3 === 1 ? LK_RED : LK_BLK);
+      }
+      box(ctx, x, top + 3.8 * k, hw + 1.2 * k, 2.4 * k, LK_RED, '#7a2a22');
+      for (let i = 0; i < 4; i++) {
+        faceQuad(ctx, 'R', x, top + 4 * k, hw + 1.2 * k, 2.6 * k, 0.08 + i * 0.24, 0.2 + i * 0.24, 0.2, 0.8, i % 2 ? LK_YEL : LK_BLUE);
+        faceQuad(ctx, 'L', x, top + 4 * k, hw + 1.2 * k, 2.6 * k, 0.06 + i * 0.24, 0.18 + i * 0.24, 0.2, 0.8, i % 2 ? LK_BLUE : LK_YEL);
+      }
+      ellipse(ctx, x + 1.6 * k, top + 2.6 * k, 0.9 * k, 0.9 * k, LK_BONE);
+      for (const [dx, dy] of [[-6.2, 4.6], [5.8, 4.4]] as const) { // ermine drops at each ear
+        poly(ctx, [x + dx * k - 0.9 * k, top + dy * k, x + dx * k + 0.9 * k, top + dy * k, x + (dx + 0.3) * k, top + (dy + 8) * k, x + (dx - 0.4) * k, top + (dy + 8) * k], LK_WHITE);
+        for (const t of [0.3, 0.6, 0.9]) ellipse(ctx, x + dx * k, top + (dy + t * 8) * k, 0.3 * k, 0.4 * k, LK_BLK);
+        line(ctx, x + dx * k, top + (dy + 0.6) * k, x + dx * k, top + (dy + 1.4) * k, LK_RED, 1.1 * k);
+      }
+      // the trailer: a strip of red trade cloth down the back with eagle feathers along both edges
+      poly(ctx, [x - 4.8 * k, top + 6 * k, x - 6.6 * k, top + 6 * k, x - 9.4 * k, top + 26 * k, x - 7.6 * k, top + 26.6 * k], '#8a2a22');
+      poly(ctx, [x - 5.4 * k, top + 6 * k, x - 6.6 * k, top + 6 * k, x - 9.4 * k, top + 26 * k, x - 8.4 * k, top + 26.2 * k], LK_RED);
+      for (let i = 0; i < 6; i++) {
+        const sy = top + (8 + i * 3.1) * k, sx = x - (5.8 + i * 0.6) * k;
+        lkEagle(ctx, sx, sy, sx - 3.4 * k, sy + 3.4 * k, 1 * k, LK_BLK);
+        if (i % 2 === 0) lkEagle(ctx, sx + 0.4 * k, sy, sx + 2.4 * k, sy + 3.6 * k, 0.9 * k, LK_BLK);
+      }
+      break;
+    }
+  }
+}
+
+/** A round painted hide shield, with eagle feathers hanging from its rim. */
+function lkShield(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  const cx = x - 1.2 * k, cy = y - 5.6 * k, rx = 5.2 * k, ry = 6 * k;
+  const field = kind === 'defender' ? LK_HIDE : kind === 'swordsman' ? '#2a2420' : kind === 'giant' ? LK_RED : kind === 'warrior' ? '#e0d2ac' : LK_BLUE;
+  const bolt = kind === 'swordsman' ? LK_YEL : LK_WHITE;
+  ellipse(ctx, cx + 0.7 * k, cy + 0.6 * k, rx, ry, LK_FUR_D);
+  ellipse(ctx, cx, cy, rx, ry, '#8a6a44'); // the rawhide rim
+  ellipse(ctx, cx, cy, rx * 0.88, ry * 0.88, field);
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx * 0.88, ry * 0.88, 0, 0, Math.PI * 2);
+  ctx.clip();
+  if (kind === 'defender') poly(ctx, [cx - rx, cy - 1 * k, cx + rx, cy - 3 * k, cx + rx, cy + ry, cx - rx, cy + ry], LK_RED);
+  ctx.restore();
+  ring(ctx, cx, cy, rx * 0.66, ry * 0.66, kind === 'swordsman' ? LK_RED : LK_BLK, 0.7 * k); // a painted hoop
+  const zz = [[-3.4, -3.4], [-0.2, -1.4], [-1.6, 0], [1.8, 2], [0.4, 2.6], [3.2, 4.2]] as const;
+  ctx.lineJoin = 'round';
+  for (const [c, wd] of [[LK_BLK, 1.6], [bolt, 0.9]] as const) { // a lightning stroke across the face
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wd * k;
+    ctx.beginPath();
+    zz.forEach(([px, py], i) => (i ? ctx.lineTo(cx + px * k, cy + py * k) : ctx.moveTo(cx + px * k, cy + py * k)));
+    ctx.stroke();
+  }
+  for (const [px, py] of [[-3.4, 2.6], [3.4, -2.6], [0, -3.6], [0.4, 4]] as const) ellipse(ctx, cx + px * k, cy + py * k, 0.5 * k, 0.5 * k, LK_YEL);
+  ring(ctx, cx, cy, rx * 0.95, ry * 0.95, shade('#8a6a44', -0.3), 0.6 * k);
+  ellipse(ctx, cx - 2.2 * k, cy - 3 * k, 1 * k, 1.5 * k, 'rgba(255,255,255,0.2)');
+  for (let i = 0; i < 5; i++) { // eagle feathers and a fringe of hair hang from the rim
+    const a = 0.4 + i * 0.58, fx = cx + Math.cos(a) * rx * 0.95, fy = cy + Math.sin(a) * ry * 0.95;
+    if (kind === 'giant' || i % 2 === 0) feather(ctx, fx, fy, fx - 0.6 * k, fy + 5.2 * k, 0.95 * k, LK_WHITE, LK_BLK);
+    else line(ctx, fx, fy, fx - 0.3 * k, fy + 2.6 * k, LK_FUR, 0.5 * k);
+  }
+}
+
+/** A steel-bladed tomahawk on a long haft, hung with feathers and a strip of red cloth. */
+function lkTomahawk(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x - 1 * k, y + 4.6 * k, x + 2.2 * k, y - 13 * k, LK_WOOD, 1.5 * k);
+  line(ctx, x - 1.4 * k, y + 4.6 * k, x + 1.8 * k, y - 13 * k, shade(LK_WOOD, 0.4), 0.45 * k);
+  for (const t of [0.2, 0.3, 0.4]) line(ctx, x - 1 * k + 3.2 * k * t * 1.6 - 0.9 * k, y + 4.6 * k - 17.6 * k * t * 1.6, x - 1 * k + 3.2 * k * t * 1.6 + 0.9 * k, y + 4.6 * k - 17.6 * k * t * 1.6 - 0.3 * k, t === 0.3 ? LK_RED : '#efe3c0', 0.7 * k); // grip wraps
+  poly(ctx, [x + 2 * k, y - 13.4 * k, x + 8.4 * k, y - 16.4 * k, x + 9 * k, y - 9.6 * k, x + 2.6 * k, y - 10.6 * k], shade(LK_STEEL, -0.2)); // the blade
+  poly(ctx, [x + 2 * k, y - 13.4 * k, x + 6 * k, y - 15.2 * k, x + 6.4 * k, y - 10.2 * k, x + 2.6 * k, y - 10.6 * k], shade(LK_STEEL, 0.2));
+  line(ctx, x + 8.4 * k, y - 16.4 * k, x + 9 * k, y - 9.6 * k, '#f2f4f6', 0.5 * k); // the bright edge
+  poly(ctx, [x + 1.2 * k, y - 13 * k, x - 2.6 * k, y - 14.6 * k, x + 1.6 * k, y - 11 * k], shade(LK_STEEL, -0.1)); // a spike at the back
+  ellipse(ctx, x + 2.3 * k, y - 12 * k, 1 * k, 1.3 * k, LK_FUR);
+  for (const [dx, dy, c] of [[-0.6, 3.6, LK_WHITE], [1.2, 4, LK_RED]] as const) feather(ctx, x + 2.2 * k, y - 10.4 * k, x + (2.2 + dx) * k, y + (-10.4 + dy + 5) * k, 0.9 * k, c, LK_BLK);
+  line(ctx, x + 2.6 * k, y - 10.6 * k, x + 3.2 * k, y - 4 * k, LK_RED, 0.8 * k);
+}
+
+/** A gunstock war club: a curved hardwood head with a steel blade along its edge, studded with brass tacks. */
+function lkGunstock(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x - 1 * k, y + 4 * k, x + 1.8 * k, y - 7.6 * k, LK_WOOD, 1.8 * k);
+  line(ctx, x - 1.5 * k, y + 4 * k, x + 1.3 * k, y - 7.6 * k, shade(LK_WOOD, 0.4), 0.45 * k);
+  poly(ctx, [x + 0.6 * k, y - 7.6 * k, x + 3 * k, y - 8.4 * k, x + 9.2 * k, y - 14.4 * k, x + 10.6 * k, y - 12.4 * k, x + 4.8 * k, y - 6 * k, x + 1.2 * k, y - 5.4 * k], LK_WOOD);
+  poly(ctx, [x + 0.6 * k, y - 7.6 * k, x + 3 * k, y - 8.4 * k, x + 9.2 * k, y - 14.4 * k, x + 8.4 * k, y - 11 * k, x + 4 * k, y - 7 * k], shade(LK_WOOD, 0.22));
+  poly(ctx, [x + 9.2 * k, y - 14.4 * k, x + 10.8 * k, y - 12.2 * k, x + 12.4 * k, y - 15.4 * k], LK_STEEL); // the blade set into the tip
+  poly(ctx, [x + 9.2 * k, y - 14.4 * k, x + 10.8 * k, y - 12.2 * k, x + 10.6 * k, y - 15 * k], '#f2f4f6');
+  lkBeads(ctx, x + 3.2 * k, y - 7.6 * k, x + 8.6 * k, y - 12.8 * k, 5, 0.42 * k, ['#e8c66a']); // brass tacks
+  for (const t of [0.1, 0.22, 0.34]) line(ctx, x - 1 * k + 2.8 * k * t * 2 - 1 * k, y + 4 * k - 11.6 * k * t * 2, x - 1 * k + 2.8 * k * t * 2 + 1 * k, y + 4 * k - 11.6 * k * t * 2 - 0.3 * k, LK_RED, 0.7 * k);
+  lkFringe(ctx, x - 1 * k, y + 5 * k, x - 0.2 * k, y + 5 * k, 3, 2 * k, '#c9b58a', 0.5 * k);
+  feather(ctx, x + 1.6 * k, y - 5.6 * k, x + 0.6 * k, y + 0.6 * k, 0.9 * k, LK_WHITE, LK_BLK);
+}
+
+/** A great stone-headed maul: a rawhide-wrapped head on a long haft, painted red, hung with feathers and fur. */
+function lkMaul(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x - 1.4 * k, y + 5 * k, x + 2.6 * k, y - 14 * k, LK_WOOD, 1.7 * k);
+  line(ctx, x - 1.8 * k, y + 5 * k, x + 2.2 * k, y - 14 * k, shade(LK_WOOD, 0.4), 0.45 * k);
+  ellipse(ctx, x + 2.8 * k, y - 15.8 * k, 3.3 * k, 3.7 * k, shade('#8d857a', -0.3));
+  ellipse(ctx, x + 2.6 * k, y - 16.2 * k, 3 * k, 3.4 * k, '#8d857a');
+  ellipse(ctx, x + 1.7 * k, y - 17.2 * k, 1.3 * k, 1.7 * k, '#b0a89c');
+  for (const t of [-1.6, -0.5, 0.6, 1.7]) line(ctx, x + (2.6 + t) * k, y - 19.2 * k, x + (2.6 + t * 0.7) * k, y - 12.6 * k, '#c9b58a', 0.5 * k); // rawhide lacing
+  ring(ctx, x + 2.7 * k, y - 15.6 * k, 3 * k, 1.1 * k, LK_RED, 1 * k); // a painted band round the head
+  lkFringe(ctx, x - 1.4 * k, y + 5.2 * k, x - 0.6 * k, y + 5.2 * k, 3, 2.2 * k, '#c9b58a', 0.5 * k);
+  ellipse(ctx, x + 2.3 * k, y - 12.4 * k, 1.1 * k, 1.5 * k, LK_FUR);
+  for (const [dx, dy, c] of [[-1.6, 4, LK_WHITE], [0, 5, LK_WHITE], [1.6, 4, LK_RED]] as const) feather(ctx, x + 2.3 * k, y - 11.6 * k, x + (2.3 + dx) * k, y + (-11.6 + dy + 4) * k, 1 * k, c, LK_BLK);
+}
+
+/** A thrusting lance with a leaf-shaped steel head and a trail of feathers along the shaft. */
+function lkSpear(ctx: Ctx, x: number, y: number, k: number) {
+  const x0 = x - 1.8 * k, y0 = y + 6.2 * k, x1 = x + 3 * k, y1 = y - 21 * k;
+  line(ctx, x0, y0, x1, y1, LK_WOOD, 1.4 * k);
+  line(ctx, x0 - 0.4 * k, y0, x1 - 0.4 * k, y1, shade(LK_WOOD, 0.4), 0.4 * k);
+  poly(ctx, [x1 + 0.4 * k, y1 - 6.6 * k, x1 - 1.6 * k, y1 - 0.2 * k, x1 + 0.4 * k, y1 + 1 * k], shade(LK_STEEL, 0.25));
+  poly(ctx, [x1 + 0.4 * k, y1 - 6.6 * k, x1 + 2.4 * k, y1 - 0.2 * k, x1 + 0.4 * k, y1 + 1 * k], shade(LK_STEEL, -0.25));
+  ellipse(ctx, x1 + 0.2 * k, y1 + 1.6 * k, 1.1 * k, 1.2 * k, LK_FUR); // fur binding
+  for (let i = 0; i < 4; i++) {
+    const t = 0.72 + i * 0.07, px = x0 + (x1 - x0) * t, py = y0 + (y1 - y0) * t;
+    feather(ctx, px, py, px - (2.4 - (i % 2) * 1.4) * k, py + 6.4 * k, 1 * k, i % 2 ? LK_RED : LK_WHITE, LK_BLK);
+  }
+  for (const t of [0.12, 0.2, 0.28]) line(ctx, x0 + (x1 - x0) * t - 1 * k, y0 + (y1 - y0) * t, x0 + (x1 - x0) * t + 1 * k, y0 + (y1 - y0) * t - 0.3 * k, t === 0.2 ? LK_RED : '#efe3c0', 0.7 * k);
+}
+
+/** A short sinew-backed bow with a fringed grip, drawn with an arrow ready. */
+function lkBow(ctx: Ctx, x: number, y: number, k: number) {
+  const bx = x - 3.8 * k, top = { x: bx + 0.6 * k, y: y - 13.4 * k }, bot = { x: bx + 0.6 * k, y: y + 10.4 * k }, ctl = { x: bx + 9.6 * k, y: y - 1.4 * k };
+  const nock = { x: bx - 3.4 * k, y: y - 1.4 * k };
+  ctx.lineCap = 'round';
+  for (const [c, wd, dx] of [['#3a2418', 1.9, 0], ['#a5723e', 1.1, -0.35], [shade('#c9a06a', 0.3), 0.35, -0.7]] as const) {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wd * k;
+    ctx.beginPath();
+    ctx.moveTo(top.x + dx * k, top.y);
+    ctx.quadraticCurveTo(ctl.x + dx * k, ctl.y, bot.x + dx * k, bot.y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = ink('#e8e0c8'); // the sinew string, drawn back
+  ctx.lineWidth = 0.4 * k;
+  ctx.beginPath();
+  ctx.moveTo(top.x, top.y);
+  ctx.lineTo(nock.x, nock.y);
+  ctx.lineTo(bot.x, bot.y);
+  ctx.stroke();
+  lkFringe(ctx, x + 0.4 * k, y + 0.4 * k, x + 0.4 * k, y + 2.4 * k, 3, 2.2 * k, LK_TAN, 0.5 * k); // buckskin wrapped round the grip
+  ellipse(ctx, x + 0.8 * k, y - 0.4 * k, 1.1 * k, 1.5 * k, LK_TAN);
+  for (const dy of [-13.4, 10.4]) ellipse(ctx, bx + 0.6 * k, y + dy * k, 0.55 * k, 0.55 * k, LK_RED); // painted tips
+  // the arrow: a shaft with three fletchings and a stone point
+  const tx = x + 9.6 * k, ty = y - 3.6 * k;
+  line(ctx, nock.x, nock.y, tx, ty, '#c9a06a', 0.7 * k);
+  poly(ctx, [tx, ty - 1 * k, tx + 3 * k, ty + 0.2 * k, tx, ty + 1 * k], '#d6d0c0');
+  for (const t of [0.04, 0.12, 0.2]) {
+    const px = nock.x + (tx - nock.x) * t, py = nock.y + (ty - nock.y) * t;
+    poly(ctx, [px, py, px + 2.2 * k, py - 1.6 * k, px + 2.6 * k, py - 0.4 * k], t === 0.12 ? LK_RED : LK_WHITE);
+  }
+}
+
+/** A walking staff with a crook, a fur wrap and hanging feathers: the scout's. */
+function lkStaff(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x + 1 * k, y + 6 * k, x + 2.4 * k, y - 15 * k, LK_WOOD, 1.5 * k);
+  line(ctx, x + 0.6 * k, y + 6 * k, x + 2 * k, y - 15 * k, shade(LK_WOOD, 0.4), 0.45 * k);
+  ctx.strokeStyle = ink(LK_WOOD);
+  ctx.lineWidth = 1.4 * k;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + 2.4 * k, y - 15 * k);
+  ctx.quadraticCurveTo(x + 2.8 * k, y - 19.4 * k, x + 6.4 * k, y - 17.8 * k);
+  ctx.stroke();
+  ellipse(ctx, x + 2.2 * k, y - 11.4 * k, 1.3 * k, 2.3 * k, LK_FUR);
+  lkFringe(ctx, x + 1.6 * k, y - 9.4 * k, x + 2.8 * k, y - 9.4 * k, 3, 3.2 * k, '#c9b58a', 0.5 * k);
+  for (const [dx, c] of [[-0.4, LK_WHITE], [1.6, '#8a6a4a']] as const) feather(ctx, x + 2 * k, y - 14.4 * k, x + (2 + dx - 1.4) * k, y - 8.4 * k, 1 * k, c, LK_BLK);
+  lkBeads(ctx, x + 0.9 * k, y + 1 * k, x + 1.4 * k, y - 4 * k, 5, 0.4 * k, [LK_BLUE, LK_WHITE, LK_RED]);
+}
+
+/** What the archer and the scout carry on their backs. */
+function lkBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'archer') {
+    // a hide quiver with a beaded band and a fringed tail, and a sheaf of fletched arrows
+    const qx = x - 7 * k;
+    box(ctx, qx, y - 8 * k, 3.8 * k, 8 * k, '#b89660');
+    band(ctx, qx, y - 8 * k, 3.8 * k, 8 * k, 0.6, 0.72, LK_RED);
+    band(ctx, qx, y - 8 * k, 3.8 * k, 8 * k, 0.72, 0.78, LK_WHITE);
+    band(ctx, qx, y - 8 * k, 3.8 * k, 8 * k, 0.4, 0.46, LK_BLUE);
+    lkFringe(ctx, qx - 1.9 * k, y - 0.4 * k, qx + 1.9 * k, y + 0.6 * k, 4, 2 * k, '#a58862', 0.5 * k);
+    for (const i of [-1.5, -0.5, 0.5, 1.5]) {
+      const tx = qx - 2 * k + i * 1.2 * k;
+      line(ctx, qx + i * 0.8 * k, y - 8.4 * k, tx, y - 15.6 * k, '#c9a06a', 0.6 * k);
+      poly(ctx, [tx, y - 15.6 * k, tx - 1 * k, y - 18.2 * k, tx + 0.5 * k, y - 16.6 * k], i > 0 ? LK_WHITE : LK_RED);
+      poly(ctx, [tx, y - 15.6 * k, tx + 1.2 * k, y - 18 * k, tx + 0.5 * k, y - 16.6 * k], shade(i > 0 ? LK_WHITE : LK_RED, -0.28));
+    }
+    return;
+  }
+  // the scout: a rolled buffalo robe tied on top of a painted rawhide parfleche
+  box(ctx, x - 6 * k, y - 7 * k, 4.6 * k, 7 * k, LK_HIDE);
+  band(ctx, x - 6 * k, y - 7 * k, 4.6 * k, 7 * k, 0.05, 0.22, LK_RED);
+  band(ctx, x - 6 * k, y - 7 * k, 4.6 * k, 7 * k, 0.74, 0.92, LK_BLUE);
+  for (const u of [0.2, 0.6]) faceQuad(ctx, 'R', x - 6 * k, y - 7 * k, 4.6 * k, 7 * k, u, u + 0.24, 0.32, 0.6, LK_YEL);
+  ellipse(ctx, x - 5.4 * k, y - 15.2 * k, 4.4 * k, 2 * k, shade(LK_FUR, -0.2));
+  ellipse(ctx, x - 5.6 * k, y - 15.6 * k, 4.2 * k, 1.8 * k, LK_FUR);
+  ellipse(ctx, x - 9.2 * k, y - 15.4 * k, 0.9 * k, 1.7 * k, '#c9a06a'); // the tanned flesh side
+  for (const dx of [-1.6, 1.6]) line(ctx, x - 5.4 * k + dx * k, y - 17 * k, x - 5.4 * k + dx * k, y - 7.6 * k, LK_ROPE, 0.6 * k);
+}
+
+/** The Lakota weapons on foot. Returns true when it drew the unit's weapon (and shield). */
+function lkWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
+  const { x, y } = b.hand;
+  switch (kind) {
+    case 'warrior':
+      lkTomahawk(ctx, x, y, k);
+      lkShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'archer':
+      lkBow(ctx, x, y, k);
+      return true;
+    case 'defender': // the shield is drawn afterwards, like everyone's
+      lkSpear(ctx, x, y, k);
+      return true;
+    case 'swordsman':
+      lkGunstock(ctx, x, y, k);
+      lkShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'giant':
+      lkMaul(ctx, x, y, k);
+      lkShield(ctx, kind, b.off.x, b.off.y, k);
+      return true;
+    case 'explorer':
+      lkStaff(ctx, x, y, k);
+      return true;
+  }
+  return false;
+}
+
 /** Back gear: the archer's quiver, the janissary's powder-flask and hatchet, the traveller's rolled prayer rug. */
 function otBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
   if (kind === 'archer') {
@@ -9134,6 +9624,414 @@ function otKangal(ctx: Ctx, x: number, y: number, k: number, body: string) {
   poly(ctx, [x + 16.2 * k, y - 5.6 * k, x + 17 * k, y - 3.4 * k, x + 15.4 * k, y - 4.2 * k], '#d05a5a'); // a lolling tongue
 }
 
+// ----- the painted pony (the tribe's strength)
+
+/** A rider's lance: a long shaft with a steel head, a fur binding and a long trail of eagle feathers. */
+function lkLance(ctx: Ctx, hx: number, hy: number, thick: number) {
+  const P = (t: number) => [hx - 3 + 11 * t, hy + 6 - 26 * t] as const;
+  const [tx, ty] = P(1);
+  line(ctx, hx - 3, hy + 6, tx, ty, LK_WOOD, thick);
+  line(ctx, hx - 3.6, hy + 6, tx - 0.6, ty, shade(LK_WOOD, 0.4), 0.5);
+  for (const [t, c] of [[0.1, LK_RED], [0.16, '#efe3c0'], [0.22, LK_RED]] as const) line(ctx, P(t)[0] - 1, P(t)[1] + 0.4, P(t)[0] + 1, P(t)[1] - 0.4, c, 0.8); // wrapped grip
+  ellipse(ctx, tx - 0.4, ty + 2.2, 1.3, 2, LK_FUR); // fur binding under the head
+  poly(ctx, [tx + 0.4, ty - 5.4, tx - 1.6, ty + 0.6, tx + 0.4, ty + 1.2], shade(LK_STEEL, 0.25));
+  poly(ctx, [tx + 0.4, ty - 5.4, tx + 2.4, ty + 0.4, tx + 0.4, ty + 1.2], shade(LK_STEEL, -0.25));
+  for (let i = 0; i < 5; i++) { // eagle feathers hanging from the shaft below the head
+    const [px, py] = P(0.7 + i * 0.058);
+    feather(ctx, px, py, px + 1.4 + (i % 2) * 1.2, py + 6.2 + (i % 3) * 0.6, 0.95, i % 3 === 1 ? LK_RED : LK_WHITE, LK_BLK);
+  }
+}
+
+/** The pony's paint, blanket, breast collar and rope bridle, over a plain drawHorse. */
+function lkHorse(ctx: Ctx, kind: UnitKind, x: number, y: number, saddle: { x: number; y: number }) {
+  const knight = kind === 'knight', hunt = kind === 'buffalorider';
+  const hx0 = x - 1, hy0 = y + 3, kh = 0.95;
+  const bx = hx0, by = hy0 - 6 * kh, bw = 17 * kh, bh = 7 * kh;
+  const P = (f: 'L' | 'R', u: number, v: number) => lkPt(f, bx, by, bw, bh, u, v);
+  const cream = '#f0e8d6';
+  // a pinto's white patches
+  if (hunt) {
+    faceQuad(ctx, 'R', bx, by, bw, bh, 0.5, 0.95, 0.3, 0.94, cream);
+    faceQuad(ctx, 'L', bx, by, bw, bh, 0.04, 0.4, 0.36, 0.98, cream);
+    faceQuad(ctx, 'R', hx0 + 7.5 * kh, hy0 - 10 * kh, 5 * kh, 7 * kh, 0.3, 1, 0.1, 0.8, cream); // neck
+  } else if (!knight) faceQuad(ctx, 'R', bx, by, bw, bh, 0.62, 0.92, 0.42, 0.92, cream);
+  // legs: painted bands above the hoof, and a lightning stroke down the forelegs
+  for (const [lx, ly, front] of [[-6, -1.5, false], [-3, 0.5, false], [4, -0.5, true], [7, 1.5, true]] as const) {
+    const cx = hx0 + lx * kh, cy = hy0 + ly * kh, w = 2.2 * kh, h = 7 * kh;
+    faceQuad(ctx, 'R', cx, cy, w, h, 0, 1, 0.26, 0.33, LK_RED);
+    faceQuad(ctx, 'R', cx, cy, w, h, 0, 1, 0.34, 0.4, cream);
+    if (front) {
+      const pts = [[0.15, 0.94], [0.85, 0.8], [0.15, 0.66], [0.85, 0.52]] as const;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = ink(knight ? LK_BLUE : LK_RED);
+      ctx.lineWidth = 0.75;
+      ctx.beginPath();
+      pts.forEach(([u, v], i) => { const p = lkPt('R', cx, cy, w, h, u, v); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+      ctx.stroke();
+    }
+  }
+  // hand marks on the shoulder and haunch, a lightning bolt down the neck
+  const hand = (p: [number, number], c: string) => {
+    ellipse(ctx, p[0], p[1] + 0.3, 1.35, 1.45, c);
+    for (let i = 0; i < 4; i++) line(ctx, p[0] + (i - 1.5) * 0.62, p[1] - 0.6, p[0] + (i - 1.5) * 0.8, p[1] - 2.5 + (i === 0 || i === 3 ? 0.5 : 0), c, 0.55);
+    line(ctx, p[0] + 1, p[1] + 0.6, p[0] + 2.3, p[1] - 0.5, c, 0.55);
+  };
+  hand(P('R', 0.72, 0.5), LK_RED);
+  hand(P('L', 0.16, 0.5), hunt ? LK_BLUE : knight ? LK_BLK : LK_WHITE);
+  for (const [c, wd] of [[LK_BLK, 1.8], [LK_WHITE, 1], ] as const) { // a lightning bolt down the flank
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wd;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    [[0.62, 0.94], [0.36, 0.68], [0.6, 0.52], [0.32, 0.16]].forEach(([u, v], i) => { const p = P('L', u, v); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+    ctx.stroke();
+  }
+  // the head: a ring of paint round the eye, a red cheek stripe, and eagle feathers tied into the forelock
+  const hhx = hx0 + 10.5 * kh, hhy = hy0 - 15 * kh;
+  const ep = lkPt('R', hhx, hhy, 7 * kh, 5 * kh, 0.535, 0.6);
+  ring(ctx, ep[0], ep[1], 1.8, 1.4, LK_WHITE, 0.8);
+  ring(ctx, ep[0], ep[1], 1.3, 1, LK_RED, 0.5);
+  faceQuad(ctx, 'R', hhx, hhy, 7 * kh, 5 * kh, 0.1, 0.24, 0.16, 0.9, LK_RED);
+  faceQuad(ctx, 'R', hhx, hhy, 7 * kh, 5 * kh, 0.68, 0.9, 0.2, 0.3, hunt ? LK_BLUE : LK_RED); // a bar across the nose
+  ellipse(ctx, hhx + 0.2, hhy - 4.4, 1, 1, LK_RED); // red cloth on the forelock
+  lkEagle(ctx, hhx + 0.4, hhy - 4.4, hhx - 3.8, hhy - 10.4, 1);
+  if (knight) lkEagle(ctx, hhx + 1.2, hhy - 4.2, hhx - 0.6, hhy - 11.4, 1, LK_RED);
+  // the tail is wrapped in red and tipped with a feather
+  line(ctx, hx0 - 9.4 * kh, hy0 - 10.4 * kh, hx0 - 10.4 * kh, hy0 - 8.6 * kh, LK_RED, 1.5);
+  lkEagle(ctx, hx0 - 11.4 * kh, hy0 - 5 * kh, hx0 - 14.6 * kh, hy0 + 1 * kh, 1);
+  if (knight) for (const t of [0.3, 0.6]) lkEagle(ctx, hx0 - (10 + t * 3) * kh, hy0 - (9 - t * 6) * kh, hx0 - (13 + t * 3) * kh, hy0 - (5 - t * 6) * kh, 0.9, LK_RED);
+  // a folded hide blanket edged with fringe, under a padded seat
+  const sx = saddle.x, sy = saddle.y;
+  poly(ctx, [sx - 3.8, sy - 0.6, sx + 3, sy - 0.6, sx + 2.6, sy + 3.8, sx - 1, sy + 2.8, sx - 3.6, sy + 4.8], LK_HIDE);
+  const hem: [number, number][] = [[sx - 3.6, sy + 4.8], [sx - 1, sy + 2.8], [sx + 2.6, sy + 3.8]];
+  for (const [d0, d1, c] of [[0, 1, LK_RED], [1, 1.8, LK_BLUE]] as const) {
+    poly(ctx, [hem[0][0], hem[0][1] - d0, hem[1][0], hem[1][1] - d0, hem[2][0], hem[2][1] - d0, hem[2][0], hem[2][1] - d1, hem[1][0], hem[1][1] - d1, hem[0][0], hem[0][1] - d1], c);
+  }
+  lkFringe(ctx, hem[0][0], hem[0][1], hem[1][0], hem[1][1], 3, 1.4, '#efe3c0', 0.45);
+  lkFringe(ctx, hem[1][0], hem[1][1], hem[2][0], hem[2][1], 3, 1.4, '#efe3c0', 0.45);
+  poly(ctx, [sx, sy - 1.7, sx + 5.2, sy + 0.6, sx, sy + 2.9, sx - 5.2, sy + 0.6], '#b48a58'); // the pad the rider sits on
+  poly(ctx, [sx, sy - 1.7, sx + 5.2, sy + 0.6, sx, sy + 2.9, sx - 5.2, sy + 0.6, sx, sy + 1.9, sx + 4, sy + 0.5, sx, sy - 0.7, sx - 4, sy + 0.5, sx, sy + 1.9], LK_RED);
+  // breast collar: a beaded strap with fringe, and (for the knight) hanging feathers
+  line(ctx, x + 3.5, y - 9.6, x + 8, y - 3.4, LK_RED, 1.2);
+  lkBeads(ctx, x + 3.8, y - 9.2, x + 7.8, y - 3.8, 5, 0.5, [LK_WHITE, LK_YEL]);
+  lkFringe(ctx, x + 4, y - 9, x + 8, y - 3.4, 5, 1.7, '#efe3c0', 0.45);
+  if (knight) lkEagle(ctx, x + 7.8, y - 3.6, x + 7.2, y + 1.6, 1);
+  // rope bridle: a hackamore knotted round the muzzle and a single rope rein
+  band(ctx, hx0 + 14.2 * kh, hy0 - 14.6 * kh, 3.2 * kh, 3 * kh, 0.32, 0.55, LK_ROPE);
+  line(ctx, hx0 + 12.4 * kh, hy0 - 15.3 * kh, hx0 + 11.3 * kh, hy0 - 18 * kh, LK_ROPE, 0.6);
+  line(ctx, hx0 + 11.3 * kh, hy0 - 18 * kh, hx0 + 9.4 * kh, hy0 - 19.2 * kh, LK_ROPE, 0.6);
+  ellipse(ctx, hx0 + 16.2 * kh, hy0 - 13.6 * kh, 0.85, 0.85, LK_ROPE);
+  ctx.strokeStyle = ink(LK_ROPE);
+  ctx.lineWidth = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(hx0 + 16.2 * kh, hy0 - 13.6 * kh);
+  ctx.quadraticCurveTo(hx0 + 9 * kh, hy0 - 8.6 * kh, hx0 + 2.6 * kh, hy0 - 12.2 * kh);
+  ctx.stroke();
+}
+
+function lkRider(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const knight = kind === 'knight', hunt = kind === 'buffalorider';
+  const coat = knight ? '#ece4d2' : hunt ? '#b4783f' : '#8a5a33';
+  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, coat, knight ? '#4a3a2c' : '#20140c', undefined, LK_RED);
+  lkHorse(ctx, kind, x, y, saddle);
+  if (hunt) { // a fringed quiver of arrows slung at the rider's back
+    const qx = saddle.x - 4.6, qy = saddle.y + 2;
+    for (const i of [-1, 0, 1]) {
+      line(ctx, qx + i * 0.8, qy - 3, qx - 2 + i * 1.3, qy - 9.6, '#c9a06a', 0.55);
+      poly(ctx, [qx - 2 + i * 1.3, qy - 9.6, qx - 3 + i * 1.3, qy - 12, qx - 1.4 + i * 1.3, qy - 10.4], i ? LK_WHITE : LK_RED);
+    }
+    box(ctx, qx, qy, 2.8, 6, '#b89660');
+    band(ctx, qx, qy, 2.8, 6, 0.55, 0.7, LK_RED);
+    lkFringe(ctx, qx - 1.4, qy + 0.8, qx + 1.4, qy + 1.4, 3, 1.8, '#a58862', 0.45);
+  }
+  const b = figure(ctx, kind, 'lakota', saddle.x, saddle.y, 0.9, true);
+  lkShield(ctx, kind, b.off.x - 1.5, b.off.y + 1.5, 0.7);
+  if (hunt) lkMaul(ctx, b.hand.x, b.hand.y, 0.72); // a stone-headed war club
+  else lkLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
+}
+
+// ----- the bent-sapling sling on a travois (catapult)
+
+function lkCatapult(ctx: Ctx, x: number, y: number) {
+  const rope = LK_ROPE;
+  const A1: [number, number] = [x + 15, y - 12], E1: [number, number] = [x - 21, y + 2.5];
+  const A2: [number, number] = [x + 13, y - 7], E2: [number, number] = [x - 18, y + 6];
+  const L = (a: [number, number], b: [number, number], t: number): [number, number] => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  // a heap of round stones for the sling, and the front props holding up the poles' apex
+  for (const [ax, ay, ar] of [[11.6, 5, 2.2], [14.6, 6, 1.9], [13.2, 3, 1.8], [9, 6.4, 1.5]] as const) {
+    ellipse(ctx, x + ax, y + ay, ar, ar * 0.85, '#7d746a');
+    ellipse(ctx, x + ax - ar * 0.3, y + ay - ar * 0.3, ar * 0.45, ar * 0.35, '#b0a698');
+  }
+  line(ctx, x + 10, y + 3, x + 14, y - 10, LK_WOOD_D, 1.3);
+  line(ctx, x + 17, y + 2, x + 14.6, y - 10.6, LK_WOOD_D, 1.3);
+  // the travois: two long poles crossing at the front and trailing to the ground behind, with a lashed hide platform
+  line(ctx, A1[0] + 1.6, A1[1] - 2, E1[0], E1[1], LK_WOOD_D, 1.9);
+  line(ctx, A1[0] + 1.6, A1[1] - 2.6, E1[0], E1[1] - 0.6, LK_WOOD, 1);
+  const q = [L(A1, E1, 0.3), L(A1, E1, 0.84), L(A2, E2, 0.84), L(A2, E2, 0.3)];
+  poly(ctx, q.flat(), LK_HIDE);
+  for (let i = 0; i < 6; i++) { // rawhide lacing across the platform
+    const t = 0.32 + i * 0.09;
+    const a = L(A1, E1, t), b = L(A2, E2, t);
+    line(ctx, a[0], a[1], b[0], b[1], shade(LK_HIDE, -0.32), 0.5);
+    ellipse(ctx, a[0], a[1], 0.45, 0.45, rope);
+    ellipse(ctx, b[0], b[1], 0.45, 0.45, rope);
+  }
+  const m1 = L(A2, E2, 0.3), m2 = L(A2, E2, 0.84);
+  line(ctx, A2[0] + 1.6, A2[1] - 1.2, E2[0], E2[1], LK_WOOD_D, 1.9);
+  line(ctx, A2[0] + 1.6, A2[1] - 1.8, E2[0], E2[1] - 0.6, LK_WOOD, 1);
+  for (const t of [0.3, 0.6, 0.9]) { const a = L(A1, E1, t), b = L(A2, E2, t); line(ctx, a[0], a[1] - 0.6, b[0], b[1] - 0.6, LK_WOOD_D, 1.1); }
+  for (const [px, py] of [m1, m2]) ellipse(ctx, px, py, 0.6, 0.6, rope);
+  // the frame: two forked posts lashed together at the top
+  const pb = L(A1, E1, 0.5), pf = L(A2, E2, 0.5);
+  line(ctx, pb[0], pb[1] - 1, pb[0] + 1, y - 26, LK_WOOD_D, 1.8);
+  line(ctx, pf[0], pf[1] - 1, pf[0] + 2.4, y - 24, LK_WOOD, 1.8);
+  line(ctx, pb[0] - 2.4, y - 26.4, pf[0] + 4.2, y - 23.2, LK_WOOD_D, 1.4);
+  for (const [px, py] of [[pb[0] + 1, y - 25], [pf[0] + 2.4, y - 23.4]] as const) { for (let i = 0; i < 3; i++) line(ctx, px - 0.9, py + i * 0.9, px + 0.9, py + i * 0.9 + 0.3, rope, 0.5); }
+  // the bent sapling: rooted at the front of the platform, bowed back over the frame and hauled down by a rawhide cord
+  const root: [number, number] = [x + 4, y - 4], tip: [number, number] = [x - 15, y - 29];
+  ctx.lineCap = 'round';
+  for (const [c, wd, dx] of [[LK_WOOD_D, 2.6, 0], [LK_WOOD, 1.6, -0.3], [shade(LK_WOOD, 0.4), 0.45, -0.7]] as const) {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wd;
+    ctx.beginPath();
+    ctx.moveTo(root[0] + dx, root[1]);
+    ctx.quadraticCurveTo(x + 5.6 + dx, y - 27, tip[0] + dx, tip[1]);
+    ctx.stroke();
+  }
+  for (const t of [0.35, 0.5, 0.65]) { const u = 1 - t; const bx = u * u * root[0] + 2 * u * t * (x + 5.6) + t * t * tip[0], by = u * u * root[1] + 2 * u * t * (y - 27) + t * t * tip[1]; line(ctx, bx - 1.1, by + 0.3, bx + 1.1, by - 0.5, t === 0.5 ? LK_RED : LK_WHITE, 0.8); } // painted bands
+  for (const [dx, dy] of [[-1.2, -0.6], [0.6, 0.9]] as const) poly(ctx, [tip[0] + dx, tip[1] + dy, tip[0] + dx - 2.6, tip[1] + dy - 1.4, tip[0] + dx - 0.6, tip[1] + dy + 0.6], '#6f9a3c'); // a sprig of leaves still on the sapling
+  const peg: [number, number] = [x - 18, y + 4];
+  line(ctx, tip[0], tip[1], peg[0], peg[1], rope, 0.9);
+  line(ctx, peg[0] + 0.6, peg[1] - 5, peg[0] + 0.6, peg[1] + 1, LK_WOOD_D, 1.4); // the peg the cord is wound round
+  // the sling pouch, hide with a stone in it, hanging from the tip
+  ellipse(ctx, tip[0] - 1.6, tip[1] + 3.6, 3.2, 2.4, shade(LK_HIDE, -0.25));
+  ellipse(ctx, tip[0] - 1.8, tip[1] + 3.2, 2.9, 2.1, LK_HIDE);
+  ellipse(ctx, tip[0] - 1.8, tip[1] + 2.4, 1.6, 1.4, '#7d746a');
+  ellipse(ctx, tip[0] - 2.2, tip[1] + 2, 0.6, 0.5, '#b0a698');
+  line(ctx, tip[0], tip[1] + 0.4, tip[0] - 3.4, tip[1] + 2.6, rope, 0.5);
+  line(ctx, tip[0], tip[1] + 0.4, tip[0] + 0.2, tip[1] + 3.4, rope, 0.5);
+  // a painted hide standard on a stick and a bundle of spare rawhide
+  line(ctx, x + 11.6, y - 8, x + 12, y - 25, LK_WOOD_D, 1);
+  poly(ctx, [x + 12, y - 25, x + 19, y - 23.6, x + 18, y - 17.6, x + 12, y - 19], LK_HIDE);
+  poly(ctx, [x + 12, y - 22.8, x + 18.8, y - 21.6, x + 18.6, y - 20.2, x + 12, y - 21.4], LK_RED);
+  lkEagle(ctx, x + 12, y - 25, x + 10.4, y - 31, 1.1);
+  ellipse(ctx, x - 8.4, y - 3.6, 3, 1.7, shade(LK_HIDE, -0.2));
+  ellipse(ctx, x - 8.6, y - 4.2, 3, 1.6, LK_TAN);
+  line(ctx, x - 10, y - 5.6, x - 7.4, y - 2.4, rope, 0.6);
+  line(ctx, x - 7.4, y - 5.6, x - 10, y - 2.4, rope, 0.6);
+}
+
+// ----- boats: bullboats, a pole raft and a dugout
+
+/** A bullboat: a round tub of buffalo hide stretched over a willow frame. `fill` draws whoever sits inside. */
+function lkBullboat(ctx: Ctx, cx: number, cy: number, r: number, fill: () => void) {
+  const hide = '#cdb684', hideD = '#8f7a52', rimY = cy - 4.4, ry = r * 0.44;
+  ellipse(ctx, cx, rimY, r, ry, '#4a3820'); // the hollow
+  ellipse(ctx, cx, rimY - 0.3, r * 0.92, ry * 0.86, '#6a5230');
+  fill();
+  ctx.beginPath();
+  ctx.moveTo(cx - r, rimY);
+  ctx.lineTo(cx - r * 0.8, cy - 0.2);
+  ctx.ellipse(cx, cy - 0.2, r * 0.8, r * 0.34, 0, Math.PI, 0, true);
+  ctx.lineTo(cx + r, rimY);
+  ctx.ellipse(cx, rimY, r, ry, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = ink(hide);
+  ctx.fill();
+  poly(ctx, [cx + r * 0.1, rimY + ry * 0.98, cx + r, rimY, cx + r * 0.8, cy - 0.2, cx + r * 0.3, cy + r * 0.32], hideD); // the shaded side
+  for (const t of [-0.6, -0.25, 0.1, 0.45]) { // stitched seams
+    const sx = cx + t * r;
+    line(ctx, sx, rimY + ry * Math.sqrt(1 - t * t), sx * 0.96 + cx * 0.04, cy + r * 0.3 * Math.sqrt(1 - t * t), shade(hide, -0.35), 0.5);
+    for (const s of [0.25, 0.55, 0.85]) ellipse(ctx, sx - 0.2, rimY + ry * Math.sqrt(1 - t * t) + s * (cy + r * 0.3 - rimY - ry) * 0.85, 0.4, 0.3, LK_ROPE);
+  }
+  for (let i = 0; i < 7; i++) { // a painted band of red triangles just under the rim
+    const a = ((i + 0.5) / 7) * Math.PI, px = cx + Math.cos(a) * r * 0.97, py = rimY + Math.sin(a) * ry * 0.97;
+    poly(ctx, [px - 1.2, py + 0.6, px + 1.2, py + 0.6, px, py + 3], i % 2 ? LK_RED : LK_BLUE);
+  }
+  ctx.strokeStyle = ink('#7a5a34'); // the willow rim
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.ellipse(cx, rimY, r, ry, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = ink('#b58a52');
+  ctx.lineWidth = 0.4;
+  ctx.beginPath();
+  ctx.ellipse(cx, rimY - 0.3, r, ry, 0, Math.PI * 1.05, Math.PI * 1.9);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'; // foam along the waterline
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 0.2, r * 0.82, r * 0.36, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.stroke();
+}
+
+function lkPaddle(ctx: Ctx, px: number, py: number, dir: number) {
+  line(ctx, px + dir * 2.4, py - 9, px - dir * 3.6, py + 5, LK_WOOD, 0.9);
+  ellipse(ctx, px - dir * 4.2, py + 6, 1.1, 2.1, LK_WOOD_D);
+  ellipse(ctx, px - dir * 4.2, py + 5.6, 0.5, 1.1, LK_RED);
+}
+
+/** A dugout cottonwood canoe with pointed, upswept ends. `fill` draws the crew between the far and near walls. */
+function lkDugout(ctx: Ctx, cx: number, cy: number, w: number, fill: () => void) {
+  const wood = '#94704a', woodD = '#5a3f22', woodL = '#b48c5a';
+  const rim = (dy: number): [number, number][] => [[cx - w, cy - 9 + dy], [cx - w * 0.66, cy - 6.4 + dy], [cx - w * 0.3, cy - 5.4 + dy], [cx, cy - 5.2 + dy], [cx + w * 0.3, cy - 5.6 + dy], [cx + w * 0.66, cy - 6.6 + dy], [cx + w + 1, cy - 10.4 + dy]];
+  const near = rim(0), far = rim(-2.8).map(([px, py], i) => [px + (i === 0 ? 2.6 : i === 6 ? -2.4 : 0), py] as [number, number]);
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), ...[...far].reverse().flatMap(([a, b]) => [a, b])], '#3f2a16');
+  fill();
+  const hull = [...near, [cx + w * 0.78, cy - 1], [cx + w * 0.42, cy + 2.8], [cx, cy + 3.4], [cx - w * 0.42, cy + 3], [cx - w * 0.8, cy - 1]] as [number, number][];
+  poly(ctx, hull.flatMap(([a, b]) => [a, b]), wood);
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), cx + w * 0.7, cy - 3.6, cx, cy - 2.4, cx - w * 0.7, cy - 3.2], woodL);
+  poly(ctx, [cx - w * 0.8, cy - 1, cx - w * 0.42, cy + 3, cx, cy + 3.4, cx + w * 0.42, cy + 2.8, cx + w * 0.78, cy - 1, cx + w * 0.4, cy - 0.2, cx, cy + 0.6, cx - w * 0.4, cy], woodD);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = ink(shade(woodL, 0.2));
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  near.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  ctx.stroke();
+  for (let i = 0; i < 9; i++) { // a painted band of red and white chevrons along the side
+    const t = -0.68 + i * 0.17, px = cx + t * w, py = cy - 3.2 + Math.abs(t) * 1.6;
+    poly(ctx, [px - 1.2, py - 0.9, px, py + 1.2, px + 1.2, py - 0.9, px + 0.5, py - 0.9, px, py + 0.2, px - 0.5, py - 0.9], i % 2 ? LK_WHITE : LK_RED);
+  }
+  for (const t of [-0.5, -0.2, 0.15, 0.5]) line(ctx, cx + t * w, cy - 5.4, cx + t * w - 0.6, cy + 2.4, shade(wood, -0.3), 0.4); // adze marks
+  for (const e of [-1, 1]) { // the raised ends: a lashed knob and a fluttering eagle feather at the bow
+    const ex = cx + e * w, ey = cy - (e < 0 ? 9 : 10.4);
+    line(ctx, ex, ey, ex + e * 1.6, ey - 2, woodD, 1.3);
+    ellipse(ctx, ex + e * 1.6, ey - 2.2, 0.8, 0.8, LK_RED);
+    if (e > 0) lkEagle(ctx, ex + 1.6, ey - 2.4, ex + 3.4, ey - 9, 1.1);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 3.4, w * 0.74, 2.2, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.stroke();
+}
+
+function lkBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const crew = (cx: number, cy: number, kd: UnitKind, kk: number) => figure(ctx, kd, 'lakota', cx, cy, kk, true);
+  if (tier === 0) {
+    // one bullboat and a single paddler, with a bow and a bundle of hides
+    lkBullboat(ctx, x, y, 10.6, () => {
+      ellipse(ctx, x - 4.6, y - 5.6, 2.6, 1.4, LK_TAN);
+      ellipse(ctx, x - 4.6, y - 6, 2.2, 1.1, shade(LK_TAN, 0.2));
+      crew(x + 1, y - 2.4, 'explorer', 0.5);
+    });
+    lkPaddle(ctx, x + 7.6, y - 1, 1);
+    return;
+  }
+  if (tier === 1) {
+    // a raft of lashed cottonwood logs floating between two bullboats, loaded with hides and poles
+    lkBullboat(ctx, x - 12, y + 1.4, 6.4, () => {});
+    lkBullboat(ctx, x + 13, y - 3, 6.4, () => {});
+    box(ctx, x, y - 1.2, 26, 2.8, '#94704a', '#b48c5a');
+    for (let i = 1; i < 6; i++) { // the logs
+      faceQuad(ctx, 'R', x, y - 1.2, 26, 2.8, i / 6, i / 6 + 0.012, 0, 1, '#5a3f22');
+      faceQuad(ctx, 'L', x, y - 1.2, 26, 2.8, i / 6, i / 6 + 0.012, 0, 1, '#5a3f22');
+    }
+    band(ctx, x, y - 1.2, 26, 2.8, 0.55, 0.7, LK_RED);
+    for (let i = 1; i < 7; i++) { // the logs along the deck, seen from above
+      const t0 = i / 7, p = [x - 13 + t0 * 13, y - 4 + t0 * 3.25 - 1.6] as const;
+      line(ctx, p[0] - 0.2, p[1] + 1.6, p[0] + 13 - 0.4, p[1] + 1.6 - 6.5, '#6a4a2a', 0.45);
+    }
+    for (const dx of [-7, 0, 7]) line(ctx, x + dx - 3, y - 5.4 + dx * 0.05, x + dx + 3, y - 3.6 + dx * 0.05, LK_WOOD_D, 1.1); // cross poles
+    for (const dx of [-9, -3, 3, 9]) ellipse(ctx, x + dx, y - 4.4 - (dx > 0 ? 0.5 : 0), 0.7, 0.7, LK_ROPE);
+    // a great bundle of folded tipi cover and a rolled robe
+    ellipse(ctx, x + 5.4, y - 7.4, 5, 3.4, shade(LK_HIDE, -0.22));
+    ellipse(ctx, x + 5.2, y - 8, 4.8, 3.2, LK_HIDE);
+    line(ctx, x + 2, y - 10, x + 8, y - 5.4, LK_ROPE, 0.6);
+    line(ctx, x + 8, y - 10.6, x + 2.4, y - 5.8, LK_ROPE, 0.6);
+    ellipse(ctx, x + 5.2, y - 7.8, 1.6, 0.9, LK_RED);
+    ellipse(ctx, x - 6.4, y - 5, 3.6, 1.7, LK_FUR);
+    ellipse(ctx, x - 6.6, y - 5.4, 3.4, 1.5, shade(LK_FUR, 0.14));
+    crew(x - 1, y - 3, 'archer', 0.46);
+    crew(x + 10, y - 4.2, 'warrior', 0.44);
+    line(ctx, x + 12.6, y - 9, x + 21, y + 4, LK_WOOD, 0.9); // a long steering pole
+    line(ctx, x - 6, y - 10, x - 16, y + 5, LK_WOOD, 0.9);
+    return;
+  }
+  // a war party: a long dugout, painted shields along its side and lances with feather trails at the bow
+  const w = 23;
+  lkDugout(ctx, x, y, w, () => {
+    crew(x - w * 0.66, y - 3.6, 'archer', 0.42);
+    crew(x - w * 0.28, y - 3.2, 'warrior', 0.44);
+    crew(x + w * 0.1, y - 3, 'giant', 0.34);
+    crew(x + w * 0.5, y - 3.6, 'defender', 0.42);
+  });
+  for (const [i, t] of [-0.5, -0.15, 0.2, 0.55].entries()) { // painted round shields hung from the gunwale
+    const sx = x + t * w, sy = y - 2.6;
+    ellipse(ctx, sx + 0.3, sy + 0.4, 2.6, 2.7, LK_FUR_D);
+    ellipse(ctx, sx, sy, 2.5, 2.6, i % 2 ? LK_BLUE : LK_HIDE);
+    ring(ctx, sx, sy, 1.6, 1.7, i % 2 ? LK_WHITE : LK_RED, 0.5);
+    ellipse(ctx, sx, sy, 0.6, 0.6, LK_YEL);
+    feather(ctx, sx + 1.4, sy + 2, sx + 1.2, sy + 5, 0.6, LK_WHITE, LK_BLK);
+  }
+  for (const [ox, lean] of [[w * 0.7, 3], [w * 0.4, 1.4]] as const) { // upright lances
+    const lx = x + ox, ly = y - 8;
+    line(ctx, lx, ly, lx + lean, ly - 21, LK_WOOD, 0.9);
+    poly(ctx, [lx + lean, ly - 25, lx + lean - 0.9, ly - 20.6, lx + lean + 1, ly - 20.6], LK_STEEL);
+    for (let i = 0; i < 3; i++) feather(ctx, lx + lean * (0.7 + i * 0.1), ly - 15 - i * 1.6, lx + lean * (0.7 + i * 0.1) - 2.4, ly - 9.4 - i * 1.6, 0.8, i % 2 ? LK_RED : LK_WHITE, LK_BLK);
+  }
+  lkPaddle(ctx, x - w * 0.28 + 3.4, y - 5, 1);
+  lkPaddle(ctx, x + w * 0.5 + 3.4, y - 5, 1);
+}
+
+// ----- the bison
+
+/** A big shaggy American bison: a huge dark mantle and hump, a small tawny hind end, a low beard-hung head and short black horns. */
+function lkBison(ctx: Ctx, x: number, y: number, k: number, body: string) {
+  const dk = shade(body, -0.32), mid = body, tawny = '#7a5a3c';
+  const E = (ex: number, ey: number, rx: number, ry: number, c: string, rot = 0) => {
+    ctx.beginPath();
+    ctx.ellipse(x + ex * k, y + ey * k, rx * k, ry * k, rot, 0, Math.PI * 2);
+    ctx.fillStyle = ink(c);
+    ctx.fill();
+  };
+  // legs: the forelegs vanish into a thick skirt of hair, the hind legs are slim and pale-shanked
+  for (const [lx, ly, front] of [[-7.4, -0.4, false], [-4.4, 0.8, false], [3.6, -0.4, true], [6.8, 0.8, true]] as const) {
+    box(ctx, x + lx * k, y + ly * k, (front ? 2.9 : 2.4) * k, 6.6 * k, front ? dk : shade(tawny, -0.2));
+    box(ctx, x + lx * k, y + ly * k, 3 * k, 1.3 * k, '#1a1410');
+  }
+  // tail with a black tuft
+  line(ctx, x - 11 * k, y - 13.4 * k, x - 13.6 * k, y - 6.4 * k, dk, 1 * k);
+  E(-13.8, -5, 1.2, 2.2, '#1f1610', 0.2);
+  // the hindquarters, smaller and lighter
+  E(-6.2, -10.4, 6.4, 5.8, shade(tawny, -0.1));
+  E(-6.8, -11.6, 5.2, 4.6, tawny);
+  // the barrel and the great shoulder hump, dark and matted
+  E(0.6, -11, 9.6, 6.6, mid);
+  E(4.6, -16.4, 7.4, 6.6, dk);
+  E(3.8, -17.8, 5.4, 4.6, shade(dk, 0.14));
+  E(1.4, -19, 2.4, 1.6, shade(dk, 0.3));
+  // the shaggy mantle hanging down over the chest and forelegs
+  poly(ctx, [x + 1 * k, y - 8 * k, x + 8 * k, y - 8.6 * k, x + 11.6 * k, y - 4 * k, x + 10.4 * k, y - 2 * k, x + 9 * k, y - 4.4 * k, x + 7.4 * k, y - 1.6 * k, x + 5.6 * k, y - 4.2 * k, x + 3.6 * k, y - 1.4 * k, x + 2.2 * k, y - 4.6 * k, x + 0.4 * k, y - 3 * k], dk);
+  for (let i = 0; i < 12; i++) { // strands of hair
+    const t = i / 11, px = x + (1 + t * 9) * k, py = y + (-8 + (i % 3) * 1.5) * k;
+    line(ctx, px, py, px + (i % 2 ? 0.3 : -0.4) * k, py + (3.6 + (i % 4)) * k, i % 2 ? shade(dk, 0.2) : shade(dk, -0.25), 0.6 * k);
+  }
+  for (let i = 0; i < 14; i++) { // lighter and darker flecks on the back and barrel
+    const t = i / 13, px = x + (-9 + t * 18) * k, py = y + (-11 + Math.sin(t * 6) * 2.4) * k;
+    line(ctx, px, py, px + 1.2 * k, py + 1.6 * k, i % 2 ? shade(mid, 0.24) : shade(mid, -0.3), 0.55 * k);
+  }
+  // the head hangs low and forward, with a heavy forelock, beard and short curved horns
+  E(12.6, -9.6, 4.6, 5.4, dk);
+  poly(ctx, [x + 8.6 * k, y - 15.2 * k, x + 13.4 * k, y - 15.4 * k, x + 15.6 * k, y - 10.8 * k, x + 12.4 * k, y - 12.4 * k, x + 10.6 * k, y - 9.4 * k, x + 8.6 * k, y - 11.6 * k], shade(dk, -0.1)); // the mop on the brow
+  E(15.4, -6, 2.9, 2.6, '#3a2c22'); // muzzle
+  E(16.6, -6.6, 0.6, 0.5, '#0e0a08');
+  poly(ctx, [x + 10.4 * k, y - 6.6 * k, x + 11.6 * k, y - 0.6 * k, x + 13 * k, y - 4.2 * k, x + 14.6 * k, y - 1 * k, x + 14.4 * k, y - 5 * k], dk); // the beard
+  E(13.8, -10.6, 0.8, 0.8, '#14100c');
+  E(14, -10.8, 0.3, 0.3, '#f2e8c8');
+  ctx.lineCap = 'round';
+  for (const [hx, c] of [[10.6, '#c4b48a'], [13.8, '#e8dcc0']] as const) { // horns: pale at the root, black at the tip
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = 1.7 * k;
+    ctx.beginPath();
+    ctx.moveTo(x + hx * k, y - 14 * k);
+    ctx.quadraticCurveTo(x + (hx - 1.4) * k, y - 17.4 * k, x + (hx + 1.6) * k, y - 18.6 * k);
+    ctx.stroke();
+    line(ctx, x + (hx + 0.2) * k, y - 18 * k, x + (hx + 1.6) * k, y - 18.6 * k, '#1a1410', 1.2 * k);
+  }
+}
+
 // ---------------------------------------------------------------- wildlife (map resources)
 
 const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' | 'caribou' | 'llama' | 'ibex' | 'kangaroo' | 'panda' | 'zebu' | 'kangal' | 'bison' | 'peacock' }> = {
@@ -9156,7 +10054,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   china: { body: '#f2f2ea', feature: 'panda' }, // the giant panda
   india: { body: '#7a7a80', feature: 'tusks' },
   mali: { body: '#c9a06a', feature: 'zebu' }, // a long-horned Sahelian zebu
-  lakota: { body: '#4a3428', feature: 'horns' },
+  lakota: { body: '#4a3428', feature: 'bison' },
   ottoman: { body: '#d8b884', feature: 'kangal' }, // an Anatolian shepherd dog
 };
 
@@ -9188,6 +10086,7 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   if (spec.feature === 'llama') return drawWildLlama(ctx, x, y, k, body);
   if (spec.feature === 'zebu') return mlZebu(ctx, x, y, 0.95 * k, body);
   if (spec.feature === 'kangaroo') return aboKangaroo(ctx, x, y, 0.9 * k, body);
+  if (spec.feature === 'bison') return lkBison(ctx, x, y, 0.95 * k, body);
   if (spec.feature === 'ibex') {
     // a walia ibex of the Simien highlands: a stocky chestnut body, pale belly, a shaggy neck and great ridged scimitar horns
     const dk = '#3a2418';
