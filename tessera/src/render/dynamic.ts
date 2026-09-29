@@ -87,7 +87,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.translate(cam.x, cam.y);
   ctx.scale(cam.zoom, cam.zoom);
 
-  drawSelection(ctx, s, ov, now);
+  drawSelection(ctx, s, ov, now, explored);
 
   const units = s.units
     .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)))
@@ -443,9 +443,52 @@ function diamondPath(ctx: Ctx, x: number, y: number, k: number) {
   ctx.closePath();
 }
 
-function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number) {
+/** The whole territory of a selected city, outlined along its outer edge in the empire's colour. */
+function drawCityBorder(ctx: Ctx, s: GameState, cityId: number, now: number, explored: (x: number, y: number) => boolean) {
+  const city = s.cities.find((c) => c.id === cityId);
+  if (!city) return;
+  const col = TRIBES[s.players[city.owner].tribe].color;
+  const pulse = (Math.sin(now / 300) + 1) / 2;
+  const tiles = s.tiles.filter((t) => t.owner === cityId && explored(t.x, t.y));
+  const edges: [number, number, number, number, number, number][] = [
+    [-1, 0, 0, -HH, -HW, 0], // upper-left edge: T to L
+    [0, -1, 0, -HH, HW, 0], // upper-right edge: T to R
+    [1, 0, HW, 0, 0, HH], // lower-right edge: R to B
+    [0, 1, -HW, 0, 0, HH], // lower-left edge: L to B
+  ];
+  const outer: [number, number, number, number][] = [];
+  for (const t of tiles) {
+    const c = tileCenter(t.x, t.y);
+    const y = c.y + (isWaterTile(t) ? WATER_DROP : 0);
+    for (const [dx, dy, ax, ay, bx, by] of edges) {
+      const n = tileAt(s, t.x + dx, t.y + dy);
+      if (n && n.owner === cityId && explored(n.x, n.y)) continue;
+      outer.push([c.x + ax, y + ay, c.x + bx, y + by]);
+    }
+  }
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const trace = () => { ctx.beginPath(); for (const [x0, y0, x1, y1] of outer) { ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); } };
+  trace();
+  ctx.strokeStyle = `rgba(255,255,255,${0.22 + pulse * 0.16})`;
+  ctx.lineWidth = 9;
+  ctx.stroke();
+  trace();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  trace();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number, explored: (x: number, y: number) => boolean) {
   if (ov.selected) {
     const t = tileAt(s, ov.selected.x, ov.selected.y);
+    if (t && t.cityId !== null) drawCityBorder(ctx, s, t.cityId, now, explored);
     if (t && s.units.some((u) => u.x === t.x && u.y === t.y)) {
       // a unit is selected: a glowing ring at its feet
       const c = tileCenter(t.x, t.y);

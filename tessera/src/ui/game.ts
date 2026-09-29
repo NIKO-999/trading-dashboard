@@ -359,6 +359,11 @@ export class GameView {
         return this.select({ x: u.x, y: u.y, mode: 'unit' });
       }
     }
+    if (mine && !asTile && t.terrain === 'ocean' && UNITS[mine.kind].naval && mine.kind !== 'ship' && mine.kind !== 'warship' && isExplored(this.s, this.me, x, y) && !unitAt(this.s, x, y)) {
+      // a canoe can't leave the shallows: say what it takes to sail the open ocean
+      sfx.play('error');
+      toast(hasTech(this.s, this.me, 'sailing') ? 'Canoes stay in the shallows. Upgrade this one to a Galley to sail the open ocean.' : 'Open ocean needs Sailing. Research it, then upgrade your canoe to a Galley.');
+    }
     const hasUnit = !asTile && !!unitAt(this.s, x, y) && isExplored(this.s, this.me, x, y);
     if (sel && sel.x === x && sel.y === y) {
       if (sel.mode === 'unit') return this.select({ x, y, mode: 'tile' });
