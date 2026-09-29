@@ -691,11 +691,261 @@ function incaBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: strin
   }
 }
 
+// ---------------------------------------------------------------- Aboriginal country: trees and camps
+
+/** Trees of the red country: ghost gum, bloodwood, grass tree (xanthorrhoea) and desert oak. */
+function aboriginalTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 4;
+  ctx.lineCap = 'round';
+  const curve = (x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, c: string) => {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
+    ctx.stroke();
+  };
+  if (v === 0) {
+    // ghost gum: a smooth chalk-white trunk that leans and forks, a pink-orange flush at the base, sparse silver-green boughs
+    const wh = P.trunk;
+    curve(x, y, x - 1.6 * k, y - 8 * k, x + 0.4 * k, y - 15 * k, 3.4 * k, shade(wh, -0.16));
+    curve(x - 0.5 * k, y, x - 2 * k, y - 8 * k, x - 0.2 * k, y - 15 * k, 1.9 * k, wh);
+    curve(x - 0.9 * k, y - 1 * k, x - 2.2 * k, y - 8 * k, x - 0.7 * k, y - 14 * k, 0.6 * k, shade(wh, 0.4)); // a lit edge
+    ellipse(ctx, x, y - 0.6 * k, 2.6 * k, 1 * k, '#c99a76'); // warm flush where the bark meets the ground
+    for (const [dx, dy] of [[-1.6, -5], [-0.8, -9.4], [0.2, -12]] as const) line(ctx, x + dx * k - 0.9 * k, y + dy * k, x + dx * k + 0.5 * k, y + (dy - 0.3) * k, '#8a7a68', 0.5 * k); // dark scars
+    curve(x + 0.4 * k, y - 14 * k, x + 4 * k, y - 17 * k, x + 8 * k, y - 22 * k, 1.5 * k, wh);
+    curve(x + 0.2 * k, y - 14.6 * k, x - 4.6 * k, y - 18 * k, x - 8.4 * k, y - 21 * k, 1.5 * k, shade(wh, -0.08));
+    curve(x + 0.2 * k, y - 15 * k, x + 0.6 * k, y - 20 * k, x - 0.4 * k, y - 26 * k, 1.3 * k, wh);
+    const leaf = P.forest;
+    const clump = (cx: number, cy: number, r: number, c: number) => {
+      const lf = mix(leaf, '#9fb8a4', 0.35);
+      for (const [dx, dy, rr, cc] of [[0, 0.7, 1, -0.24], [-0.55, 0.1, 0.62, -0.1], [0.55, 0.3, 0.6, -0.16], [0, -0.2, 0.8, 0]] as const) ellipse(ctx, cx + dx * r * k, cy + dy * k, r * rr * k, r * rr * 0.5 * k, shade(lf, c + cc)); // lobed, uneven clumps
+      ellipse(ctx, cx - r * 0.25 * k, cy - 0.7 * k, r * 0.5 * k, r * 0.2 * k, shade(mix(lf, '#dfe8c8', 0.5), c + 0.1));
+      for (let i = 0; i < 6; i++) { // long, thin leaves hang below
+        const lx = cx + (i - 2.5) * r * 0.32 * k, ly = cy + (0.8 + (i % 2) * 0.6) * k;
+        poly(ctx, [lx - 0.35 * k, ly, lx + 0.35 * k, ly, lx + (i % 2 ? 0.5 : -0.4) * k, ly + (2.6 + (i % 3) * 0.9) * k], shade(leaf, i % 2 ? -0.1 : 0.08));
+      }
+    };
+    clump(x + 8 * k, y - 22.4 * k, 5.4, 0);
+    clump(x - 8.4 * k, y - 21.4 * k, 5.6, -0.06);
+    clump(x - 0.4 * k, y - 26.6 * k, 6.2, 0.04);
+    clump(x + 4 * k, y - 18 * k, 3.6, -0.1);
+    return;
+  }
+  if (v === 1) {
+    // bloodwood: a thick, dark, tessellated trunk, a wide dense crown and tiny red gum-nut blossoms
+    const bk = '#6e3f2b';
+    curve(x, y, x + 0.6 * k, y - 6 * k, x - 0.3 * k, y - 11 * k, 4.4 * k, shade(bk, -0.25));
+    curve(x - 0.5 * k, y, x + 0.1 * k, y - 6 * k, x - 0.8 * k, y - 11 * k, 2.6 * k, bk);
+    for (let i = 0; i < 6; i++) { // rough, tessellated bark plates
+      const o = (i % 2) * 0.9;
+      line(ctx, x - 1.8 * k + o * k, y - (1 + i * 1.7) * k, x - 0.4 * k + o * k, y - (0.4 + i * 1.7) * k, shade(bk, -0.42), 0.5 * k);
+      line(ctx, x - 0.4 * k + o * k, y - (0.4 + i * 1.7) * k, x + 0.5 * k + o * k * 0.4, y - (1.3 + i * 1.7) * k, shade(bk, -0.42), 0.5 * k);
+      line(ctx, x - 1.1 * k - o * 0.4 * k, y - (1.8 + i * 1.7) * k, x - 1 * k - o * 0.4 * k, y - (0.7 + i * 1.7) * k, shade(bk, -0.3), 0.4 * k);
+    }
+    curve(x - 0.4 * k, y - 10 * k, x - 4.4 * k, y - 12 * k, x - 6.6 * k, y - 15 * k, 2 * k, bk);
+    curve(x - 0.4 * k, y - 10 * k, x + 4.4 * k, y - 12 * k, x + 7 * k, y - 15 * k, 2 * k, shade(bk, -0.1));
+    const g = mix(P.forest, '#4f6a34', 0.5);
+    for (const [dx, dy, rx, ry, c] of [[-5.4, -15, 6, 3.6, -0.14], [5.8, -15, 6.4, 3.8, -0.2], [0, -18.6, 8, 4.4, -0.06], [-1.6, -21, 5.4, 3, 0.08]] as const) {
+      ellipse(ctx, x + dx * k, y + (dy + 1) * k, rx * k, ry * k, shade(g, c - 0.16));
+      ellipse(ctx, x + dx * k, y + dy * k, rx * k, ry * k, shade(g, c));
+      ellipse(ctx, x + (dx - rx * 0.25) * k, y + (dy - ry * 0.35) * k, rx * 0.6 * k, ry * 0.4 * k, shade(g, c + 0.16));
+    }
+    for (const [dx, dy] of [[-4, -16.6], [3, -19.4], [6.4, -14.6], [-6.6, -13.4], [-0.6, -22.6], [1.4, -16]] as const) { ellipse(ctx, x + dx * k, y + dy * k, 0.9 * k, 0.8 * k, '#d8442e'); ellipse(ctx, x + (dx - 0.2) * k, y + (dy - 0.2) * k, 0.4 * k, 0.35 * k, '#f2a070'); }
+    return;
+  }
+  if (v === 2) {
+    // grass tree: a squat black trunk, a shaggy skirt of drooping blades and a tall flower spear
+    const tr = '#2c2118';
+    curve(x, y, x + 0.8 * k, y - 4 * k, x + 0.4 * k, y - 8.4 * k, 3.6 * k, shade(tr, 0.12));
+    curve(x - 0.7 * k, y, x + 0.1 * k, y - 4 * k, x - 0.3 * k, y - 8.4 * k, 1 * k, shade(tr, 0.4));
+    for (let i = 0; i < 4; i++) line(ctx, x - 1.4 * k, y - (1.2 + i * 2) * k, x + 1.8 * k, y - (0.6 + i * 2) * k, '#0e0a06', 0.5 * k); // charred bands
+    // the flower spear
+    line(ctx, x + 0.4 * k, y - 9 * k, x + 1 * k, y - 26 * k, '#6a4a2a', 1.3 * k);
+    line(ctx, x + 0.4 * k, y - 15.6 * k, x + 1 * k, y - 26 * k, '#c9a878', 1.7 * k);
+    line(ctx, x + 0.9 * k, y - 16 * k, x + 1.4 * k, y - 25.6 * k, '#e6d6b0', 0.6 * k);
+    const cx = x + 0.4 * k, cy = y - 8.4 * k;
+    const G = mix(P.forest, '#7ea04a', 0.35);
+    for (let i = 0; i < 21; i++) {
+      const a = Math.PI + (i / 20) * Math.PI;
+      const len = (8.6 + rand(variant + 5, i) * 2.6) * k;
+      const ex = cx + Math.cos(a) * len, ey = cy - Math.sin(a) * len * 0.7 + len * 0.42;
+      ctx.strokeStyle = ink(i % 3 === 0 ? shade(G, 0.2) : i % 3 === 1 ? G : shade(G, -0.2));
+      ctx.lineWidth = 0.6 * k;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(cx + Math.cos(a) * len * 0.7, cy - Math.sin(a) * len * 1.0 - 1.4 * k, ex, ey);
+      ctx.stroke();
+    }
+    ellipse(ctx, cx, cy - 0.6 * k, 2 * k, 1.2 * k, shade(G, -0.32));
+    return;
+  }
+  // desert oak: a slim dark trunk under a soft, weeping mass of fine grey-green needles
+  const tk = '#5c4a3a';
+  curve(x, y, x + 0.8 * k, y - 8 * k, x, y - 15 * k, 2.4 * k, shade(tk, -0.1));
+  curve(x - 0.4 * k, y, x + 0.3 * k, y - 8 * k, x - 0.5 * k, y - 15 * k, 1 * k, shade(tk, 0.25));
+  for (let i = 0; i < 5; i++) line(ctx, x - 1 * k, y - (2 + i * 2.6) * k, x + 1.2 * k, y - (1.4 + i * 2.6) * k, shade(tk, -0.36), 0.5 * k); // corky ridges
+  const nd = mix(P.forest, '#7a8a6a', 0.55);
+  ellipse(ctx, x + 0.2 * k, y - 18 * k, 8.4 * k, 4.4 * k, shade(nd, -0.2));
+  ellipse(ctx, x - 0.2 * k, y - 19.4 * k, 7.2 * k, 3.7 * k, nd);
+  ellipse(ctx, x - 1.6 * k, y - 21 * k, 4.6 * k, 2 * k, shade(nd, 0.16));
+  for (let i = 0; i < 22; i++) { // drooping needle strands
+    const a = (i / 21) * Math.PI * 2, r = (1.4 + rand(variant + 9, i) * 5.6) * k;
+    const bx = x + Math.cos(a) * r * 1.3, by = y - 18 * k + Math.sin(a) * r * 0.45;
+    line(ctx, bx, by, bx + Math.cos(a) * 0.9 * k, by + (3 + rand(variant + 11, i) * 3.4) * k, i % 2 ? shade(nd, 0.2) : shade(nd, -0.28), 0.5 * k);
+  }
+}
+
+/** Bark humpies, grass domes, windbreaks, drying racks, a rock-art wall and an everyday fire ring. */
+function aboriginalBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string) {
+  const bark = '#a56a3c', barkD = '#6d4326', barkL = '#c98f58', clay = '#f1ead8', ochre = '#b8502e', string = '#e6d6b0';
+  const spot: Record<string, number> = { '-10,2': 1, '10,2': 0, '0,8': 3, '-6,-8': 2, '7,-7': 1, '-14,-3': 0, '14,-2': 2 }; // which camp goes on which building spot
+  const seed = spot[`${Math.round(x)},${Math.round(y)}`] ?? ((Math.round(x) * 7 + Math.round(y) * 3) % 4 + 4) % 4;
+  const stones = (cx: number, cy: number, rx: number, ry: number, n: number, r: number) => { // a ring of hearth stones
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + 0.3, sx = cx + Math.cos(a) * rx, sy = cy + Math.sin(a) * ry;
+      ellipse(ctx, sx, sy + 0.4, r, r * 0.7, '#5f5a52');
+      ellipse(ctx, sx, sy, r, r * 0.7, i % 2 ? '#a39c90' : '#b8b0a2');
+      ellipse(ctx, sx - r * 0.3, sy - r * 0.25, r * 0.4, r * 0.28, '#d8d2c4');
+    }
+  };
+  const flame = (fx: number, fy: number, s: number) => {
+    poly(ctx, [fx - 1.4 * s, fy, fx - 0.2 * s, fy - 4.4 * s, fx + 0.4 * s, fy - 2 * s, fx + 1.4 * s, fy], '#e8642a');
+    poly(ctx, [fx - 0.8 * s, fy, fx + 0.2 * s, fy - 3 * s, fx + 0.9 * s, fy], '#f6c33a');
+    ellipse(ctx, fx, fy, 1 * s, 0.5 * s, '#fff0a0');
+  };
+  const smoke = (sx: number, sy: number, s: number) => {
+    ctx.strokeStyle = 'rgba(190,190,195,0.5)';
+    ctx.lineWidth = 1.3 * s;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.bezierCurveTo(sx + 2 * s, sy - 3 * s, sx - 2 * s, sy - 5 * s, sx + 1.6 * s, sy - 8 * s);
+    ctx.stroke();
+  };
+  /** A gunyah / humpy: a gabled frame of poles under overlapping sheets of bark, ridge poles poking out at both ends, a dark doorway in the gable. */
+  const humpy = (cx: number, cy: number, w: number, rh: number) => {
+    const hw = w / 2, hh = w / 4;
+    const Lc = [cx - hw, cy], Fc = [cx, cy + hh], Rc = [cx + hw, cy];
+    const rL = [cx - hw / 2, cy - hh / 2 - rh], rF = [cx + hw / 2, cy + hh / 2 - rh];
+    poly(ctx, [Fc[0], Fc[1], Rc[0], Rc[1], rF[0], rF[1]], barkD); // the gable end
+    for (const t of [0.3, 0.55, 0.8]) line(ctx, Fc[0] * (1 - t) + rF[0] * t, Fc[1] * (1 - t) + rF[1] * t, Rc[0] * (1 - t) + rF[0] * t, Rc[1] * (1 - t) + rF[1] * t, shade(barkD, -0.3), 0.5); // battens across the gable
+    poly(ctx, [Lc[0], Lc[1], Fc[0], Fc[1], rF[0], rF[1], rL[0], rL[1]], bark); // the sunlit roof plane of bark sheets
+    for (const t of [0.34, 0.68]) line(ctx, Lc[0] * (1 - t) + rL[0] * t, Lc[1] * (1 - t) + rL[1] * t, Fc[0] * (1 - t) + rF[0] * t, Fc[1] * (1 - t) + rF[1] * t, shade(bark, -0.4), 0.6); // courses of overlapping sheets
+    for (let i = 1; i < 4; i++) { const f = i / 4; line(ctx, Lc[0] + (Fc[0] - Lc[0]) * f, Lc[1] + (Fc[1] - Lc[1]) * f, rL[0] + (rF[0] - rL[0]) * f, rL[1] + (rF[1] - rL[1]) * f, shade(bark, -0.22), 0.45); }
+    line(ctx, Lc[0], Lc[1], Fc[0], Fc[1], barkL, 1); // the lit eave
+    line(ctx, Fc[0], Fc[1], Rc[0], Rc[1], barkD, 0.8);
+    line(ctx, rL[0] - 1.6, rL[1] - 0.8, rF[0] + 2.2, rF[1] + 1.1, '#4a2e16', 1.1); // the ridge pole, ends poking out
+    for (const f of [0.28, 0.5, 0.72]) line(ctx, rL[0] + (rF[0] - rL[0]) * f - 0.2, rL[1] + (rF[1] - rL[1]) * f - 1.2, rL[0] + (rF[0] - rL[0]) * f + 0.2, rL[1] + (rF[1] - rL[1]) * f + 0.8, string, 0.5); // ties
+    const m = [(Fc[0] + Rc[0]) / 2, (Fc[1] + Rc[1]) / 2];
+    poly(ctx, [m[0] - 2.2, m[1] + 1.1, m[0] + 2.2, m[1] - 1.1, m[0] + 2.2, m[1] - 5, m[0] + 0.4, m[1] - 6.6, m[0] - 2.2, m[1] - 4.6], '#2a1a10'); // the doorway
+    line(ctx, m[0] - 2.2, m[1] + 1.1, m[0] + 2.2, m[1] - 1.1, '#c9a878', 0.6); // a threshold log
+  };
+  if (big) {
+    // the great camp: a rock-art wall of red stone behind, a big bark gunyah, a fire ring and a drying rack
+    const rk = [[-8.4, -0.4], [-9, -7], [-6.6, -12.4], [-2.4, -14.4], [1.8, -12.2], [4.4, -8.4], [4.8, -2.6], [0.6, 1.4], [-4, 1.6]] as [number, number][];
+    poly(ctx, rk.flatMap(([a, b]) => [x + a, y + b]), '#a8523a'); // a face of red rock
+    poly(ctx, [x + 0.6, y + 1.4, x + 4.8, y - 2.6, x + 4.4, y - 8.4, x + 1.8, y - 12.2, x - 0.6, y - 9, x - 0.4, y - 3], '#8a3f2a'); // its shaded flank
+    poly(ctx, [x - 9, y - 7, x - 6.6, y - 12.4, x - 2.4, y - 14.4, x - 4.6, y - 9.6], '#c67a58'); // the lit shoulder
+    for (const [ya, ha] of [[-3, 0.5], [-6.4, -0.5], [-9.6, 0.4]] as const) line(ctx, x - 8.6, y + ya, x + 4.6, y + ya + ha, '#8a3f2a', 0.6); // strata
+    for (const [hx, hy] of [[-6, -6.2], [-3.4, -7.6], [-0.4, -6.2]] as const) { // ochre-and-clay hand stencils
+      const px = x + hx, py = y + hy;
+      ellipse(ctx, px, py, 0.95, 1.1, clay);
+      for (let i = 0; i < 4; i++) line(ctx, px - 0.9 + i * 0.6, py - 0.7, px - 1.2 + i * 0.75, py - 2.7, clay, 0.42);
+      line(ctx, px + 0.9, py - 0.2, px + 2, py - 1.4, clay, 0.42);
+    }
+    ctx.strokeStyle = clay; // a small kangaroo outline
+    ctx.lineWidth = 0.55;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - 6.4, y - 1.8); ctx.lineTo(x - 5.6, y - 4.2); ctx.lineTo(x - 4.4, y - 4.6); ctx.lineTo(x - 3.6, y - 3.8); ctx.lineTo(x - 4.2, y - 3); ctx.lineTo(x - 4.4, y - 1.6);
+    ctx.stroke();
+    line(ctx, x - 5.4, y - 2.6, x - 7.4, y - 1.2, clay, 0.5); // its tail
+    for (const [dx, dy] of [[-2, -2.6], [-1, -2.2], [0, -1.8], [1, -1.4], [2, -1]] as const) ellipse(ctx, x + dx, y + dy, 0.45, 0.4, ochre); // a row of ochre dots
+    humpy(x + 7, y + 3.4, 14, 8.6);
+    ellipse(ctx, x - 5, y + 6.4, 4, 1.8, '#9c7a54'); // scraped clay under the hearth
+    stones(x - 5, y + 6.2, 3, 1.3, 8, 0.8);
+    flame(x - 5, y + 6.2, 1);
+    smoke(x - 5, y + 3.4, 0.7);
+    return;
+  }
+  if (seed === 0) {
+    humpy(x, y, 11, 7);
+    line(ctx, x + 6.6, y - 6, x + 7.4, y + 1.6, '#c9a878', 0.6); // a spear left leaning by the door
+    poly(ctx, [x + 6.6, y - 6, x + 6, y - 7.6, x + 7.4, y - 7], '#e0d0a8');
+  } else if (seed === 1) {
+    // a dome of woven boughs and thatched grass, banded with ties, sticks poking from the crown
+    const r = 6.2;
+    ellipse(ctx, x, y + 0.6, r + 1.4, (r + 1.4) * 0.5, '#8a6a42');
+    ctx.beginPath();
+    ctx.moveTo(x - r, y);
+    ctx.bezierCurveTo(x - r, y - r * 1.75, x + r, y - r * 1.75, x + r, y);
+    ctx.ellipse(x, y, r, r * 0.5, 0, 0, Math.PI, false);
+    ctx.closePath();
+    ctx.fillStyle = ink(shade(roofC, -0.08));
+    ctx.fill();
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = 'rgba(70,40,10,0.24)';
+    ctx.fillRect(x, y - 12, 8, 14); // the shaded half
+    for (const f of [0.28, 0.5, 0.72]) { // ties round the dome
+      ctx.strokeStyle = ink(shade(roofC, -0.42));
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.ellipse(x, y - r * 1.2 * f * 1.25 + 1.4, r * (1 - f * 0.78), r * 0.42 * (1 - f * 0.5), 0, 0.02 * Math.PI, 0.98 * Math.PI);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 7; i++) line(ctx, x - r + i * r * 0.32, y - 0.6, x + (i - 3) * 0.4, y - r * 1.2, shade(roofC, 0.14), 0.4); // grass strands
+    ctx.restore();
+    ctx.strokeStyle = ink(shade(roofC, -0.5));
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * 0.5, 0, 0.02 * Math.PI, 0.98 * Math.PI);
+    ctx.stroke();
+    poly(ctx, [x + 0.6, y + 2.4, x + 0.6, y - 1.2, x + 2.4, y - 2.4, x + 4.2, y - 1.2, x + 4.2, y + 1.4], '#2a1a10'); // a low doorway
+    for (const dx of [-1.6, 0, 1.4]) line(ctx, x + dx * 0.6, y - r * 1.25 + 0.6, x + dx, y - r * 1.25 - 2.4, '#7a5230', 0.6);
+    ellipse(ctx, x, y - r * 1.25 + 0.6, 1.2, 0.6, shade(roofC, -0.3));
+  } else if (seed === 2) {
+    // a brush windbreak curved round a hearth, a rack of drying meat and skins
+    ellipse(ctx, x + 1, y + 1.4, 6.6, 2.8, '#9c7a54'); // scraped ground
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8, sx = x - 7 + t * 12, sy = y - 3.2 + Math.sin(t * Math.PI) * -1.2 + t * 1.4;
+      line(ctx, sx, sy + 2.4, sx + (t - 0.5) * 1.4, sy - 5.8, '#6a4a2a', 0.8); // upright forked stakes
+      ellipse(ctx, sx, sy - 3.6, 2.1, 3.6, i % 2 ? '#8a9a4a' : '#6f8a3a'); // leafy brush
+      ellipse(ctx, sx - 0.5, sy - 4.8, 1, 1.9, i % 2 ? '#a5b45a' : '#8aa04a');
+    }
+    stones(x + 1.4, y + 2.6, 2.2, 1, 7, 0.65);
+    flame(x + 1.4, y + 2.6, 0.9);
+    smoke(x + 1.4, y - 0.4, 0.8);
+    const rx = x + 8, ry = y + 4;
+    line(ctx, rx - 3.4, ry - 8, rx - 3.6, ry + 0.4, '#5a3a1e', 0.9);
+    line(ctx, rx + 3.4, ry - 8.4, rx + 3.6, ry + 0.6, '#5a3a1e', 0.9);
+    line(ctx, rx - 4.2, ry - 7.6, rx + 4.2, ry - 8.4, '#7a5230', 0.9);
+    for (const [i, c] of [[0, '#8a3a2a'], [1, '#c9a878'], [2, '#8a3a2a'], [3, '#a5563a']] as const) poly(ctx, [rx - 3 + i * 2, ry - 7.8 - i * 0.2, rx - 2 + i * 2, ry - 7.9 - i * 0.2, rx - 1.8 + i * 2, ry - 3.8, rx - 2.9 + i * 2, ry - 3.4], c);
+  } else {
+    // a yarning place: a ring of stones round a small fire, log seats, a wooden dish and a digging stick
+    ellipse(ctx, x, y + 1, 8.4, 3.6, '#a5825a');
+    ellipse(ctx, x, y + 0.6, 7, 3, '#93724a');
+    for (const [dx, dy] of [[-6.4, -2.4], [6.2, 0.8], [-3, 3]] as const) {
+      box(ctx, x + dx, y + dy, 5, 1.7, '#7a5230');
+      ellipse(ctx, x + dx - 2.4, y + dy - 0.8, 0.9, 0.5, '#c9a878');
+    }
+    stones(x, y + 0.6, 3.4, 1.5, 9, 0.9);
+    ellipse(ctx, x, y + 0.6, 2.4, 1, '#3a2418');
+    flame(x, y + 0.8, 1.2);
+    smoke(x + 0.6, y - 3, 1);
+    ellipse(ctx, x + 5.2, y + 3.4, 1.7, 0.75, '#8a5a34'); // a coolamon
+    ellipse(ctx, x + 5.2, y + 3.2, 1.3, 0.5, '#4a2e18');
+    line(ctx, x - 8, y + 1, x - 10.4, y - 7, '#a5723e', 0.8); // a digging stick
+  }
+}
+
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
+  if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
@@ -1292,6 +1542,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
     case 'inca':
       incaBuilding(ctx, x, y, big, roofC, w, h);
+      break;
+    case 'aboriginal':
+      aboriginalBuilding(ctx, x, y, big, roofC);
       break;
     case 'egypt':
       box(ctx, x, y, w, h, '#ecdcaa');

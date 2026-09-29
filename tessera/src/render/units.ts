@@ -111,7 +111,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   const L = LOOK[tribe];
   const T = TRIBES[tribe];
   const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'immortal' || kind === 'shotelai';
-  const heavy = isHeavy(kind);
+  const heavy = isHeavy(kind) && !isAbo(tribe); // no metal here: rank is shown in paint, feathers and cloaks
   const metal = metalOf(tribe);
   let torso = T.color, legs = shade(T.colorDark, 0.1), sleeves = L.skin;
   switch (tribe) {
@@ -129,6 +129,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'inuit': torso = kind === 'harpooner' ? T.colorDark : kind === 'swordsman' ? '#5a3e2b' : kind === 'giant' ? '#eef3f6' : T.color; legs = '#5a3e2b'; sleeves = torso; break;
     case 'inca': torso = T.color; legs = L.skin; sleeves = L.skin; break;
     case 'ethiopia': torso = '#f3eedd'; legs = '#ece6d2'; break; // white cotton shamma over tight cotton shurruba
+    case 'aboriginal': torso = L.skin; legs = L.skin; break; // bare skin, painted in ochre and clay
     case 'celts': torso = kind === 'explorer' ? '#e6e0cc' : '#b07a3a'; legs = kind === 'explorer' ? '#d8d2b8' : '#3f6a34'; sleeves = torso; break;
   }
   const hip = seated ? y : y - 5 * k;
@@ -136,7 +137,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
 
   // A cloak hangs behind the tallest ranks, in the empire's colour with a darker lining.
   if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal' || kind === 'shotelai') {
-    const cape = tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' ? GOLD : T.color;
+    const cape = tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : isAbo(tribe) ? (kind === 'giant' ? '#7a5a3c' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' ? GOLD : T.color;
     const top = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cape, -0.22));
     poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(cape, 0.02));
@@ -159,6 +160,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
       ellipse(ctx, x - 4 * k, top + 0.4 * k, 1 * k, 1 * k, GOLD);
     }
     if (tribe === 'celts') celtCloak(ctx, x, top, hip, k);
+    if (isAbo(tribe)) aboCloak(ctx, x, top, hip, k); // a possum-skin cloak, stitched and incised
     if (tribe === 'aztec') for (let i = 0; i < 3; i++) poly(ctx, [x - 9.3 * k + i * 2.4 * k, hip + 6.6 * k - i * 0.5 * k, x - 8.3 * k + i * 2.4 * k, hip + 10 * k - i * 0.5 * k, x - 7 * k + i * 2.4 * k, hip + 6.3 * k - i * 0.5 * k], ['#1faa6b', '#d6453b', '#1faa9b'][i]); // feather fringe
   }
 
@@ -193,14 +195,14 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     box(ctx, x - 2.2 * k, y - 0.3 * k, 3.6 * k, 5.2 * k, legs);
     box(ctx, x + 2.2 * k, y + 0.7 * k, 3.6 * k, 5.2 * k, legs);
     const boots = tribe === 'pirates' || tribe === 'mongols' || tribe === 'vikings' || tribe === 'inuit';
-    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'inuit' ? '#3a2a20' : tribe === 'zulu' || tribe === 'ethiopia' ? L.skin : tribe === 'japan' ? '#e2dccb' : '#6b4424';
+    const shoe = tribe === 'pirates' ? DARK : tribe === 'mongols' ? '#3a2418' : tribe === 'inuit' ? '#3a2a20' : tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? L.skin : tribe === 'japan' ? '#e2dccb' : '#6b4424';
     const sv = boots ? 0.45 : 0.2;
     const leg = [[-2.2, -0.3, 'L'], [2.2, 0.7, 'R'], [2.2, 0.7, 'L']] as const;
     for (const [dx, dy, f] of leg) {
       faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0, sv, shoe);
       faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, sv, sv + 0.07, boots ? shade(shoe, 0.3) : shade(legs, -0.22)); // boot cuff / ankle wrap
       if (heavy) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.12, 0.88, sv + 0.1, 0.78, metal); // greave
-      else if (tribe !== 'zulu' && tribe !== 'polynesia' && tribe !== 'egypt') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.9, 1, shade(legs, -0.18)); // trouser hem line
+      else if (tribe !== 'zulu' && tribe !== 'polynesia' && tribe !== 'egypt' && tribe !== 'aboriginal') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.9, 1, shade(legs, -0.18)); // trouser hem line
       if (tribe === 'japan' && !heavy) faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.42, 0.56, sv + 0.1, 0.9, shade(legs, -0.28)); // hakama pleat
       if (tribe === 'japan') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, sv - 0.02, sv + 0.02, '#8a3a2a'); // waraji straps
       if (tribe === 'mongols') faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.3, 0.7, sv + 0.1, sv + 0.42, '#c8372d'); // embroidered boot panel
@@ -218,6 +220,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
         else faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.5, 0.5 + 0.06, 0.55, 0.65, shade(legs, -0.14)); // a fold in the cloth
       }
       if (tribe === 'celts') celtTrews(ctx, f, x + dx * k, y + dy * k, k, legs, sv, kind === 'explorer');
+      if (tribe === 'aboriginal') aboLeg(ctx, f, x + dx * k, y + dy * k, k, kind);
       if (tribe === 'zulu') {
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0, 1, 0.27, 0.4, '#f4efe0'); // cow-tail anklet
         faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.1, 0.9, 0.22, 0.27, '#2a1a10');
@@ -264,6 +267,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, heavy ? metal : shade(sleeves, -0.25)); // bracer or cuff
   box(ctx, x - 5.9 * k, hip + 0.9 * k, 2.4 * k, 2 * k, glove);
   if (tribe === 'celts') celtSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, true);
+  if (tribe === 'aboriginal') aboArm(ctx, x - 5.9 * k, hip - 1 * k, k, false, kind);
   if (tribe === 'mongols') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a'); // fur cuff
   if (tribe === 'zulu') faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.64, '#d9a441'); // brass arm ring
   if (tribe === 'inuit') { faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, '#f4f8fb'); faceQuad(ctx, 'R', x - 5.9 * k, hip - 1 * k, 2.8 * k, 7 * k, 0, 1, 0.5, 0.6, '#c8372d'); } // fur cuff and a red band
@@ -279,7 +283,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   band(ctx, x, hip, tw, th, 0.93, 1, shade(torso, 0.3));
   band(ctx, x, hip, tw, th, 0, 0.05, shade(torso, -0.3));
   // strap and quiver belt for the bowmen and the wanderer
-  if (kind === 'archer' || kind === 'explorer' || kind === 'horsearcher' || kind === 'buccaneer' || kind === 'slinger') {
+  if ((kind === 'archer' || kind === 'explorer' || kind === 'horsearcher' || kind === 'buccaneer' || kind === 'slinger') && !isAbo(tribe)) {
     facePoly(ctx, 'R', x, hip, tw, th, [[0.05, 0.98], [0.3, 0.98], [0.98, 0.12], [0.72, 0.1]], '#6b4424');
     facePoly(ctx, 'L', x, hip, tw, th, [[0.15, 0.98], [0.4, 0.98], [0.9, 0.3], [0.65, 0.28]], '#5a3a1e');
     faceQuad(ctx, 'R', x, hip, tw, th, 0.4, 0.5, 0.42, 0.56, GOLD); // buckle
@@ -288,6 +292,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.16, 0.3, heavy ? metal : shade(sleeves, -0.25));
   box(ctx, x + 6 * k, hip + 2.5 * k, 2.4 * k, 2 * k, glove);
   if (tribe === 'celts') celtSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, false);
+  if (tribe === 'aboriginal') aboArm(ctx, x + 6 * k, hip + 0.6 * k, k, true, kind);
   if (tribe === 'mongols') { // fur cuff and a gold armband
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.08, 0.2, '#6a4a2a');
     faceQuad(ctx, 'R', x + 6 * k, hip + 0.6 * k, 2.8 * k, 7 * k, 0, 1, 0.62, 0.72, GOLD);
@@ -384,6 +389,7 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
       inuitTorso(ctx, kind, x, y, w, h);
       break;
     case 'inca': incaTorso(ctx, kind, x, y, w, h); break;
+    case 'aboriginal': aboTorso(ctx, kind, x, y, w, h); break;
     case 'egypt':
       band(ctx, x, y, w, h, 0, 0.42, '#f4efe0'); // linen kilt
       for (const u of [0.12, 0.3, 0.7, 0.88]) faceQuad(ctx, 'R', x, y, w, h, u, u + 0.05, 0, 0.38, '#d9d0b8'); // pleats
@@ -700,6 +706,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
       inuitFace(ctx, kind, x, y, w, h);
       break;
     case 'inca': incaFace(ctx, kind, x, y, w, h); break;
+    case 'aboriginal': aboFace(ctx, kind, x, y, w, h); break;
     case 'egypt':
       faceQuad(ctx, 'R', x, y, w, h, 0.18, 0.86, 0.62, 0.67, '#101010'); // kohl line
       faceQuad(ctx, 'R', x, y, w, h, 0.82, 0.98, 0.52, 0.58, '#101010'); // the kohl wing at the outer corner
@@ -863,6 +870,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       inuitHead(ctx, kind, x, top, k, hw);
       break;
     case 'inca': incaHeadgear(ctx, kind, x, top, k, hw); break;
+    case 'aboriginal': aboHead(ctx, kind, x, top, k, hw); break;
     case 'egypt': {
       if (kind === 'giant') {
         // tall white crown with a red rim
@@ -1293,7 +1301,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       break;
     }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' ? 16 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' ? 12 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' ? 16 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
@@ -1306,7 +1314,8 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
     }
     inuitFloat(ctx, x - 7.4 * k, y - 6.6 * k, k * 0.95);
   }
-  if (kind === 'archer' || kind === 'explorer') {
+  if (isAbo(tribe) && (kind === 'archer' || kind === 'explorer' || kind === 'woomera')) aboBack(ctx, kind, x, y, k);
+  else if (kind === 'archer' || kind === 'explorer') {
     box(ctx, x - (kind === 'archer' ? 7 : 4.5) * k, y - 8 * k, 4 * k, 8 * k, kind === 'explorer' ? '#8a5a2b' : '#6b4424');
     if (kind === 'archer' && tribe === 'polynesia') {
       // a woven flax kete with a bundle of darts, their feathered ends and red lashings sticking out
@@ -1342,7 +1351,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
     }
   }
   if (kind === 'slinger') incaBag(ctx, x, y, k);
-  const shieldFirst = kind === 'defender' || kind === 'immortal' || kind === 'legionary' || kind === 'jaguar' || kind === 'hoplite' || kind === 'impi' || kind === 'shotelai' || (kind === 'warrior' && (tribe === 'vikings' || tribe === 'ethiopia')) || (tribe === 'celts' && (kind === 'warrior' || kind === 'clansman' || kind === 'swordsman'));
+  const shieldFirst = kind === 'defender' || kind === 'immortal' || kind === 'legionary' || kind === 'jaguar' || kind === 'hoplite' || kind === 'impi' || kind === 'shotelai' || (kind === 'warrior' && (tribe === 'vikings' || tribe === 'ethiopia')) || (tribe === 'celts' && (kind === 'warrior' || kind === 'clansman' || kind === 'swordsman')) || (isAbo(tribe) && (kind === 'warrior' || kind === 'swordsman' || kind === 'giant'));
   const b = figure(ctx, kind, tribe, x, y, k);
   drawWeapon(ctx, kind, tribe, b, k);
   if (shieldFirst) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
@@ -1494,6 +1503,7 @@ function maoriSpear(ctx: Ctx, hx: number, hy: number, thick: number, grand: bool
 function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number) {
   if (tribe === 'persia' && persiaWeapon(ctx, kind, b, k)) return;
   if (tribe === 'celts' && celtWeapon(ctx, kind, b, k)) return;
+  if (tribe === 'aboriginal' && aboWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
   if (tribe === 'inuit') {
     if (kind === 'harpooner') return inuitHarpoon(ctx, x, y, k);
@@ -1917,6 +1927,7 @@ function aksumSword(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
 function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number, k: number) {
   if (tribe === 'persia') return persiaShield(ctx, kind, x, y, k);
   if (tribe === 'celts') return celtShield(ctx, kind, x, y, k);
+  if (tribe === 'aboriginal') return aboShield(ctx, kind, x, y, k);
   const T = TRIBES[tribe];
   const rivets = (cx: number, cy: number, rx: number, ry: number, n: number, color: string) => {
     for (let i = 0; i < n; i++) {
@@ -4260,9 +4271,10 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
     return;
   }
   const T = TRIBES[tribe];
-  const coat = knight ? '#eeeeee' : tribe === 'pirates' ? '#3a2a22' : tribe === 'mongols' ? '#a07845' : '#8a5a33';
-  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, coat, knight ? '#9aa3ad' : '#2a1a10', knight ? T.color : undefined, T.color);
-  if (knight) {
+  const ab = isAbo(tribe);
+  const coat = ab ? (knight ? '#d3bd94' : '#9a6238') : knight ? '#eeeeee' : tribe === 'pirates' ? '#3a2a22' : tribe === 'mongols' ? '#a07845' : '#8a5a33';
+  const saddle = drawHorse(ctx, x - 1, y + 3, 0.95, coat, knight && !ab ? '#9aa3ad' : '#2a1a10', knight && !ab ? T.color : undefined, ab ? AB_FUR : T.color);
+  if (knight && !ab) {
     // the warhorse's chamfron and a plume between its ears
     const hx = x - 1 + 10.5 * 0.95, hy = y + 3 - 15 * 0.95;
     faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.05, 0.7, 0.1, 0.95, metalOf(tribe));
@@ -4285,6 +4297,7 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
     }
   }
   if (tribe === 'persia') persiaHorseGear(ctx, kind, x, y, saddle);
+  if (ab) aboHorse(ctx, kind, x, y, saddle);
   if (tribe === 'polynesia') {
     // a woven flax saddle blanket: black with a red taniko border, white diamonds and a hanging tassel fringe
     const sx = saddle.x, sy = saddle.y;
@@ -4405,6 +4418,7 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   if (kind === 'knight' || kind === 'rider') drawShield(ctx, tribe, kind, b.off.x - 1.5, b.off.y + 1.5, 0.7);
   if (tribe === 'celts') celtLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
   else if (tribe === 'polynesia') maoriSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);
+  else if (ab) aboRiderSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
   else {
     lance(ctx, b.hand.x, b.hand.y, tribe === 'pirates' ? '#15151a' : T.color, knight ? 2 : 1.6, tribe !== 'ethiopia');
     if (tribe === 'ethiopia') { // three streamers of the tibeb colours below the spearhead
@@ -4485,6 +4499,7 @@ function drawChariot(ctx: Ctx, tribe: TribeId, x: number, y: number) {
 /** Each empire fields its own siege engine. */
 function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   if (tribe === 'inuit') return inuitCatapult(ctx, x, y);
+  if (tribe === 'aboriginal') return aboCatapult(ctx, x, y);
   const T = TRIBES[tribe];
   const wheels = (hub: string) => {
     for (const [wx, wy] of [[-7, 1], [6, 3]]) {
@@ -5085,6 +5100,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   if (tribe === 'inca') return drawIncaBoat(ctx, kind, x, y);
   if (tribe === 'ethiopia') return drawAksumBoat(ctx, kind, x, y);
   if (tribe === 'celts') return drawCurragh(ctx, kind, x, y);
+  if (tribe === 'aboriginal') return drawAboriginalCanoe(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
   if (tribe === 'egypt') {
@@ -6005,9 +6021,678 @@ function inuitHead(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, 
   }
 }
 
+// ---------------------------------------------------------------- Aboriginal arms, paint and country
+// Everyday hunting and fighting gear only: ochre and white-clay body paint, string and cane bands, possum-skin
+// cloaks, boomerangs, waddies, spears and woomeras, carved parrying shields and broad bark shields.
+
+const AB_OCH = '#b8502e', AB_OCH_D = '#7a3018', AB_YOCH = '#d9a441', AB_CLAY = '#f1ead8', AB_CHAR = '#1a1410';
+const AB_FUR = '#8a6a4a', AB_FUR_D = '#5a3f2a', AB_BARK = '#a7703f', AB_BARK_D = '#6f4526';
+const AB_CANE = '#d3b26a', AB_CANE_D = '#8f6f30', AB_WOOD = '#8a5a34', AB_WOOD_D = '#4f2f18', AB_STRING = '#e6d6b0';
+
+const isAbo = (t: TribeId) => t === 'aboriginal';
+
+/** A rotated ellipse (kangaroo bodies, dilly bags). */
+function aboEll(ctx: Ctx, x: number, y: number, rx: number, ry: number, rot: number, color: string) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, Math.PI * 2);
+  ctx.fillStyle = ink(color);
+  ctx.fill();
+}
+
+/** A boomerang from its end a1 through its elbow e to its end a2: a darker body, a lit edge and painted dots. */
+function aboBoomerangPts(ctx: Ctx, a1: { x: number; y: number }, e: { x: number; y: number }, a2: { x: number; y: number }, w: number, color: string, dots: string | null) {
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const [col, wid, off] of [[shade(color, -0.4), w, 0], [color, w * 0.66, -w * 0.08], [shade(color, 0.35), w * 0.2, -w * 0.22]] as const) {
+    ctx.strokeStyle = ink(col);
+    ctx.lineWidth = wid;
+    ctx.beginPath();
+    ctx.moveTo(a1.x, a1.y + off);
+    ctx.lineTo(e.x, e.y + off);
+    ctx.lineTo(a2.x, a2.y + off);
+    ctx.stroke();
+  }
+  if (dots) for (const [p, q, ts] of [[a1, e, [0.3, 0.55, 0.8]], [e, a2, [0.2, 0.45, 0.7]]] as const) for (const t of ts) ellipse(ctx, p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t, w * 0.2, w * 0.2, dots);
+}
+
+/** A boomerang whose elbow is at (x, y) and whose arms open towards `rot`. */
+function aboBoomerang(ctx: Ctx, x: number, y: number, rot: number, len: number, open: number, w: number, color: string, dots: string | null) {
+  aboBoomerangPts(ctx, { x: x + Math.cos(rot - open / 2) * len, y: y + Math.sin(rot - open / 2) * len }, { x, y }, { x: x + Math.cos(rot + open / 2) * len, y: y + Math.sin(rot + open / 2) * len }, w, color, dots);
+}
+
+/** A spear from (x0, y0) to (x1, y1): a fire-hardened shaft, a barbed head bound on with ochre string and a tuft of white feathers. */
+function aboSpearLine(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, k: number, w: number, head = 6.4) {
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const ux = (x1 - x0) / len, uy = (y1 - y0) / len, nx = -uy, ny = ux;
+  line(ctx, x0, y0, x1, y1, '#8a6a3c', w);
+  line(ctx, x0 - nx * w * 0.3, y0 - ny * w * 0.3, x1 - nx * w * 0.3, y1 - ny * w * 0.3, '#cfae74', w * 0.35);
+  const hx = x1 + ux * head * k, hy = y1 + uy * head * k;
+  poly(ctx, [x1 - nx * 0.8 * k, y1 - ny * 0.8 * k, hx, hy, x1 + nx * 0.8 * k, y1 + ny * 0.8 * k], '#e6d8b4'); // the head
+  poly(ctx, [x1, y1, hx, hy, x1 + nx * 0.8 * k, y1 + ny * 0.8 * k], '#b8a880');
+  for (const t of [0.32, 0.62]) { // barbs cut into the head
+    const bx = x1 + ux * head * k * t, by = y1 + uy * head * k * t;
+    poly(ctx, [bx, by, bx - nx * 1.7 * k - ux * 1.5 * k, by - ny * 1.7 * k - uy * 1.5 * k, bx - nx * 0.5 * k, by - ny * 0.5 * k], '#e6d8b4');
+    poly(ctx, [bx, by, bx + nx * 1.7 * k - ux * 1.5 * k, by + ny * 1.7 * k - uy * 1.5 * k, bx + nx * 0.5 * k, by + ny * 0.5 * k], '#b8a880');
+  }
+  for (const [t, c] of [[0, AB_OCH], [1, AB_CLAY], [2, AB_OCH]] as const) line(ctx, x1 - ux * (0.6 + t * 0.9) * k - nx * 1 * k, y1 - uy * (0.6 + t * 0.9) * k - ny * 1 * k, x1 - ux * (0.6 + t * 0.9) * k + nx * 1 * k, y1 - uy * (0.6 + t * 0.9) * k + ny * 1 * k, c, 0.7 * k); // binding
+  for (const [s, c] of [[-1, AB_OCH], [0, '#ffffff'], [1, AB_STRING]] as const) line(ctx, x1 - ux * 2.6 * k, y1 - uy * 2.6 * k, x1 - ux * 2.6 * k + s * nx * 1 * k, y1 - uy * 2.6 * k + s * ny * 1 * k + 2.4 * k, c, 0.6 * k); // a small hanging tassel
+}
+
+/** A waddy (nulla-nulla): a heavy hardwood club, thin at the grip and swelling to a knobbed head, with burnt and painted bands. */
+function aboClub(ctx: Ctx, x: number, y: number, k: number, big = false) {
+  const g = { x: x - 0.8 * k, y: y + 2.8 * k }, h = { x: x + 3.4 * k, y: y - 14.6 * k };
+  const len = Math.hypot(h.x - g.x, h.y - g.y), ux = (h.x - g.x) / len, uy = (h.y - g.y) / len, nx = -uy, ny = ux;
+  const wg = 0.75 * k, wh = (big ? 2.2 : 1.7) * k;
+  poly(ctx, [g.x - nx * wg, g.y - ny * wg, h.x - nx * wh, h.y - ny * wh, h.x, h.y, g.x, g.y], '#a5703c');
+  poly(ctx, [g.x + nx * wg, g.y + ny * wg, h.x + nx * wh, h.y + ny * wh, h.x, h.y, g.x, g.y], AB_WOOD_D);
+  aboEll(ctx, h.x + ux * 0.6 * k, h.y + uy * 0.6 * k, wh * 1.05, wh * 1.35, Math.atan2(uy, ux) + Math.PI / 2, AB_WOOD_D); // the knob
+  aboEll(ctx, h.x + ux * 0.9 * k - nx * 0.3 * k, h.y + uy * 0.9 * k - ny * 0.3 * k, wh * 0.8, wh * 1.0, Math.atan2(uy, ux) + Math.PI / 2, '#b07a44');
+  for (const t of [0.5, 0.66, 0.8]) { // burnt-in rings, and an ochre band with clay dots
+    const px = g.x + (h.x - g.x) * t, py = g.y + (h.y - g.y) * t, hw = wg + (wh - wg) * t;
+    line(ctx, px - nx * hw, py - ny * hw, px + nx * hw, py + ny * hw, t === 0.66 ? AB_OCH : AB_CHAR, 0.7 * k);
+  }
+  for (let i = 0; i < 3; i++) { const t = 0.55 + i * 0.075; ellipse(ctx, g.x + (h.x - g.x) * t + nx * 0.2 * k, g.y + (h.y - g.y) * t + ny * 0.2 * k, 0.28 * k, 0.28 * k, AB_CLAY); }
+  for (const t of [0.04, 0.12, 0.2, 0.28]) line(ctx, g.x + (h.x - g.x) * t - nx * wg * 1.1, g.y + (h.y - g.y) * t - ny * wg * 1.1, g.x + (h.x - g.x) * t + nx * wg * 1.1, g.y + (h.y - g.y) * t + ny * wg * 1.1, AB_STRING, 0.6 * k); // string-bound grip
+}
+
+/** A woomera (spear-thrower): a long leaf-shaped board with a resin grip and a hooked peg at its tail. */
+function aboWoomera(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, k: number) {
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const ux = (x1 - x0) / len, uy = (y1 - y0) / len, nx = -uy, ny = ux;
+  const P = (t: number, s: number) => [x0 + (x1 - x0) * t + nx * s * k, y0 + (y1 - y0) * t + ny * s * k];
+  poly(ctx, [...P(0, 0.4), ...P(0.3, 1.5), ...P(0.7, 1.5), ...P(1, 0.5), ...P(1, -0.5), ...P(0.7, -1.5), ...P(0.3, -1.5), ...P(0, -0.4)], '#b07a44');
+  poly(ctx, [...P(0, 0), ...P(0.3, 0), ...P(0.7, 0), ...P(1, 0), ...P(1, -0.5), ...P(0.7, -1.5), ...P(0.3, -1.5), ...P(0, -0.4)], AB_WOOD_D);
+  const a = P(0.12, 0), b = P(0.9, 0);
+  line(ctx, a[0], a[1], b[0], b[1], '#5a3418', 0.5 * k); // a carved groove for the spear
+  for (const t of [0.42, 0.52, 0.62]) { const p = P(t, 0.9), q = P(t + 0.04, -0.9); line(ctx, p[0], p[1], q[0], q[1], AB_CLAY, 0.4 * k); } // incised cross-hatching
+  const hk = P(1, 0);
+  poly(ctx, [hk[0], hk[1], hk[0] + nx * 1.2 * k - ux * 0.2 * k, hk[1] + ny * 1.2 * k - uy * 0.2 * k - 1.8 * k, hk[0] + ux * 0.6 * k, hk[1] + uy * 0.6 * k], '#e6d8b4'); // the peg
+  const g = P(0.06, 0);
+  ellipse(ctx, g[0], g[1], 1.5 * k, 1.3 * k, '#3a2412'); // spinifex-resin grip
+  ellipse(ctx, g[0] - 0.4 * k, g[1] - 0.4 * k, 0.6 * k, 0.5 * k, '#6a4a2a');
+}
+
+/** A parrying shield: a long narrow slab of carved wood, incised in bands and chevrons, with a hand-hole at the middle. */
+function aboParry(ctx: Ctx, x: number, y: number, k: number, tone = AB_WOOD) {
+  const cx = x - 1.4 * k, cy = y - 5.4 * k, rx = 2.5 * k, ry = 8 * k;
+  ellipse(ctx, cx + 0.6 * k, cy + 0.5 * k, rx, ry, AB_WOOD_D); // its thickness
+  ellipse(ctx, cx, cy, rx, ry, shade(tone, -0.1));
+  poly(ctx, [cx, cy - ry, cx + rx * 0.98, cy - 1 * k, cx + rx * 0.7, cy + ry * 0.55, cx, cy + ry], shade(tone, -0.26)); // shaded half
+  poly(ctx, [cx, cy - ry, cx - rx * 0.98, cy - 1 * k, cx - rx * 0.7, cy + ry * 0.55, cx, cy + ry], tone);
+  line(ctx, cx, cy - ry * 0.92, cx, cy + ry * 0.92, shade(tone, -0.4), 0.5 * k); // the ridge
+  for (const [t, c] of [[-0.78, AB_CLAY], [-0.62, AB_OCH], [0.5, AB_OCH], [0.66, AB_CLAY]] as const) {
+    const wy = cy + ry * t, ww = rx * Math.sqrt(Math.max(0, 1 - t * t)) * 0.92;
+    line(ctx, cx - ww, wy, cx + ww, wy, c, 0.7 * k);
+  }
+  for (let i = 0; i < 4; i++) { // incised chevrons between the bands
+    const wy = cy - ry * 0.5 + i * ry * 0.22;
+    const ww = rx * Math.sqrt(Math.max(0, 1 - (0.5 - i * 0.22) ** 2)) * 0.8;
+    line(ctx, cx - ww, wy - 0.9 * k, cx, wy + 0.5 * k, AB_CLAY, 0.45 * k);
+    line(ctx, cx, wy + 0.5 * k, cx + ww, wy - 0.9 * k, AB_CLAY, 0.45 * k);
+  }
+  ellipse(ctx, cx, cy + 0.4 * k, 0.8 * k, 1.3 * k, '#2a1a10'); // the grip hole
+  ellipse(ctx, cx - rx * 0.5, cy - ry * 0.35, 0.5 * k, 1.6 * k, 'rgba(255,255,255,0.2)');
+}
+
+/** A broad bark-and-wood shield painted in ochre and clay bands and diamonds. */
+function aboBroadShield(ctx: Ctx, x: number, y: number, k: number, kind: UnitKind) {
+  const cx = x - 1 * k, cy = y - 5.2 * k, rx = 5.4 * k, ry = 6.6 * k;
+  ellipse(ctx, cx + 0.7 * k, cy + 0.6 * k, rx, ry, AB_BARK_D);
+  ellipse(ctx, cx, cy, rx, ry, AB_BARK);
+  ellipse(ctx, cx, cy, rx * 0.86, ry * 0.88, AB_OCH);
+  ring(ctx, cx, cy, rx, ry, shade(AB_BARK_D, -0.2), 0.8 * k);
+  ring(ctx, cx, cy, rx * 0.86, ry * 0.88, AB_CLAY, 0.7 * k);
+  // painted diamond rows down the face
+  const dia = (px: number, py: number, s: number, c: string) => poly(ctx, [px, py - s * 1.2, px + s, py, px, py + s * 1.2, px - s, py], c);
+  for (const [dy, s] of [[-3.6, 1.2], [3.6, 1.2]] as const) dia(cx, cy + dy * k, s * k, AB_CLAY);
+  dia(cx, cy, 2 * k, AB_YOCH);
+  dia(cx, cy, 1.2 * k, AB_OCH_D);
+  for (const sx of [-1, 1]) for (const [dy, c] of [[-2.2, AB_CLAY], [0, AB_YOCH], [2.2, AB_CLAY]] as const) ellipse(ctx, cx + sx * 3.1 * k, cy + dy * k, 0.5 * k, 0.5 * k, c);
+  line(ctx, cx, cy - ry * 0.84, cx, cy - 2.4 * k, AB_CLAY, 0.6 * k);
+  line(ctx, cx, cy + 2.4 * k, cx, cy + ry * 0.84, AB_CLAY, 0.6 * k);
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + 0.2; ellipse(ctx, cx + Math.cos(a) * rx * 0.93, cy + Math.sin(a) * ry * 0.93, 0.36 * k, 0.36 * k, AB_CLAY); } // rim dots
+  ellipse(ctx, cx - 2.2 * k, cy - 3 * k, 1 * k, 1.5 * k, 'rgba(255,255,255,0.2)');
+  void kind;
+}
+
+function aboShield(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'defender') aboBroadShield(ctx, x, y, k, kind);
+  else aboParry(ctx, x, y, k, kind === 'knight' || kind === 'giant' ? '#9a6a3c' : AB_WOOD);
+}
+
+/** A woven dilly bag with a diamond pattern and an ochre band. */
+function aboDilly(ctx: Ctx, x: number, y: number, k: number) {
+  line(ctx, x + 1.4 * k, y - 4 * k, x + 4 * k, y - 10 * k, AB_FUR_D, 0.7 * k); // the cord over the shoulder
+  aboEll(ctx, x, y, 3 * k, 3.5 * k, 0, shade(AB_CANE, -0.25));
+  aboEll(ctx, x - 0.3 * k, y - 0.2 * k, 2.7 * k, 3.2 * k, 0, AB_CANE);
+  for (let i = -1; i <= 1; i++) { line(ctx, x + i * 1.6 * k - 1.2 * k, y - 2.4 * k, x + i * 1.6 * k + 1.2 * k, y + 2.6 * k, AB_CANE_D, 0.4 * k); line(ctx, x + i * 1.6 * k + 1.2 * k, y - 2.4 * k, x + i * 1.6 * k - 1.2 * k, y + 2.6 * k, AB_CANE_D, 0.4 * k); }
+  line(ctx, x - 2.7 * k, y - 0.8 * k, x + 2.5 * k, y - 0.8 * k, AB_OCH, 0.9 * k);
+  ellipse(ctx, x, y - 3 * k, 1.6 * k, 0.6 * k, AB_FUR_D);
+}
+
+function aboBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'woomera') { // a fan of spare spears carried behind the shoulder
+    for (const [dx, tx, ty] of [[0, -11.6, -27], [1.4, -8.6, -28.6], [2.8, -5.4, -27.6], [-1.2, -14, -24]] as const) aboSpearLine(ctx, x - 6.4 * k + dx * k, y - 7 * k, x + tx * k, y + ty * k, k, 0.85 * k, 5.2);
+  } else if (kind === 'archer') { // two spare boomerangs thrust through the belt cord, and a dilly bag
+    aboBoomerangPts(ctx, { x: x - 5.4 * k, y: y - 7 * k }, { x: x - 9 * k, y: y - 14 * k }, { x: x - 6.6 * k, y: y - 21 * k }, 1.5 * k, AB_WOOD, AB_CLAY);
+    aboBoomerangPts(ctx, { x: x - 4.4 * k, y: y - 8 * k }, { x: x - 6.6 * k, y: y - 15 * k }, { x: x - 3.6 * k, y: y - 20 * k }, 1.3 * k, '#9a6a3c', null);
+    aboDilly(ctx, x - 6.6 * k, y - 5 * k, k * 0.95);
+  } else { // the wanderer: a rolled possum-skin rug, a dilly bag and a digging stick
+    ellipse(ctx, x - 4.5 * k, y - 16.6 * k, 3.6 * k, 1.8 * k, AB_FUR_D);
+    ellipse(ctx, x - 4.5 * k, y - 16.9 * k, 3.6 * k, 1.5 * k, AB_FUR);
+    for (const ox of [-1.8, 1.8]) line(ctx, x - 4.5 * k + ox * k, y - 18 * k, x - 4.5 * k + ox * k, y - 8.4 * k, AB_STRING, 0.6 * k);
+    aboDilly(ctx, x - 6.8 * k, y - 4.6 * k, k);
+    line(ctx, x - 8.6 * k, y + 1.4 * k, x - 6.4 * k, y - 21 * k, '#a5723e', 0.9 * k);
+  }
+}
+
+/** All of the Aboriginal empire's weapons. Returns true when it drew the unit's weapon. */
+function aboWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
+  const { x, y } = b.hand;
+  switch (kind) {
+    case 'warrior':
+      aboBoomerang(ctx, b.off.x - 3.4 * k, b.off.y - 0.8 * k, -0.9, 6 * k, 1.8, 1.7 * k, AB_WOOD, AB_CLAY); // a war boomerang thrust through the hair-string belt
+      aboClub(ctx, x, y, k);
+      return true;
+    case 'archer': { // the returning-boomerang hunter, arm cocked to throw
+      aboBoomerangPts(ctx, { x: x + 0.2 * k, y: y + 0.6 * k }, { x: x + 1.4 * k, y: y - 9 * k }, { x: x + 9.6 * k, y: y - 12 * k }, 1.5 * k, '#b07a44', AB_CLAY);
+      line(ctx, x - 0.4 * k, y + 0.8 * k, x + 0.4 * k, y - 2.8 * k, AB_STRING, 1 * k); // the string-wrapped grip
+      return true;
+    }
+    case 'woomera': { // a spear seated on the woomera, arm drawn back
+      aboWoomera(ctx, x - 1.6 * k, y + 1.6 * k, x + 6.6 * k, y - 4.6 * k, k);
+      aboSpearLine(ctx, x - 0.8 * k, y + 2.4 * k, x + 16 * k, y - 15.6 * k, k, 1.1 * k, 7);
+      return true;
+    }
+    case 'defender': // a long stabbing spear
+      aboSpearLine(ctx, x - 1.8 * k, y + 6.2 * k, x + 3 * k, y - 22.4 * k, k, 1.4 * k, 8);
+      return true;
+    case 'swordsman': // a heavy non-returning war boomerang held like a blade
+      aboBoomerangPts(ctx, { x: x - 0.4 * k, y: y + 1.8 * k }, { x: x + 2 * k, y: y - 10.6 * k }, { x: x + 11.4 * k, y: y - 16.4 * k }, 2.1 * k, '#a5703c', AB_CLAY);
+      line(ctx, x - 0.6 * k, y + 2 * k, x + 0.2 * k, y - 3 * k, AB_STRING, 1.7 * k);
+      return true;
+    case 'giant': // the champion: a great club in the hand, a spear thrust through the belt
+      aboClub(ctx, x, y, k, true);
+      return true;
+    case 'explorer': { // a walking stick with a fire-hardened tip and a tuft of feathers
+      line(ctx, x + 1 * k, y + 6 * k, x + 2.5 * k, y - 15 * k, '#a5723e', 1.5 * k);
+      line(ctx, x + 0.6 * k, y + 6 * k, x + 2.1 * k, y - 15 * k, shade('#a5723e', 0.4), 0.5 * k);
+      for (const [t, c] of [[-13, AB_OCH], [-11.4, AB_CLAY], [-9.8, AB_OCH]] as const) line(ctx, x + 1.4 * k, y + t * k, x + 3.6 * k, y + (t - 0.4) * k, c, 0.9 * k);
+      feather(ctx, x + 2.6 * k, y - 15 * k, x + 0.6 * k, y - 21.6 * k, 1.1 * k, '#f6f3ea', AB_YOCH);
+      feather(ctx, x + 2.6 * k, y - 15 * k, x + 4.6 * k, y - 21.4 * k, 1.1 * k, '#e8dcc0');
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Clothing details on the torso: skin apron, string and bark belts, body paint and necklaces. */
+function aboTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const skin = LOOK.aboriginal.skin;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  const Lf = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, y, w, h, u0, u1, v0, v1, c);
+  const B = (v0: number, v1: number, c: string) => band(ctx, x, y, w, h, v0, v1, c);
+  const elder = kind === 'giant', bare = kind === 'explorer';
+  const belted = kind === 'defender' || kind === 'swordsman' || elder;
+  const hunter = kind === 'woomera' || kind === 'archer';
+  // an ochre wash over the chest
+  if (!bare) B(0.36, 1, mix(skin, AB_OCH, hunter ? 0.34 : 0.62));
+  // a short kangaroo-skin apron with a string fringe
+  B(0, 0.3, AB_FUR);
+  for (const u of [0.1, 0.36, 0.62, 0.86]) R(u, u + 0.12, 0.04, 0.26, AB_FUR_D);
+  for (const u of [0.15, 0.55]) Lf(u, u + 0.14, 0.04, 0.26, AB_FUR_D);
+  for (const u of [0.05, 0.22, 0.4, 0.58, 0.76, 0.92]) R(u, u + 0.06, -0.09, 0.05, AB_STRING);
+  for (const u of [0.1, 0.34, 0.6, 0.84]) Lf(u, u + 0.06, -0.09, 0.05, AB_STRING);
+  // the belt: hair-string, or a broad belt of stitched bark for the shield-bearers
+  if (belted) {
+    B(0.27, 0.46, AB_BARK);
+    B(0.27, 0.3, AB_BARK_D);
+    B(0.43, 0.46, AB_BARK_D);
+    for (const u of [0.1, 0.3, 0.5, 0.7, 0.9]) R(u - 0.03, u + 0.03, 0.31, 0.42, AB_BARK_D);
+    for (const u of [0.2, 0.6]) Lf(u - 0.03, u + 0.03, 0.31, 0.42, AB_BARK_D);
+    for (const u of [0.2, 0.4, 0.6, 0.8]) R(u - 0.025, u + 0.025, 0.35, 0.39, AB_CLAY);
+  } else {
+    B(0.29, 0.39, AB_STRING);
+    for (let i = 0; i < 6; i++) { R(0.02 + i * 0.16, 0.08 + i * 0.16, 0.3, 0.38, i % 2 ? AB_FUR : '#f6ecd0'); Lf(0.03 + i * 0.16, 0.09 + i * 0.16, 0.3, 0.38, i % 2 ? AB_FUR : '#f6ecd0'); }
+    R(0.4, 0.6, 0.24, 0.42, AB_FUR_D); // the knot and the hanging ends
+    R(0.44, 0.5, 0.12, 0.26, AB_STRING);
+  }
+  // body paint in white clay
+  const teeth = (n: number, v: number, sz: number) => { // kangaroo-tooth necklace on a cord
+    B(v + 0.02, v + 0.07, AB_FUR_D);
+    for (let i = 0; i < n; i++) {
+      const u = 0.1 + i * (0.8 / (n - 1)), d = Math.sin((i / (n - 1)) * Math.PI) * 0.06;
+      facePoly(ctx, 'R', x, y, w, h, [[u - 0.045, v + 0.03], [u + 0.045, v + 0.03], [u, v - sz - d]], AB_CLAY);
+    }
+  };
+  if (kind === 'warrior' || kind === 'knight') {
+    for (const v of [0.5, 0.62, 0.74]) { B(v, v + 0.05, AB_CLAY); }
+    for (const [i, u] of [0.16, 0.36, 0.56, 0.76].entries()) { R(u, u + 0.05, 0.56 + (i % 2) * 0.12 - 0.02, 0.6 + (i % 2) * 0.12 - 0.02, AB_CLAY); Lf(u, u + 0.05, 0.56 + (i % 2) * 0.12 - 0.02, 0.6 + (i % 2) * 0.12 - 0.02, AB_CLAY); }
+    R(0.47, 0.53, 0.42, 0.8, AB_CLAY); // a stripe down the breastbone
+    teeth(5, 0.8, 0.2);
+  } else if (kind === 'defender') {
+    for (const u of [0.1, 0.3, 0.5, 0.7, 0.88]) R(u, u + 0.07, 0.46, 0.8, AB_CLAY); // ladder of rib stripes
+    for (const u of [0.15, 0.45, 0.75]) Lf(u, u + 0.08, 0.46, 0.8, AB_CLAY);
+    B(0.8, 0.86, AB_YOCH);
+    teeth(5, 0.84, 0.16);
+  } else if (kind === 'swordsman' || elder) {
+    facePoly(ctx, 'R', x, y, w, h, [[0.02, 0.98], [0.18, 0.98], [0.98, 0.5], [0.98, 0.42]], AB_CLAY); // crossed chest stripes
+    facePoly(ctx, 'R', x, y, w, h, [[0.82, 0.98], [0.98, 0.98], [0.2, 0.42], [0.04, 0.5]], AB_CLAY);
+    for (const [u, v] of [[0.12, 0.6], [0.86, 0.6], [0.5, 0.6], [0.5, 0.8], [0.3, 0.84], [0.7, 0.84]] as const) R(u - 0.03, u + 0.03, v - 0.03, v + 0.03, AB_CLAY);
+    for (const u of [0.2, 0.55]) Lf(u, u + 0.08, 0.56, 0.62, AB_CLAY);
+    teeth(elder ? 7 : 5, 0.8, 0.16);
+    if (elder) { B(0.9, 0.96, '#f6ecd0'); for (let i = 0; i < 6; i++) R(0.06 + i * 0.15, 0.13 + i * 0.15, 0.86, 0.92, i % 2 ? '#e6d0b0' : '#ffffff'); } // a second necklace of shells
+  } else if (kind === 'woomera' || kind === 'archer') {
+    facePoly(ctx, 'R', x, y, w, h, [[0.04, 0.98], [0.24, 0.98], [0.98, 0.4], [0.8, 0.4]], AB_STRING); // a possum-string bandolier
+    for (const t of [0.1, 0.3, 0.5, 0.7, 0.9]) faceQuad(ctx, 'R', x, y, w, h, 0.04 + t * 0.9 - 0.02, 0.04 + t * 0.9 + 0.03, 0.98 - t * 0.55 - 0.05, 0.98 - t * 0.55 + 0.02, AB_FUR_D);
+    for (const [u, v] of [[0.6, 0.86], [0.78, 0.7], [0.3, 0.56], [0.5, 0.52], [0.7, 0.54], [0.4, 0.7]] as const) R(u - 0.03, u + 0.03, v - 0.03, v + 0.03, AB_CLAY); // clay dots
+    for (const [u, v] of [[0.2, 0.56], [0.5, 0.7]] as const) Lf(u, u + 0.06, v, v + 0.06, AB_CLAY);
+    B(0.9, 0.95, AB_FUR_D);
+    for (let i = 0; i < 6; i++) R(0.06 + i * 0.15, 0.12 + i * 0.15, 0.86, 0.92, i % 2 ? '#e6d0b0' : '#ffffff'); // a shell necklace
+  } else if (bare) {
+    // a possum-skin cloak over the shoulders, stitched panels and a fur collar
+    B(0.66, 1, AB_FUR);
+    for (const u of [0.2, 0.5, 0.8]) R(u, u + 0.03, 0.5, 1, AB_FUR_D);
+    for (const u of [0.12, 0.34, 0.56, 0.78]) R(u, u + 0.12, 0.52, 0.68, AB_FUR_D);
+    for (const u of [0.3, 0.7]) Lf(u, u + 0.03, 0.66, 1, AB_FUR_D);
+    B(0.92, 1, '#a58862');
+    for (let i = 0; i < 5; i++) R(0.06 + i * 0.2, 0.12 + i * 0.2, 0.5, 0.6, AB_FUR_D);
+    B(0.62, 0.66, AB_CLAY); // an incised hem
+    for (const [u, v] of [[0.3, 0.74], [0.62, 0.8]] as const) R(u - 0.03, u + 0.03, v - 0.03, v + 0.03, AB_CLAY);
+  }
+}
+
+/** Legs: white-clay shin stripes and a possum-string anklet. */
+function aboLeg(ctx: Ctx, f: 'L' | 'R', cx: number, cy: number, k: number, kind: UnitKind) {
+  const q = (v0: number, v1: number, c: string) => faceQuad(ctx, f, cx, cy, 3.6 * k, 5.2 * k, 0.05, 0.95, v0, v1, c);
+  q(0.14, 0.22, AB_STRING); // string anklet
+  q(0.16, 0.19, AB_FUR_D);
+  if (kind === 'explorer') return;
+  if (kind === 'woomera' || kind === 'archer') { for (const [u, v] of [[0.3, 0.5], [0.6, 0.62], [0.42, 0.74]] as const) faceQuad(ctx, f, cx, cy, 3.6 * k, 5.2 * k, u, u + 0.12, v, v + 0.1, AB_CLAY); return; }
+  q(0.42, 0.49, AB_CLAY); // shin stripes
+  q(0.58, 0.64, AB_CLAY);
+  q(0.7, 0.9, mix(LOOK.aboriginal.skin, AB_OCH, 0.5));
+}
+
+/** Arms: a plaited cane armband above the elbow, a possum-string band and clay stripes on the forearm. */
+function aboArm(ctx: Ctx, cx: number, cy: number, k: number, front: boolean, kind: UnitKind) {
+  const skin = LOOK.aboriginal.skin;
+  const q = (v0: number, v1: number, c: string) => faceQuad(ctx, 'R', cx, cy, 2.8 * k, 7 * k, 0, 1, v0, v1, c);
+  q(0.16, 0.3, skin); // overpaints the shared cuff band
+  q(0.6, 0.82, AB_CANE); // the plaited armband: two tones and a woven diamond row
+  q(0.6, 0.64, AB_CANE_D);
+  q(0.78, 0.82, AB_CANE_D);
+  for (const u of [0.15, 0.55]) faceQuad(ctx, 'R', cx, cy, 2.8 * k, 7 * k, u, u + 0.28, 0.66, 0.76, AB_OCH);
+  if (front) { q(0.38, 0.44, AB_STRING); q(0.08, 0.14, AB_CLAY); if (kind !== 'explorer') { q(0.24, 0.29, AB_CLAY); } }
+  else { q(0.34, 0.4, AB_STRING); q(0.1, 0.15, AB_CLAY); }
+}
+
+/** A face: white-clay lines under the eyes and across the brow, a full beard for the senior ranks. */
+function aboFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const skin = LOOK.aboriginal.skin, hair = LOOK.aboriginal.hair;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, y, w, h, u0, u1, v0, v1, c);
+  const Lf = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, y, w, h, u0, u1, v0, v1, c);
+  const bearded = kind === 'defender' || kind === 'swordsman' || kind === 'giant' || kind === 'knight' || kind === 'explorer';
+  const strong = kind === 'warrior' || kind === 'defender' || kind === 'swordsman' || kind === 'giant' || kind === 'knight';
+  R(0.02, 0.98, 0.3, 0.35, strong ? AB_CLAY : mix(skin, AB_CLAY, 0.7)); // a clay line under the eyes
+  if (strong) { R(0.02, 0.98, 0.18, 0.22, AB_OCH); Lf(0.5, 1, 0.3, 0.35, AB_CLAY); Lf(0.4, 1, 0.18, 0.22, AB_OCH); }
+  else { for (const u of [0.1, 0.3, 0.7, 0.86]) R(u, u + 0.06, 0.2, 0.26, AB_CLAY); } // dotted cheeks
+  R(0.4, 0.62, 0.5, 0.66, mix(skin, AB_OCH, 0.35)); // an ochre bridge over the nose
+  R(0.42, 0.6, 0.28, 0.5, shade(skin, -0.16));
+  for (const u of [0.2, 0.42, 0.64]) R(u, u + 0.08, 0.8, 0.86, AB_CLAY); // a row of brow dots
+  if (bearded) {
+    R(0.02, 0.98, -0.02, 0.15, hair);
+    Lf(0.3, 1, 0, 0.16, hair);
+    R(0.9, 1, 0.14, 0.4, hair); // beard running up into the sideburn
+    R(0.3, 0.7, 0.1, 0.13, shade(hair, 0.22));
+    if (kind === 'giant' || kind === 'swordsman') R(0.28, 0.72, -0.2, -0.02, hair); // a longer beard
+    if (kind === 'giant') R(0.4, 0.6, -0.26, -0.18, shade(hair, 0.18)); // a white-flecked tip
+  } else R(0.4, 0.6, 0.06, 0.13, hair); // a chin tuft
+  if (kind === 'giant' || kind === 'explorer') { R(0.16, 0.42, 0.7, 0.75, '#c9c2b4'); R(0.58, 0.83, 0.7, 0.75, '#c9c2b4'); } // greying brows
+}
+
+/** Hair, a woven headband and feathers, by rank. */
+function aboHead(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  const hair = LOOK.aboriginal.hair;
+  const bw = hw + 1.4 * k, by = top + 2.1 * k;
+  const wide = kind === 'woomera' || kind === 'swordsman' || kind === 'giant';
+  const bh = (wide ? 2.9 : 2.2) * k;
+  const cord = wide ? AB_CANE : AB_STRING;
+  // hair falling behind
+  poly(ctx, [x - 5.4 * k, top + 2 * k, x - 7 * k, top + 6 * k, x - 6.4 * k, top + 10 * k, x - 4 * k, top + 9 * k, x - 3.6 * k, top + 3 * k], shade(hair, 0.06));
+  poly(ctx, [x - 5.4 * k, top + 6 * k, x - 6.8 * k, top + 8.6 * k, x - 5.4 * k, top + 10.4 * k, x - 4.4 * k, top + 8 * k], shade(hair, 0.22));
+  // the headband
+  box(ctx, x, by, bw, bh, cord);
+  for (let i = 0; i < 6; i++) { // twisted possum-fur string
+    const c = i % 2 ? AB_OCH : '#f6ecd0';
+    faceQuad(ctx, 'R', x, by, bw, bh, i / 6, i / 6 + 1 / 12, 0.1, 0.9, c);
+    faceQuad(ctx, 'L', x, by, bw, bh, i / 6 + 0.04, i / 6 + 1 / 12 + 0.04, 0.1, 0.9, c);
+  }
+  if (wide) { faceQuad(ctx, 'R', x, by, bw, bh, 0, 1, 0.42, 0.58, AB_OCH); faceQuad(ctx, 'L', x, by, bw, bh, 0, 1, 0.42, 0.58, AB_OCH); }
+  // curly hair over the crown, and a fringe above the band
+  ellipse(ctx, x + 0.2 * k, top + 0.1 * k, hw * 0.5, 2.7 * k, hair);
+  for (const [dx, dy, r] of [[-5.2, 0.6, 1.7], [-3.6, -1.6, 1.6], [-0.6, -2.5, 1.7], [2.4, -1.9, 1.6], [4.8, -0.2, 1.6], [-5.9, 2.6, 1.3], [1.4, 1.2, 1.5]] as const) ellipse(ctx, x + dx * k, top + dy * k, r * k, r * 0.9 * k, hair);
+  ellipse(ctx, x - 1.4 * k, top - 0.9 * k, 3 * k, 1.2 * k, shade(hair, 0.22));
+  for (const [dx, dy] of [[-3.6, -1.9], [-0.6, -2.7], [2.4, -2.1]] as const) ellipse(ctx, x + dx * k, top + dy * k, 0.9 * k, 0.6 * k, shade(hair, 0.38));
+  faceQuad(ctx, 'R', x, by, bw, bh, 0, 1, 1, 1.32, hair);
+  faceQuad(ctx, 'L', x, by, bw, bh, 0, 1, 1, 1.32, hair);
+  const plume = (bx: number, ty: number, lean: number, c: string, tip?: string) => // cockatoo crest feathers sweep up and back from the band
+    feather(ctx, bx, top + 1.8 * k, bx + (lean - 1.4) * k, top + (ty - 1.6 - Math.abs(lean) * 0.2) * k * 0.78 + 0.2 * k, 1.25 * k, c, tip);
+  switch (kind) {
+    case 'warrior':
+      plume(x - 2.6 * k, -7, -1.4, '#f6f3ea');
+      plume(x - 0.6 * k, -8, 0.6, '#f6f3ea');
+      break;
+    case 'archer': // a single emu feather trailing back, hair gathered in a bun
+      ellipse(ctx, x - 4.8 * k, top + 0.6 * k, 2.3 * k, 2.1 * k, hair);
+      ellipse(ctx, x - 5.2 * k, top + 0.2 * k, 1.2 * k, 1 * k, shade(hair, 0.25));
+      for (const [dx, dy] of [[-0.4, -6.4], [0.6, -7]] as const) line(ctx, x - 1.6 * k, top + 1.4 * k, x + dx * k - 3 * k, top + dy * k, '#6a5238', 0.8 * k);
+      break;
+    case 'woomera': // a hair-string tuft and one white feather
+      plume(x - 1.6 * k, -6.6, 1.2, '#f6f3ea');
+      for (const [dx, dy] of [[-6.4, 2.6], [-6.8, 4.6]] as const) ellipse(ctx, x + dx * k, top + dy * k, 0.7 * k, 0.7 * k, AB_CLAY); // shell beads in the hair
+      break;
+    case 'defender': // a fan of white cockatoo feathers
+      for (const [dx, ty, lean] of [[-4, -5.6, -3.2], [-2, -7.6, -1.6], [0, -8.4, 0], [2, -7.6, 1.6], [4, -5.6, 3.2]] as const) plume(x + dx * k, ty, lean, '#f6f3ea', AB_YOCH);
+      break;
+    case 'swordsman': // yellow-crested feathers and a bone through the hair
+      plume(x - 3 * k, -8, -2, '#f6f3ea', AB_YOCH);
+      plume(x - 0.4 * k, -9.4, 0.4, '#f6f3ea', AB_YOCH);
+      plume(x + 2.4 * k, -7.6, 2.2, AB_OCH);
+      break;
+    case 'knight': // a tall fan of cockatoo feathers with a red centre
+      for (const [dx, ty, lean, c] of [[-4.4, -6.6, -3.4, '#f6f3ea'], [-2.2, -9, -1.6, '#f6f3ea'], [0, -10.4, 0, AB_OCH], [2.2, -9, 1.6, '#f6f3ea'], [4.4, -6.6, 3.4, '#f6f3ea']] as const) plume(x + dx * k, ty, lean, c, AB_YOCH);
+      break;
+    case 'giant': // a crown of white and yellow-crested feathers on a wide cane band
+      for (const [dx, ty, lean, c] of [[-5.4, -4, -4, '#f6f3ea'], [-3.6, -7.4, -2.6, AB_YOCH], [-1.8, -9.4, -1.2, '#f6f3ea'], [0, -10.2, 0, AB_OCH], [1.8, -9.4, 1.2, '#f6f3ea'], [3.6, -7.4, 2.6, AB_YOCH], [5.4, -4, 4, '#f6f3ea']] as const) plume(x + dx * k, ty, lean, c, '#ffffff');
+      break;
+    case 'explorer': // hair tied up, one small tuft
+      plume(x - 1.6 * k, -4.6, 1, '#e8dcc0');
+      break;
+    default:
+      plume(x - 1.6 * k, -6, 1, '#f6f3ea');
+  }
+  ellipse(ctx, x + 3 * k, by - 0.4 * k, 0.5 * k, 0.5 * k, AB_CLAY);
+}
+
+/** The possum-skin cloak's detail on the cape hanging behind the higher ranks. */
+function aboCloak(ctx: Ctx, x: number, top: number, hip: number, k: number) {
+  const hem = (t: number) => ({ x: x - 9.5 * k + 7.5 * k * t, y: hip + 6.5 * k + 2 * k * t });
+  for (const t of [0.15, 0.5, 0.85]) { // stitched seams between the skins
+    const h = hem(t);
+    line(ctx, x - 3.6 * k - t * 1.2 * k, top + 0.8 * k, h.x, h.y, AB_FUR_D, 0.6 * k);
+  }
+  for (const t of [0.3, 0.6]) { // cross seams
+    line(ctx, x - 4.6 * k - t * 3.8 * k, top + (hip + 6 * k - top) * t, x - 2.6 * k - t * 3.4 * k, top + (hip + 6.6 * k - top) * t + 0.4 * k, shade(AB_FUR_D, -0.2), 0.5 * k);
+  }
+  for (let i = 0; i < 6; i++) { // an incised zigzag of clay along the hem
+    const a = hem(i / 6), b = hem((i + 1) / 6);
+    line(ctx, a.x, a.y - 1.4 * k, (a.x + b.x) / 2, a.y - 2.8 * k + 1 * k, AB_CLAY, 0.5 * k);
+    line(ctx, (a.x + b.x) / 2, a.y - 2.8 * k + 1 * k, b.x, b.y - 1.4 * k, AB_CLAY, 0.5 * k);
+  }
+  for (let i = 0; i < 7; i++) { const a = hem(i / 6); line(ctx, a.x, a.y, a.x - 0.3 * k, a.y + 1.6 * k, '#a58862', 0.7 * k); } // fur tufts on the hem
+  ellipse(ctx, x - 3.6 * k, top + 0.6 * k, 2.6 * k, 1 * k, '#a58862'); // fur collar
+}
+
+// ----- horses: ochre stripes on the flanks and legs, a possum-fur blanket and a woven browband
+
+function aboHorse(ctx: Ctx, kind: UnitKind, x: number, y: number, saddle: { x: number; y: number }) {
+  const hx0 = x - 1, hy0 = y + 3, kh = 0.95;
+  const bx = hx0, by = hy0 - 6 * kh, bw = 17 * kh, bh = 7 * kh;
+  for (const [u, c] of [[0.6, AB_OCH], [0.68, AB_CLAY], [0.76, AB_OCH]] as const) faceQuad(ctx, 'R', bx, by, bw, bh, u, u + 0.05, 0.2, 0.94, c); // shoulder stripes
+  for (const [u, c] of [[0.16, AB_OCH], [0.24, AB_CLAY]] as const) faceQuad(ctx, 'L', bx, by, bw, bh, u, u + 0.06, 0.2, 0.94, c); // haunch stripes
+  for (const [lx, ly] of [[-6, -1.5], [-3, 0.5], [4, -0.5], [7, 1.5]] as const) { // clay rings on the lower legs
+    faceQuad(ctx, 'R', hx0 + lx * kh, hy0 + ly * kh, 2.2 * kh, 7 * kh, 0, 1, 0.22, 0.3, AB_CLAY);
+    faceQuad(ctx, 'R', hx0 + lx * kh, hy0 + ly * kh, 2.2 * kh, 7 * kh, 0, 1, 0.32, 0.38, AB_OCH);
+  }
+  const sx = saddle.x, sy = saddle.y;
+  // a possum-fur blanket, edged in tufts and dotted in clay
+  poly(ctx, [sx - 6.4, sy - 1, sx + 4, sy - 1, sx + 3.4, sy + 6.6, sx - 1.4, sy + 5, sx - 5.4, sy + 8], AB_FUR);
+  poly(ctx, [sx - 6.4, sy - 1, sx + 4, sy - 1, sx + 3.9, sy + 0.8, sx - 6.2, sy + 0.8], '#a58862');
+  poly(ctx, [sx - 1.4, sy + 5, sx + 3.4, sy + 6.6, sx + 3.9, sy + 4, sx - 0.4, sy + 2.6], AB_FUR_D);
+  for (const [dx, dy] of [[-4.4, 2.2], [-2.4, 4], [0, 1.8], [1.8, 3.6], [-0.6, 5.2]] as const) ellipse(ctx, sx + dx, sy + dy, 0.5, 0.5, AB_CLAY);
+  for (let i = 0; i < 6; i++) line(ctx, sx - 5.2 + i * 1.7, sy + 7.6 - i * 0.6, sx - 5.4 + i * 1.7, sy + 9.4 - i * 0.6, i % 2 ? '#a58862' : AB_FUR_D, 0.8); // tufted hem
+  line(ctx, sx - 2.6, sy + 5, sx - 2.6, sy + 11, AB_STRING, 0.7); // a string girth
+  const hx = x - 1 + 10.5 * 0.95, hy = y + 3 - 15 * 0.95;
+  faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.1, 0.9, 0.62, 0.74, AB_OCH); // red ochre across the face
+  faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.1, 0.9, 0.86, 0.96, AB_CANE); // a plaited browband
+  for (const u of [0.22, 0.5, 0.78]) faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, u - 0.05, u + 0.05, 0.88, 0.94, AB_CANE_D);
+  feather(ctx, hx + 0.8, hy - 3.6, hx - 3.6, hy - 8.4, 1.1, '#f6f3ea', AB_YOCH); // a cockatoo feather swept back from the browband
+  line(ctx, x + 5, y - 9, x + 9, y - 4.6, AB_FUR_D, 0.7); // a shell pendant on a cord at the neck
+  ellipse(ctx, x + 7.2, y - 5.8, 1.3, 1.5, '#f4ecd8');
+  ellipse(ctx, x + 6.9, y - 6.2, 0.5, 0.6, '#ffffff');
+  if (kind === 'knight') for (const [i, c] of [[0, AB_CLAY], [1, AB_OCH]] as const) band(ctx, bx, by, bw, bh, 0.08 + i * 0.06, 0.13 + i * 0.06, c);
+}
+
+/** The rider's long spear: fire-hardened, barbed and tufted, with a bark-string wrap at the grip. */
+function aboRiderSpear(ctx: Ctx, hx: number, hy: number, thick: number) {
+  aboSpearLine(ctx, hx - 3, hy + 6, hx + 8, hy - 20, 0.85, thick * 0.9, 6);
+  for (const t of [0.1, 0.16, 0.22]) line(ctx, hx - 3 + 11 * t - 1, hy + 6 - 26 * t + 0.4, hx - 3 + 11 * t + 1, hy + 6 - 26 * t - 0.4, AB_STRING, 0.8);
+}
+
+// ----- the great wooden spear-thrower (catapult)
+
+function aboCatapult(ctx: Ctx, x: number, y: number) {
+  const wood = '#8a5a34', woodD = '#4f2f18', woodL = '#b07a44';
+  const rope = (x0: number, y0: number, x1: number, y1: number) => line(ctx, x0, y0, x1, y1, AB_STRING, 0.9);
+  // a heap of stones for the counterweight and spare spears leaning at the front
+  for (const [ax, ay, ar] of [[-15, 5, 2.4], [-12, 6.4, 2.1], [-13.4, 3.2, 2], [-10, 3.8, 1.6]] as const) {
+    ellipse(ctx, x + ax, y + ay, ar, ar * 0.85, '#7d746a');
+    ellipse(ctx, x + ax - ar * 0.3, y + ay - ar * 0.3, ar * 0.45, ar * 0.35, '#b0a698');
+  }
+  // log rollers and the timber sledge
+  for (const [wx, wy] of [[-7, 2.8], [6, 4.4]] as const) {
+    ellipse(ctx, x + wx, y + wy, 2.8, 3.2, woodD);
+    ellipse(ctx, x + wx, y + wy, 2.2, 2.6, woodL);
+    ring(ctx, x + wx, y + wy, 1.3, 1.6, woodD, 0.5);
+    ring(ctx, x + wx, y + wy, 0.6, 0.8, woodD, 0.4);
+  }
+  box(ctx, x, y - 1.6, 20, 3.2, woodD, shade(wood, 0.05));
+  band(ctx, x, y - 1.6, 20, 3.2, 0.62, 0.78, AB_OCH);
+  for (const u of [0.15, 0.35, 0.55, 0.75, 0.92]) faceQuad(ctx, 'R', x, y - 1.6, 20, 3.2, u, u + 0.03, 0, 1, woodD); // bound logs
+  for (const u of [0.25, 0.5, 0.8]) { faceQuad(ctx, 'L', x, y - 1.6, 20, 3.2, u, u + 0.05, 0.62, 0.78, AB_CLAY); }
+  // the A-frame: two great poles crossed and lashed, a cross-pole for the pivot
+  line(ctx, x - 6, y - 3, x + 2, y - 24, woodD, 3.6);
+  line(ctx, x - 6.4, y - 3, x + 1.6, y - 24, wood, 2.4);
+  line(ctx, x + 7, y - 3, x - 0.4, y - 24, woodD, 3.6);
+  line(ctx, x + 6.6, y - 3, x - 0.8, y - 24, shade(wood, 0.12), 2.4);
+  for (const t of [0.35, 0.5]) { const py = y - 3 - 21 * t; line(ctx, x - 5.6 + 8.2 * t, py, x + 6.4 - 6.8 * t, py + 0.4, AB_CLAY, 0.7); } // clay stripes
+  line(ctx, x - 5.4, y - 6.8, x + 5.4, y - 6.2, woodL, 1.4); // a low cross-brace
+  const px = x + 0.6, py = y - 22; // the pivot: lashed with string, a crossbar through it
+  line(ctx, px - 5, py + 1.4, px + 5, py - 0.8, woodD, 2);
+  for (const dx of [-1.6, 0, 1.6]) line(ctx, px + dx - 0.8, py - 1.6 + dx * -0.2, px + dx + 0.8, py + 2.2 + dx * -0.2, AB_STRING, 0.8);
+  // the throwing arm: a huge woomera, hooked at the long end; its stone-filled net at the short end
+  ctx.lineCap = 'round';
+  for (const [c, wid, dy] of [[woodD, 3.4, 0], [woodL, 2.1, -0.3]] as const) {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = wid;
+    ctx.beginPath();
+    ctx.moveTo(px - 10.4, py + 8.4 + dy);
+    ctx.quadraticCurveTo(px + 1, py - 1 + dy, px + 14.6, py - 9 + dy);
+    ctx.stroke();
+  }
+  for (const t of [0.5, 0.62, 0.74]) { const bx = px - 10.4 + 25 * t, by = py + 8.4 - 17.4 * t - 2; line(ctx, bx - 0.8, by + 1.6, bx + 0.8, by - 0.4, t === 0.62 ? AB_OCH : AB_CLAY, 0.7); }
+  poly(ctx, [px + 14.6, py - 9, px + 16.2, py - 12.6, px + 13.4, py - 10.2], '#e6d8b4'); // the hook
+  const nx = px - 11.4, ny = py + 11.6; // the counterweight net
+  line(ctx, px - 10.4, py + 8.4, nx - 2, ny - 1, AB_STRING, 0.6);
+  line(ctx, px - 10.4, py + 8.4, nx + 2, ny - 1, AB_STRING, 0.6);
+  aboEll(ctx, nx, ny + 1.6, 3.6, 3.9, 0, '#5a4a3a');
+  aboEll(ctx, nx - 0.3, ny + 1.3, 3.2, 3.5, 0, '#8a7a68');
+  for (const [dx, dy, r, c] of [[-1.2, 0.6, 1.3, '#a89e90'], [1.2, 1.8, 1.2, '#7a7062'], [-0.4, 3, 1.2, '#98907e']] as const) ellipse(ctx, nx + dx, ny + dy, r, r * 0.9, c);
+  for (let i = -1; i <= 1; i++) { line(ctx, nx + i * 1.4 - 1, ny - 1.4, nx + i * 1.4 + 1, ny + 4.6, AB_STRING, 0.4); line(ctx, nx + i * 1.4 + 1, ny - 1.4, nx + i * 1.4 - 1, ny + 4.6, AB_STRING, 0.4); }
+  // a great spear seated on the hook, aimed skyward
+  aboSpearLine(ctx, px - 1.4, py + 0.4, px + 15.4, py - 15, 1.2, 1.3, 8);
+  // a bundle of feathers and a painted spear rest at the front
+  for (const [dx, tx] of [[10, 6.4], [11.6, 8.4], [13.2, 10.6]] as const) aboSpearLine(ctx, x + dx, y + 2.6, x + tx, y - 13, 0.8, 0.9, 4.4);
+  rope(x - 5.4, y - 2.8, x - 3, y - 4.2);
+  for (const dx of [-1.4, 0.4, 2.2]) line(ctx, px + dx, py - 2.4, px + dx + 0.6, py - 6.6, dx > 0 ? AB_YOCH : '#f6f3ea', 1); // cockatoo feathers on the pivot
+}
+
+// ----- bark canoes
+
+/** One sewn-bark canoe: pointed, upswept ends, stitched seams, a dark hollow inside. `fill` draws the crew and hearth between the far and near walls. */
+function aboCanoe(ctx: Ctx, cx: number, cy: number, w: number, fill: () => void) {
+  const bark = '#a9703f', barkD = '#6f4526', barkL = '#cb975c';
+  const rim = (dy: number): [number, number][] => [[cx - w, cy - 9 + dy], [cx - w * 0.66, cy - 6.6 + dy], [cx - w * 0.3, cy - 5.6 + dy], [cx, cy - 5.4 + dy], [cx + w * 0.3, cy - 5.8 + dy], [cx + w * 0.66, cy - 6.8 + dy], [cx + w + 1, cy - 10 + dy]];
+  const near = rim(0), far = rim(-2.8).map(([px, py], i) => [px + (i === 0 ? 2.6 : i === 6 ? -2.4 : 0), py] as [number, number]);
+  // the hollow
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), ...[...far].reverse().flatMap(([a, b]) => [a, b])], '#3f2414');
+  poly(ctx, [...far.flatMap(([a, b]) => [a, b]), ...[...far].reverse().map(([a, b]) => [a, b + 1.6]).flatMap(([a, b]) => [a, b])], barkD); // the inside of the far wall
+  fill();
+  // the outer hull
+  const hull = [...near, [cx + w * 0.78, cy - 1], [cx + w * 0.42, cy + 2.8], [cx, cy + 3.4], [cx - w * 0.42, cy + 3], [cx - w * 0.8, cy - 1]] as [number, number][];
+  poly(ctx, hull.flatMap(([a, b]) => [a, b]), bark);
+  poly(ctx, [...near.flatMap(([a, b]) => [a, b]), cx + w * 0.7, cy - 3.8, cx, cy - 2.6, cx - w * 0.7, cy - 3.4], barkL); // the sunlit strip under the rim
+  poly(ctx, [cx - w * 0.8, cy - 1, cx - w * 0.42, cy + 3, cx, cy + 3.4, cx + w * 0.42, cy + 2.8, cx + w * 0.78, cy - 1, cx + w * 0.4, cy - 0.4, cx, cy + 0.4, cx - w * 0.4, cy - 0.2], barkD); // the shaded belly
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = ink(shade(barkL, 0.15)); // the rolled rim
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  near.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  ctx.stroke();
+  for (const t of [-0.5, -0.2, 0.15, 0.5]) { // sewn seams: a dark line with cream stitches
+    const sx = cx + t * w;
+    line(ctx, sx, cy - 5.6, sx - 0.6, cy + 2.6, shade(barkD, -0.3), 0.5);
+    for (const s of [0.1, 0.4, 0.7]) line(ctx, sx - 0.8 - 0.6 * s, cy - 5 + s * 7.6, sx + 0.8 - 0.6 * s, cy - 4.4 + s * 7.6, AB_STRING, 0.4);
+  }
+  for (const e of [-1, 1]) { // the bark is gathered and lashed at each pointed end, and painted with clay bands
+    const ex = cx + e * w, ey = cy - (e < 0 ? 9 : 10);
+    for (let i = 0; i < 3; i++) line(ctx, ex - e * (1.6 + i * 1.4), ey + 1.6 + i * 0.5, ex - e * (2.2 + i * 1.4), ey + 4.2 + i * 0.4, AB_STRING, 0.7);
+    line(ctx, ex, ey, ex + e * 1.6, ey - 1.8, barkD, 1.1);
+    ellipse(ctx, ex + e * 1.6, ey - 2, 0.7, 0.7, AB_OCH);
+  }
+  for (const [i, c] of [[0, AB_CLAY], [1, AB_OCH], [2, AB_CLAY]] as const) line(ctx, cx - w * 0.24 + i * 1.6, cy - 3.8 + i * 0.1, cx - w * 0.2 + i * 1.6, cy + 1.6, c, 0.6); // painted band on the hull
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'; // foam along the waterline
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 3.4, w * 0.74, 2.2, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+  ctx.stroke();
+}
+
+/** A small cooking fire on a mound of clay: stones, logs, flames, a fish on a stick and a curl of smoke. */
+function aboCanoeFire(ctx: Ctx, x: number, y: number, fish: boolean) {
+  ellipse(ctx, x, y + 0.6, 4.2, 1.7, '#7a5a3a');
+  ellipse(ctx, x, y, 3.8, 1.5, '#c39a68');
+  ellipse(ctx, x - 0.4, y - 0.3, 2.6, 0.9, '#d6b285');
+  for (const a of [0.2, 1.4, 2.6, 3.8, 5.1]) ellipse(ctx, x + Math.cos(a) * 3, y + Math.sin(a) * 1.1, 0.7, 0.55, '#8a8378');
+  line(ctx, x - 2.2, y + 0.2, x + 1.6, y - 1, '#3a2418', 0.9);
+  line(ctx, x - 1.4, y - 0.8, x + 2.2, y + 0.2, '#4a2e18', 0.9);
+  poly(ctx, [x - 1.6, y - 0.6, x - 0.4, y - 5.4, x + 0.5, y - 2.6, x + 1.7, y - 4.6, x + 2, y - 0.8], '#e8642a');
+  poly(ctx, [x - 0.9, y - 0.6, x + 0.1, y - 3.6, x + 1.1, y - 0.8], '#f6c33a');
+  ellipse(ctx, x + 0.1, y - 0.8, 0.9, 0.5, '#fff0a0');
+  if (fish) {
+    line(ctx, x - 4, y + 1, x - 2.6, y - 5.4, '#7a5230', 0.6);
+    aboEll(ctx, x - 2.8, y - 4.2, 1.9, 0.8, -1.1, '#c9c9c0');
+    poly(ctx, [x - 3.4, y - 6.2, x - 2.2, y - 6.8, x - 2.6, y - 5.4], '#8a8a84');
+  }
+  ctx.strokeStyle = 'rgba(200,200,205,0.55)';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + 0.4, y - 5);
+  ctx.bezierCurveTo(x + 2.6, y - 8, x - 1.4, y - 10, x + 1.6, y - 14);
+  ctx.stroke();
+}
+
+function drawAboriginalCanoe(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const w = 14.5 + tier * 3.6;
+  const paddle = (px: number, py: number, dir: number) => { // a long paddle with a leaf-shaped blade dipping in the water
+    line(ctx, px + dir * 2.6, py - 9, px - dir * 3.8, py + 5.2, '#7a5230', 0.9);
+    aboEll(ctx, px - dir * 4.4, py + 6.2, 1.1, 2.1, dir * 0.5, AB_WOOD);
+    aboEll(ctx, px - dir * 4.4, py + 6.2, 0.4, 1.1, dir * 0.5, AB_OCH);
+  };
+  const crew = (cx: number, cy: number, at: number, kd: UnitKind, kk: number) => figure(ctx, kd, 'aboriginal', cx + at, cy - 6.6, kk, true);
+  if (tier === 2) {
+    // a war party: two canoes lashed together with poles, a platform of bark between, warriors with shields and a feathered standard
+    const bx = x - 5, by = y - 5.2;
+    aboCanoe(ctx, bx, by, w * 0.9, () => {
+      crew(bx, by, -w * 0.3, 'woomera', 0.42);
+      crew(bx, by, w * 0.34, 'warrior', 0.42);
+    });
+    for (const t of [-0.55, 0, 0.55]) { // cross poles lashed over both hulls
+      const ax = bx + t * w * 0.8, ay = by - 7.4, ex = x + 3 + t * w * 0.8, ey = y - 6.2;
+      line(ctx, ax, ay, ex, ey, '#5a3a1e', 1.5);
+      line(ctx, ax, ay - 0.3, ex, ey - 0.3, '#8a6a3c', 0.5);
+      for (const p of [0.08, 0.92]) ellipse(ctx, ax + (ex - ax) * p, ay + (ey - ay) * p, 0.7, 0.7, AB_STRING);
+    }
+    aboCanoe(ctx, x + 3, y, w, () => {
+      aboCanoeFire(ctx, x + 3 - w * 0.06, y - 6.2, true);
+      crew(x + 3, y, -w * 0.62, 'warrior', 0.46);
+      crew(x + 3, y, w * 0.5, 'swordsman', 0.46);
+      crew(x + 3, y, w * 0.86 - 3, 'defender', 0.44);
+    });
+    for (const [i, t] of [-0.5, -0.2, 0.15, 0.5].entries()) { // parrying shields hung along the rim
+      const sx = x + 3 + t * w, sy = y - 6;
+      aboEll(ctx, sx, sy + 0.6, 1.6, 3.6, 0, AB_WOOD_D);
+      aboEll(ctx, sx - 0.2, sy + 0.2, 1.4, 3.3, 0, i % 2 ? '#9a6a3c' : AB_WOOD);
+      line(ctx, sx, sy - 2.6, sx, sy + 3, AB_CLAY, 0.4);
+      line(ctx, sx - 1, sy - 0.6, sx, sy + 0.4, AB_OCH, 0.5);
+      line(ctx, sx + 1, sy - 0.6, sx, sy + 0.4, AB_OCH, 0.5);
+    }
+    // a standard of white cockatoo feathers on a pole at the bow, spears bristling behind
+    const px = x + 3 + w + 0.6, py = y - 10;
+    line(ctx, px, py, px + 0.6, py - 20, '#5a3a1e', 1.1);
+    for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * 0.42; poly(ctx, [px + 0.6, py - 19, px + 0.6 + Math.cos(a) * 6, py - 19 + Math.sin(a) * 6.4, px + 0.6 + Math.cos(a + 0.2) * 2.4, py - 19 + Math.sin(a + 0.2) * 2.4], i % 3 === 1 ? AB_YOCH : '#f6f3ea'); }
+    ellipse(ctx, px + 0.6, py - 19.4, 1.1, 1.1, AB_OCH);
+    for (const [ox, tx] of [[-8, -12], [-4, -5], [-1, 2]] as const) aboSpearLine(ctx, x + 3 + ox, y - 8, x + 3 + tx * 0.4 + ox, y - 26, 0.8, 0.8, 4.4); // spears upright
+    return;
+  }
+  aboCanoe(ctx, x, y, w, () => {
+    aboCanoeFire(ctx, x - w * 0.14, y - 6.2, tier === 1);
+    if (tier === 1) { // a second paddler, a bundle of spears and a dilly bag of catch
+      crew(x, y, -w * 0.62, 'woomera', 0.46);
+      for (const [dx, ex] of [[-w * 0.2, w * 0.6], [-w * 0.24, w * 0.56], [-w * 0.28, w * 0.5]] as const) line(ctx, x + dx, y - 5.8, x + ex, y - 8.2, '#8a6a3c', 0.7); // spears lying across
+      aboDilly(ctx, x + w * 0.16, y - 6.6, 0.6);
+    }
+    crew(x, y, w * 0.52, 'archer', tier ? 0.46 : 0.5);
+  });
+  // paddles over the near gunwale
+  paddle(x + w * 0.52 + 3.4, y - 5, 1);
+  if (tier === 1) paddle(x - w * 0.62 + 3.4, y - 5, 1);
+  else { // a lone paddler's spear and a coil of string lying across the bow
+    line(ctx, x + w * 0.2, y - 8.6, x + w * 0.8, y - 11.4, '#8a6a3c', 0.8);
+  }
+}
+
+// ----- the kangaroo
+
+function aboKangaroo(ctx: Ctx, x: number, y: number, k: number, body: string) {
+  const dk = shade(body, -0.3), pale = '#ecd9b6';
+  // the long, thick tail sweeps back and down to the ground
+  poly(ctx, [x - 4 * k, y - 9 * k, x - 9 * k, y - 4.6 * k, x - 15.6 * k, y - 0.6 * k, x - 15 * k, y + 0.8 * k, x - 8 * k, y - 1.4 * k, x - 3 * k, y - 3.4 * k], dk);
+  poly(ctx, [x - 4 * k, y - 9 * k, x - 9 * k, y - 5.6 * k, x - 15.2 * k, y - 0.6 * k, x - 8.4 * k, y - 3.4 * k, x - 3.6 * k, y - 6 * k], body);
+  // the great hind leg: a heavy thigh and a long foot lying forward
+  aboEll(ctx, x - 3 * k, y - 5.6 * k, 4.4 * k, 5 * k, -0.3, dk);
+  aboEll(ctx, x - 3.4 * k, y - 6.2 * k, 3.8 * k, 4.4 * k, -0.3, shade(body, -0.08));
+  poly(ctx, [x - 4 * k, y - 3.4 * k, x - 1 * k, y - 3 * k, x + 0.4 * k, y - 0.6 * k, x - 0.6 * k, y + 0.2 * k, x - 3.4 * k, y - 1 * k], dk); // the shin
+  poly(ctx, [x - 3 * k, y - 0.4 * k, x + 4.6 * k, y - 0.8 * k, x + 5.6 * k, y + 0.5 * k, x - 3.6 * k, y + 0.5 * k], '#3a2418'); // the foot
+  ellipse(ctx, x + 5.4 * k, y - 0.1 * k, 0.6 * k, 0.5 * k, '#1a1410'); // the claw
+  // the torso, leaning forward, and a pale chest
+  aboEll(ctx, x - 0.4 * k, y - 11.6 * k, 4.4 * k, 7.4 * k, 0.32, body);
+  aboEll(ctx, x + 1.6 * k, y - 11.4 * k, 2.8 * k, 5.6 * k, 0.32, pale);
+  aboEll(ctx, x - 1.4 * k, y - 14.4 * k, 2.4 * k, 4.2 * k, 0.32, shade(body, 0.14));
+  // the small forearm, held up at the chest
+  line(ctx, x + 2.6 * k, y - 11.4 * k, x + 5.6 * k, y - 9 * k, dk, 1.3 * k);
+  for (const t of [0, 0.5]) line(ctx, x + 5.6 * k, y - 9 * k, x + 7 * k, y - (8.2 - t * 1.2) * k, '#1a1410', 0.5 * k);
+  // neck and head with long ears
+  aboEll(ctx, x + 2.6 * k, y - 18.4 * k, 2.2 * k, 3.2 * k, 0.3, body);
+  aboEll(ctx, x + 4.4 * k, y - 21.6 * k, 2.6 * k, 2.4 * k, 0, shade(body, 0.06));
+  poly(ctx, [x + 5.6 * k, y - 22.8 * k, x + 10.2 * k, y - 20.8 * k, x + 10.4 * k, y - 19.4 * k, x + 6.4 * k, y - 19.2 * k], shade(body, 0.16)); // the long muzzle
+  poly(ctx, [x + 6 * k, y - 19.6 * k, x + 10.2 * k, y - 19.6 * k, x + 9.6 * k, y - 18.6 * k, x + 6.6 * k, y - 18.6 * k], pale);
+  ellipse(ctx, x + 10.4 * k, y - 20.6 * k, 0.9 * k, 0.75 * k, '#1a1410'); // the black nose
+  ellipse(ctx, x + 5.4 * k, y - 22 * k, 0.6 * k, 0.6 * k, '#101010');
+  line(ctx, x + 6.4 * k, y - 21 * k, x + 9 * k, y - 20.2 * k, dk, 0.4 * k); // the dark mouth line
+  for (const [bx, tx, ty] of [[3.4, 2.2, -29.4], [4.8, 5.8, -29.8]] as const) {
+    poly(ctx, [x + bx * k - 0.9 * k, y - 23 * k, x + tx * k, y + ty * k, x + bx * k + 1.1 * k, y - 23.4 * k], body);
+    poly(ctx, [x + bx * k - 0.3 * k, y - 23.4 * k, x + (tx + 0.1) * k, y + (ty + 2) * k, x + bx * k + 0.6 * k, y - 23.6 * k], '#e0a08c');
+  }
+  line(ctx, x + 6.4 * k, y - 23.6 * k, x + 9 * k, y - 22.2 * k, pale, 0.5 * k); // a pale cheek stripe
+}
+
 // ---------------------------------------------------------------- wildlife (map resources)
 
-const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' | 'caribou' | 'llama' | 'ibex' }> = {
+const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'snout' | 'horns' | 'tusks' | 'stripes' | 'kiwi' | 'lion' | 'caribou' | 'llama' | 'ibex' | 'kangaroo' }> = {
   egypt: { body: '#d0a45e', feature: 'hump' },
   aztec: { body: '#9c6236', feature: 'antlers' },
   polynesia: { body: '#7a5a3a', feature: 'kiwi' },
@@ -6023,7 +6708,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   inuit: { body: '#8a6a4c', feature: 'caribou' },
   inca: { body: '#e8dcc0', feature: 'llama' },
   ethiopia: { body: '#7a4530', feature: 'ibex' },
-  aboriginal: { body: '#a8683a', feature: 'hump' },
+  aboriginal: { body: '#b5623a', feature: 'kangaroo' }, // a red kangaroo
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {
@@ -6050,6 +6735,7 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   }
   if (spec.feature === 'lion') return persiaLion(ctx, x, y, k, body);
   if (spec.feature === 'llama') return drawWildLlama(ctx, x, y, k, body);
+  if (spec.feature === 'kangaroo') return aboKangaroo(ctx, x, y, 0.9 * k, body);
   if (spec.feature === 'ibex') {
     // a walia ibex of the Simien highlands: a stocky chestnut body, pale belly, a shaggy neck and great ridged scimitar horns
     const dk = '#3a2418';
