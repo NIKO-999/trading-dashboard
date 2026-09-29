@@ -1262,6 +1262,412 @@ function lkBuilding(ctx: Ctx, x: number, y: number, big: boolean, capital: boole
   else lkCorral(ctx, x, y);
 }
 
+// ---------------------------------------------------------------- Tibet: junipers, blue pines, barley terraces and the whitewashed gompa
+// Scenery only: rhododendron and birch, barley fields, strings of prayer flags between poles, chortens (stupas), mani-stone walls,
+// black yak-hair tents, flat-roofed stone houses, monasteries with red bands and gold roofs, and a hilltop palace-fortress.
+
+const TB_WASH = '#f4f0e6', TB_KEMAR = '#9a2f30', TB_GOLD_R = '#d9ac2e', TB_WIN = '#251a16';
+const TB_FLAG_C = ['#2f5fa0', '#f4f0e6', '#b22a2a', '#3a8a4a', '#e6b62a'];
+
+/** A string of prayer-flag pennants, sagging between two points. */
+function tbFlags(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, n: number, sag: number, s = 1) {
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 + sag;
+  ctx.strokeStyle = ink('#3a2e26');
+  ctx.lineWidth = 0.4;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(cx, cy, x1, y1);
+  ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.6) / (n + 0.2), u = 1 - t;
+    const px = u * u * x0 + 2 * u * t * cx + t * t * x1, py = u * u * y0 + 2 * u * t * cy + t * t * y1;
+    const c = TB_FLAG_C[i % 5];
+    poly(ctx, [px - 1.1 * s, py, px + 1.1 * s, py + 0.3, px + 0.9 * s, py + 3 * s, px - 0.9 * s, py + 2.7 * s], c);
+    poly(ctx, [px - 1.1 * s, py, px, py + 0.15, px - 0.1 * s, py + 2.8 * s, px - 0.9 * s, py + 2.7 * s], shade(c, 0.16));
+  }
+}
+
+/** A tall wooden flag-pole with a pennant at the top. */
+function tbPole(ctx: Ctx, x: number, y: number, h: number, flag = true) {
+  line(ctx, x, y, x + 0.3, y - h, '#5a4030', 1);
+  line(ctx, x - 0.3, y, x, y - h, '#9a7a56', 0.35);
+  if (flag) {
+    poly(ctx, [x + 0.3, y - h, x + 6.6, y - h + 1.2, x + 4.6, y - h + 3, x + 6.6, y - h + 4.8, x + 0.1, y - h + 4.2], '#d040b0');
+    poly(ctx, [x + 0.3, y - h, x + 6.6, y - h + 1.2, x + 6, y - h + 1.9, x + 0.3, y - h + 1.5], '#e6b62a');
+  }
+  ellipse(ctx, x + 0.3, y - h - 0.6, 0.7, 0.7, '#d9ac2e');
+}
+
+/** A trapezoid window (narrower at the top, framed in black with a white lintel) on one visible side of a box. */
+function tbWin(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u: number, v: number, ww: number, wh: number, big = false) {
+  const P = (uu: number, vv: number) => face === 'R'
+    ? [cx + (uu * w) / 2, cy + (w / 4) * (1 - uu) - vv * h]
+    : [cx - w / 2 + (uu * w) / 2, cy + (w / 4) * uu - vv * h];
+  const q = (a: number, b: number, col: string, ins: number) => {
+    const p = [P(a + ins, b), P(a + ww - ins, b), P(a + ww - ins * 2.6, b + wh), P(a + ins * 2.6, b + wh)];
+    poly(ctx, p.flatMap((z) => z), col);
+  };
+  const fr = ww * 0.16;
+  q(u - fr, v - wh * 0.06, face === 'L' ? '#3a2e2a' : '#2a201c', 0); // the black surround
+  const p = [P(u, v), P(u + ww - fr * 2, v), P(u + ww - fr * 2 - 0.02, v + wh * 0.9), P(u + 0.02, v + wh * 0.9)];
+  poly(ctx, p.flatMap((z) => z), TB_WIN);
+  if (big) { const m = [P(u + (ww - fr * 2) * 0.5, v), P(u + (ww - fr * 2) * 0.5 + 0.012, v), P(u + (ww - fr * 2) * 0.5 + 0.012, v + wh * 0.9), P(u + (ww - fr * 2) * 0.5, v + wh * 0.9)]; poly(ctx, m.flatMap((z) => z), '#8a6a4a'); }
+  const lt = [P(u - fr, v + wh * 0.9), P(u + ww - fr, v + wh * 0.9), P(u + ww - fr, v + wh * 0.98), P(u - fr, v + wh * 0.98)];
+  poly(ctx, lt.flatMap((z) => z), face === 'L' ? '#d8d0c0' : '#a8a090'); // a pale lintel
+}
+
+/** A whitewashed stone block with rows of windows, a dark eave and an optional coloured parapet band. */
+function tbBlock(ctx: Ctx, cx: number, cy: number, w: number, h: number, wall: string, rows: number, cols: number, parapet?: string, doors = false) {
+  box(ctx, cx, cy, w, h, wall, shade(wall, -0.05));
+  if (parapet) { band(ctx, cx, cy, w, h, 0.84, 1, parapet); band(ctx, cx, cy, w, h, 0.8, 0.84, '#2a1e1a'); }
+  const top = parapet ? 0.72 : 0.9;
+  for (let r = 0; r < rows; r++) {
+    const v = top - ((r + 1) / (rows + 0.3)) * (top - 0.08) + 0.01;
+    for (let c = 0; c < cols; c++) {
+      const u = (c + 0.5) / cols - 0.07;
+      tbWin(ctx, 'L', cx, cy, w, h, u, v, 0.14 * (4 / Math.max(cols, 3)) + 0.02, 0.15);
+      tbWin(ctx, 'R', cx, cy, w, h, u, v, 0.14 * (4 / Math.max(cols, 3)) + 0.02, 0.15);
+    }
+  }
+  if (doors) tbWin(ctx, 'R', cx, cy, w, h, 0.4, 0.02, 0.2, 0.26, true);
+  // stone courses: faint horizontal joints on the walls, and a lit edge
+  for (const v of [0.3, 0.55]) { faceQuad(ctx, 'L', cx, cy, w, h, 0, 1, v, v + 0.012, shade(wall, -0.16)); faceQuad(ctx, 'R', cx, cy, w, h, 0, 1, v, v + 0.012, shade(wall, -0.16)); }
+}
+
+/** A hipped golden roof with upturned corners and a finial on each ridge end. */
+function tbGoldRoof(ctx: Ctx, cx: number, cy: number, w: number, h: number, finial = true) {
+  roof(ctx, cx, cy, w, h, TB_GOLD_R);
+  poly(ctx, [cx - w / 2, cy, cx - w / 2 - 2.2, cy - 2, cx - w / 2 + 2, cy + 0.6], TB_GOLD_R); // the eaves curl up at the corners
+  poly(ctx, [cx + w / 2, cy, cx + w / 2 + 2.2, cy - 2, cx + w / 2 - 2, cy + 0.6], shade(TB_GOLD_R, -0.25));
+  poly(ctx, [cx, cy + w / 4, cx - 2, cy + w / 4 - 1.8, cx + 2, cy + w / 4 - 1.8], shade(TB_GOLD_R, -0.06));
+  line(ctx, cx - w / 2 + 1, cy - 0.2, cx, cy - h + 0.4, shade(TB_GOLD_R, 0.4), 0.4);
+  line(ctx, cx, cy + w / 4 - 0.2, cx, cy - h + 0.6, shade(TB_GOLD_R, 0.25), 0.4);
+  poly(ctx, [cx - w / 2, cy, cx, cy + w / 4, cx + w / 2, cy, cx + w / 2, cy + 1.1, cx, cy + w / 4 + 1.1, cx - w / 2, cy + 1.1], '#7a2a24'); // the eave's red fascia
+  if (finial) {
+    ellipse(ctx, cx, cy - h - 0.6, 1.1, 1.1, '#f4d060');
+    line(ctx, cx, cy - h, cx, cy - h - 2.6, '#c9a02a', 0.8);
+    poly(ctx, [cx - 1, cy - h - 2.6, cx + 1, cy - h - 2.6, cx, cy - h - 4.6], '#f4d060');
+  }
+}
+
+/** A chorten (stupa): tiered whitewashed plinth, a round bell, a red-banded box, a gilded spire of stacked rings and a finial. */
+function tbChorten(ctx: Ctx, x: number, y: number, s: number) {
+  ellipse(ctx, x, y + 1, 7.4 * s, 3.2 * s, 'rgba(0,0,0,0.16)');
+  box(ctx, x, y, 12 * s, 2 * s, TB_WASH, '#fff9ee');
+  box(ctx, x, y - 2 * s, 9.6 * s, 2 * s, TB_WASH, '#fff9ee');
+  band(ctx, x, y - 2 * s, 9.6 * s, 2 * s, 0.3, 0.55, TB_KEMAR);
+  box(ctx, x, y - 4 * s, 7.4 * s, 1.6 * s, TB_WASH, '#fff9ee');
+  // the bell (vase)
+  const by = y - 5.6 * s;
+  ctx.beginPath();
+  ctx.moveTo(x - 3.7 * s, by);
+  ctx.bezierCurveTo(x - 4.6 * s, by - 3 * s, x - 3.2 * s, by - 6.4 * s, x, by - 6.6 * s);
+  ctx.bezierCurveTo(x + 3.2 * s, by - 6.4 * s, x + 4.6 * s, by - 3 * s, x + 3.7 * s, by);
+  ctx.ellipse(x, by, 3.7 * s, 1.5 * s, 0, 0, Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = ink(TB_WASH);
+  ctx.fill();
+  poly(ctx, [x + 0.6 * s, by + 1.5 * s, x + 3.7 * s, by, x + 4.2 * s, by - 3 * s, x + 2.6 * s, by - 5.6 * s, x + 0.6 * s, by - 6.4 * s], 'rgba(120,100,70,0.3)');
+  tbNiche(ctx, x, by, s);
+  band(ctx, x, by - 6.6 * s, 4 * s, 1.8 * s, 0, 1, '#f4f0e6');
+  box(ctx, x, by - 6.6 * s, 4 * s, 1.8 * s, TB_WASH, '#fff9ee');
+  band(ctx, x, by - 6.6 * s, 4 * s, 1.8 * s, 0.2, 0.55, TB_KEMAR);
+  // the thirteen gilded rings tapering to a spire
+  for (let i = 0; i < 7; i++) {
+    const ry = by - 8.4 * s - i * 1.1 * s, rw = (3.4 - i * 0.36) * s;
+    poly(ctx, [x - rw, ry, x, ry + rw / 2, x + rw, ry, x, ry - rw / 2], i % 2 ? '#e6bc3a' : '#c9a02a');
+    poly(ctx, [x, ry + rw / 2, x + rw, ry, x + rw, ry + 0.7 * s, x, ry + rw / 2 + 0.7 * s], '#a8801a');
+  }
+  const ty = by - 16.2 * s;
+  ellipse(ctx, x, ty, 1.1 * s, 0.5 * s, '#f4d060'); // a crescent and a sun-disc above
+  ellipse(ctx, x, ty - 1.2 * s, 0.7 * s, 0.7 * s, '#fff0a0');
+  poly(ctx, [x - 0.5 * s, ty - 1.8 * s, x + 0.5 * s, ty - 1.8 * s, x, ty - 3.4 * s], '#f4d060');
+}
+/** The little door-niche on a chorten's bell. */
+function tbNiche(ctx: Ctx, x: number, by: number, s: number) {
+  poly(ctx, [x - 1.2 * s, by, x + 1.2 * s, by + 0.2 * s, x + 1 * s, by - 2.4 * s, x - 1 * s, by - 2.6 * s], '#3a2a20');
+  poly(ctx, [x - 1.2 * s, by - 2.6 * s, x + 1 * s, by - 2.4 * s, x, by - 3.3 * s], '#3a2a20');
+}
+
+/** A straight wall segment running down-right: front face, end face and a top. */
+function tbWallSeg(ctx: Ctx, x0: number, y0: number, len: number, h: number, t: number, color: string) {
+  const dx = len, dy = len / 2, tx = t, ty = -t / 2;
+  poly(ctx, [x0, y0 - h, x0 + dx, y0 - h + dy, x0 + dx + tx, y0 - h + dy + ty, x0 + tx, y0 - h + ty], shade(color, 0.22));
+  poly(ctx, [x0, y0 - h, x0 + dx, y0 - h + dy, x0 + dx, y0 + dy, x0, y0], color);
+  poly(ctx, [x0 + dx, y0 - h + dy, x0 + dx + tx, y0 - h + dy + ty, x0 + dx + tx, y0 + dy + ty, x0 + dx, y0 + dy], shade(color, -0.2));
+}
+
+/** A mani wall: a long low wall of stacked slate slabs, painted and stacked with more stones on top, a chorten at one end and a pole with flags. */
+function tbManiWall(ctx: Ctx, x: number, y: number) {
+  ellipse(ctx, x, y + 3, 15, 5.4, 'rgba(0,0,0,0.14)');
+  const x0 = x - 12, y0 = y - 2;
+  tbWallSeg(ctx, x0, y0, 20, 5, 3.4, '#9a917f');
+  for (let i = 0; i < 7; i++) { // the slabs on the wall front, some painted
+    const t = i / 7, sx = x0 + t * 20 + 0.4, sy = y0 + t * 10;
+    const c = i % 3 === 0 ? '#c8c0ae' : i % 3 === 1 ? '#8a8272' : '#b0a894';
+    poly(ctx, [sx, sy - 4.4, sx + 2.6, sy - 3.1, sx + 2.6, sy - 0.3, sx, sy - 1.4], c);
+    if (i % 2 === 0) poly(ctx, [sx + 0.6, sy - 3.6, sx + 2, sy - 2.9, sx + 2, sy - 1.6, sx + 0.6, sy - 2.2], i % 4 === 0 ? '#f4f0e6' : '#b03a34');
+  }
+  for (let i = 0; i < 9; i++) { // loose stones standing along the top
+    const t = i / 8, sx = x0 + 1 + t * 20 + 1.4, sy = y0 - 5 + t * 10 - 0.6 - 0.4;
+    poly(ctx, [sx - 1.2, sy, sx + 1.4, sy + 0.2, sx + 1, sy - 1.9 - (i % 3) * 0.5, sx - 0.6, sy - 2.2], i % 2 ? '#b8b0a0' : '#8f8776');
+    if (i % 3 === 0) ellipse(ctx, sx, sy - 1, 0.5, 0.4, '#f4f0e6');
+  }
+  tbChorten(ctx, x + 11.6, y + 6, 0.62);
+  tbPole(ctx, x - 12, y + 0.4, 15, true);
+  tbFlags(ctx, x - 12, y - 14, x + 11.6, y - 2, 8, 3, 0.9);
+}
+
+/** A black yak-hair tent: a low ridge tent with stays and pegs, a white woven border, a lighter smoke slit and a prayer flag. */
+function tbTent(ctx: Ctx, x: number, y: number, s: number) {
+  ellipse(ctx, x + 1, y + 2.6 * s, 11 * s, 4.4 * s, 'rgba(0,0,0,0.16)');
+  const R0: [number, number] = [x - 6.5 * s, y - 8 * s], R1: [number, number] = [x + 6.5 * s, y - 1.5 * s];
+  const E0: [number, number] = [x - 10.5 * s, y - 1 * s], E1: [number, number] = [x + 9.5 * s, y + 9 * s];
+  poly(ctx, [R0[0], R0[1], R1[0], R1[1], R1[0] + 3, R1[1] - 1.5, R0[0] + 3, R0[1] - 1.5], '#3a2c24'); // the far slope catching the light at the ridge
+  poly(ctx, [R0[0], R0[1], E0[0], E0[1], E0[0] + 3.6 * s, E0[1] - 1.6 * s], '#2a1f19'); // the gable end
+  poly(ctx, [R0[0], R0[1], R1[0], R1[1], E1[0], E1[1], E0[0], E0[1]], '#1e1613'); // the main slope
+  poly(ctx, [R0[0], R0[1], R1[0], R1[1], R1[0] - 0.4, R1[1] + 2, R0[0] - 0.4, R0[1] + 2], '#4a3a30'); // the lit ridge
+  for (let i = 1; i < 7; i++) { // woven bands of hair down the slope
+    const t = i / 7;
+    line(ctx, R0[0] + (R1[0] - R0[0]) * t, R0[1] + (R1[1] - R0[1]) * t, E0[0] + (E1[0] - E0[0]) * t, E0[1] + (E1[1] - E0[1]) * t, i % 2 ? '#2e231d' : '#161010', 0.7);
+  }
+  poly(ctx, [R0[0] + (R1[0] - R0[0]) * 0.32, R0[1] + (R1[1] - R0[1]) * 0.32 + 0.2, R0[0] + (R1[0] - R0[0]) * 0.68, R0[1] + (R1[1] - R0[1]) * 0.68 + 0.2, R0[0] + (R1[0] - R0[0]) * 0.68, R0[1] + (R1[1] - R0[1]) * 0.68 + 1, R0[0] + (R1[0] - R0[0]) * 0.32, R0[1] + (R1[1] - R0[1]) * 0.32 + 1], '#8a8078'); // the smoke slit
+  poly(ctx, [E0[0], E0[1], E1[0], E1[1], E1[0], E1[1] + 1.4, E0[0], E0[1] + 1.4], '#e8e0cc'); // white border along the eave
+  for (let i = 0; i < 9; i++) line(ctx, E0[0] + (E1[0] - E0[0]) * (i / 8), E0[1] + (E1[1] - E0[1]) * (i / 8) + 1.4, E0[0] + (E1[0] - E0[0]) * (i / 8), E0[1] + (E1[1] - E0[1]) * (i / 8) + 2.8, '#161010', 0.5); // a hair fringe
+  const dm = [E0[0] + (E1[0] - E0[0]) * 0.55, E0[1] + (E1[1] - E0[1]) * 0.55] as const; // the doorway, a folded flap
+  poly(ctx, [dm[0] - 2.4 * s, dm[1] + 0.4, dm[0] + 2.4 * s, dm[1] + 1.2 * s, dm[0] + 1.6 * s, dm[1] - 4 * s, dm[0] - 1.6 * s, dm[1] - 4.8 * s], '#0e0a08');
+  poly(ctx, [dm[0] - 2.8 * s, dm[1] + 0.2, dm[0] - 0.4 * s, dm[1] + 0.8 * s, dm[0] - 0.8 * s, dm[1] - 4.6 * s, dm[0] - 1.9 * s, dm[1] - 5 * s], '#e8e0cc');
+  for (const [a, b, pxo, pyo] of [[R0[0], R0[1], -7, 4], [R1[0], R1[1], 8, -2], [E0[0], E0[1], -5, 5], [E1[0], E1[1], 6, 3]] as const) { // stays to pegs
+    line(ctx, a, b, a + pxo * s, b + pyo * s + 5, '#5a4a3a', 0.4);
+    line(ctx, a + pxo * s, b + pyo * s + 5, a + pxo * s + 0.4, b + pyo * s + 6.4, '#7a5a3a', 1);
+  }
+  line(ctx, R0[0] - 0.4, R0[1] - 0.4, R0[0] - 0.4, R0[1] - 6, '#6a4a2c', 0.9); // the end pole and a pennant
+  poly(ctx, [R0[0] - 0.4, R0[1] - 6, R0[0] + 4.2, R0[1] - 5, R0[0] + 2.6, R0[1] - 3.6, R0[0] - 0.4, R0[1] - 3.6], '#d040b0');
+  // a yak-hair rope coil, and a pile of dung cakes for fuel
+  ellipse(ctx, x + 12 * s, y + 6 * s, 2.2, 1, '#241a14');
+  ellipse(ctx, x + 12 * s, y + 5.6 * s, 1.4, 0.6, '#3e3028');
+}
+
+/** A flat-roofed stone house: whitewashed walls with trapezoid windows, a red-and-black parapet, stacked firewood and a roof pole. */
+function tbHouse(ctx: Ctx, x: number, y: number, w: number, h: number, tall: boolean, wall = TB_WASH) {
+  ellipse(ctx, x + 1, y + 1.6, w * 0.7, w * 0.3, 'rgba(0,0,0,0.16)');
+  tbBlock(ctx, x, y, w, h, wall, tall ? 2 : 1, 2, TB_KEMAR, true);
+  // the flat roof: a firewood stack, a pole and a string of flags to a corner
+  const rt = y - h;
+  for (let i = 0; i < 4; i++) { ellipse(ctx, x - 2.6 + i * 1.2, rt + 0.2 + (i % 2) * 0.6, 0.75, 0.6, i % 2 ? '#8a5a34' : '#a0703c'); }
+  line(ctx, x - 3.4, rt + 0.6, x + 0.8, rt - 0.2, '#6a4a2c', 0.9);
+  tbPole(ctx, x + w * 0.42, rt + w * 0.05, 9, false);
+  tbFlags(ctx, x + w * 0.42, rt - 8.4, x - w * 0.38, rt + 0.6, 6, 2, 0.8);
+  poly(ctx, [x + w * 0.42 + 0.3, rt - 8.6, x + w * 0.42 + 5.2, rt - 7.6, x + w * 0.42 + 3.4, rt - 6, x + w * 0.42 + 0.3, rt - 6.2], '#d040b0');
+}
+
+/** A monastery (gompa): a whitewashed battered base, a red-banded storey under a black-and-white drape, a gilded roof with finials, and banners. */
+function tbGompa(ctx: Ctx, x: number, y: number) {
+  ellipse(ctx, x, y + 2, 15, 6.6, 'rgba(0,0,0,0.18)');
+  tbBlock(ctx, x, y, 22, 9, TB_WASH, 2, 4, undefined, true);
+  band(ctx, x, y, 22, 9, 0.86, 1, '#2a1e1a');
+  for (let i = 0; i < 8; i++) { faceQuad(ctx, 'L', x, y, 22, 9, i * 0.125 + 0.02, i * 0.125 + 0.08, 0.88, 0.98, '#f4f0e6'); faceQuad(ctx, 'R', x, y, 22, 9, i * 0.125 + 0.02, i * 0.125 + 0.08, 0.88, 0.98, '#f4f0e6'); }
+  const y2 = y - 9;
+  box(ctx, x, y2, 16, 6, TB_KEMAR, shade(TB_KEMAR, 0.1)); // the red upper storey
+  for (let i = 0; i < 3; i++) { tbWin(ctx, 'L', x, y2, 16, 6, 0.12 + i * 0.28, 0.24, 0.2, 0.5); tbWin(ctx, 'R', x, y2, 16, 6, 0.12 + i * 0.28, 0.24, 0.2, 0.5); }
+  band(ctx, x, y2, 16, 6, 0.86, 1, '#2a1e1a'); // the black drape under the eaves
+  for (let i = 0; i < 6; i++) { faceQuad(ctx, 'L', x, y2, 16, 6, i * 0.17 + 0.03, i * 0.17 + 0.1, 0.88, 0.98, '#f4f0e6'); faceQuad(ctx, 'R', x, y2, 16, 6, i * 0.17 + 0.03, i * 0.17 + 0.1, 0.88, 0.98, '#f4f0e6'); }
+  tbGoldRoof(ctx, x, y2 - 6, 19, 6.4);
+  // banners hang from the lower roof line, a small golden pavilion on the terrace, and flags
+  for (const [ox, oy] of [[-8, 1.6], [8, 1.6]] as const) { ellipse(ctx, x + ox, y - 9 + oy - 3.4, 1.1, 1.1, TB_GOLD_R); }
+  tbPole(ctx, x - 10.4, y - 10.6, 14, true);
+  tbFlags(ctx, x - 10.4, y - 24, x + 11, y - 2, 9, 4, 0.9);
+}
+
+// ----- terrain
+
+/** Junipers, Himalayan blue pines, birch, rhododendron, a barley terrace and prayer-flag poles. */
+function tbTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const type = ['juniper', 'bluepine', 'flags', 'birch', 'barley', 'rhodo', 'bluepine', 'juniper', 'birch', 'rhodo'][variant % 10];
+  ctx.lineCap = 'round';
+  const curve = (x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, c: string) => {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(cx, cy, x1, y1);
+    ctx.stroke();
+  };
+  if (type === 'juniper') {
+    // a gnarled juniper: a twisted red-brown trunk with peeling bark and a dense blue-green crown of scaly sprays
+    const bk = '#8a4a34';
+    curve(x, y, x - 1.6 * k, y - 4 * k, x + 0.4 * k, y - 8 * k, 3.2 * k, shade(bk, -0.3));
+    curve(x - 0.5 * k, y, x - 2 * k, y - 4 * k, x - 0.2 * k, y - 8 * k, 1.9 * k, bk);
+    curve(x - 1.2 * k, y - 0.4 * k, x - 2.6 * k, y - 4 * k, x - 0.8 * k, y - 7.6 * k, 0.5 * k, shade(bk, 0.3));
+    curve(x + 0.2 * k, y - 6 * k, x + 3 * k, y - 8 * k, x + 4.4 * k, y - 11 * k, 1.4 * k, shade(bk, -0.1));
+    const g = mix(P.forest, '#4a8a7a', 0.5);
+    for (const [dx, dy, rx, ry, c] of [[-3.6, -11, 4.2, 2.8, -0.12], [3.8, -13.4, 4.4, 2.8, -0.08], [0, -14.6, 4.8, 3.2, 0], [-2.6, -17.4, 3.2, 2.2, 0.06], [2.4, -18.4, 3, 2.1, 0.1]] as const) {
+      ellipse(ctx, x + dx * k, y + (dy + 1) * k, rx * k, ry * k, shade(g, c - 0.2));
+      ellipse(ctx, x + dx * k, y + dy * k, rx * k, ry * k, shade(g, c));
+      ellipse(ctx, x + (dx - rx * 0.25) * k, y + (dy - ry * 0.35) * k, rx * 0.55 * k, ry * 0.4 * k, shade(g, c + 0.16));
+    }
+    for (let i = 0; i < 9; i++) { const a = rand(variant + 5, i) * Math.PI * 2, r = 2 + rand(variant + 9, i) * 4.2; ellipse(ctx, x + Math.cos(a) * r * k, y - 14 * k + Math.sin(a) * r * 0.6 * k, 0.55 * k, 0.4 * k, i % 3 ? shade(g, 0.3) : '#6a5aa0'); } // dusky-blue berries
+    return;
+  }
+  if (type === 'bluepine') {
+    // a Himalayan blue pine: a tall reddish trunk and tiers of long, drooping blue-green needle sprays
+    const bk = '#7a5238';
+    curve(x, y, x + 0.3 * k, y - 13 * k, x + 0.1 * k, y - 26 * k, 2.4 * k, shade(bk, -0.3));
+    curve(x - 0.4 * k, y, x - 0.1 * k, y - 13 * k, x - 0.3 * k, y - 26 * k, 1.4 * k, bk);
+    const nd = mix(P.forest, '#5d92a0', 0.6);
+    const tier = (ty: number, r: number, c: number) => {
+      const pts: number[] = [x, ty - 5.4 * k];
+      for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(x + (t * 2 - 1) * r * k, ty + (i % 2 ? 2.4 : 0.6) * k + Math.abs(t * 2 - 1) * -0.4 * k); }
+      poly(ctx, pts, shade(nd, c - 0.16));
+      poly(ctx, [x, ty - 5.4 * k, x - r * k, ty + 0.6 * k, x - r * 0.5 * k, ty + 2.4 * k, x, ty + 0.2 * k], shade(nd, c + 0.06));
+      for (let i = 0; i < 9; i++) { const t = (i + 0.5) / 9; line(ctx, x + (t * 2 - 1) * r * 0.85 * k, ty + 0.4 * k, x + (t * 2 - 1) * r * k, ty + (2.6 + (i % 3) * 0.8) * k, shade(nd, c + (i % 2 ? 0.2 : -0.24)), 0.5 * k); }
+    };
+    tier(y - 6 * k, 7, -0.08);
+    tier(y - 12 * k, 5.8, -0.02);
+    tier(y - 18 * k, 4.6, 0.04);
+    tier(y - 23.6 * k, 3.4, 0.1);
+    poly(ctx, [x - 2 * k, y - 22 * k, x, y - 27 * k, x + 2 * k, y - 22.4 * k, x, y - 23.6 * k], '#f4f6f8'); // a dusting of snow at the top
+    return;
+  }
+  if (type === 'birch') {
+    // a hardy birch: white peeling bark scarred with black, thin bare-ish limbs and a light golden-green crown
+    curve(x, y, x + 0.4 * k, y - 8 * k, x - 0.2 * k, y - 15 * k, 2 * k, '#d8d4c8');
+    curve(x - 0.4 * k, y, x - 0.1 * k, y - 8 * k, x - 0.5 * k, y - 15 * k, 0.7 * k, '#f8f6f0');
+    for (let i = 0; i < 7; i++) line(ctx, x - 0.8 * k, y - (1.4 + i * 2) * k, x + 0.6 * k, y - (1 + i * 2) * k, '#2a2624', 0.6 * k);
+    curve(x, y - 9 * k, x + 3 * k, y - 11 * k, x + 4.4 * k, y - 15 * k, 0.9 * k, '#cfc8b8');
+    curve(x, y - 11 * k, x - 3 * k, y - 13 * k, x - 4.6 * k, y - 16.6 * k, 0.9 * k, '#cfc8b8');
+    const g = mix(P.forest, '#c8c050', 0.62);
+    for (const [dx, dy, rx, ry, c] of [[-4.6, -17, 3.6, 3, -0.08], [4.6, -16, 3.6, 3, -0.12], [0, -19.4, 4.6, 3.6, 0], [-1.6, -22.4, 3, 2.2, 0.08]] as const) {
+      ellipse(ctx, x + dx * k, y + (dy + 1) * k, rx * k, ry * k, shade(g, c - 0.18));
+      ellipse(ctx, x + dx * k, y + dy * k, rx * k, ry * k, shade(g, c));
+      ellipse(ctx, x + (dx - 0.6) * k, y + (dy - 0.8) * k, rx * 0.55 * k, ry * 0.4 * k, shade(g, c + 0.16));
+    }
+    for (let i = 0; i < 10; i++) { const a = rand(variant + 2, i) * Math.PI * 2, r = 2 + rand(variant + 4, i) * 5; ellipse(ctx, x + Math.cos(a) * r * 1.1 * k, y - 19 * k + Math.sin(a) * r * 0.7 * k, 0.6 * k, 0.45 * k, i % 3 ? '#e8d84a' : '#f6f0a0'); }
+    return;
+  }
+  if (type === 'rhodo') {
+    // rhododendron: a low, dark, glossy mound smothered in trusses of magenta, crimson and white flowers
+    const g = shade(mix(P.forest, '#1f5a3a', 0.5), -0.05);
+    for (const [dx, dy, rx, ry, c] of [[-3.4, -2.4, 4, 3, -0.1], [3.6, -2.2, 3.8, 2.8, -0.14], [0, -4.4, 4.8, 3.4, 0]] as const) {
+      ellipse(ctx, x + dx * k, y + (dy + 1) * k, rx * k, ry * k, shade(g, c - 0.2));
+      ellipse(ctx, x + dx * k, y + dy * k, rx * k, ry * k, shade(g, c));
+      ellipse(ctx, x + (dx - 0.8) * k, y + (dy - 1) * k, rx * 0.5 * k, ry * 0.36 * k, shade(g, c + 0.16));
+    }
+    for (let i = 0; i < 14; i++) {
+      const a = rand(variant + 6, i) * Math.PI * 2, r = 1 + rand(variant + 3, i) * 5, fx = x + Math.cos(a) * r * k, fy = y - 4.4 * k + Math.sin(a) * r * 0.5 * k - 0.6 * k;
+      const c = ['#d040b0', '#e8386a', '#f4f0f4', '#b82a8a'][i % 4];
+      ellipse(ctx, fx, fy, 1.1 * k, 0.9 * k, c);
+      ellipse(ctx, fx - 0.3 * k, fy - 0.2 * k, 0.5 * k, 0.4 * k, shade(c, 0.35));
+    }
+    return;
+  }
+  if (type === 'barley') {
+    // a terrace of ripening barley: golden rows edged with stones, a few stones piled at the corner and a flag pole
+    const w = 12 * k;
+    const p = (u: number, v: number) => [x + (u - v) * w, y - 2 * k + (u + v - 1) * w * 0.5] as const;
+    poly(ctx, [...p(0, 0), ...p(1, 0), ...p(1, 1), ...p(0, 1)], '#8a6a44');
+    poly(ctx, [...p(0.04, 0.04), ...p(0.96, 0.04), ...p(0.96, 0.96), ...p(0.04, 0.96)], '#b89a48');
+    poly(ctx, [...p(0, 1), ...p(1, 1), p(1, 1)[0], p(1, 1)[1] + 2.2 * k, p(0, 1)[0], p(0, 1)[1] + 2.2 * k], '#7a5c3c'); // the stone terrace wall
+    for (let i = 0; i < 6; i++) { const [ax, ay] = p(i / 6 + 0.08, 1); line(ctx, ax, ay, ax, ay + 1.6 * k, shade('#6a4c30', -0.2), 0.4 * k); }
+    for (let r = 0; r < 6; r++) { // rows of barley: stalks topped with bearded ears
+      const v = 0.14 + r * 0.14;
+      for (let i = 0; i < 9; i++) {
+        const u = 0.08 + (i / 8) * 0.84, [px, py] = p(u, v);
+        line(ctx, px, py, px, py - 3.2 * k, r % 2 ? '#c8a63c' : '#dcbc4c', 0.6 * k);
+        line(ctx, px, py - 3.2 * k, px + 0.5 * k, py - 4.8 * k, '#f0d870', 0.9 * k);
+      }
+    }
+    for (let i = 0; i < 6; i++) { const [px, py] = p(0.02, i / 5); ellipse(ctx, px, py, 1 * k, 0.7 * k, i % 2 ? '#9a9080' : '#b0a896'); }
+    tbPole(ctx, x + 8.4 * k, y - 1 * k, 10 * k, true);
+    tbFlags(ctx, x + 8.4 * k, y - 9.4 * k, x - 5 * k, y + 1.4 * k, 5, 1.8, 0.7 * k);
+    return;
+  }
+  // flags: a tall peeled pole with a long string of prayer flags to a stake, and a juniper sapling
+  line(ctx, x, y, x + 0.3 * k, y - 24 * k, '#6a4a2c', 1.4 * k);
+  line(ctx, x - 0.4 * k, y, x - 0.1 * k, y - 24 * k, '#a58258', 0.4 * k);
+  poly(ctx, [x + 0.3 * k, y - 24 * k, x + 7 * k, y - 23 * k, x + 4.8 * k, y - 21 * k, x + 7 * k, y - 19 * k, x + 0.1 * k, y - 19.6 * k], '#d040b0');
+  poly(ctx, [x + 0.3 * k, y - 24 * k, x + 7 * k, y - 23 * k, x + 6.4 * k, y - 22.2 * k, x + 0.3 * k, y - 22.6 * k], '#e6b62a');
+  ellipse(ctx, x + 0.3 * k, y - 24.6 * k, 0.8 * k, 0.8 * k, '#d9ac2e');
+  tbFlags(ctx, x + 0.2 * k, y - 22 * k, x + 13 * k, y + 1 * k, 9, 4, k);
+  tbFlags(ctx, x + 0.2 * k, y - 19 * k, x - 12 * k, y + 1.4 * k, 8, 3.4, k);
+  line(ctx, x + 13 * k, y + 1.4 * k, x + 13 * k, y - 1.6 * k, '#6a4a2c', 0.9 * k);
+  line(ctx, x - 12 * k, y + 1.8 * k, x - 12 * k, y - 1.4 * k, '#6a4a2c', 0.9 * k);
+  ellipse(ctx, x + 2 * k, y + 0.6 * k, 3 * k, 1.1 * k, '#9a9080'); // a cairn at the foot
+  ellipse(ctx, x + 1.6 * k, y - 0.2 * k, 1.8 * k, 0.8 * k, '#b8b0a0');
+}
+
+/** A great palace-fortress on a rocky hill: terraced white walls with many windows, a central red palace, gilded roofs and flags. */
+function tbPalace(ctx: Ctx, x: number, y: number) {
+  // the hill, with a zigzag stair, scrub and boulders
+  ellipse(ctx, x, y + 11, 31, 8, 'rgba(0,0,0,0.18)');
+  const hill = [x - 29, y + 8, x - 21, y - 4, x - 9, y - 12, x + 4, y - 13, x + 17, y - 6, x + 29, y + 7, x + 15, y + 13, x - 12, y + 14];
+  poly(ctx, hill, '#8f8270');
+  poly(ctx, [x - 29, y + 8, x - 21, y - 4, x - 9, y - 12, x - 4, y - 2, x - 14, y + 9, x - 12, y + 14], '#a89a86');
+  poly(ctx, [x + 4, y - 13, x + 17, y - 6, x + 29, y + 7, x + 15, y + 13, x + 9, y + 4], '#6a5e50');
+  for (const [dx, dy, r] of [[-23, 6, 2.8], [24, 6.4, 2.6], [-7, 12, 2.2], [10, 12, 2.4]] as const) { ellipse(ctx, x + dx, y + dy + 0.6, r, r * 0.7, '#6a5e50'); ellipse(ctx, x + dx - 0.3, y + dy, r * 0.85, r * 0.6, '#a89a86'); }
+  for (const [dx, dy] of [[-25, 3], [-19, 9.6], [20, 9.6], [26, 3.4], [-12, 13]] as const) { ellipse(ctx, x + dx, y + dy - 1, 2.2, 1.4, '#3a6a4a'); ellipse(ctx, x + dx - 0.4, y + dy - 1.6, 1.4, 0.8, '#5a9a6a'); }
+  // the great stair
+  const zz = [[x - 6, y + 14], [x + 6, y + 11.4], [x - 3, y + 9.4], [x + 5, y + 7.6]];
+  ctx.strokeStyle = ink('#d8d0be');
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  zz.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+  ctx.stroke();
+  // the white terraces, stepped back, each with rows of windows
+  box(ctx, x, y + 5, 36, 5, '#b8ac98', '#cfc4b0'); // a battered stone retaining wall
+  for (let i = 0; i < 6; i++) { faceQuad(ctx, 'L', x, y + 5, 36, 5, i / 6 + 0.02, i / 6 + 0.04, 0, 1, '#8f8470'); faceQuad(ctx, 'R', x, y + 5, 36, 5, i / 6 + 0.02, i / 6 + 0.04, 0, 1, '#8f8470'); }
+  for (const dx of [-10, 0, 10]) { tbWin(ctx, 'L', x, y + 5, 36, 5, 0.3 + dx * 0.012, 0.2, 0.06, 0.4); tbWin(ctx, 'R', x, y + 5, 36, 5, 0.6 + dx * 0.012, 0.2, 0.06, 0.4); }
+  tbBlock(ctx, x, y, 32, 9, TB_WASH, 1, 8, TB_KEMAR);
+  tbBlock(ctx, x - 1, y - 9, 26, 8, TB_WASH, 1, 6);
+  for (const [dx, h2] of [[-12, 12], [13, 10]] as const) { // flanking towers
+    tbBlock(ctx, x + dx, y - 8, 8, h2, TB_WASH, 2, 2, TB_KEMAR);
+    tbGoldRoof(ctx, x + dx, y - 8 - h2, 9, 3.6, true);
+  }
+  // the red palace with its gold band, black drape and windows
+  const ry = y - 17;
+  box(ctx, x + 1, ry, 20, 14, TB_KEMAR, shade(TB_KEMAR, 0.1));
+  for (const r of [0.66, 0.36]) for (let c = 0; c < 3; c++) { tbWin(ctx, 'L', x + 1, ry, 20, 14, 0.1 + c * 0.3, r, 0.16, 0.16); tbWin(ctx, 'R', x + 1, ry, 20, 14, 0.1 + c * 0.3, r, 0.16, 0.16); }
+  tbWin(ctx, 'R', x + 1, ry, 20, 14, 0.4, 0.04, 0.2, 0.18, true);
+  band(ctx, x + 1, ry, 20, 14, 0.84, 0.96, '#2a1e1a');
+  for (let i = 0; i < 8; i++) { faceQuad(ctx, 'L', x + 1, ry, 20, 14, i * 0.125 + 0.02, i * 0.125 + 0.08, 0.86, 0.94, '#f4f0e6'); faceQuad(ctx, 'R', x + 1, ry, 20, 14, i * 0.125 + 0.02, i * 0.125 + 0.08, 0.86, 0.94, '#f4f0e6'); }
+  band(ctx, x + 1, ry, 20, 14, 0.96, 1, TB_GOLD_R);
+  // upper red hall and the great golden roofs
+  const uy = ry - 14;
+  box(ctx, x + 1, uy, 12, 6, TB_KEMAR, shade(TB_KEMAR, 0.1));
+  for (let c = 0; c < 2; c++) { tbWin(ctx, 'L', x + 1, uy, 12, 6, 0.14 + c * 0.42, 0.28, 0.24, 0.42); tbWin(ctx, 'R', x + 1, uy, 12, 6, 0.14 + c * 0.42, 0.28, 0.24, 0.42); }
+  tbGoldRoof(ctx, x + 1, uy - 6, 17, 6.6, false);
+  // a golden pavilion roof on the lower hall's shoulders
+  tbGoldRoof(ctx, x + 1 - 8, ry - 14, 8, 3.2, true);
+  tbGoldRoof(ctx, x + 1 + 8, ry - 14, 8, 3.2, true);
+  const sy = uy - 12.8;
+  poly(ctx, [x + 1 - 1, sy, x + 1 + 1, sy, x + 1, sy - 6], '#f4d060'); // a tall gilded spire
+  ellipse(ctx, x + 1, sy - 6.6, 1.2, 1.2, '#fff0a0');
+  // pennant poles on the towers and long flag strings down to the hill
+  tbPole(ctx, x - 12, y - 20.6, 8, true);
+  tbFlags(ctx, x - 12, y - 26, x - 27, y + 7, 9, 5, 1);
+  tbFlags(ctx, x + 13, y - 18, x + 27, y + 6, 8, 5, 1);
+  tbPole(ctx, x + 13, y - 18.6, 6, false);
+  tbFlags(ctx, x + 1, sy - 6, x - 12, y - 25, 6, 2.4, 0.8);
+}
+
+/** The buildings of a Tibetan town: gompas, chortens, mani walls, black tents and stone houses; a hilltop palace for the capital. */
+function tbBuilding(ctx: Ctx, x: number, y: number, big: boolean, capital: boolean) {
+  if (big && capital) return tbPalace(ctx, x, y);
+  if (big) {
+    tbGompa(ctx, x, y);
+    tbChorten(ctx, x + 13, y + 5, 0.6);
+    return;
+  }
+  const spot: Record<string, number> = { '-10,2': 0, '10,2': 1, '0,8': 2, '-6,-8': 3, '7,-7': 4, '-14,-3': 1, '14,-2': 2 };
+  const v = spot[`${Math.round(x)},${Math.round(y)}`] ?? ((Math.round(x) * 7 + Math.round(y) * 3) % 5 + 5) % 5;
+  if (v === 0) tbHouse(ctx, x, y, 11, 8, false);
+  else if (v === 1) tbChorten(ctx, x, y + 1, 0.86);
+  else if (v === 2) tbTent(ctx, x, y, 0.95);
+  else if (v === 3) tbManiWall(ctx, x, y);
+  else tbHouse(ctx, x, y, 10, 9, true);
+}
+
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
@@ -1271,6 +1677,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
   if (biome === 'lakota') return lkTree(ctx, x, y, k, P, variant);
+  if (biome === 'tibet') return tbTree(ctx, x, y, k, P, variant);
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'china') return drawChinaTree(ctx, x, y, k, P, variant);
   if (biome === 'mali') return mlTree(ctx, x, y, k, P, variant);
@@ -1878,6 +2285,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'lakota':
       lkBuilding(ctx, x, y, big, capital);
+      break;
+    case 'tibet':
+      tbBuilding(ctx, x, y, big, capital);
       break;
     case 'egypt':
       box(ctx, x, y, w, h, '#ecdcaa');
