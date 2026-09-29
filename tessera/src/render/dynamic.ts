@@ -624,7 +624,8 @@ function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], mo
   kinds.forEach((kind, i) => {
     const cx = snap(tip.x - total / 2 + R + i * (R * 2 + gap));
     const cy = snap(tip.y - R - 9 * k + bob);
-    const [hi, lo] = BUBBLE_COLORS[kind];
+    const off = !!ov.bubblesOff?.includes(kind);
+    const [hi, lo] = off ? ['#cfd4dc', '#8d95a3'] : BUBBLE_COLORS[kind];
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = 6 * k;
@@ -647,7 +648,9 @@ function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], mo
     ctx.lineTo(cx, cy + R + 7 * k);
     ctx.closePath();
     ctx.stroke();
+    ctx.globalAlpha = off ? 0.8 : 1;
     drawBubbleIcon(ctx, kind, cx, cy, R * 0.55);
+    ctx.globalAlpha = 1;
     bubbleRects.push({ kind, x: cx, y: cy, r: R });
   });
 }

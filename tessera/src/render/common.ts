@@ -65,6 +65,7 @@ export interface Overlay {
   moves: { x: number; y: number }[];
   attacks: { x: number; y: number }[];
   bubbles?: ('attack' | 'heal' | 'capture')[]; // what the selected unit can do, shown as buttons above it
+  bubblesOff?: ('attack' | 'heal' | 'capture')[]; // ...of those, the ones not possible yet (drawn greyed out)
   glow: Set<number>; // tiles (y*size+x) holding something the viewer can harvest right now
   fx: Fx;
   now: number;

@@ -293,8 +293,10 @@ export class GameView {
     }
     const t = tileAt(this.s, sel.x, sel.y)!;
     const id = kind === 'heal' ? 'recover' : 'capture';
-    if (!tileActions(this.s, this.me, t).some((a) => a.id === id && a.enabled)) {
+    const act = tileActions(this.s, this.me, t).find((a) => a.id === id);
+    if (!act?.enabled) {
       sfx.play('error');
+      if (act?.reason) toast(id === 'capture' ? 'This unit can claim it next turn: it has to start the turn here.' : act.reason);
       return;
     }
     sfx.play(kind === 'heal' ? 'harvest' : 'build');
@@ -358,6 +360,7 @@ export class GameView {
     this.ov.moves = [];
     this.ov.attacks = [];
     this.ov.bubbles = [];
+    this.ov.bubblesOff = [];
     if (sel && sel.mode === 'unit' && this.myTurn()) {
       const u = unitAt(this.s, sel.x, sel.y);
       if (u && u.owner === this.me) {
@@ -366,7 +369,12 @@ export class GameView {
         const acts = tileActions(this.s, this.me, tileAt(this.s, u.x, u.y)!);
         if (this.ov.attacks.length) this.ov.bubbles.push('attack');
         if (acts.some((a) => a.id === 'recover' && a.enabled)) this.ov.bubbles.push('heal');
-        if (acts.some((a) => a.id === 'capture' && a.enabled)) this.ov.bubbles.push('capture');
+        // claiming shows as soon as the unit stands on a village or enemy city, greyed out until it can act
+        const claim = acts.find((a) => a.id === 'capture');
+        if (claim) {
+          this.ov.bubbles.push('capture');
+          if (!claim.enabled) this.ov.bubblesOff.push('capture');
+        }
       }
     }
     this.version++;
