@@ -60,6 +60,7 @@
     G.giveStarter(s);
     return s;
   };
+  const SPEEDS = [1, 2, 4, 8];
   const BACKUP_KEY = SAVE_KEY + '-backup', CORRUPT_KEY = SAVE_KEY + '-corrupt', SAVE_VERSION = 2;
   let storageOk = true, saveNotice = '';
   // 'empty' = nothing stored, 'bad' = stored but unreadable, otherwise the parsed save
@@ -89,6 +90,7 @@
     out.unlocked = Math.min(Math.max(1, out.unlocked), CHAPTERS.length);
     if (out.run && (!isObj(out.run) || !CHAPTERS.some(c => c.id === out.run.chId) || !HEROES[out.run.heroKey])) out.run = null;
     if (!HEROES[out.hero]) out.hero = HERO_KEYS[0];
+    if (!SPEEDS.includes(out.speed)) out.speed = 1;
     out.version = SAVE_VERSION;
     return out;
   }
@@ -109,7 +111,7 @@
   })();
   if (!HEROES[save.hero]) save.hero = HERO_KEYS[0];
   if (save.freeEggs > 3) { save.bonusEggs += save.freeEggs - 3; save.freeEggs = 3; }
-  const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {} };
+  const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {}, setSpeed() {} };
   SND.setMusic(save.music); SND.setSfx(save.sfx);
   const snd = n => { if (!(R && R.skip)) SND.play(n); };
   const UNL = 999999999;
@@ -774,7 +776,7 @@
         <div class="boss-bar"><div class="bar"><i></i><span></span></div><div class="round-pill">Round : 1/15</div></div>
         <div class="actors"></div>
         <div class="fx"></div>
-        <div class="stage-btns"><button class="btn skip">⏩ Skip</button><button class="btn speed">x${save.speed}</button></div>
+        <div class="stage-btns"><button class="btn skip">⏩ Skip</button><button class="btn speed x${save.speed}">x${save.speed}</button></div>
       </div>
       <div class="statbar">
         <div class="stat xp"><span class="lab">EXP</span><i class="fillbar"></i><svg class="ic" viewBox="0 0 64 64"><path d="M32 4 L56 18 V46 L32 60 L8 46 V18 Z" fill="#5fbf2a" stroke="#2b1d14" stroke-width="4"/><text x="32" y="40" font-size="18" text-anchor="middle" fill="#fff" stroke="#2b1d14" stroke-width="3" paint-order="stroke" font-family="Lilita One, sans-serif">EXP</text></svg><span class="v"></span></div>
@@ -799,8 +801,11 @@
     S.hero = el(`<div class="actor hero" style="--asp:${(HEROES[R.heroKey] && HEROES[R.heroKey].aspect) || 1.2}"><div class="art">${art.hero(R.heroKey, 'run')}</div><div class="status"></div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
     S.actors.append(S.hero);
     if (R.pet) { S.pet = el(`<div class="actor pet"><div class="art">${art.pet(R.pet, 'runpet')}</div></div>`); S.actors.append(S.pet); }
-    S.speed.classList.toggle('x1', save.speed === 1);
-    S.speed.onclick = () => { save.speed = save.speed === 1 ? 2 : 1; S.speed.textContent = 'x' + save.speed; S.speed.classList.toggle('x1', save.speed === 1); persist(); setWalkSpeed(); };
+    S.speed.onclick = () => {
+      save.speed = SPEEDS[(SPEEDS.indexOf(save.speed) + 1) % SPEEDS.length];
+      S.speed.textContent = 'x' + save.speed; S.speed.className = 'btn speed x' + save.speed;
+      persist(); setWalkSpeed();
+    };
     setWalkSpeed();
     S.skip.onclick = () => { R.skip = true; };
     $('.gear', scr).onclick = pauseMenu;
@@ -871,9 +876,13 @@
   let stepTimer = null;
   function setWalkSpeed() {
     if (!S.stage) return;
-    const sp = save.speed || 1;
-    S.stage.style.setProperty('--scroll', (9 / sp) + 's');
-    S.stage.style.setProperty('--stride', (0.52 / sp) + 's');
+    const sp = save.speed || 1, vs = Math.min(sp, 3); // the walk itself stops getting faster at 3x so it never becomes a blur
+    S.stage.style.setProperty('--scroll', (9 / vs) + 's');
+    S.stage.style.setProperty('--stride', (0.52 / vs) + 's');
+    // combat animations shorten with speed: --k for motion, --kf for floating text and effects (kept readable)
+    S.stage.style.setProperty('--k', Math.max(0.2, 1 / sp));
+    S.stage.style.setProperty('--kf', Math.max(0.4, 1 / sp));
+    SND.setSpeed(sp);
     if (stepTimer) { setWalking(false); setWalking(true); }
   }
   function setWalking(on) {
@@ -888,7 +897,7 @@
       if (n % 2) SND.play('step');
       const f = pos(S.hero, 0.96);
       fxEl('<div class="dust"></div>', f.x - f.w * 0.12 + (n % 2 ? 10 : -4), f.y, 700);
-    }, 260 / (save.speed || 1));
+    }, 260 / Math.min(save.speed || 1, 3));
   }
 
   // ---------------------------------------------------------------- main loop

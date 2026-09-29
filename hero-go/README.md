@@ -22,7 +22,7 @@ All ten are hand-drawn, animated SVG. Each file was built by its own agent, foll
 
 ## Game loop
 - **Chapters:** 5 chapters (30–60 days). Each day is one event: a battle, a story, an Angel, a Devil deal, a merchant, a chest, a campfire or the Wheel of Fortune. Elites come every 10 days and a boss on the final day.
-- **Battles:** auto turn-based with a round limit, x1/x2 speed and Skip.
+- **Battles:** auto turn-based with a round limit, a speed button that cycles x1, x2, x4 and x8 (combat animations, walking and sound bursts scale with it), and Skip.
 - **Leveling:** each level-up lets you pick one of 3 skills. There are 22 stackable skills (daggers, lightning and thunderstorm, fire, meteor, angel, vampire, frost and others).
 - **Gear:** six slots (weapon, helmet, armor, boots, ring, amulet) in five rarities from Common to Mythic (`js/gear.js`, icons in `js/art/gear.js`). Gear drops from battles, elites, bosses and treasure chests, and the Shop sells chests. Upgrade pieces with coins, merge three of a kind into the next rarity, or salvage them for coins. Legendary and Mythic pieces roll a perk (crit, lifesteal, damage reduction, coins or EXP). The bag holds 60 items; when it is full new drops turn into coins.
 - **Chapters:** ten chapters from Whispering Forest to the Celestial Void, each with its own scene, mobs, hard elite and a detailed boss. Chapters 6–10 (`js/art/ch6.js` … `ch10.js`) are much tougher.

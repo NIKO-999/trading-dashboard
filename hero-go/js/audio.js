@@ -4,6 +4,7 @@
   let ctx = null, master, musicBus, sfxBus, noiseBuf, pulse25;
   let musicOn = true, sfxOn = true;
   const last = {};
+  let speedMul = 1;
 
   function init() {
     // iOS: 'playback' session keeps sound on even with the ring/silent switch set to silent
@@ -105,7 +106,7 @@
   function play(name) {
     if (!ctx || !sfxOn || !FX[name]) return;
     const now = performance.now();
-    if (last[name] && now - last[name] < 45) return; // throttle bursts
+    if (last[name] && now - last[name] < 45 * Math.min(speedMul, 4)) return; // throttle bursts; wider at high game speed
     last[name] = now;
     try { FX[name](); } catch (e) { console.warn('sfx', name, e); }
   }
@@ -187,5 +188,5 @@
   function setMusic(on) { musicOn = on; if (musicBus) musicBus.gain.setTargetAtTime(on ? 0.16 : 0, ctx.currentTime, 0.05); }
   function setSfx(on) { sfxOn = on; if (sfxBus) sfxBus.gain.setTargetAtTime(on ? 0.5 : 0, ctx.currentTime, 0.02); }
 
-  window.SFX = { init, play, music, setMusic, setSfx, get ready() { return !!ctx; } };
+  window.SFX = { init, play, music, setMusic, setSfx, setSpeed: v => { speedMul = v || 1; }, get ready() { return !!ctx; } };
 })();
