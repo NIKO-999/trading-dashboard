@@ -52,11 +52,11 @@
         stops.map(function (s) { return '<stop offset="' + s[0] + '" stop-color="' + s[1] + '"' + (s[2] != null ? ' stop-opacity="' + s[2] + '"' : '') + '/>'; }).join('') + '</radialGradient>';
     }
     return '<defs>' +
-      lg('skinH', 0, 0, 1, 0, [[0, '#120a04'], [0.22, '#39220d'], [0.5, '#5c3a1c'], [0.78, '#3a2411'], [1, '#100903']]) +
-      lg('skinT', 140, 0, 310, 0, [[0, '#120a04'], [0.16, '#34200d'], [0.42, '#5c3a1c'], [0.62, '#4e3117'], [0.86, '#321e0d'], [1, '#100903']], 1) +
+      lg('skinH', 0, 0, 1, 0, [[0, '#0c0702'], [0.22, '#2c1a09'], [0.5, '#4a2f15'], [0.78, '#2c1a0a'], [1, '#0a0602']]) +
+      lg('skinT', 140, 0, 310, 0, [[0, '#0c0702'], [0.16, '#2a1808'], [0.42, '#4a2f15'], [0.62, '#402812'], [0.86, '#26160a'], [1, '#0a0602']], 1) +
       lg('skinV', 0, 0, 0, 1, [[0, '#8a5a2c'], [0.5, '#6b4423'], [1, '#3f2712']]) +
-      lg('face', 0, 0, 1, 0, [[0, '#24150a'], [0.3, '#5e3a1a'], [0.55, '#734a23'], [0.85, '#452a12'], [1, '#1a0f06']]) +
-      rg('hi', 0.4, 0.32, 0.65, [[0, '#e0b27a', 0.62], [0.55, '#b87a3a', 0.24], [1, '#a86a2a', 0]]) +
+      lg('face', 0, 0, 1, 0, [[0, '#1a0f06'], [0.3, '#4c3016'], [0.55, '#5e3c1c'], [0.85, '#39230f'], [1, '#150c05']]) +
+      rg('hi', 0.4, 0.32, 0.65, [[0, '#c99a62', 0.6], [0.55, '#9a6630', 0.22], [1, '#8a5a24', 0]]) +
       rg('sh', 0.5, 0.5, 0.5, [[0, '#0d0703', 0.65], [1, '#0d0703', 0]]) +
       lg('obs', 0, 0, 0.6, 1, [[0, '#3a3a40'], [0.25, '#141416'], [0.7, '#08080a'], [1, '#1a1a1e']]) +
       lg('obsE', 0, 0, 1, 0, [[0, '#050506'], [0.45, '#1c1c20'], [0.6, '#2e3034'], [1, '#050506']]) +
@@ -77,14 +77,14 @@
       rg('mouth', 0.5, 0.5, 0.5, [[0, '#7a1c10'], [1, '#2a0603']]) +
       /* fish-scale skin */
       '<pattern id="' + I('scale') + '" width="16" height="12" patternUnits="userSpaceOnUse">' +
-      '<g fill="none" stroke="#1c0f05" stroke-opacity=".4" stroke-width="1.2"><path d="M0,0 Q4,7 8,0 M8,0 Q12,7 16,0 M-4,6 Q0,13 4,6 M4,6 Q8,13 12,6 M12,6 Q16,13 20,6"/></g>' +
+      '<g fill="none" stroke="#0a0502" stroke-opacity=".6" stroke-width="1.3"><path d="M0,0 Q4,7 8,0 M8,0 Q12,7 16,0 M-4,6 Q0,13 4,6 M4,6 Q8,13 12,6 M12,6 Q16,13 20,6"/></g>' +
       '<g fill="none" stroke="#e6b06a" stroke-opacity=".22" stroke-width="1"><path d="M0,1.6 Q4,8.6 8,1.6 M8,1.6 Q12,8.6 16,1.6 M-4,7.6 Q0,14.6 4,7.6 M4,7.6 Q8,14.6 12,7.6 M12,7.6 Q16,14.6 20,7.6"/></g></pattern>' +
       '<pattern id="' + I('scaleG') + '" width="14" height="10" patternUnits="userSpaceOnUse">' +
       '<g fill="none" stroke="#e0a63a" stroke-opacity=".5" stroke-width="1"><path d="M0,0 Q3.5,6 7,0 M7,0 Q10.5,6 14,0 M-3.5,5 Q0,11 3.5,5 M3.5,5 Q7,11 10.5,5 M10.5,5 Q14,11 17.5,5"/></g></pattern>' +
       lg('vig', 0, 0, 0, 1, [[0, '#000', 0], [0.55, '#0a0502', 0.05], [1, '#0a0502', 0.5]]) +
       lg('absG', 0, 0, 0, 1, [[0, '#f0c088', 0.85], [0.4, '#b87a3a', 0.15], [1, '#0c0501', 0.75]]) +
       lg('snk', 0, 0, 0.3, 1, [[0, '#4a525a'], [0.3, '#181b1f'], [1, '#040405']]) +
-      '<pattern id="' + I('crk') + '" width="80" height="80" patternUnits="userSpaceOnUse"><g fill="none" stroke="#120802" stroke-opacity=".5" stroke-width="1.4" stroke-linejoin="bevel"><path d="M0,16 L18,26 L30,14 L52,22 L80,16 M18,26 L22,48 L40,58 L36,80 M52,22 L60,44 L78,52 M40,58 L64,66 L80,62 M22,48 L0,56 M60,44 L58,0 M30,14 L28,0"/></g><g fill="none" stroke="#f0c08a" stroke-opacity=".16" stroke-width="1"><path d="M0,18 L18,28 L30,16 L52,24 L80,18 M18,28 L22,50 L40,60"/></g></pattern>' +
+      '<pattern id="' + I('crk') + '" width="80" height="80" patternUnits="userSpaceOnUse"><g fill="none" stroke="#080401" stroke-opacity=".8" stroke-width="1.6" stroke-linejoin="bevel"><path d="M0,16 L18,26 L30,14 L52,22 L80,16 M18,26 L22,48 L40,58 L36,80 M52,22 L60,44 L78,52 M40,58 L64,66 L80,62 M22,48 L0,56 M60,44 L58,0 M30,14 L28,0"/></g><g fill="none" stroke="#f0c08a" stroke-opacity=".16" stroke-width="1"><path d="M0,18 L18,28 L30,16 L52,24 L80,18 M18,28 L22,50 L40,60"/></g></pattern>' +
       '</defs>';
   }
 
@@ -124,8 +124,8 @@
       '<path d="M0,3 L0,' + f(len * 0.9) + '" stroke="#7a5a2a" stroke-opacity=".55" stroke-width=".9" fill="none"/>' +
       '</g>';
   }
-  var LEDGE = [[240, 118], [300, 68], [400, 36], [500, 20], [560, 22], [650, 48], [750, 92], [840, 150], [905, 225]];
-  var REDGE = [[240, 332], [300, 380], [400, 402], [500, 402], [560, 397], [650, 382], [750, 338], [840, 278], [905, 225]];
+  var LEDGE = [[195, 118], [255, 72], [355, 40], [455, 26], [540, 30], [640, 62], [740, 112], [830, 168], [915, 225]];
+  var REDGE = [[195, 332], [255, 378], [355, 404], [455, 404], [540, 398], [640, 370], [740, 324], [830, 276], [915, 225]];
   function edgeAt(E, y) {
     for (var i = 1; i < E.length; i++) if (y <= E[i][0]) { var a = E[i - 1], b = E[i], t = (y - a[0]) / (b[0] - a[0]); return a[1] + (b[1] - a[1]) * t; }
     return E[E.length - 1][1];
@@ -140,7 +140,7 @@
     for (var y = top; y <= bottom; y += 27) {
       var l = edgeAt(LEDGE, y), rr = edgeAt(REDGE, y);
       for (var x = l; x <= rr + 1; x += 23) {
-        var hidden = (y < 560 && x > 85 && x < 365) || (y < 700 && x > 130 && x < 320);
+        var hidden = (y < 515 && x > 85 && x < 365) || (y < 655 && x > 135 && x < 315);
         if (hidden) continue;
         var xx = x + (r() - 0.5) * 8, yy = y + (r() - 0.5) * 8;
         var ang = (225 - xx) * 0.085 + (r() - 0.5) * 9;
@@ -156,12 +156,12 @@
   /* ---------------- serpents (left drawn; right = mirror about x=221) ---------------- */
   function serpent(I) {
     var s = '';
-    /* neck */
-    s += '<path d="M160,316 C142,274 130,240 140,200 C142,190 150,180 156,170" fill="none" stroke="#050506" stroke-width="50" stroke-linecap="round"/>';
-    s += '<path d="M160,316 C142,274 130,240 140,200 C142,190 150,180 156,170" fill="none" stroke="url(#' + I('obsE') + ')" stroke-width="44" stroke-linecap="round"/>';
-    s += '<path d="M160,316 C142,274 130,240 140,200 C142,190 150,180 156,170" fill="none" stroke="#e0a63a" stroke-opacity=".8" stroke-width="43" stroke-dasharray="2 8" stroke-linecap="butt"/>';
-    s += '<path d="M148,316 C130,274 118,240 128,204 C130,196 136,188 142,180" fill="none" stroke="#98a4b0" stroke-opacity=".55" stroke-width="6" stroke-linecap="round"/>';
-    s += '<path d="M176,300 C164,268 156,236 160,204" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="7" stroke-linecap="round"/>';
+    /* neck: S-curve rising from behind the shoulder */
+    s += '<path d="M186,300 C150,302 116,282 120,246 C124,216 158,216 150,184" fill="none" stroke="#050506" stroke-width="34" stroke-linecap="round"/>';
+    s += '<path d="M186,300 C150,302 116,282 120,246 C124,216 158,216 150,184" fill="none" stroke="url(#' + I('obsE') + ')" stroke-width="28" stroke-linecap="round"/>';
+    s += '<path d="M186,300 C150,302 116,282 120,246 C124,216 158,216 150,184" fill="none" stroke="#e0a63a" stroke-opacity=".8" stroke-width="27" stroke-dasharray="2 8"/>';
+    s += '<path d="M176,296 C142,296 108,278 112,246 C116,222 140,220 140,196" fill="none" stroke="#98a4b0" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>';
+    s += '<path d="M186,300 C150,302 116,282 120,246 C124,216 158,216 150,184" fill="none" stroke="#7a5a30" stroke-opacity=".7" stroke-width="5" stroke-dasharray="4 4" transform="translate(6 5)"/>';
     /* mouth interior, lower jaw */
     s += '<path d="M90,190 L168,192 L162,208 L96,210 Z" fill="url(#' + I('mouth') + ')" stroke="' + OL + '" stroke-width="1.6"/>';
     s += '<path d="M112,204 C100,212 92,222 94,234 M94,234 l-6,7 M94,234 l8,6" fill="none" stroke="#0a0a0c" stroke-width="2.8" stroke-linecap="round"/>';
@@ -179,7 +179,6 @@
     s += '<circle cx="96" cy="180" r="1.8" fill="#000"/>';
     s += '<ellipse cx="128" cy="168" rx="9" ry="4.5" fill="url(#' + I('glow') + ')"/><path d="M118,170 Q128,162 140,168 Q128,174 118,170Z" fill="#ffc21a" stroke="#000" stroke-width="1.1"/><ellipse cx="129" cy="168" rx="1.3" ry="2.8" fill="#000"/>';
     s += '<path d="M100,180 C112,164 132,154 156,158" fill="none" stroke="#9aa6b0" stroke-opacity=".45" stroke-width="2.4"/><path d="M112,196 C124,206 146,208 162,200" fill="none" stroke="#8a7a5a" stroke-opacity=".5" stroke-width="2"/>';
-    s += '<path d="M168,214 C164,240 170,270 176,300 M160,222 C158,246 164,272 170,300" fill="none" stroke="#6a5030" stroke-opacity=".55" stroke-width="7" stroke-dasharray="5 4"/>';
     s += crack([[140, 152], [146, 160], [142, 168], [150, 178]], 1.3);
     s += crack([[176, 250], [180, 232], [174, 214], [178, 198]], 1.2);
     /* hair wisps behind */
@@ -187,36 +186,8 @@
   }
 
   /* ---------------- legs ---------------- */
-  function leg(I) {
-    var d = 'M100,545 C86,585 82,640 88,690 C90,715 94,738 98,760 C98,780 94,795 96,812 L96,912 L134,912 L136,812 C140,790 156,770 170,745 C182,718 190,690 196,655 C200,620 208,585 220,552 Z';
-    var s = '<path d="' + d + '" fill="url(#' + I('skinH') + ')"/><path d="' + d + '" fill="url(#' + I('scale') + ')" opacity=".45"/><path d="' + d + '" fill="url(#' + I('crk') + ')" opacity=".8"/>';
-    /* muscle volume */
-    s += '<ellipse cx="146" cy="640" rx="24" ry="66" transform="rotate(-9 146 640)" fill="url(#' + I('hi') + ')"/><ellipse cx="146" cy="630" rx="12" ry="46" transform="rotate(-9 146 630)" fill="#f0c088" opacity=".16"/>';
-    s += '<path d="M112,600 C100,640 104,690 116,716 L126,712 C118,684 116,640 124,604Z" fill="#0c0501" opacity=".28"/>';
-    s += '<ellipse cx="108" cy="645" rx="15" ry="58" transform="rotate(-2 108 645)" fill="url(#' + I('hi') + ')" opacity=".8"/>';
-    s += '<ellipse cx="184" cy="640" rx="14" ry="48" fill="url(#' + I('sh') + ')"/>';
-    s += '<path d="M126,585 C120,630 126,680 134,708" fill="none" stroke="#1a0c04" stroke-opacity=".45" stroke-width="3.5"/>';
-    s += '<path d="M164,590 C166,640 168,684 162,708" fill="none" stroke="#1a0c04" stroke-opacity=".4" stroke-width="3"/>';
-    s += '<path d="M124,720 C130,706 152,706 158,720 C154,738 128,738 124,720Z" fill="url(#' + I('hi') + ')"/><path d="M124,720 C130,706 152,706 158,720" fill="none" stroke="#1a0c04" stroke-opacity=".4" stroke-width="2.2"/>';
-    s += '<ellipse cx="170" cy="690" rx="13" ry="28" transform="rotate(8 170 690)" fill="url(#' + I('hi') + ')"/><path d="M112,606 C104,646 108,690 118,714 M146,580 C132,620 130,668 138,700" fill="none" stroke="#1a0c04" stroke-opacity=".5" stroke-width="3"/>';
-    s += '<path d="M128,744 C132,756 150,756 154,744" fill="none" stroke="#1a0c04" stroke-opacity=".35" stroke-width="2"/>';
-    s += '<path d="M104,764 C104,778 108,792 112,800" fill="none" stroke="#1a0c04" stroke-opacity=".4" stroke-width="3"/>';
-    s += '<ellipse cx="152" cy="775" rx="13" ry="26" fill="url(#' + I('hi') + ')" opacity=".7"/>';
-    /* obsidian patches */
-    s += '<path d="M90,580 C102,570 122,576 128,594 C124,606 112,608 108,622 C110,636 100,646 94,650 C84,634 84,600 90,580 Z" fill="url(#' + I('obs') + ')" opacity=".9"/>';
-    s += '<path d="M156,690 L170,680 L182,686 L184,700 L174,714 L162,708Z" fill="url(#' + I('obs') + ')" opacity=".85"/>';
-    s += '<path d="M150,600 C160,596 170,602 168,614 C160,622 152,616 150,600 Z" fill="url(#' + I('obs') + ')" opacity=".85"/>';
-        s += '<path d="' + d + '" fill="url(#' + I('vig') + ')" opacity=".7"/>';
-    s += '<path d="' + d + '" fill="none" stroke="' + OL + '" stroke-width="3" stroke-linejoin="round"/>';
-    s += '<path d="M96,600 C88,650 90,700 100,760" fill="none" stroke="#5fe0d0" stroke-opacity=".3" stroke-width="2.4"/>';
-    /* greave */
-    s += '<path d="M74,790 L144,786 L140,905 L80,910 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="3"/>';
-    s += '<path d="M74,790 L144,786 L143,799 L75,803 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="2"/><path d="M75,791 L143,787" stroke="#d9ae4a" stroke-width="2"/>';
-    s += '<path d="M79,894 L141,890 L140,906 L80,910 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="2"/><path d="M80,896 L140,892" stroke="#d9ae4a" stroke-width="2"/>';
-    s += blk(I, 84, 808, 52, 26, 0) + blk(I, 84, 838, 52, 24, 0) + blk(I, 83, 866, 52, 22, 0);
-    s += '<path d="M90,806 V890 M130,804 V889" stroke="#3a2412" stroke-width="5"/><path d="M90,806 V890 M130,804 V889" stroke="#8a5a2c" stroke-width="2"/>';
-    s += '<circle cx="90" cy="828" r="2.2" fill="#f1c75a"/><circle cx="130" cy="828" r="2.2" fill="#f1c75a"/><circle cx="90" cy="874" r="2.2" fill="#f1c75a"/><circle cx="130" cy="874" r="2.2" fill="#f1c75a"/>';
-    s += '<path d="M76,796 L76,904" stroke="#ffe08a" stroke-opacity=".5" stroke-width="2"/>';
+  function foot(I) {
+    var s = '';
     /* foot + sandal */
     s += '<path d="M96,904 L136,904 C142,926 138,946 128,960 L125,975 C104,984 70,986 44,984 C26,984 18,972 24,962 C30,954 44,952 58,946 C72,938 84,924 96,904 Z" fill="url(#' + I('skinH') + ')" stroke="' + OL + '" stroke-width="2.6"/>';
     s += '<path d="M120,914 C126,930 124,948 116,958" fill="none" stroke="#e6b06a" stroke-opacity=".25" stroke-width="3"/>';
@@ -229,8 +200,34 @@
     s += '<ellipse cx="46" cy="958" rx="9" ry="4" fill="#e0a55a" opacity=".2"/>';
     return s;
   }
+  function leg(I) {
+    var d = 'M110,490 C100,530 98,580 104,630 C108,665 114,690 112,720 C108,745 100,770 106,810 C108,850 108,880 110,908 L134,908 C136,880 138,850 141,815 C146,785 154,758 160,728 C166,700 172,680 178,640 C186,590 204,540 226,500 Z';
+    var s = '<path d="' + d + '" fill="url(#' + I('skinH') + ')"/><path d="' + d + '" fill="url(#' + I('scale') + ')" opacity=".55"/><path d="' + d + '" fill="url(#' + I('crk') + ')"/>';
+    /* muscle volume */
+    s += '<ellipse cx="150" cy="590" rx="20" ry="84" transform="rotate(-6 150 590)" fill="url(#' + I('hi') + ')"/>';
+    s += '<ellipse cx="117" cy="610" rx="11" ry="72" fill="url(#' + I('hi') + ')" opacity=".8"/>';
+    s += '<ellipse cx="171" cy="668" rx="11" ry="32" transform="rotate(10 171 668)" fill="url(#' + I('hi') + ')"/>';
+    s += '<ellipse cx="186" cy="600" rx="10" ry="60" fill="url(#' + I('sh') + ')"/>';
+    s += '<path d="M132,540 C126,600 132,662 140,700 M112,560 C104,610 108,660 116,704 M160,560 C164,610 166,660 162,696" fill="none" stroke="#0a0401" stroke-opacity=".55" stroke-width="3"/>';
+    s += '<path d="M124,706 C130,694 148,694 154,706 C150,722 128,722 124,706Z" fill="url(#' + I('hi') + ')"/><path d="M122,708 C128,692 150,692 156,708 M126,728 C134,736 148,736 156,726" fill="none" stroke="#0a0401" stroke-opacity=".5" stroke-width="2.4"/>';
+    s += '<ellipse cx="124" cy="768" rx="11" ry="30" transform="rotate(4 124 768)" fill="url(#' + I('hi') + ')"/>';
+    s += '<path d="M142,748 C144,780 142,820 140,850 M110,745 C112,770 110,790 112,800" fill="none" stroke="#0a0401" stroke-opacity=".45" stroke-width="2.6"/>';
+    s += '<path d="M104,562 L118,552 L126,566 L120,584 L106,586Z M158,650 L170,642 L178,654 L172,668 L160,666Z M106,742 L116,736 L120,748 L112,756Z" fill="url(#' + I('obs') + ')" opacity=".9"/>';
+    s += '<path d="' + d + '" fill="url(#' + I('vig') + ')" opacity=".7"/>';
+    s += '<path d="' + d + '" fill="none" stroke="' + OL + '" stroke-width="2.6" stroke-linejoin="round"/>';
+    s += '<path d="M104,600 C98,650 106,700 112,740" fill="none" stroke="#5fe0d0" stroke-opacity=".3" stroke-width="2.2"/>';
+    /* greave on the lower shin */
+    s += '<path d="M88,806 L142,802 L138,898 L94,904 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="2.6"/>';
+    s += '<path d="M88,806 L142,802 L141,814 L89,818 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="1.8"/><path d="M89,807 L141,803" stroke="#d9ae4a" stroke-width="2"/>';
+    s += '<path d="M94,888 L138,884 L138,898 L94,904 Z" fill="url(#' + I('bronze') + ')" stroke="' + OL + '" stroke-width="1.8"/><path d="M94,890 L138,886" stroke="#d9ae4a" stroke-width="2"/>';
+    s += blk(I, 97, 820, 38, 24, 0) + blk(I, 97, 848, 38, 20, 0) + blk(I, 96, 871, 38, 14, 0);
+    s += '<path d="M99,818 V886 M133,816 V884" stroke="#1c0f06" stroke-width="4"/><circle cx="99" cy="832" r="1.8" fill="#f1c75a"/><circle cx="133" cy="832" r="1.8" fill="#f1c75a"/>';
+    s += '<path d="M89,808 L93,900" stroke="#ffe08a" stroke-opacity=".45" stroke-width="1.6"/>';
+    s += '<g transform="translate(118 905) scale(.78 .74) translate(-118 -905)">' + foot(I) + '</g>';
+    return s;
+  }
   function legs(I) {
-    return '<g transform="translate(221 0) scale(.95 1) translate(-221 0)"><g>' + leg(I) + '</g><g transform="translate(442 0) scale(-1 1)">' + leg(I) + '</g></g>';
+    return '<g>' + leg(I) + '</g><g transform="translate(442 0) scale(-1 1)">' + leg(I) + '</g>';
   }
 
   /* ---------------- skirt & apron ---------------- */
@@ -251,21 +248,21 @@
     return s;
   }
   function apron(I) {
-    var d = 'M190,522 L260,522 L261,826 L225,908 L189,826 Z', s = '';
+    var d = 'M190,522 L260,522 L261,871 L225,953 L189,871 Z', s = '';
     s += '<path d="' + d + '" fill="url(#' + I('aprn') + ')" stroke="' + OL + '" stroke-width="3"/>';
-    s += '<path d="M195,528 L255,528 L256,822 L225,898 L194,822 Z" fill="none" stroke="#b07a25" stroke-width="1.8"/>';
-    for (var i = 0; i < 9; i++) s += blk(I, 210, 532 + i * 33, 30, 26, 0);
-    for (var j = 0; j < 20; j++) { s += '<rect x="197" y="' + (532 + j * 16) + '" width="7" height="10" fill="url(#' + I('jadeD') + ')" stroke="#b07a25" stroke-width="1"/><rect x="246" y="' + (532 + j * 16) + '" width="7" height="10" fill="url(#' + I('jadeD') + ')" stroke="#b07a25" stroke-width="1"/>'; }
-    s += '<path d="M204,836 L246,836 L225,880 Z" fill="url(#' + I('jade') + ')" stroke="#b07a25" stroke-width="2"/>';
-    s += '<path d="M212,838 L225,862 L238,838" fill="none" stroke="#d9ae4a" stroke-width="1.4"/>';
-    s += bead(I, 225, 888, 6);
+    s += '<path d="M195,528 L255,528 L256,867 L225,943 L194,867 Z" fill="none" stroke="#b07a25" stroke-width="1.8"/>';
+    for (var i = 0; i < 10; i++) s += blk(I, 210, 532 + i * 33, 30, 26, 0);
+    for (var j = 0; j < 22; j++) { s += '<rect x="197" y="' + (532 + j * 16) + '" width="7" height="10" fill="url(#' + I('jadeD') + ')" stroke="#b07a25" stroke-width="1"/><rect x="246" y="' + (532 + j * 16) + '" width="7" height="10" fill="url(#' + I('jadeD') + ')" stroke="#b07a25" stroke-width="1"/>'; }
+    s += '<path d="M204,876 L246,876 L225,922 Z" fill="url(#' + I('jade') + ')" stroke="#b07a25" stroke-width="2"/>';
+    s += '<path d="M212,878 L225,902 L238,878" fill="none" stroke="#d9ae4a" stroke-width="1.4"/>';
+    s += bead(I, 225, 932, 6);
     s += '<path d="M192,524 H258" stroke="#ffe08a" stroke-opacity=".5" stroke-width="2"/>';
-    s += '<path d="M189,826 L225,908" stroke="#000" stroke-opacity=".3" stroke-width="3"/>';
+    s += '<path d="M189,871 L225,953" stroke="#000" stroke-opacity=".3" stroke-width="3"/>';
     return s;
   }
 
   /* ---------------- torso ---------------- */
-  var TORSO = 'M203,228 C196,244 170,254 140,264 C128,270 120,282 122,300 C124,332 138,352 146,388 C158,415 178,436 184,458 L180,528 L272,528 L266,458 C272,436 292,415 304,388 C312,352 326,332 328,300 C330,282 322,270 310,264 C280,254 256,244 249,228 Z';
+  var TORSO = 'M203,228 C196,244 170,254 140,264 C128,270 120,282 122,300 C124,332 138,352 146,388 C158,415 184,436 192,460 L190,528 L262,528 L260,460 C266,436 292,415 304,388 C312,352 326,332 328,300 C330,282 322,270 310,264 C280,254 256,244 249,228 Z';
   function torso(I) {
     var s = '<path d="' + TORSO + '" fill="url(#' + I('skinT') + ')"/><path d="' + TORSO + '" fill="url(#' + I('scale') + ')" opacity=".5"/><path d="' + TORSO + '" fill="url(#' + I('crk') + ')" opacity=".8"/>';
     /* neck / traps */
@@ -301,6 +298,9 @@
     s += '<path d="M200,364 Q225,370 250,364" fill="none" stroke="#0c0501" stroke-opacity=".5" stroke-width="2.6"/>';
     s += '<path d="M225,362 L225,462" stroke="#0c0501" stroke-opacity=".75" stroke-width="3"/>';
     s += '<ellipse cx="225" cy="456" rx="4" ry="2.6" fill="#0c0501" opacity=".7"/>';
+    /* ribcage edge */
+    function ribs() { return '<path d="M158,344 C166,352 172,364 174,376 M160,362 C168,370 172,380 174,392 M164,380 C170,388 174,398 176,408 M170,398 C176,406 180,416 182,426" fill="none" stroke="#0a0401" stroke-opacity=".6" stroke-width="2.8"/><path d="M160,342 C168,350 174,362 176,374 M162,360 C170,368 174,378 176,390" fill="none" stroke="#e0b07a" stroke-opacity=".28" stroke-width="1.6"/>'; }
+    s += ribs() + '<g transform="translate(451 0) scale(-1 1)">' + ribs() + '</g>';
     /* obliques / serratus */
     s += '<path d="M160,336 L180,346 M158,352 L182,362 M162,370 L184,380 M290,336 L270,346 M292,352 L268,362 M288,370 L266,380" stroke="#150a04" stroke-opacity=".5" stroke-width="2.6" fill="none"/>';
     s += '<path d="M176,392 C182,420 186,440 186,470 M274,392 C268,420 264,440 264,470" fill="none" stroke="#150a04" stroke-opacity=".35" stroke-width="3.5"/>';
@@ -564,18 +564,16 @@
   /* ---------------- scepter (origin: orb centre; shaft runs along +y) ---------------- */
   function prong(I) {
     var s = '';
-    var out = 'M-24,24 C-40,18 -54,6 -56,-16 C-58,-44 -48,-78 -34,-112 C-28,-130 -22,-146 -14,-172 C-16,-146 -12,-128 -8,-112 C-16,-88 -22,-60 -22,-32 C-22,-14 -16,2 -6,14 Z';
-    s += '<path d="' + out + '" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2.6" stroke-linejoin="round"/>';
-    /* inlay panels */
-    s += '<path d="M-48,-4 C-48,-30 -40,-58 -32,-84 L-24,-72 C-30,-50 -34,-30 -32,-8 Z" fill="url(#' + I('jadeD') + ')" opacity=".9"/>';
-    s += '<path d="M-42,-96 C-36,-112 -30,-126 -24,-142 L-20,-120 C-24,-112 -28,-100 -30,-92 Z" fill="url(#' + I('jadeD') + ')" opacity=".9"/>';
-    s += '<path d="M-56,-16 C-58,-44 -48,-78 -34,-112 C-28,-130 -22,-146 -14,-172" fill="none" stroke="url(#' + I('gold') + ')" stroke-width="2.4"/>';
-    s += '<path d="M-22,-32 C-22,-60 -16,-88 -8,-112" fill="none" stroke="#e0a63a" stroke-width="1.6"/>';
-    s += '<path d="M-52,-30 L-24,-40 M-46,-60 L-26,-66 M-38,-90 L-24,-94" stroke="#e0a63a" stroke-width="1.6"/>';
-    /* barbs */
-    s += '<path d="M-56,-10 L-68,26 L-52,10 Z M-50,-60 L-62,-56 L-48,-44 Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2"/>';
-    s += '<path d="M-56,-10 L-66,22" stroke="#e0a63a" stroke-width="1.4"/>';
-    s += '<path d="M-54,-6 C-52,-40 -42,-70 -30,-104" fill="none" stroke="#c9fff6" stroke-opacity=".28" stroke-width="2"/>';
+    var out = 'M-14,26 C-42,16 -60,-14 -55,-58 C-51,-98 -36,-134 -17,-176 C-25,-134 -34,-102 -36,-66 C-38,-30 -32,-4 -8,10 Z';
+    s += '<path d="' + out + '" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2.2" stroke-linejoin="round"/>';
+    s += '<path d="M-14,20 C-38,12 -50,-14 -46,-56 C-43,-92 -32,-124 -19,-160" fill="none" stroke="url(#' + I('jadeD') + ')" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 3"/>';
+    s += '<path d="M-55,-58 C-51,-98 -36,-134 -17,-176" fill="none" stroke="url(#' + I('gold') + ')" stroke-width="2"/>';
+    s += '<path d="M-36,-66 C-38,-30 -32,-4 -8,10" fill="none" stroke="#c98a2b" stroke-width="1.4"/>';
+    for (var k = 0; k < 6; k++) {
+      var y = -10 - k * 24, x = -57 + k * 3.4 - (k > 3 ? 1 : 0);
+      s += '<path d="M' + f(x + 1) + ',' + (y - 8) + ' L' + f(x - 9) + ',' + (y + 6) + ' L' + f(x + 2) + ',' + (y + 4) + ' Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="1.4"/>';
+    }
+    s += '<path d="M-53,-10 C-56,-50 -42,-96 -26,-138" fill="none" stroke="#c9fff6" stroke-opacity=".28" stroke-width="1.6"/>';
     return s;
   }
   function scepter(I) {
@@ -606,7 +604,7 @@
     s += bead(I, -24, 100, 9) + bead(I, 24, 106, 9);
     s += '<path d="M-24,110 v14 M24,116 v14" stroke="#e0a63a" stroke-width="1.6"/><path d="M-24,124 l-3,8 l6,0Z M24,130 l-3,8 l6,0Z" fill="#c98a2b"/>';
     /* central spike & orb */
-    s += '<path d="M0,-118 L7,-60 L-7,-60 Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2.2"/><path d="M0,-118 L0,-62" stroke="#e0a63a" stroke-width="1.6"/>';
+    s += '<path d="M0,-124 L4.5,-60 L-4.5,-60 Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2.2"/><path d="M0,-124 L0,-62" stroke="#e0a63a" stroke-width="1.6"/>';
     s += '<path d="M-10,-56 L10,-56 L6,-40 L-6,-40 Z" fill="url(#' + I('gold') + ')" stroke="' + OL + '" stroke-width="1.6"/>';
     s += '<path d="M-8,-70 l-6,-8 l6,3 Z M8,-70 l6,-8 l-6,3 Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="1.4"/>';
     s += '<circle cx="0" cy="-2" r="34" fill="url(#' + I('glow') + ')"/>';
@@ -626,32 +624,37 @@
     return s;
   }
   function scepterPlaced(I) {
-    return '<g transform="translate(427 208) rotate(5.2) scale(1.08)">' + scepter(I) + '</g>';
+    return '<g transform="translate(420 208) rotate(5.2) scale(1.08)">' + scepter(I) + '</g>';
   }
 
   /* ---------------- assemble ---------------- */
+  /* ---------------- assemble ---------------- */
+  function U(x) { return '<g transform="translate(0 -45)">' + x + '</g>'; }
+  var HS = 'translate(225 236) scale(.82) translate(-225 -236)';
+  var SERP = 'translate(161 262) scale(.72) translate(-186 -300)';
+  function serpL(I) { return '<g transform="' + SERP + '">' + serpent(I) + '</g>'; }
+  function serpR(I) { return '<g transform="translate(442 0) scale(-1 1)">' + serpL(I) + '</g>'; }
+  function armLs(I) { return '<g transform="translate(150 0) scale(.82 1) translate(-150 0)">' + armL(I) + '</g>'; }
+  function beltS(I) { return '<g transform="translate(225 498) scale(.9) translate(-225 -498)">' + belt(I) + '</g>'; }
+  function headW(I) { var h = head(I); return [0, 1, 2].map(function (i) { return '<g transform="' + HS + '">' + h[i] + '</g>'; }); }
+
   function svg(uid) {
     uid = uid == null ? '' : String(uid);
     function I(n) { return 'polynesian-' + n + '-' + uid; }
     var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 300">' + defs(I);
-    s += '<ellipse class="part-shadow" cx="85" cy="291.5" rx="66" ry="5" fill="#000" opacity="0.28"/>';
-    /* back mantle tail */
-    s += '<g class="part-cape" style="transform-origin: ' + vx(225) + 'px ' + vy(255) + 'px">' + T(mantleBack(I, 246, 880)) + '</g>';
-    /* serpents */
-    s += '<g class="part-cape" style="transform-origin: ' + vx(176) + 'px ' + vy(268) + 'px">' + T('<g transform="translate(162 246) scale(.84) translate(-176 -270)">' + serpent(I) + '</g>') + '</g>';
-    s += '<g class="part-cape" style="transform-origin: ' + vx(266) + 'px ' + vy(268) + 'px">' + T('<g transform="translate(442 0) scale(-1 1)"><g transform="translate(162 246) scale(.84) translate(-176 -270)">' + serpent(I) + '</g></g>') + '</g>';
-    /* legs */
+    s += '<ellipse class="part-shadow" cx="85" cy="291.5" rx="60" ry="4.5" fill="#000" opacity="0.28"/>';
+    s += '<g class="part-cape" style="transform-origin: ' + vx(225) + 'px ' + vy(215) + 'px">' + T(mantleBack(I, 201, 880)) + '</g>';
+    s += '<g class="part-cape" style="transform-origin: ' + vx(165) + 'px ' + vy(230) + 'px">' + T(U(serpL(I))) + '</g>';
+    s += '<g class="part-cape" style="transform-origin: ' + vx(277) + 'px ' + vy(230) + 'px">' + T(U(serpR(I))) + '</g>';
     s += T(legs(I));
-    /* body */
-    s += '<g class="part-body" style="transform-origin: ' + vx(225) + 'px ' + vy(420) + 'px">';
-    s += T(torso(I));
-    s += '<g class="part-cape" style="transform-origin: ' + vx(225) + 'px ' + vy(515) + 'px">' + T(skirt(I) + apron(I)) + '</g>';
-    s += T('<g transform="translate(150 0) scale(.87 1) translate(-150 0)">' + armL(I) + '</g>' + belt(I) + collar(I) + plate(I));
-    s += T(shoulderTufts(I, -1));
-    s += (function () { var h = head(I); return '<g class="part-head" style="transform-origin: ' + vx(226) + 'px ' + vy(240) + 'px">' + T(h[0]) + '<g class="part-eyes" style="transform-origin: ' + vx(226) + 'px ' + vy(184) + 'px">' + T(h[1]) + '</g>' + T(h[2]) + '</g>'; })();
+    s += '<g class="part-body" style="transform-origin: ' + vx(225) + 'px ' + vy(370) + 'px">';
+    s += T(U(torso(I)));
+    s += '<g class="part-cape" style="transform-origin: ' + vx(225) + 'px ' + vy(470) + 'px">' + T(U(skirt(I) + apron(I))) + '</g>';
+    s += T(U(armLs(I) + beltS(I) + collar(I) + plate(I) + shoulderTufts(I, -1)));
+    var h = headW(I);
+    s += '<g class="part-head" style="transform-origin: ' + vx(226) + 'px ' + vy(195) + 'px">' + T(U(h[0])) + '<g class="part-eyes" style="transform-origin: ' + vx(226) + 'px ' + vy(148) + 'px">' + T(U(h[1])) + '</g>' + T(U(h[2])) + '</g>';
     s += '</g>';
-    /* weapon arm + scepter */
-    s += '<g class="part-weapon" style="transform-origin: ' + vx(335) + 'px ' + vy(285) + 'px">' + T(scepterPlaced(I) + '<g transform="translate(300 0) scale(.87 1) translate(-300 0)">' + armR(I) + fist(I) + '</g>' + plateR(I) + shoulderTufts(I, 1)) + '</g>';
+    s += '<g class="part-weapon" style="transform-origin: ' + vx(335) + 'px ' + vy(240) + 'px">' + T(scepterPlaced(I) + U('<g transform="translate(300 0) scale(.82 1) translate(-300 0)">' + armR(I) + fist(I) + '</g>' + plateR(I) + shoulderTufts(I, 1))) + '</g>';
     s += '</svg>';
     return s;
   }
@@ -661,20 +664,18 @@
     uid = uid == null ? '' : String(uid);
     function I(n) { return 'polynesian-pt-' + n + '-' + uid; }
     var bg = I('bg'), cl = I('clip');
+    var h = headW(I);
     var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">' + defs(I) +
       '<defs><radialGradient id="' + bg + '" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#16333a"/><stop offset=".55" stop-color="#0b1417"/><stop offset="1" stop-color="#050708"/></radialGradient>' +
       '<clipPath id="' + cl + '"><rect x="0" y="0" width="120" height="120" rx="16"/></clipPath></defs>' +
       '<g clip-path="url(#' + cl + ')"><rect width="120" height="120" fill="url(#' + bg + ')"/>' +
       '<circle cx="60" cy="52" r="52" fill="url(#' + I('tglow') + ')" opacity=".35"/>' +
       '<g opacity=".8">' + bolt([[8, 30], [16, 40], [10, 48], [20, 60]], 1) + bolt([[112, 24], [104, 36], [110, 44], [100, 56]], 1) + '</g>' +
-      '<g transform="translate(-12 4) scale(0.32)">' +
-      mantleBack(I, 246, 300) +
-      '<g transform="translate(162 246) scale(.84) translate(-176 -270)">' + serpent(I) + '</g><g transform="translate(442 0) scale(-1 1)"><g transform="translate(162 246) scale(.84) translate(-176 -270)">' + serpent(I) + '</g></g>' +
-      torso(I) + armTop(I) + '<g transform="translate(450 0) scale(-1 1)">' + armTop(I) + '</g>' +
-      collar(I) + plate(I) + plateR(I) + shoulderTufts(I, -1) + shoulderTufts(I, 1) +
-      head(I).join('') +
-      '</g>' +
-      '<rect x="0" y="92" width="120" height="28" fill="#050708" opacity="0"/></g>' +
+      '<g transform="translate(-14 6) scale(0.33)">' +
+      mantleBack(I, 201, 255) +
+      U(serpL(I) + serpR(I) + torso(I) + armTop(I) + '<g transform="translate(450 0) scale(-1 1)">' + armTop(I) + '</g>' +
+        collar(I) + plate(I) + plateR(I) + shoulderTufts(I, -1) + shoulderTufts(I, 1) + h[0] + h[1] + h[2]) +
+      '</g></g>' +
       '<rect x="1.5" y="1.5" width="117" height="117" rx="15" fill="none" stroke="' + OL + '" stroke-width="3"/>' +
       '<rect x="4.6" y="4.6" width="110.8" height="110.8" rx="12.5" fill="none" stroke="#c98a2b" stroke-width="1.3" opacity=".9"/>' +
       '</svg>';
