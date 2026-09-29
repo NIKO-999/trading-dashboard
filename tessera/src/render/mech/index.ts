@@ -10,6 +10,7 @@ import { render as mongols } from './mongols';
 import { render as persia } from './persia';
 import { render as rome } from './rome';
 import { render as tibet } from './tibet';
+import { render as vikings } from './vikings';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { egypt, ethiopia, japan, korea, mongols, persia, rome, tibet, zulu };
+export const MECH_RENDER: MechRenderRegistry = { egypt, ethiopia, japan, korea, mongols, persia, rome, tibet, vikings, zulu };
