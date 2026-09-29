@@ -541,10 +541,160 @@ function drawForest(ctx: Ctx, t: Tile, cx: number, cy: number, P: BiomePalette) 
   for (const tr of trees) drawTree(ctx, t.biome, tr.x, tr.y, 0.85 + rand(t.seed, 70 + tr.i) * 0.35, P, tr.i);
 }
 
+// ---------------------------------------------------------------- Inca trees and stonework
+
+/** The mountain trees of the Andes: gnarled queñua (polylepis), a tall eucalyptus, and a columnar San Pedro cactus. */
+function incaTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 3;
+  if (v === 0) {
+    // queñua: a twisted trunk of peeling red paper-bark under low, dense clumps of small dark leaves
+    const bark = '#a3532c';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = bark;
+    ctx.lineWidth = 3.2 * k;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x - 3.4 * k, y - 6 * k, x + 1 * k, y - 11 * k);
+    ctx.stroke();
+    ctx.strokeStyle = shade(bark, 0.35);
+    ctx.lineWidth = 0.9 * k;
+    ctx.beginPath();
+    ctx.moveTo(x - 0.8 * k, y);
+    ctx.quadraticCurveTo(x - 4.2 * k, y - 6 * k, x + 0.2 * k, y - 11 * k);
+    ctx.stroke();
+    for (const [dx, dy] of [[-2.6, -3], [-2.2, -7], [0.4, -9.4], [-0.6, -5]] as const) poly(ctx, [x + dx * k, y + dy * k, x + (dx + 1.6) * k, y + (dy - 0.6) * k, x + (dx + 0.6) * k, y + (dy + 1.6) * k], '#e0a470'); // peeling flakes
+    for (const [tx, ty] of [[-7, -15], [8, -14], [1, -18]] as const) line(ctx, x + 1 * k, y - 10 * k, x + tx * k, y + ty * k, bark, 1.5 * k);
+    const clumps: [number, number, number, number][] = [[-7, -15, 5.4, 3.4], [8, -14, 5.2, 3.2], [1, -19, 5.8, 3.6], [-2, -13.6, 5, 3.2], [4.4, -11.6, 4.4, 2.8]];
+    for (const [cx, cy, rx, ry] of clumps) {
+      ellipse(ctx, x + cx * k, y + cy * k + 1.2 * k, rx * k, ry * k, shade(P.forest, -0.28));
+      ellipse(ctx, x + cx * k - 0.4 * k, y + cy * k, rx * 0.94 * k, ry * 0.9 * k, shade(P.forest, -0.06));
+      ellipse(ctx, x + cx * k - rx * 0.22 * k, y + cy * k - ry * 0.3 * k, rx * 0.56 * k, ry * 0.5 * k, shade(P.forest, 0.14));
+    }
+    for (let i = 0; i < 5; i++) ellipse(ctx, x + (rand(variant + 9, i) - 0.5) * 16 * k, y - (12 + rand(variant + 4, i) * 8) * k, 0.55 * k, 0.5 * k, shade(P.forest, 0.4));
+  } else if (v === 1) {
+    // eucalyptus, brought to the highlands: a tall pale trunk streaked with bark and a thin crown of drooping leaves
+    line(ctx, x, y, x + 0.8 * k, y - 25 * k, '#cdb992', 2.4 * k);
+    line(ctx, x + 0.5 * k, y, x + 1.4 * k, y - 25 * k, '#a08a64', 0.9 * k);
+    for (const [ty, dx] of [[-6, -0.8], [-11, 0.6], [-16, -0.6], [-20, 0.4]] as const) line(ctx, x + dx * k, y + ty * k, x + (dx + 0.9) * k, y + (ty - 2.4) * k, '#8a7654', 0.6 * k); // bark strips
+    const tips: [number, number][] = [[-7, -22], [7, -24], [0, -29], [-3, -17], [6, -18]];
+    for (const [tx, ty] of tips) {
+      line(ctx, x + 0.8 * k, y - (Math.abs(ty) > 24 ? 21 : 15) * k, x + tx * k, y + ty * k, '#a08a64', 1 * k);
+      for (let i = 0; i < 5; i++) {
+        const dx = (i - 2) * 2.1 * k;
+        poly(ctx, [x + tx * k, y + ty * k, x + tx * k + dx - 0.9 * k, y + ty * k + 7.4 * k, x + tx * k + dx + 0.6 * k, y + ty * k + 7 * k], i % 2 ? mix(P.forest, '#6fa8a0', 0.45) : mix(P.forest, '#8fbfae', 0.35));
+      }
+    }
+  } else {
+    // San Pedro cactus: a ribbed green column with two upturned arms, white spines and a flower
+    const g = '#5f9a4a';
+    ctx.lineCap = 'round';
+    for (const [dx, h, w] of [[0, 20, 5]] as const) {
+      line(ctx, x + dx * k, y - 1 * k, x + dx * k, y - h * k, shade(g, -0.22), w * k);
+      line(ctx, x + (dx - 0.9) * k, y - 1 * k, x + (dx - 0.9) * k, y - (h - 0.4) * k, g, (w - 1.9) * k);
+      line(ctx, x + (dx - 1.4) * k, y - 2 * k, x + (dx - 1.4) * k, y - (h - 1) * k, shade(g, 0.3), 0.8 * k);
+    }
+    for (const s of [-1, 1]) { // arms
+      const ay = y - (9 + (s > 0 ? 2.4 : 0)) * k;
+      ctx.strokeStyle = shade(g, s > 0 ? -0.22 : -0.1);
+      ctx.lineWidth = 3.2 * k;
+      ctx.beginPath();
+      ctx.moveTo(x + s * 1.5 * k, ay);
+      ctx.quadraticCurveTo(x + s * 7 * k, ay + 1 * k, x + s * 7 * k, ay - 6.4 * k);
+      ctx.stroke();
+      line(ctx, x + s * 6.6 * k, ay - 1 * k, x + s * 6.6 * k, ay - 6 * k, shade(g, s > 0 ? 0.04 : 0.24), 1 * k);
+    }
+    for (const [dx, dy] of [[-1.4, -4], [0.8, -7], [-0.6, -11], [1.2, -14], [-1.2, -17], [-6.4, -13], [6.4, -14], [6.8, -18], [-6.8, -16]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.4 * k, 0.4 * k, '#f4efe0'); // spines
+    ellipse(ctx, x, y - 20.4 * k, 1.9 * k, 1.5 * k, '#f8f2e8'); // a night-blooming flower
+    ellipse(ctx, x, y - 20.6 * k, 0.8 * k, 0.6 * k, '#f2c53a');
+  }
+}
+
+/** A fitted-stone Inca wall: a trapezoid block (its sides lean in), coursed masonry, and optional trapezoid door and niches. */
+function incaWall(ctx: Ctx, x: number, y: number, w: number, h: number, taper: number, color: string, lid: string, door = false, niches = 0) {
+  const hw = w / 2, hh = w / 4, th = 1 - taper, hwt = hw * th, hht = hh * th;
+  const Lb = { x: x - hw, y }, Fb = { x, y: y + hh }, Rb = { x: x + hw, y };
+  const Lt = { x: x - hwt, y: y - h }, Ft = { x, y: y - h + hht }, Rt = { x: x + hwt, y: y - h }, Bt = { x, y: y - h - hht };
+  poly(ctx, [Lb.x, Lb.y, Fb.x, Fb.y, Ft.x, Ft.y, Lt.x, Lt.y], shade(color, 0.08));
+  poly(ctx, [Fb.x, Fb.y, Rb.x, Rb.y, Rt.x, Rt.y, Ft.x, Ft.y], shade(color, -0.18));
+  poly(ctx, [Lt.x, Lt.y, Ft.x, Ft.y, Rt.x, Rt.y, Bt.x, Bt.y], lid);
+  const lerp = (a: { x: number; y: number }, b: { x: number; y: number }, t: number) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  const rows = Math.max(2, Math.round(h / 2.4));
+  for (const [face, A0, A1, B0, B1, d] of [['L', Lb, Fb, Lt, Ft, -0.32], ['R', Fb, Rb, Ft, Rt, -0.42]] as const) {
+    const pt = (u: number, v: number) => lerp(lerp(A0, A1, u), lerp(B0, B1, u), v);
+    for (let r = 1; r < rows; r++) { // courses
+      const a = pt(0, r / rows), b = pt(1, r / rows);
+      line(ctx, a.x, a.y, b.x, b.y, shade(color, d), 0.45);
+    }
+    for (let r = 0; r < rows; r++) for (const s of [0.28, 0.6, 0.86]) { // staggered joints
+      const u = Math.min(0.95, s + (r % 2 ? 0.12 : 0) - (r % 3 === 0 ? 0.05 : 0));
+      const a = pt(u, r / rows), b = pt(u, (r + 1) / rows);
+      line(ctx, a.x, a.y, b.x, b.y, shade(color, d), 0.35);
+    }
+    if (face === 'R' && door) { // the trapezoid doorway, a narrow lintel above
+      const p = [pt(0.34, 0), pt(0.7, 0), pt(0.64, 0.66), pt(0.4, 0.66)];
+      poly(ctx, p.flatMap((q) => [q.x, q.y]), '#241610');
+      const l0 = pt(0.3, 0.7), l1 = pt(0.74, 0.7), l2 = pt(0.74, 0.8), l3 = pt(0.3, 0.8);
+      poly(ctx, [l0.x, l0.y, l1.x, l1.y, l2.x, l2.y, l3.x, l3.y], shade(color, 0.22));
+    }
+    if (face === 'L' && niches > 0) for (let n = 0; n < niches; n++) { // trapezoid niches
+      const u0 = 0.2 + n * 0.32, p = [pt(u0, 0.42), pt(u0 + 0.2, 0.42), pt(u0 + 0.17, 0.74), pt(u0 + 0.03, 0.74)];
+      poly(ctx, p.flatMap((q) => [q.x, q.y]), shade(color, -0.55));
+    }
+  }
+  return { Lt, Ft, Rt, Bt };
+}
+
+/** A thatched roof of golden ichu grass: bundled strands down each slope, a lashed ridge and a ragged eave. */
+function incaThatch(ctx: Ctx, x: number, y: number, w: number, rh: number, roofC: string) {
+  roof(ctx, x, y, w, rh, roofC);
+  const hw = w / 2, hh = w / 4, ax = x, ay = y - rh;
+  const mixp = (px: number, py: number, f: number) => ({ x: px + (ax - px) * f, y: py + (ay - py) * f });
+  for (let i = 1; i < 6; i++) { // bundled strands down each slope
+    const t = i / 6;
+    line(ctx, ax, ay, x - hw + hw * t, y + hh * t, shade(roofC, -0.22), 0.5);
+    line(ctx, ax, ay, x + hw * t, y + hh * (1 - t), shade(roofC, -0.4), 0.5);
+  }
+  for (const f of [0.34, 0.66]) { // horizontal thatch tiers
+    const a = mixp(x - hw, y, f), b = mixp(x, y + hh, f), c = mixp(x + hw, y, f);
+    line(ctx, a.x, a.y, b.x, b.y, shade(roofC, -0.3), 0.6);
+    line(ctx, b.x, b.y, c.x, c.y, shade(roofC, -0.45), 0.6);
+  }
+  line(ctx, x - hw, y, x, y + hh, shade(roofC, -0.5), 0.9); // eave shadow
+  line(ctx, x, y + hh, x + hw, y, shade(roofC, -0.65), 0.9);
+  for (let i = 0; i < 7; i++) { // ragged fringe along the eave
+    const t = i / 6;
+    line(ctx, x - hw + hw * t, y + hh * t, x - hw + hw * t - 0.2, y + hh * t + 1.2, shade(roofC, -0.2), 0.5);
+    line(ctx, x + hw * t, y + hh * (1 - t), x + hw * t, y + hh * (1 - t) + 1.2, shade(roofC, -0.35), 0.5);
+  }
+  line(ctx, ax - 1.6, ay - 1.6, ax + 0.2, ay + 1.8, '#7a5230', 0.8); // crossed ridge poles
+  line(ctx, ax + 1.6, ay - 1.6, ax - 0.2, ay + 1.8, '#7a5230', 0.8);
+}
+
+function incaBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, w: number, h: number) {
+  const stone = '#b9ad98', stoneWarm = '#c4b298';
+  const green = '#8fbf4f', greenD = '#6f9f42';
+  if (big) {
+    // a stepped terrace of fitted stone with green crop rows, and a thatched hall on top with a golden sun on its ridge
+    const t1 = incaWall(ctx, x, y + 2, w + 14, 4.2, 0.05, stone, green);
+    for (const f of [0.3, 0.55, 0.8]) line(ctx, t1.Lt.x + (t1.Bt.x - t1.Lt.x) * f, t1.Lt.y + (t1.Bt.y - t1.Lt.y) * f, t1.Ft.x + (t1.Rt.x - t1.Ft.x) * f, t1.Ft.y + (t1.Rt.y - t1.Ft.y) * f, greenD, 0.7);
+    const t2 = incaWall(ctx, x, y - 2.2, w + 6, 4.2, 0.07, stoneWarm, mix(green, '#e0c860', 0.35));
+    for (const f of [0.3, 0.6]) line(ctx, t2.Lt.x + (t2.Bt.x - t2.Lt.x) * f, t2.Lt.y + (t2.Bt.y - t2.Lt.y) * f, t2.Ft.x + (t2.Rt.x - t2.Ft.x) * f, t2.Ft.y + (t2.Rt.y - t2.Ft.y) * f, '#a88a3a', 0.7);
+    const t3 = incaWall(ctx, x, y - 6.4, w - 4, 6.4, 0.16, stone, shade(stone, 0.1), true, 2);
+    void t3;
+    incaThatch(ctx, x, y - 12.8, w - 1, 8.4, roofC);
+    ellipse(ctx, x, y - 22.2, 2, 2, '#f0c43a');
+    ellipse(ctx, x, y - 22.2, 1, 1, '#2fb5a8');
+  } else {
+    incaWall(ctx, x, y, w, h - 1, 0.16, stone, shade(stone, 0.1), true, 1);
+    incaThatch(ctx, x, y - h + 1, w + 3.6, 6.2, roofC);
+  }
+}
+
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
+  if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
       // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
@@ -1093,6 +1243,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       }
       break;
     }
+    case 'inca':
+      incaBuilding(ctx, x, y, big, roofC, w, h);
+      break;
     case 'egypt':
       box(ctx, x, y, w, h, '#ecdcaa');
       if (big) {
