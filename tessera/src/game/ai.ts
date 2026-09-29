@@ -32,7 +32,7 @@ export function aiStep(s: GameState): boolean {
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
     if (!c.pendingRewards.length) continue;
-    const [a, b] = rewardOptions(c.pendingRewards[0]);
+    const [a, b] = rewardOptions(c.pendingRewards[0], s.players[pid].tribe);
     const threatened = s.units.some((u) => u.owner !== pid && dist(u.x, u.y, c.x, c.y) <= 2);
     const pick = a.id === 'walls' ? (threatened ? a : b) : a.id === 'growth' ? b : a.id === 'park' ? b : a;
     applyReward(s, c, pick.id);

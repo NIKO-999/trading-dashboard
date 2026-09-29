@@ -911,8 +911,8 @@ export class GameView {
     if (!c) return;
     this.rewardOpen = true;
     const level = c.pendingRewards[0];
-    const [a, b] = rewardOptions(level);
     const tribe = this.s.players[this.me].tribe;
+    const [a, b] = rewardOptions(level, tribe);
     const pick = (id: typeof a.id) => {
       sfx.play('build');
       this.rewardOpen = false;

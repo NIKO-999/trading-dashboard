@@ -145,7 +145,16 @@ export interface RewardOption {
 /** City levels whose reward can be a Colossus. */
 export const GIANT_LEVELS = [5, 8];
 
-export function rewardOptions(level: number): [RewardOption, RewardOption] {
+export function rewardOptions(level: number, tribe?: string): [RewardOption, RewardOption] {
+  // Lakota camps move with the herds and keep no permanent buildings: no Workshop, no City Walls (see game/mech/lakota)
+  if (tribe === 'lakota' && level === 2) return [
+    { id: 'resources', name: 'Trade Robes', desc: 'Receive 5★ right now. A moving camp keeps no workshop.' },
+    { id: 'explorer', name: 'Pathfinder', desc: 'A scout roams the land and reveals the map.' },
+  ];
+  if (tribe === 'lakota' && level === 3) return [
+    { id: 'borders', name: 'Wide Pastures', desc: 'Camp territory expands to 5×5. A moving camp builds no walls.' },
+    { id: 'resources', name: 'Treasury', desc: 'Receive 5★ right now.' },
+  ];
   if (level === 2) return [
     { id: 'workshop', name: 'Workshop', desc: '+1★ income every turn.' },
     { id: 'explorer', name: 'Pathfinder', desc: 'A scout roams the land and reveals the map.' },
@@ -172,6 +181,7 @@ export function rewardOptions(level: number): [RewardOption, RewardOption] {
 export function applyReward(s: GameState, c: City, id: RewardOption['id']) {
   const p = s.players[c.owner];
   c.pendingRewards.shift();
+  if (p.tribe === 'lakota') id = id === 'workshop' ? 'resources' : id === 'walls' ? 'borders' : id; // no permanent buildings
   switch (id) {
     case 'workshop': c.workshop = true; break;
     case 'explorer': explore(s, c.owner, c.x, c.y, 18); break;
