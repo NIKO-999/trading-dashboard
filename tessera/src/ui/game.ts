@@ -1189,7 +1189,7 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
 }
 
 function projectileFor(kind: UnitKind, tribe: TribeId): Fx['projectiles'][number]['kind'] {
-  if (kind === 'catapult') return ({ egypt: 'bolt', polynesia: 'nut', pirates: 'ball', greeks: 'bolt' } as Partial<Record<TribeId, 'bolt' | 'nut' | 'ball'>>)[tribe] ?? 'stone';
+  if (kind === 'catapult') return ({ egypt: 'bolt', pirates: 'ball', greeks: 'bolt' } as Partial<Record<TribeId, 'bolt' | 'ball'>>)[tribe] ?? 'stone';
   if (kind === 'warship') return tribe === 'pirates' ? 'ball' : 'stone';
   if (kind === 'buccaneer') return 'shot';
   return 'arrow';

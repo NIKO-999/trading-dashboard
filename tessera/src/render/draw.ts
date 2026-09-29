@@ -543,7 +543,34 @@ function drawForest(ctx: Ctx, t: Tile, cx: number, cy: number, P: BiomePalette) 
 
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
-  if (biome === 'egypt' || biome === 'polynesia') {
+  if (biome === 'polynesia') {
+    if (variant % 2 === 0) {
+      // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
+      line(ctx, x, y, x + 0.4 * k, y - 15 * k, P.trunk, 2.4 * k);
+      line(ctx, x - 0.6 * k, y, x - 0.2 * k, y - 15 * k, shade(P.trunk, 0.3), 0.7 * k);
+      for (let i = 0; i < 4; i++) line(ctx, x - 1.4 * k, y - (3 + i * 3) * k, x + 1.6 * k, y - (2.4 + i * 3) * k, shade(P.trunk, -0.35), 0.5 * k);
+      const cx = x + 0.4 * k, cy = y - 15.5 * k;
+      for (const dx of [-1, 1]) poly(ctx, [cx, cy + 1 * k, cx + dx * 5 * k, cy + 7 * k, cx + dx * 3 * k, cy + 3 * k], '#8a6a3a'); // dead fronds
+      for (let i = 0; i < 8; i++) {
+        const a = -Math.PI / 2 + (i - 3.5) * 0.44;
+        const ex = cx + Math.cos(a) * 11 * k, ey = cy + Math.sin(a) * 5 * k + 5 * k;
+        poly(ctx, [cx, cy - 1, ex, ey, cx + Math.cos(a) * 4 * k, cy + 2 * k], i % 2 ? P.forest : shade(P.forest, 0.25));
+        line(ctx, cx, cy, ex, ey, shade(P.forest, -0.3), 0.4 * k);
+      }
+    } else {
+      // tī kōuka, the cabbage tree: a thick trunk that forks into spiky tufts
+      line(ctx, x, y, x + 0.5 * k, y - 8 * k, P.trunk, 3.4 * k);
+      for (const [dx, dy] of [[-4, -13], [0.6, -16], [5, -12]] as const) {
+        line(ctx, x + 0.5 * k, y - 7 * k, x + dx * k, y + dy * k + 3 * k, P.trunk, 1.6 * k);
+        for (let i = 0; i < 7; i++) {
+          const a = -Math.PI / 2 + (i - 3) * 0.5;
+          poly(ctx, [x + dx * k, y + dy * k + 3 * k, x + dx * k + Math.cos(a) * 6.5 * k, y + dy * k + 3 * k + Math.sin(a) * 6.5 * k, x + dx * k + Math.cos(a + 0.22) * 2 * k, y + dy * k + 3 * k + Math.sin(a + 0.22) * 2 * k], i % 2 ? shade(P.forest, 0.2) : P.forest);
+        }
+      }
+    }
+    return;
+  }
+  if (biome === 'egypt') {
     // palm: curved trunk and a star of fronds
     ctx.strokeStyle = P.trunk;
     ctx.lineWidth = 2.4 * k;
@@ -558,7 +585,6 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
       const ex = tx + Math.cos(a) * 11 * k, ey = ty + Math.sin(a) * 5 * k + 5.5 * k;
       poly(ctx, [tx, ty - 1, ex, ey, tx + Math.cos(a) * 4 * k, ty + 2.5 * k], i % 2 ? P.forest : shade(P.forest, 0.22));
     }
-    if (biome === 'polynesia') ellipse(ctx, tx, ty + 2 * k, 1.8 * k, 1.8 * k, '#6b4a1e');
     return;
   }
   const cone = (bx: number, by: number, h: number, w: number, col: string) => {
@@ -864,10 +890,25 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
         roof(ctx, x, y - h, w + 2, 5, roofC);
       }
       break;
-    case 'polynesia':
-      box(ctx, x, y, w, h - 2, '#c8a36a');
-      roof(ctx, x, y - h + 2, w + 5, big ? 13 : 9, '#a8864a');
+    case 'polynesia': {
+      // a whare: carved timber walls under a steep thatched roof, red carved barge-boards and a tekoteko at the apex
+      const rh = big ? 13 : 9;
+      box(ctx, x, y, w, h - 2, '#7a5230');
+      for (const v of [0.35, 0.7]) ctx.fillStyle = '#5a3a1e', ctx.fillRect(x - w / 2, y - (h - 2) * v, w, 0.8);
+      roof(ctx, x, y - h + 2, w + 5, rh, '#c9a45a');
+      const ay = y - h + 2 - rh, ex = (w + 5) / 2, ey = y - h + 2;
+      line(ctx, x, ay, x - ex, ey, '#b3302a', 1.4);
+      line(ctx, x, ay, x + ex, ey, '#8f2222', 1.4);
+      for (const t of [0.35, 0.65]) { ellipse(ctx, x - ex * t, ay + (ey - ay) * t, 0.9, 0.9, '#f4efe0'); ellipse(ctx, x + ex * t, ay + (ey - ay) * t, 0.9, 0.9, '#f4efe0'); }
+      ellipse(ctx, x, ay - 1.6, 1.3, 1.4, '#a5673a'); // tekoteko
+      line(ctx, x - 1.6, ay - 0.4, x + 1.6, ay - 0.4, '#a5673a', 0.9);
+      if (big) {
+        for (const ox of [-w * 0.38, w * 0.38]) box(ctx, x + ox, y + 1, 1.6, h - 1, '#5a3a1e'); // verandah posts
+        ellipse(ctx, x, y - 1.6, 2.2, 3, '#2a1a10'); // the doorway
+        line(ctx, x - 2.6, y - 4.6, x + 2.6, y - 4.6, '#b3302a', 1.2);
+      }
       break;
+    }
     case 'rome':
       box(ctx, x, y, w, h, '#f7f4ee');
       roof(ctx, x, y - h, w + 2, 6, roofC);
