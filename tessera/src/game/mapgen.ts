@@ -1,6 +1,7 @@
 import { TRIBES, unitFor } from '../data/tribes';
 import { CLIMATES, type ClimateTerrain } from '../data/terrain';
 import { UNITS } from '../data/units';
+import { hookSetup } from './mech';
 import { perkSum } from './perks';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
@@ -114,6 +115,7 @@ export function createGame(opts: NewGameOptions): GameState {
 
   placeVillagesAndRuins(state, rng, capitals);
   ensureGrowthResources(state, rng);
+  hookSetup(state);
   for (const p of players) revealAround(state, p.id);
   return state;
 }

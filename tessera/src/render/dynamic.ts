@@ -1,5 +1,7 @@
 // Everything on the map that moves: units walking tile by tile, swimming fish and whales,
 // water glints, selection rings, combat effects, plus the crisp screen-space labels on top.
+import { unitVisibleTo } from '../game/mech';
+import { MECH_RENDER } from './mech';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
@@ -90,7 +92,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   drawSelection(ctx, s, ov, now, explored);
 
   const units = s.units
-    .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)))
+    .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)) && (viewer < 0 || unitVisibleTo(s, viewer, u)))
     .sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
   const motion = new Map<number, Motion>();
   for (const u of units) {
@@ -149,6 +151,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
       poly(ctx, [ex, ey, ex - Math.cos(ang) * 6 - Math.sin(ang) * 2.5, ey - Math.sin(ang) * 3 + Math.cos(ang) * 1.2, ex - Math.cos(ang) * 6 + Math.sin(ang) * 2.5, ey - Math.sin(ang) * 3 - Math.cos(ang) * 1.2], '#ff4040');
     }
   }
+  for (const m of Object.values(MECH_RENDER)) m?.overlay?.(ctx, s, viewer, cam, ov, now);
   ctx.restore();
 
   drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);

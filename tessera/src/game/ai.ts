@@ -1,4 +1,5 @@
 import { UNITS } from '../data/units';
+import { hookAi } from './mech';
 import { dist, isLand, neighbors, tileAt } from './grid';
 import { roadNetwork } from './network';
 import {
@@ -26,6 +27,7 @@ export function aiStep(s: GameState): boolean {
     economyDone = false;
   }
   const p = s.players[pid];
+  if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {

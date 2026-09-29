@@ -1,5 +1,6 @@
 import { emit } from './events';
 import { revealAround } from './mapgen';
+import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
 import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
@@ -11,7 +12,7 @@ const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
 export function startTurn(s: GameState) {
   const p = s.players[s.current];
   if (s.turn > 0) {
-    const inc = income(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
+    const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;
   }
   for (const u of s.units) {
@@ -37,6 +38,7 @@ export function startTurn(s: GameState) {
       emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
     }
   }
+  hookTurnStart(s, p.id);
   revealAround(s, p.id);
 }
 
@@ -46,6 +48,7 @@ export function endTurn(s: GameState) {
   for (const p of s.players) if (p.alive) checkElimination(s, p.id, s.current);
   checkGameOver(s);
   if (s.over) return;
+  hookTurnEnd(s, s.current);
   let next = s.current;
   do {
     next = (next + 1) % s.players.length;

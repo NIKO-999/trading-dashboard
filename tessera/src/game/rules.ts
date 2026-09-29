@@ -1,5 +1,6 @@
 import { TECH_BY_ID, techsFor } from '../data/techs';
 import { unitFor } from '../data/tribes';
+import { hookActions, hookAfterAttack, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
 import { perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
@@ -234,7 +235,17 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
   return TRAIN_BASE.map((k) => unitFor(tribe, k));
 }
 
+/** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
+  const acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t)];
+  for (const a of acts) {
+    const why = hookBlock(s, pid, a.id, t);
+    if (why && a.enabled) { a.enabled = false; a.reason = why; }
+  }
+  return acts;
+}
+
+function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
   const p = s.players[pid];
   const acts: Action[] = [];
   const mine = tileOwnerPlayer(s, t) === pid;
@@ -368,6 +379,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     return true;
   };
 
+  if (id.startsWith('mech:')) return hookDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     spawnUnit(s, kind, pid, t.x, t.y, t.cityId);
@@ -443,6 +455,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
     joinCity(c);
     claimTerritory(s, c.id);
     emit({ type: 'capture', player: pid, cityId: c.id, from });
+    hookCityCaptured(s, c, from);
     checkElimination(s, from, pid);
     if (s.players[pid].tribe === 'persia') { // Royal Tribute
       s.players[pid].stars += 3;
@@ -525,7 +538,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const range = Math.max(1, d.move + perkUnit(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
+  const range = Math.max(1, d.move + perkUnit(s, u, 'move') + hookStat(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {
@@ -565,6 +578,10 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
         }
       }
       if (enemyNear(to.x, to.y)) stop = true;
+      const step = { cost, stop, forbid: false, opt }; // empire mechanics may change a step
+      hookMoveStep(s, u, from, to, step);
+      if (step.forbid) continue;
+      cost = step.cost; stop = step.stop; opt = step.opt;
       if (cost > left) continue;
       const remaining = stop ? 0 : left - cost;
       const fromI = from.y * size + from.x;
@@ -582,8 +599,13 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
     }
   }
   const startI = start.y * size + start.x;
+  for (const ex of hookExtraMoves(s, u)) { // jumps (ziplines, portals...) from empire mechanics
+    const i = ex.y * size + ex.x;
+    if (!out.has(i) && !unitAt(s, ex.x, ex.y) && isExplored(s, pid, ex.x, ex.y)) { out.set(i, ex); parent[i] = startI; }
+  }
   return [...out.entries()].map(([i, opt]) => {
     const path: { x: number; y: number }[] = [];
+    if (opt.path) return opt; // a jump brings its own path
     for (let j = i, guard = 0; j !== startI && j >= 0 && guard < 64; j = parent[j], guard++) path.unshift({ x: j % size, y: Math.floor(j / size) });
     return { ...opt, path };
   });
@@ -679,19 +701,27 @@ const unitDef = (s: GameState, u: Unit) => def(u).def
 export function attackOptions(s: GameState, u: Unit): Unit[] {
   const d = def(u);
   if (u.attacked || d.atk <= 0) return [];
-  return s.units.filter((e) => e.owner !== u.owner && dist(e.x, e.y, u.x, u.y) <= d.range && isExplored(s, u.owner, e.x, e.y));
+  const range = d.range + hookStat(s, u, 'range');
+  const targets = s.units.filter((e) => e.owner !== u.owner && dist(e.x, e.y, u.x, u.y) <= range && isExplored(s, u.owner, e.x, e.y) && unitVisibleTo(s, u.owner, e));
+  return hookAttackTargets(s, u, targets);
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk'));
-  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def'));
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk'));
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def'));
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
   const total = aForce + dForce || 1;
-  const dmg = Math.round((aForce / total) * atk * 4.5);
-  const kills = dmg >= d.hp;
-  const canRetaliate = !kills && dist(a.x, a.y, d.x, d.y) <= def(d).range && def(d).atk > 0;
-  const ret = canRetaliate ? Math.round((dForce / total) * dd * 4.5) : 0;
+  const ranged = dist(a.x, a.y, d.x, d.y) > 1;
+  let dmg = Math.round((aForce / total) * atk * 4.5);
+  let kills = dmg >= d.hp;
+  const canRetaliate = !kills && dist(a.x, a.y, d.x, d.y) <= def(d).range + hookStat(s, d, 'range') && def(d).atk > 0;
+  let ret = canRetaliate ? Math.round((dForce / total) * dd * 4.5) : 0;
+  const ctx = { dmg, ret, ranged, kills }; // empire mechanics may change the numbers (crits, traps, ambushes...)
+  hookCombat(s, a, d, ctx);
+  dmg = Math.max(0, Math.round(ctx.dmg));
+  kills = dmg >= d.hp;
+  ret = kills ? 0 : Math.max(0, Math.round(ctx.ret));
   return { dmg, ret, kills };
 }
 
@@ -704,8 +734,10 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   d.hp -= dmg;
   emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg });
   const pa = s.players[a.owner];
-  if (kills) {
-    removeUnit(s, d);
+  const spared = kills && hookSpare(s, a, d); // a mechanic may take the defender alive instead
+  if (spared) d.hp = 1;
+  else if (kills) {
+    removeUnit(s, d, a);
     emit({ type: 'death', unitId: d.id, x: d.x, y: d.y, owner: d.owner, kind: d.kind });
     pa.kills++;
     const ks = perkSum(s, a.owner, 'kill');
@@ -738,7 +770,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     a.hp -= ret;
     emit({ type: 'damage', unitId: a.id, x: a.x, y: a.y, amount: ret });
     if (a.hp <= 0) {
-      removeUnit(s, a);
+      removeUnit(s, a, d);
       emit({ type: 'death', unitId: a.id, x: a.x, y: a.y, owner: a.owner, kind: a.kind });
       s.players[d.owner].kills++;
       return true;
@@ -746,15 +778,17 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   }
   a.attacked = true;
   const skills = def(a).skills;
-  if (kills && skills.includes('persist')) a.attacked = false;
+  if (kills && !spared && skills.includes('persist')) a.attacked = false;
   a.moved = !skills.includes('escape');
+  hookAfterAttack(s, a, d, { dmg, ret, killed: kills && !spared, ranged });
   return true;
 }
 
-export function removeUnit(s: GameState, u: Unit) {
+export function removeUnit(s: GameState, u: Unit, killer: Unit | null = null) {
   s.units = s.units.filter((x) => x !== u);
   const c = cityById(s, u.homeCity);
   if (c) c.units = Math.max(0, c.units - 1);
+  hookUnitDied(s, u, killer);
 }
 
 export const livingPlayers = (s: GameState): Player[] => s.players.filter((p) => p.alive);

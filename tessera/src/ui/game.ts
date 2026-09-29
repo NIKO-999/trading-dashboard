@@ -1,3 +1,5 @@
+import { MECH_UI } from './mech';
+import type { MechView } from './mech/types';
 import { TECH_BY_ID } from '../data/techs';
 import { portraitKind, TRIBES } from '../data/tribes';
 import { CLIMATE_INFO, isClimate } from '../data/terrain';
@@ -125,6 +127,8 @@ export class GameView {
     root.append(h('div', { class: 'game-ui' }, h('div', { class: 'vignette' }), this.buildTag, this.hud, this.hint, this.banner, this.panel, this.bottom));
     const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
       h('button', { class: `dock-btn ${cls}`, onclick }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
+    this.mechHud = h('div', { class: 'mech-hud' });
+    this.hud.after(this.mechHud);
     this.bottom.append(
       btn('menu', 'Menu', 'dark', () => this.openMenu()),
       btn('globe', 'Empires', 'dark', () => this.openStats()),
@@ -532,10 +536,35 @@ export class GameView {
     this.countTo(e.score, e.scoreBox, sc, (v) => v.toLocaleString());
     this.countTo(e.stars, e.starsBox, p.stars, String);
     this.bottom.classList.toggle('waiting', !this.myTurn());
+    this.refreshMech();
     this.ov.glow = this.harvestable();
     this.updateHint();
     this.version++;
     if (this.sel) this.select(this.sel);
+  }
+
+  private mechHud!: HTMLElement;
+  private mechDock: HTMLElement | null = null;
+
+  /** The empire mechanic's own readout and dock button (see ui/mech). */
+  private refreshMech() {
+    const ui = MECH_UI[this.s.players[this.me].tribe];
+    const view: MechView = {
+      s: this.s, me: this.me,
+      refresh: () => this.refresh(),
+      act: (fn) => { fn(); this.refresh(); },
+      focus: (x, y) => this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450),
+    };
+    const hud = ui?.hud?.(view) ?? null;
+    this.mechHud.replaceChildren(...(hud ? [hud] : []));
+    const dock = ui?.dock?.(view) ?? null;
+    if (!dock) { this.mechDock?.remove(); this.mechDock = null; return; }
+    if (!this.mechDock) {
+      this.mechDock = h('button', { class: 'dock-btn dark' });
+      this.bottom.insertBefore(this.mechDock, this.bottom.lastElementChild);
+    }
+    this.mechDock.onclick = () => dock.open();
+    this.mechDock.replaceChildren(h('span', { class: 'round' }, iconEl(dock.icon as Parameters<typeof iconEl>[0])), h('span', { class: 'dock-label' }, dock.label));
   }
 
   /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
@@ -1217,7 +1246,7 @@ export class GameView {
 function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
   const where = owner === null ? 'Unclaimed land.' : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
-  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra' };
+  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform' };
   const res: Record<string, [string, string]> = {
     fruit: ['Wild Fruit', 'Harvest with Gathering.'],
     crop: ['Crops', 'Farm with Farming.'],

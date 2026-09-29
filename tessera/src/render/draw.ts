@@ -1,6 +1,7 @@
 // World rendering in a flat, low-poly isometric style. The terrain, scenery and cloud cover are
 // drawn into a cached layer that is only rebuilt when the game state or camera changes; units,
 // effects and labels are drawn on top every frame so they can animate cheaply.
+import { MECH_RENDER } from './mech';
 import { TRIBES, type BiomePalette } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
@@ -220,6 +221,7 @@ function drawStaticTop(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: 
 function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean) {
   const P = TRIBES[t.biome].palette;
   const { x, y } = tileTop(t.x, t.y);
+  for (const m of Object.values(MECH_RENDER)) if (m?.ground?.(ctx, s, t, x, y)) return; // an empire's own ground (ice, platforms)
   const water = isWaterTile(t);
   const top = y + (water ? WATER_DROP : 0);
   if (water) {
@@ -518,6 +520,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
     const city = cityById(s, t.cityId);
     if (city) drawCity(ctx, s, city, c.x, c.y);
   }
+  for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }
 
 function drawGlow(ctx: Ctx, x: number, y: number) {

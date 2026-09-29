@@ -1,7 +1,9 @@
 export type BaseTerrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
-export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra';
+export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'platform';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
-export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market';
+export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market'
+  // built by empire mechanics (see game/mech)
+  | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
 export type Biome = TribeId;
 export type UnitKind =
@@ -27,6 +29,8 @@ export interface Tile {
   cityId: number | null; // city standing on this tile
   owner: number | null; // city id whose territory this is
   seed: number; // stable per-tile random for decoration
+  /** Free-form state kept by empire mechanics (see game/mech). Always JSON-safe. */
+  data?: Record<string, unknown>;
 }
 
 export interface City {
@@ -46,6 +50,7 @@ export interface City {
   units: number; // units currently supported
   roadStage?: number; // road-network milestones already paid out (missing in older saves)
   linked?: number[]; // cities this one has already been paid for linking to by road
+  data?: Record<string, unknown>; // state kept by empire mechanics
 }
 
 export interface Unit {
@@ -63,6 +68,7 @@ export interface Unit {
   carrying: UnitKind | null; // land unit carried by a boat
   fortified: boolean;
   explorerSteps?: number;
+  data?: Record<string, unknown>; // state kept by empire mechanics
 }
 
 export interface Player {
@@ -77,6 +83,8 @@ export interface Player {
   bonusScore: number;
   /** Empires this one has met: seen a unit or city of, or fought (missing in older saves). */
   met?: number[];
+  /** State kept by this empire's mechanic (see game/mech), e.g. a calendar or a captive count. Always JSON-safe. */
+  mech?: Record<string, unknown>;
 }
 
 export type GameMode = 'perfection' | 'domination';
@@ -105,4 +113,6 @@ export interface GameState {
   winner: number | null;
   log: LogEntry[];
   hintStep: number;
+  /** World-level state kept by empire mechanics (see game/mech). */
+  mech?: Record<string, unknown>;
 }
