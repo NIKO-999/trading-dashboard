@@ -111,7 +111,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   switch (tribe) {
     case 'egypt': torso = L.skin; legs = L.skin; break;
     case 'aztec': torso = kind === 'jaguar' ? '#e3a53a' : '#efe6d2'; legs = kind === 'jaguar' ? '#e3a53a' : L.skin; sleeves = kind === 'jaguar' ? '#e3a53a' : L.skin; break;
-    case 'polynesia': torso = L.skin; legs = L.skin; break;
+    case 'polynesia': torso = T.color; legs = L.skin; break;
     case 'rome': torso = '#b3302a'; legs = L.skin; break;
     case 'pirates': torso = '#f1efe6'; legs = '#3b3b46'; sleeves = '#f1efe6'; break;
     case 'vikings': torso = T.color; legs = '#6a5238'; sleeves = T.color; break;
@@ -148,7 +148,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   if (tribe === 'polynesia') {
     // a korowai flax cloak hangs from the shoulders: taniko border at the hem, feather tufts (kiwi-feather brown for the high ranks)
     const rank = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender';
-    const cl = rank ? '#7a5a38' : '#c9b27a';
+    const cl = rank ? '#2b2b33' : '#c9b27a';
     const ct = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, ct, x + 1 * k, ct - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cl, -0.2));
     poly(ctx, [x - 4 * k, ct, x - 6.5 * k, ct + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], cl);
