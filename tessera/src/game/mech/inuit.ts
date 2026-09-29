@@ -22,8 +22,8 @@ export const FREEZE_DAMAGE = 2;
 export const FIRE_TECHS = ['smithing', 'mining'];
 export const FREEZE_COST = 1;
 export const HARVEST_COST = 2;
-export const WHALE = { stars: 9, pop: 2, rest: 6 };
-export const FISH = { stars: 3, pop: 2, rest: 4 };
+export const WHALE = { stars: 7, pop: 2, rest: 7 };
+export const FISH = { stars: 3, pop: 1, rest: 5 };
 const AI_FREEZES_PER_TURN = 2;
 
 type Counters = { frozen: number; walked: number; aura: number; whales: number; fish: number; chilled: number; turnFrozen: number };

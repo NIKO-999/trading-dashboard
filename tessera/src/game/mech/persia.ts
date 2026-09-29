@@ -88,6 +88,9 @@ function unrest(s: GameState, owner: number) {
   }
 }
 
+/** Royal Road stipend: the King's roads bring every Persian city this many stars a turn. */
+export const SATRAP_STIPEND = 1;
+
 export const mech: Mechanic = {
   name: 'Royal Road Network & Satrap Extraction',
   blurb: 'A fallen Immortal returns at the capital next turn while Stars flow; conquered cities pay double from their tiles but bleed Population unless garrisoned.',
@@ -110,7 +113,7 @@ export const mech: Mechanic = {
     if (from === owner && c.data) delete c.data.satrap;
   },
 
-  income(s, owner) { return mechIncome(s, owner); },
+  income(s, owner) { return mechIncome(s, owner) + SATRAP_STIPEND * citiesOf(s, owner).length; },
 
   // The AI garrisons its restless satrapies: train the cheapest soldier in an empty one.
   ai(s, owner) {

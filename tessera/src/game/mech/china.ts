@@ -28,7 +28,7 @@ import type { Mechanic } from './types';
 export const WALL_COST = 1;
 export const WALL_PER_CITY = 8;
 /** Stars per turn per city from the Imperial treasury while the Mandate is not lost. */
-export const TREASURY = 4;
+export const TREASURY = 5;
 export const MOURNING_TURNS = 2;
 export const SIEGE: readonly string[] = ['catapult', 'hwacha'];
 const PRODUCTIVE = ['farm', 'mine', 'lumber', 'port'];

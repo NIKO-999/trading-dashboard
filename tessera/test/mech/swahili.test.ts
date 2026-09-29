@@ -128,7 +128,7 @@ test('trade pays x2 with the wind, x0.5 against, x1 across, from the ship\'s las
   };
   let o = run(1); // east: with the wind
   assert.equal(o.r.total, 4);
-  assert.equal(mech.income!(s, me), 4 + 3 * s.cities.filter((k) => k.owner === me).length);
+  assert.equal(mech.income!(s, me), 4 + 4 * s.cities.filter((k) => k.owner === me).length);
   s.units = s.units.filter((u) => u !== o.ship);
   o = run(3); // against
   assert.equal(o.r.total, 1);

@@ -1,6 +1,6 @@
 import { emit } from '../events';
 import { dist, isWater, tileAt } from '../grid';
-import { def, previewCombat, removeUnit } from '../rules';
+import { citiesOf, def, previewCombat, removeUnit } from '../rules';
 import type { Action } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
@@ -50,8 +50,12 @@ function salvo(s: GameState, a: Unit, t: Tile) {
   a.moved = true;
 }
 
+/** Hall of Worthies: scholar-officials send every Korean city this many stars a turn. */
+export const WORTHIES = 1;
+
 export const mech: Mechanic = {
   name: 'Singijeon Rocket Fleets',
+  income(s, owner) { return WORTHIES * citiesOf(s, owner).length; },
   blurb: 'Rocket salvos arc over fog and cover, setting targets ablaze for turns.',
 
   turnStart(s, owner) {

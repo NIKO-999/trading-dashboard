@@ -177,7 +177,7 @@ export const mech: Mechanic = {
     u.data = { ...(u.data ?? {}), trade: { turn: s.turn, al } };
   },
 
-  income(s, owner) { return tradeReport(s, owner).total + 3 * s.cities.filter((c) => c.owner === owner).length; },
+  income(s, owner) { return tradeReport(s, owner).total + 4 * s.cities.filter((c) => c.owner === owner).length; },
 
   turnStart(s, owner) {
     if (s.turn === 0) return;
