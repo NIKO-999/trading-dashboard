@@ -13,7 +13,7 @@
     return '<linearGradient id="' + id + '" x1="' + (x1 == null ? 0 : x1) + '" y1="' + (y1 == null ? 0 : y1) + '" x2="' + (x2 == null ? 0 : x2) + '" y2="' + (y2 == null ? 1 : y2) + '">' + stops(a) + '</linearGradient>';
   }
   function rg(id, a, cx, cy, r) {
-    return '<radialGradient id="' + id + '" cx="' + (cx == null ? 0.5 : cx) + '" cy="' + (cy == null ? 0.5 : cy) + '" r="' + (r == null ? 0.6 : r) + '">' + stops(a) + '</radialGradient>';
+    return '<radialGradient id="' + id + '" cx="' + (cx == null ? 0.5 : cx) + '" cy="' + (cy == null ? 0.5 : cy) + '" r="' + (r == null ? 0.5 : r) + '">' + stops(a) + '</radialGradient>';
   }
   function shadow(rx, cx, op) {
     cx = cx == null ? 100 : cx;
@@ -436,30 +436,30 @@
 
       // ---- far (right) wing
       b += '<g class="part-cape" style="transform-origin: 124px 96px">';
-      // primaries from wrist (158,58)
+      // primaries from wrist (146,46)
       for (i = 0; i < 9; i++) {
-        var pr = 4 + i * 11.5, pl = 50 - Math.abs(i - 3) * 1.6;
-        b += feather(158, 60, pl, 8.5, pr, PR, '#0c1e70', '#08123e', 2.4);
+        var pl = 44 + 6 * Math.sin(i / 8 * Math.PI);
+        b += feather(146, 46, pl, 8.6, 34 + i * 10.5, PR, '#0c1e70', '#08123e', 2.4);
       }
-      // secondaries along forearm 124,96 -> 158,60
-      for (i = 0; i < 7; i++) {
-        var t = i / 6, sx = 128 + t * 30, sy = 94 - t * 34;
-        b += feather(sx, sy, 44 - i * 1.5, 9, 104 + i * 3.5, SC, '#0c1e70', '#08123e', 2.4);
+      // secondaries along forearm (128,90) -> (146,46)
+      for (i = 0; i < 8; i++) {
+        var t = i / 7, sx = 128 + t * 18, sy = 90 - t * 44;
+        b += feather(sx, sy, 50 - i * 0.6, 9.4, 104 + i * 4.5, SC, '#0c1e70', '#08123e', 2.4);
       }
+      for (i = 0; i < 8; i++) { var t6 = i / 7; b += feather(127 + t6 * 18, 88 - t6 * 42, 32, 8, 102 + i * 4, CV, '#0c1e70', '#08123e', 2); }
       // coverts rows
-      for (i = 0; i < 8; i++) { var t2 = i / 7; b += feather(126 + t2 * 32, 92 - t2 * 32, 24, 7.5, 92 + i * 3, CV, '#0c1e70', '#08123e', 2); }
-      for (i = 0; i < 7; i++) { var t3 = i / 6; b += feather(128 + t3 * 30, 90 - t3 * 30, 17, 6, 90 + i * 2, CW, '#4a7ad0', '#08123e', 1.8); }
+      for (i = 0; i < 8; i++) { var t2 = i / 7; b += feather(125 + t2 * 20, 90 - t2 * 42, 22, 7, 96 + i * 5, CW, '#4a7ad0', '#08123e', 1.8); }
       // arm leading edge
-      b += '<path d="M118 100Q136 84 160 58" stroke="' + O + '" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M118 100Q136 84 160 58" stroke="#3a64d8" stroke-width="6" stroke-linecap="round" fill="none"/>';
-      b += '<path d="M124 92Q138 80 152 66" stroke="#9ec8ff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".8"/>';
-      b += bolt(176, 44, 0.7, 60, '#ffd84a', 1.6) + bolt(150, 34, 0.55, 20, '#ffd84a', 1.5) + bolt(188, 82, 0.6, 100, '#ffd84a', 1.5);
-      b += arc(170, 20, 186, 6, 3, 4, 1, '#7fe9ff', '#fff', 1.3) + arc(196, 60, 186, 34, 4, 5, 2, '#7fe9ff', '#fff', 1.3);
-      b += arc(150, 46, 174, 68, 5, 6, 4, '#7fe9ff', '#fff', 1.1);
+      b += '<path d="M116 102Q128 84 146 46" stroke="' + O + '" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M116 102Q128 84 146 46" stroke="#3a64d8" stroke-width="6" stroke-linecap="round" fill="none"/>';
+      b += '<path d="M122 92Q132 78 142 56" stroke="#9ec8ff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".8"/>';
+      b += bolt(178, 60, 0.7, 70, '#ffd84a', 1.6) + bolt(160, 30, 0.55, 30, '#ffd84a', 1.5) + bolt(170, 96, 0.6, 110, '#ffd84a', 1.5);
+      b += arc(174, 14, 190, 4, 3, 4, 1, '#7fe9ff', '#fff', 1.3) + arc(198, 52, 190, 86, 4, 5, 2, '#7fe9ff', '#fff', 1.3);
+      b += arc(140, 30, 164, 46, 4, 5, 4, '#7fe9ff', '#fff', 1.1);
       b += '</g>';
 
       // ---- near (left) wing, foreshortened
       b += '<g class="part-cape" style="transform-origin: 82px 100px">';
-      for (i = 0; i < 7; i++) b += feather(40, 66, 40 - Math.abs(i - 3) * 1.2, 8, -104 + i * 12, PR, '#0c1e70', '#08123e', 2.4);
+      for (i = 0; i < 7; i++) b += feather(36, 62, 46 - Math.abs(i - 3) * 1.4, 8.4, -132 + i * 14, PR, '#0c1e70', '#08123e', 2.4);
       for (i = 0; i < 6; i++) { var t4 = i / 5; b += feather(78 - t4 * 34, 98 - t4 * 30, 36 - i, 8.5, -120 + i * 3, SC, '#0c1e70', '#08123e', 2.4); }
       for (i = 0; i < 6; i++) { var t5 = i / 5; b += feather(78 - t5 * 34, 96 - t5 * 30, 20, 6.5, -100 + i * 4, CV, '#0c1e70', '#08123e', 2); }
       b += '<path d="M84 102Q56 94 40 66" stroke="' + O + '" stroke-width="10" stroke-linecap="round" fill="none"/><path d="M84 102Q56 94 40 66" stroke="#3a64d8" stroke-width="5.5" stroke-linecap="round" fill="none"/>';

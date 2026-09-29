@@ -121,21 +121,27 @@
         rg(I('cy'), [[0, '#ffffff'], [0.4, '#7ffcff'], [1, '#1aa8d8']], 0.4, 0.4, 0.6);
       function leg(pts, col, w) {
         var d = 'M' + pts.map(function (p) { return p[0] + ' ' + p[1]; }).join(' L');
+        var hair = '';
+        for (var q = 0; q < pts.length - 1; q++) for (var t = 0.2; t < 0.9; t += 0.25) {
+          var hx = pts[q][0] + (pts[q + 1][0] - pts[q][0]) * t, hy = pts[q][1] + (pts[q + 1][1] - pts[q][1]) * t;
+          hair += 'M' + f(hx) + ' ' + f(hy) + 'l' + (pts[q + 1][0] > pts[q][0] ? -5 : 5) + ' ' + (-3) + 'M' + f(hx) + ' ' + f(hy) + 'l' + (pts[q + 1][0] > pts[q][0] ? 5 : -5) + ' -3';
+        }
         return '<path d="' + d + '" fill="none" stroke="' + O + '" stroke-width="' + (w + 5) + '" stroke-linejoin="round" stroke-linecap="round"/>' +
-          '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linejoin="round" stroke-linecap="round"/>';
+          '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="' + w + '" stroke-linejoin="round" stroke-linecap="round"/>' +
+          '<path d="' + hair + '" stroke="' + O + '" stroke-width="1.6" stroke-linecap="round" opacity=".8" fill="none"/>';
       }
       var far = [[[92, 130], [70, 82], [40, 186]], [[100, 128], [96, 74], [72, 188]], [[126, 126], [136, 76], [116, 188]], [[142, 130], [172, 92], [152, 186]]];
       var near = [[[70, 142], [26, 98], [10, 186]], [[82, 148], [46, 112], [42, 189]], [[104, 156], [90, 112], [92, 190]], [[126, 152], [130, 108], [138, 190]]];
       var body = '';
-      far.forEach(function (l) { body += leg(l, '#2a1844', 7); body += shard(l[1][0], l[1][1], 7, 14, l[1][0] < l[0][0] ? -30 : 30, AM, 1.8); });
+      far.forEach(function (l) { body += leg(l, '#2a1844', 5.5); body += shard(l[1][0], l[1][1], 7, 14, l[1][0] < l[0][0] ? -30 : 30, AM, 1.8); });
       // abdomen
-      body += '<path d="' + fluff(140, 128, 36, 32, 14, 0.09) + '" fill="url(#' + I('fur') + ')" ' + S(4) + '/>';
+      body += '<path d="' + fluff(140, 128, 38, 34, 18, 0.1) + '" fill="url(#' + I('fur') + ')" ' + S(4) + '/>';
       body += shard(122, 104, 12, 30, -14, AM) + shard(142, 98, 14, 38, 6, SA) + shard(162, 108, 12, 28, 26, RS);
       body += '<path d="M116 122 Q140 108 166 122 M112 138 Q140 124 170 138 M118 152 Q142 142 166 152" stroke="#c48aff" stroke-width="2.4" fill="none" opacity=".5" stroke-linecap="round"/>';
       body += '<path d="M130 128 l10 -8 l10 8 l-10 14 Z" fill="#ff6ae8" opacity=".85" ' + S(2) + '/>' + hl(130, 108, 8, 4, -20, 0.35);
-      near.forEach(function (l) { body += leg(l, '#5a3a82', 8); body += '<path d="M' + l[1][0] + ' ' + l[1][1] + ' L' + l[2][0] + ' ' + l[2][1] + '" stroke="#a884d8" stroke-width="2" stroke-linecap="round" opacity=".5" transform="translate(-1 0)"/>' + shard(l[1][0], l[1][1], 8, 17, l[1][0] < l[0][0] ? -34 : 34, l[1][0] < 60 ? SA : EM, 2); });
+      near.forEach(function (l) { body += leg(l, '#5a3a82', 6.5); body += '<path d="M' + l[1][0] + ' ' + l[1][1] + ' L' + l[2][0] + ' ' + l[2][1] + '" stroke="#a884d8" stroke-width="2" stroke-linecap="round" opacity=".5" transform="translate(-1 0)"/>' + shard(l[1][0], l[1][1], 8, 17, l[1][0] < l[0][0] ? -34 : 34, l[1][0] < 60 ? SA : EM, 2); });
       // cephalothorax
-      body += '<path d="' + fluff(84, 138, 28, 24, 12, 0.1) + '" fill="url(#' + I('fur') + ')" ' + S(4) + '/>';
+      body += '<path d="' + fluff(84, 138, 30, 26, 14, 0.12) + '" fill="url(#' + I('fur') + ')" ' + S(4) + '/>';
       body += hl(70, 124, 9, 4, -30, 0.35);
       // fangs + palps
       body += '<path d="M62 152 Q54 164 58 174 Q66 166 68 154 Z" fill="#f4f0ff" ' + S(3) + '/>' +
@@ -471,7 +477,7 @@
     s += '<defs>' +
       lg('crystal-sky', [[0, '#120c33'], [0.5, '#2a1f5e'], [1, '#43308a']]) +
       lg('crystal-ground', [[0, '#3c3080'], [1, '#170f3c']]) +
-      lg('crystal-rock', [[0, '#2e2478'], [1, '#150e40']]) +
+      lg('crystal-rock', [[0, '#0a0620'], [1, '#1e1552']]) +
       lg('crystal-bed', [[0, '#5a4a96'], [1, '#3a2c70']]) +
       lg('crystal-wood', [[0, '#a8683a'], [1, '#603418']]) +
       lg('crystal-rail', [[0, '#d4dcec'], [0.5, '#8a94b0'], [1, '#4a5274']]) +
@@ -490,15 +496,12 @@
         '<polygon points="' + f(cx) + ',' + f(196 - h) + ' ' + f(cx + w * 0.6) + ',' + f(196 - h * 0.7) + ' ' + f(cx + w) + ',196 ' + f(cx) + ',196" fill="#1a1250" opacity=".35"/>';
     }
     // ceiling with stalactites
-    var d = 'M-10 -4 L410 -4 L410 30 ';
-    var xs = [];
-    for (i = 0; i < 14; i++) xs.push(400 - i * 30 - 6 - r() * 14);
-    xs.forEach(function (x, k) {
-      var len = 18 + r() * 52, w = 9 + r() * 10;
-      d += 'L' + f(x + w) + ' ' + (28 + (k % 2) * 4) + ' L' + f(x + w * 0.2) + ' ' + f(30 + len) + ' L' + f(x - w) + ' ' + (30 + (k % 3)) + ' ';
-    });
-    d += 'L-10 30 Z';
-    s += '<path d="' + d + '" fill="url(#crystal-rock)" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>';
+    s += '<rect x="-10" y="-4" width="420" height="34" fill="url(#crystal-rock)"/><path d="M-10 30 L410 30" stroke="' + O + '" stroke-width="3"/>';
+    for (i = 0; i < 15; i++) {
+      var sx = 8 + i * 27 + r() * 10, len = 20 + r() * 56, sw = 10 + r() * 9;
+      s += '<polygon points="' + f(sx - sw) + ',28 ' + f(sx + sw) + ',28 ' + f(sx + sw * 0.15) + ',' + f(30 + len) + '" fill="url(#crystal-rock)" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>' +
+        '<polygon points="' + f(sx - sw + 3) + ',30 ' + f(sx - 2) + ',30 ' + f(sx + sw * 0.15 - 1) + ',' + f(26 + len) + '" fill="#6a54c8" opacity=".45"/>';
+    }
     s += '<path d="M-10 22 L410 22" stroke="#6a54c8" stroke-width="2.5" opacity=".6"/>';
     for (i = 0; i < 10; i++) s += '<path d="M' + f(r() * 400) + ' ' + f(4 + r() * 16) + 'l6 8" stroke="#5a44b0" stroke-width="2" opacity=".5"/>';
     // glowing crystals on ceiling
