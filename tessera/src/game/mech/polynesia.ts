@@ -29,11 +29,11 @@ import type { Mechanic } from './types';
 //     Temples, markets, shrines, roads, harvesting resources and clearing land are all still allowed (each removes wild tiles).
 // State: city.data = { waka, sailed (turn), anchored? }; player.mech = { sails, anchors, wakas, absorbed }.
 
-export const SAIL_RANGE = 3;
-export const WAKA_COST = 10;
-export const MAX_WAKAS = 2;
-export const ABSORB_CAP = 4;
-export const WILD_CAP = 4;
+export const SAIL_RANGE = 2;
+export const WAKA_COST = 16;
+export const MAX_WAKAS = 1;
+export const ABSORB_CAP = 1;
+export const WILD_CAP = 1;
 const BLOCKED = ['farm', 'mine', 'lumber', 'port'];
 
 const isMaori = (s: GameState, owner: number) => s.players[owner].tribe === 'polynesia';

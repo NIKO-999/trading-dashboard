@@ -27,11 +27,11 @@ import type { Mechanic } from './types';
 
 export const CHASKI_COST = 6;
 export const TERRACE_COST = 5;
-export const TERRACE_POP = 2;
+export const TERRACE_POP = 1;
 export const ZIP_MOUNTAINS = 4;
 export const ZIP_RANGE = 9;
-export const CITY_CAP = 6;
-export const PEAK_CAP = 6;
+export const CITY_CAP = 3;
+export const PEAK_CAP = 2;
 
 export type Level = 'lowland' | 'hill' | 'peak';
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];

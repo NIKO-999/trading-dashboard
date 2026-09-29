@@ -20,12 +20,12 @@ import type { Mechanic } from './types';
 //     (x1.5 for two, x2 for three or more). Each city's hydraulic income is capped. Floods are too brief to pay.
 //     This comes on top of the existing +1★ per farm of `cityIncome`.
 
-export const BARAY_COST = 4;
+export const BARAY_COST = 8;
 export const DAM_COST = 2;
 export const FLOOD_COST = 1;
 export const FLOOD_RADIUS = 2;
 export const FLOOD_TURNS = 2;
-export const CITY_CAP = 8;
+export const CITY_CAP = 3;
 const BUILDABLE = ['field', 'desert', 'swamp', 'tundra'];
 const LAND_RES = ['fruit', 'crop', 'animal', 'ore'];
 
@@ -230,8 +230,8 @@ export const mech: Mechanic = {
         if (spot) { p.stars -= DAM_COST; return build(s, owner, spot, 'dam'); }
       }
     }
-    // 3. Dig a profitable baray, but keep a reserve for everything else.
-    if (p.stars >= BARAY_COST + 4 && citiesOf(s, owner).length) {
+    // 3. Dig a profitable baray as soon as it can be afforded: it is the Khmer's main investment.
+    if (p.stars >= BARAY_COST && citiesOf(s, owner).length) {
       let best: { t: Tile; g: number } | null = null;
       for (const t of s.tiles) {
         if (tileOwnerPlayer(s, t) !== owner || buildCheck(s, owner, t) || unitAt(s, t.x, t.y)) continue;

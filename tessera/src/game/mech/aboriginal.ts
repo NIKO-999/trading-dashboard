@@ -26,7 +26,7 @@ import type { Mechanic } from './types';
 
 export const PAINT_COST = 1;
 export const MIN_TRIP = 4;
-export const MAX_PAY = 5;
+export const MAX_PAY = 3;
 
 interface Mem { painted: number; trips: number; tripStars: number; reached: string[]; pt?: number; pn?: number }
 type Pt = { x: number; y: number };
@@ -80,10 +80,10 @@ function pilgrimage(s: GameState, owner: number, u: Unit, to: Tile) {
     }
   }
   if (!d.last || d.last.x !== to.x || d.last.y !== to.y) { d.prev = d.last; d.last = { x: to.x, y: to.y }; }
-  if (!m.reached.includes(key(to))) { // new land opened by the Songlines: the nearest city grows
+  if (!m.reached.includes(key(to))) { const grow = m.reached.length < 12; // new land opened by the Songlines: the nearest city grows
     m.reached.push(key(to));
     const c = citiesOf(s, owner).sort((a, b) => dist(a.x, a.y, to.x, to.y) - dist(b.x, b.y, to.x, to.y) || a.id - b.id)[0];
-    if (c) { addPop(s, c, 1); emit({ type: 'harvest', player: owner, x: to.x, y: to.y, pop: 1 }); }
+    if (c && grow) { addPop(s, c, 1); emit({ type: 'harvest', player: owner, x: to.x, y: to.y, pop: 1 }); }
   }
 }
 

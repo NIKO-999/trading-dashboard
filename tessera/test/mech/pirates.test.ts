@@ -5,7 +5,8 @@ import { attack, doAction, moveOptions, moveUnit, tileActions, tileOwnerPlayer }
 import { dist, isLand, neighbors, tileAt } from '../../src/game/grid';
 import { createGame, spawnUnit } from '../../src/game/mapgen';
 import { endTurn, startTurn } from '../../src/game/turn';
-import { cluster, mech, platformsOf, recruitCost, statsOf } from '../../src/game/mech/pirates';
+import { LAUNCH_COST, RECRUIT_GAP, RECRUIT_POP, TOLL, TOLL_CAP, WAGE_CAP, WAGE_STEP, cluster, mech, platformsOf, recruitCost, statsOf } from '../../src/game/mech/pirates';
+import { popNeeded } from '../../src/game/rules';
 import type { GameState, Tile } from '../../src/game/types';
 
 const has = (s: GameState, t: Tile, id: string, enabled = true) => tileActions(s, 0, t).some((a) => a.id === id && a.enabled === enabled);
@@ -157,7 +158,7 @@ test('launch turns a land crew standing on a platform into a galley', () => {
   assert.ok(doAction(s, 0, tileAt(s, u.x, u.y)!, 'mech:launch'));
   assert.equal(u.kind, 'ship');
   assert.ok(u.carrying);
-  assert.equal(s.players[0].stars, stars - 3);
+  assert.equal(s.players[0].stars, stars - LAUNCH_COST);
   assert.ok(!has(s, tileAt(s, u.x, u.y)!, 'mech:launch'));
 });
 
@@ -207,9 +208,9 @@ test('tolls: foreign ships beside a pirate ship or in platform waters pay at the
   spawnUnit(s, 'ship', 1, w.x, w.y, null);
   const before = s.players[0].stars;
   mech.turnStart!(s, 0);
-  assert.equal(s.players[0].stars, before + 2);
-  assert.equal(s.players[1].stars, 8);
-  assert.equal(statsOf(s, 0).tolls, 2);
+  assert.equal(s.players[0].stars, before + TOLL);
+  assert.equal(s.players[1].stars, 10 - TOLL);
+  assert.equal(statsOf(s, 0).tolls, TOLL);
   // a distant foreign ship pays nothing
   const far = s.tiles.find((t) => !isLand(t) && dist(t.x, t.y, mine.x, mine.y) > 4 && t.owner === null)!;
   s.units = s.units.filter((u) => u.owner !== 1);
@@ -219,14 +220,30 @@ test('tolls: foreign ships beside a pirate ship or in platform waters pay at the
   assert.equal(s.players[0].stars, b2);
   // the cap per victim
   s.units = s.units.filter((u) => u.owner !== 1);
-  for (let i = 0; i < 5; i++) {
+  const victims = Math.ceil(TOLL_CAP / TOLL) + 2; // enough ships to exceed the cap
+  for (let i = 0; i < victims; i++) {
     const t = neighbors(s, mine.x, mine.y).concat(neighbors(s, mine.x, mine.y, 2)).find((n) => !isLand(n) && !s.units.some((u) => u.x === n.x && u.y === n.y))!;
     spawnUnit(s, 'ship', 1, t.x, t.y, null);
   }
   s.players[1].stars = 50;
   const b3 = s.players[0].stars;
   mech.turnStart!(s, 0);
-  assert.equal(s.players[0].stars - b3, 6);
+  assert.ok(victims * TOLL > TOLL_CAP);
+  assert.equal(s.players[0].stars - b3, TOLL_CAP);
+});
+
+test('crew wages: every ship of the fleet costs upkeep, capped and never below zero stars', () => {
+  const s = game();
+  const ships = () => s.units.filter((u) => u.owner === 0 && u.kind === 'ship').length;
+  const expected = () => -Math.min(WAGE_CAP, s.players[0].stars, Math.floor(ships() / WAGE_STEP));
+  assert.ok(ships() > 0);
+  assert.equal(mech.income!(s, 0), expected());
+  assert.ok(mech.income!(s, 0) < 0, 'a fleet costs wages');
+  s.players[0].stars = 0;
+  assert.ok(mech.income!(s, 0) === 0, 'an empty chest pays nothing');
+  s.players[0].stars = 100;
+  s.units = s.units.filter((u) => !(u.owner === 0 && u.kind === 'ship'));
+  assert.ok(mech.income!(s, 0) === 0, 'no ships, no wages');
 });
 
 test('raiding a coastal improvement pays 2x its cost and costs the host a citizen', () => {
@@ -251,20 +268,25 @@ test('raiding a coastal improvement pays 2x its cost and costs the host a citize
   assert.ok(!has(s, shore, 'mech:raid'));
 });
 
-test('recruit turns stars into population, once a turn per city', () => {
+test('recruit turns stars into population, once every RECRUIT_GAP turns per city', () => {
   const s = game();
   const c = cap(s);
   const t = tileAt(s, c.x, c.y)!;
-  c.level = 1; c.pop = 0;
+  c.level = 1; c.pop = popNeeded(1) - RECRUIT_POP;
   const cost = recruitCost(c);
   const stars = s.players[0].stars;
   assert.ok(has(s, t, 'mech:recruit'));
   assert.ok(doAction(s, 0, t, 'mech:recruit'));
   assert.equal(s.players[0].stars, stars - cost);
-  assert.equal(c.level, 2, '2 pop levels a size-1 city');
+  assert.equal(c.level, 2, 'the recruits level up a city one short of growing');
+  assert.equal(c.pop, 0);
   assert.ok(has(s, t, 'mech:recruit', false));
-  s.players[0].stars = 0;
+  s.players[0].stars = 100;
+  s.turn += RECRUIT_GAP - 1;
+  assert.ok(has(s, t, 'mech:recruit', false), 'the crew is still settling in');
   s.turn++;
+  assert.ok(has(s, t, 'mech:recruit'), 'the gap has passed');
+  s.players[0].stars = 0;
   assert.ok(has(s, t, 'mech:recruit', false), 'no stars, no crew');
 });
 

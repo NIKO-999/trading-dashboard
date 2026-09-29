@@ -10,6 +10,9 @@ import type { Mechanic } from './types';
 
 /** Zulu melee units needed around an enemy to trap it. */
 export const TRAP_SIZE = 3;
+/** Regiments drawn from the kraals: every UPKEEP_STEP melee units of a Zulu army cost 1 star a turn (at most UPKEEP_CAP). */
+export const UPKEEP_STEP = 1;
+export const UPKEEP_CAP = 8;
 
 const isZulu = (s: GameState, pid: number) => s.players[pid]?.tribe === 'zulu';
 const melee = (u: Unit) => { const d = UNITS[u.kind]; return d.atk > 0 && d.range === 1 && !d.naval; };
@@ -64,6 +67,11 @@ function formV(s: GameState, owner: number): boolean {
 export const mech: Mechanic = {
   name: 'Chest & Horns Formation',
   blurb: 'Melee units in a V around an enemy trap it, stopping its counter-attack and dealing triple damage.',
+
+  // the regiments must be fed
+  income(s, owner) {
+    return -Math.min(UPKEEP_CAP, Math.max(0, s.players[owner].stars), Math.floor(s.units.filter((u) => u.owner === owner && melee(u)).length / UPKEEP_STEP));
+  },
 
   // a trapped unit has nowhere to go
   moveStep(s, _owner, u, _from, _to, ctx) {

@@ -20,9 +20,9 @@ import type { Mechanic } from './types';
 // Each stupa also gives +1 population when built (max STUPA_MAX per city).
 
 export const MIST_REACH = 2;
-export const STUPA_COST = 5;
-export const STUPA_MAX = 2;
-export const SOLITUDE_CAP = 10;
+export const STUPA_COST = 8;
+export const STUPA_MAX = 1;
+export const SOLITUDE_CAP = 2;
 const FAR = 99;
 
 const isPeak = (t: Tile) => t.terrain === 'mountain';
@@ -62,7 +62,7 @@ export function solitudeStars(s: GameState, owner: number, t: Tile): number {
   if (!t.resource || tileOwnerPlayer(s, t) !== owner) return 0;
   if (t.terrain !== 'mountain' && t.terrain !== 'forest') return 0;
   const d = isolation(s, owner, t);
-  return t.terrain === 'mountain' ? Math.min(3, Math.floor(d / 2)) : Math.min(2, Math.floor(d / 3));
+  return t.terrain === 'mountain' ? Math.min(2, Math.floor(d / 2)) : Math.min(1, Math.floor(d / 3));
 }
 
 export function solitudeIncome(s: GameState, owner: number): number {

@@ -5,7 +5,7 @@ import { aiTurn } from '../../src/game/ai';
 import { attack, citiesOf, doAction, moveOptions, moveUnit, tileActions, unitAt } from '../../src/game/rules';
 import { endTurn, startTurn } from '../../src/game/turn';
 import { dist, isLand, isWater, neighbors, tileAt } from '../../src/game/grid';
-import { counter, isWaka, isWild, sailTargets, tapuIncome, wakasOf, wildIncome } from '../../src/game/mech/polynesia';
+import { ABSORB_CAP, WILD_CAP, counter, isWaka, isWild, sailTargets, tapuIncome, wakasOf, wildIncome, wildPairs } from '../../src/game/mech/polynesia';
 import type { GameState, Tile } from '../../src/game/types';
 
 function setup(seed = 7, terrain?: 'balanced' | 'islands' | 'pangaea') {
@@ -89,10 +89,19 @@ test('a floating city drinks fish and whales in its borders into its population,
   const before = city.level * 100 + city.pop;
   s.current = me;
   s.turn = 5;
+  const left = () => ring.slice(0, 3).filter((t) => t.resource).length;
   startTurn(s);
-  assert.equal(ring[0].resource, null);
-  assert.equal(ring[2].resource, null);
+  assert.equal(ring[2].resource, null, 'the whale goes first');
+  assert.equal(left(), 3 - Math.min(3, ABSORB_CAP), 'at most ABSORB_CAP a turn');
   assert.ok(city.level * 100 + city.pop > before, 'the people grew');
+  for (let turn = 1; turn < Math.ceil(3 / ABSORB_CAP); turn++) {
+    const l = left();
+    s.turn++;
+    startTurn(s);
+    assert.equal(left(), l - Math.min(l, ABSORB_CAP));
+  }
+  assert.equal(ring[0].resource, null);
+  assert.equal(ring[1].resource, null);
   assert.equal(counter(s, me, 'absorbed'), 4, 'fish 1+1, whale 2');
 });
 
@@ -147,10 +156,12 @@ test("Tane's Tapu: wild tiles pay stars by adjacent pairs, capped by level; work
   const inc = tapuIncome(s, me);
   assert.equal(inc, wildIncome(s, city));
   assert.equal(inc, 1, 'level 1: cap 1');
+  const pairs = wildPairs(s, city);
+  assert.ok(pairs > WILD_CAP, 'enough wild pairs to hit the cap');
   city.level = 3;
-  assert.equal(wildIncome(s, city), 3);
+  assert.equal(wildIncome(s, city), Math.min(WILD_CAP, 3, pairs));
   city.level = 9;
-  assert.equal(wildIncome(s, city), 4, 'capped');
+  assert.equal(wildIncome(s, city), WILD_CAP, 'capped');
   // the cap is the ceiling; strip the wild tiles and the income goes
   for (const t of s.tiles) if (t.owner === city.id) t.improvement = 'temple';
   assert.equal(wildIncome(s, city), 0);

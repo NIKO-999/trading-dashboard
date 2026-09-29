@@ -24,25 +24,28 @@ import type { Mechanic } from './types';
 // intercepting sea trade: at the start of a Pirate turn every foreign ship that sits next to a Pirate ship or in
 // waters owned by a platform pays a toll (TOLL each, at most TOLL_CAP per victim); `mech:raze` lets a ship or a landed
 // raider burn an enemy improvement on the coast for 2x its cost (host city loses a citizen). Stolen Stars are spent on
-// `mech:recruit`: +2 population into a platform city (once every 2 turns per city). SIMPLIFICATION: the core still pays each
+// `mech:recruit`: +1 population into a platform city (once every 4 turns per city). SIMPLIFICATION: the core still pays each
 // city its level in Stars (`cityIncome`), the platform cities' "harbour dues"; the mechanic does not remove it.
 // Enemy capture of a Pirate city is still possible (a landing party can step onto the platform).
 
-export const PLATFORM_BASE = 3;
-export const FOUND_COST = 8;
+export const PLATFORM_BASE = 4;
+export const FOUND_COST = 14;
 export const TOW_COST = 3; // onto open water (2 onto one of your platforms)
 export const TOW_RANGE = 2;
-export const LAUNCH_COST = 3;
-export const TOLL = 2;
-export const TOLL_CAP = 6;
+export const LAUNCH_COST = 5;
+export const TOLL = 1;
+/** Crew wages: every WAGE_STEP ships of the fleet cost 1 star a turn (at most WAGE_CAP). */
+export const WAGE_STEP = 1;
+export const WAGE_CAP = 10;
+export const TOLL_CAP = 2;
 export const RAID_MULT = 2;
-export const RECRUIT_POP = 2;
-export const RECRUIT_GAP = 2; // turns between recruitments in one city
-export const MAX_PRIZES = 2;
+export const RECRUIT_POP = 1;
+export const RECRUIT_GAP = 4; // turns between recruitments in one city
+export const MAX_PRIZES = 1;
 const BLOCKED = ['farm', 'irrigate', 'market', 'road'];
 export const IMPROVEMENT_COST: Partial<Record<Improvement, number>> = { farm: 5, mine: 5, lumber: 3, port: 7, temple: 10, market: 8 };
 export const raidValue = (i: Improvement) => RAID_MULT * (IMPROVEMENT_COST[i] ?? 5);
-export const recruitCost = (c: City) => 6 + 3 * c.level;
+export const recruitCost = (c: City) => 14 + 5 * c.level;
 
 // ---------------------------------------------------------------- state
 
@@ -215,7 +218,7 @@ function launchCheck(s: GameState, owner: number, t: Tile): Unit | null {
 function recruitCheck(s: GameState, owner: number, t: Tile): { city: City; reason?: string } | null {
   const c = cityById(s, t.cityId);
   if (!c || c.owner !== owner) return null;
-  if (typeof c.data?.recruited === 'number' && s.turn - (c.data.recruited as number) < RECRUIT_GAP) return { city: c, reason: 'The crew is still settling in (one recruitment every 2 turns)' };
+  if (typeof c.data?.recruited === 'number' && s.turn - (c.data.recruited as number) < RECRUIT_GAP) return { city: c, reason: 'The crew is still settling in (one recruitment every 4 turns)' };
   if (s.players[owner].stars < recruitCost(c)) return { city: c, reason: 'Not enough stars' };
   return { city: c };
 }
@@ -333,6 +336,12 @@ export const mech: Mechanic = {
   afterAttack(s, owner, a, d) {
     if (a.owner !== owner || d.data?.boarded !== owner) return;
     takePrize(s, owner, d, Math.ceil(maxHp(d) / 3));
+  },
+
+  // the fleet's crews must be paid out of the plunder
+  income(s, owner) {
+    const ships = s.units.filter((u) => u.owner === owner && isShip(u)).length;
+    return -Math.min(WAGE_CAP, Math.max(0, s.players[owner].stars), Math.floor(ships / WAGE_STEP));
   },
 
   turnStart(s, owner) {
@@ -524,11 +533,11 @@ export const mech: Mechanic = {
       }
     }
     // 6. found a city on a lone raft
-    if (cities.length < 4 && p.stars >= FOUND_COST + 2) {
+    if (cities.length < 3 && p.stars >= FOUND_COST + 2) {
       for (const t of platformsOf(s, owner)) if (foundCheck(s, owner, t) === undefined) return mech.doAction!(s, owner, t, 'mech:found');
     }
     // 7. drop a raft beside a ship, far from every city, to seed a colony
-    if (cities.length < 4 && p.stars >= platformCost(s, owner) + FOUND_COST + 2 && !platformsOf(s, owner).some((t) => foundCheck(s, owner, t, false) === undefined)) {
+    if (cities.length < 3 && p.stars >= platformCost(s, owner) + FOUND_COST + 2 && !platformsOf(s, owner).some((t) => foundCheck(s, owner, t, false) === undefined)) {
       const home = cities[0];
       let best: Tile | null = null;
       let bestD = Infinity;

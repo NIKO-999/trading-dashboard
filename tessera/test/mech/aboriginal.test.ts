@@ -6,7 +6,7 @@ import { tileAt } from '../../src/game/grid';
 import { createGame, spawnUnit } from '../../src/game/mapgen';
 import { endTurn, startTurn } from '../../src/game/turn';
 import { unitVisibleTo } from '../../src/game/mech';
-import { memOf } from '../../src/game/mech/aboriginal';
+import { MAX_PAY, memOf } from '../../src/game/mech/aboriginal';
 import type { GameState, Tile } from '../../src/game/types';
 
 function setup() {
@@ -119,7 +119,7 @@ test('a real move onto a landmark triggers the pilgrimage', () => {
   u.moved = false;
   const stars0 = s.players[0].stars;
   assert.ok(moveUnit(s, u, c.x, c.y));
-  assert.equal(s.players[0].stars, stars0 + 4); // 8 tiles: floor(8/2)
+  assert.equal(s.players[0].stars, stars0 + Math.min(MAX_PAY, 4)); // 8 tiles: floor(8/2), capped at MAX_PAY
 });
 
 import { mech } from '../../src/game/mech/aboriginal';
