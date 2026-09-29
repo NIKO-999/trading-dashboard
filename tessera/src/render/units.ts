@@ -1813,6 +1813,7 @@ function meleeWeapon(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: num
   switch (tribe) {
     case 'inuit':
       inuitMelee(ctx, kind, x, y, k);
+      break;
     case 'inca':
       incaMace(ctx, x, y, k, kind === 'giant');
       break;
@@ -2009,6 +2010,7 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   switch (tribe) {
     case 'inuit':
       inuitShieldFace(ctx, x, y, k);
+      break;
     case 'inca':
       incaShield(ctx, x, y, k);
       break;
@@ -4846,6 +4848,7 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
       break;
     case 'ottoman':
       otCatapult(ctx, x, y, wheels);
+      break;
     case 'india':
       indCatapult(ctx, x, y, wheels);
       break;

@@ -1974,6 +1974,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'ottoman':
       drawOttomanBuilding(ctx, x, y, big, capital);
+      break;
     case 'india':
       indianBuilding(ctx, x, y, big, roofC, color, capital);
       break;
@@ -2077,6 +2078,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'china':
       drawChinaBuilding(ctx, x, y, big, roofC, capital);
+      break;
     case 'mali':
       mlBuilding(ctx, x, y, big, roofC, capital);
       break;
