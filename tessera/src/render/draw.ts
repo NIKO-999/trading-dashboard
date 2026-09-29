@@ -943,6 +943,7 @@ function aboriginalBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC:
 function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: BiomePalette, variant: number) {
   ellipse(ctx, x + 1.5, y, 4.5 * k, 1.8 * k, 'rgba(0,0,0,0.16)');
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
+  if (biome === 'ottoman') return drawOttomanTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
@@ -1643,6 +1644,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'persia':
       drawPersianBuilding(ctx, x, y, big, capital);
       break;
+    case 'ottoman':
+      drawOttomanBuilding(ctx, x, y, big, capital);
+      break;
     case 'ethiopia': {
       // Aksum: carved granite stelae, stepped stone-and-timber towers with monkey-head beam ends, and round churches
       const stone = '#c9bfa8', beam = '#4a2e16', G = '#2f9a4a', Y = '#e8c21a', R = '#c8372d';
@@ -1767,7 +1771,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : 0; // the flag rides on the fire temple's dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : 0; // the flag rides on the fire temple's or mosque's dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -1956,6 +1960,304 @@ function drawPersianBuilding(ctx: Ctx, x: number, y: number, big: boolean, capit
     faceL(0.2, 0.8, 0.28, 0.62, h, TURQ);
     faceL(0.4, 0.6, 0.36, 0.54, h, '#f4efe0');
     persianDome(ctx, x - 2.6, y - h + 0.4, 2.6, 4.6, TURQ);
+  }
+}
+
+// ---------------------------------------------------------------- Ottoman trees and buildings
+
+/** The Anatolian hillside: dark cypresses, broad plane trees (çınar), silvery olives and flat-topped stone pines. */
+function drawOttomanTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 4;
+  if (v === 0) {
+    // cypress: a slim, dark, ragged column of stacked foliage drawn to a needle point
+    const H = 30 * k;
+    ctx.fillStyle = P.trunk;
+    ctx.fillRect(x - 0.7 * k, y - 3 * k, 1.4 * k, 3 * k);
+    const dark = '#1f4a34', mid = '#2c6647';
+    for (let i = 0; i < 9; i++) {
+      const t = i / 9, yy = y - 4 * k - t * H * 0.9, r = (3.6 * Math.pow(1 - t, 0.62) + 0.5) * k, sway = Math.sin(variant * 2.1 + t * 4) * 0.5 * k * t;
+      ellipse(ctx, x + sway + 0.5 * k, yy + 0.6 * k, r * 1.05, 3.4 * k, shade(dark, -0.15));
+      ellipse(ctx, x + sway, yy, r, 3.4 * k, dark);
+      ellipse(ctx, x + sway - r * 0.3, yy - 0.5 * k, r * 0.6, 2.6 * k, mid);
+      ellipse(ctx, x + sway - r * 0.42, yy - 1 * k, r * 0.26, 1.5 * k, shade(mid, 0.3));
+    }
+    poly(ctx, [x - 1.1 * k, y - H * 0.9 - 2 * k, x, y - H - 3 * k, x + 1.1 * k, y - H * 0.9 - 2 * k], dark);
+    return;
+  }
+  if (v === 1) {
+    // plane tree (çınar): a vast mottled trunk splitting into great limbs under a broad, layered crown
+    const bark = '#9a8e76';
+    line(ctx, x, y, x + 0.4 * k, y - 9 * k, bark, 4.2 * k);
+    line(ctx, x - 1.4 * k, y, x - 1 * k, y - 8 * k, shade(bark, 0.22), 0.9 * k);
+    for (const [dx, dy, r] of [[-0.6, -2.6, 1], [0.9, -4.6, 0.9], [-0.6, -6.6, 0.8]] as const) ellipse(ctx, x + dx * k, y + dy * k, r * k, r * 0.8 * k, '#6a5a44'); // peeling patches
+    line(ctx, x + 0.4 * k, y - 8 * k, x - 4.4 * k, y - 13 * k, bark, 1.8 * k);
+    line(ctx, x + 0.4 * k, y - 8 * k, x + 4.6 * k, y - 12.6 * k, bark, 1.8 * k);
+    const leaf = mix(P.forest, '#b8c84a', 0.22);
+    ellipse(ctx, x + 0.4 * k, y - 15 * k, 10 * k, 6.4 * k, shade(leaf, -0.34));
+    ellipse(ctx, x + 4.2 * k, y - 14 * k, 5.6 * k, 4.2 * k, shade(leaf, -0.18));
+    ellipse(ctx, x - 4 * k, y - 16 * k, 5.8 * k, 4.6 * k, shade(leaf, 0));
+    ellipse(ctx, x + 0.2 * k, y - 19.6 * k, 5.6 * k, 3.8 * k, shade(leaf, 0.14));
+    ellipse(ctx, x - 1.6 * k, y - 20.4 * k, 3 * k, 1.9 * k, shade(leaf, 0.34));
+    for (const [dx, dy] of [[-6, -17], [-3, -21.6], [3, -19], [6.4, -15.4], [-1, -13.6], [8, -13]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1.7 * k, 1.1 * k, shade(leaf, 0.4));
+    for (const [dx, dy] of [[3, -11.6], [-3, -11.4], [6.6, -12.6]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1.8 * k, 0.9 * k, shade(leaf, -0.5));
+    return;
+  }
+  if (v === 2) {
+    // olive: a short, twisted, hollow trunk under a low silver-green crown flecked with black olives
+    ctx.strokeStyle = '#6e5a44';
+    ctx.lineWidth = 2.6 * k;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - 0.4 * k, y);
+    ctx.bezierCurveTo(x - 3 * k, y - 3 * k, x + 2.4 * k, y - 5 * k, x - 0.6 * k, y - 8 * k);
+    ctx.stroke();
+    line(ctx, x - 0.4 * k, y - 5.6 * k, x + 3.8 * k, y - 10 * k, '#6e5a44', 1.4 * k);
+    line(ctx, x - 0.6 * k, y - 7.6 * k, x - 3.8 * k, y - 11 * k, '#6e5a44', 1.3 * k);
+    ellipse(ctx, x - 0.2 * k, y - 2.6 * k, 0.6 * k, 1 * k, '#2e241a'); // the hollow
+    const c = '#8fa07a';
+    ellipse(ctx, x + 0.6 * k, y - 13 * k, 8.2 * k, 5 * k, shade(c, -0.3));
+    ellipse(ctx, x + 3.4 * k, y - 12.4 * k, 4.4 * k, 3.2 * k, shade(c, -0.14));
+    ellipse(ctx, x - 3 * k, y - 13.6 * k, 4.8 * k, 3.6 * k, c);
+    ellipse(ctx, x, y - 16 * k, 4.6 * k, 2.8 * k, shade(c, 0.18));
+    for (let i = 0; i < 14; i++) { // leaf-flecks in silver and grey-green
+      const a = rand(variant + 3, i) * Math.PI * 2, r = 1 + rand(variant + 5, i) * 6.6;
+      ellipse(ctx, x + 0.6 * k + Math.cos(a) * r * k, y - 13.6 * k + Math.sin(a) * r * 0.5 * k, 1.1 * k, 0.5 * k, i % 3 ? shade(c, 0.42) : shade(c, -0.36));
+    }
+    for (const [dx, dy] of [[-4, -11.4], [1, -10.4], [4.6, -12], [-1.6, -14.6]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.6 * k, 0.7 * k, '#2a2a30');
+    return;
+  }
+  // stone pine: a tall reddish trunk crowned with a flat, spreading umbrella of dark needles
+  line(ctx, x, y, x + 0.8 * k, y - 15 * k, '#8a5a3a', 2.4 * k);
+  line(ctx, x - 0.6 * k, y, x + 0.2 * k, y - 15 * k, '#b57a52', 0.7 * k);
+  for (const t of [0.2, 0.4, 0.6]) line(ctx, x - 1 * k + t * 0.8 * k, y - t * 15 * k, x + 1 * k + t * 0.8 * k, y - t * 15 * k + 0.4 * k, '#5a3a22', 0.5 * k);
+  line(ctx, x + 0.8 * k, y - 13 * k, x - 4 * k, y - 16.4 * k, '#8a5a3a', 1.2 * k);
+  line(ctx, x + 0.8 * k, y - 13 * k, x + 5 * k, y - 16 * k, '#8a5a3a', 1.2 * k);
+  const g = '#3a6a3a';
+  for (const [dx, dy, rx, ry, c] of [[0.8, -17.4, 10, 4, shade(g, -0.3)], [6, -16.6, 5.6, 3, shade(g, -0.12)], [-4.6, -17, 6, 3.2, g], [0.4, -20, 6.6, 3.2, shade(g, 0.14)], [-2, -21.2, 3.4, 1.7, shade(g, 0.32)]] as const) ellipse(ctx, x + dx * k, y + dy * k, rx * k, ry * k, c);
+  for (const [dx, dy] of [[-6, -16], [-2, -18.4], [3, -18.8], [6.6, -16.4], [0.6, -15.4]] as const) line(ctx, x + dx * k, y + dy * k, x + (dx + 1.6) * k, y + (dy + 0.6) * k, shade(g, 0.4), 0.6 * k); // needle sprays
+  ellipse(ctx, x + 2 * k, y - 14.6 * k, 0.9 * k, 1.2 * k, '#7a4a2a'); // a cone
+}
+
+/** A hemispherical Ottoman dome: a lit flank, a shaded flank, a gilt rim and ribs, and (optionally) a crescent finial. */
+function otDome(ctx: Ctx, x: number, y: number, r: number, h: number, col: string, finial = true, skylights = 0) {
+  const shape = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - r, y);
+    ctx.bezierCurveTo(x - r, y - h * 1.34, x + r, y - h * 1.34, x + r, y);
+    ctx.lineTo(x - r, y);
+    ctx.closePath();
+  };
+  shape();
+  ctx.fillStyle = ink(shade(col, 0.1));
+  ctx.fill();
+  ctx.save();
+  shape();
+  ctx.clip();
+  ctx.fillStyle = ink(shade(col, -0.26));
+  ctx.fillRect(x + r * 0.05, y - h * 1.2, r, h * 1.3);
+  ctx.fillStyle = ink(shade(col, -0.08));
+  ctx.fillRect(x - r * 0.45, y - h * 1.2, r * 0.5, h * 1.3);
+  ctx.restore();
+  ctx.lineCap = 'round';
+  for (const [f, c] of [[-0.62, shade(col, -0.04)], [-0.28, shade(col, -0.18)], [0.3, shade(col, -0.4)], [0.64, shade(col, -0.44)]] as const) { // ribs
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = Math.max(0.4, r * 0.05);
+    ctx.beginPath();
+    ctx.moveTo(x + f * r, y - 0.2);
+    ctx.bezierCurveTo(x + f * r * 1.05, y - h * 0.7, x + f * r * 0.5, y - h * 0.98, x, y - h);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = ink('#f0c43a'); // a gilt ring at the base
+  ctx.lineWidth = Math.max(0.7, r * 0.1);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.26, 0, 0, Math.PI);
+  ctx.stroke();
+  ellipse(ctx, x - r * 0.4, y - h * 0.62, r * 0.18, r * 0.3, 'rgba(255,255,255,0.4)');
+  for (let i = 0; i < skylights; i++) { const a = (i + 0.5) / skylights; ellipse(ctx, x - r * 0.6 + a * r * 1.2, y - h * (0.34 + 0.34 * Math.sin(a * Math.PI)), Math.max(0.4, r * 0.09), Math.max(0.4, r * 0.09), '#23303a'); } // star-shaped skylights of a bath
+  if (finial) {
+    line(ctx, x, y - h, x, y - h - r * 0.4, '#f0c43a', Math.max(0.7, r * 0.1));
+    const cy = y - h - r * 0.7;
+    ctx.strokeStyle = ink('#f0c43a');
+    ctx.lineWidth = Math.max(0.6, r * 0.11);
+    ctx.beginPath();
+    ctx.arc(x, cy, r * 0.28, -0.35 * Math.PI, 1.35 * Math.PI, false);
+    ctx.stroke();
+    ellipse(ctx, x + r * 0.06, cy, Math.max(0.4, r * 0.09), Math.max(0.4, r * 0.09), '#f0c43a');
+  }
+}
+
+/** A slender pencil minaret: a fluted shaft on a square plinth, a balcony (şerefe) with a rail, and a needle cap topped with a crescent. */
+function otMinaret(ctx: Ctx, x: number, y: number, h: number, cap = '#3f9ab5') {
+  const w = 1.5;
+  box(ctx, x, y, 4.4, 3.4, '#eadfc6'); // the plinth
+  const top = y - 3.4;
+  const bal = top - h * 0.66, hh = h * 0.66;
+  // the lower shaft, lit on the left and shaded on the right, with an ablaq band
+  poly(ctx, [x - w, top, x - w * 0.86, bal, x, bal, x, top], '#f4ecd6');
+  poly(ctx, [x + w, top, x + w * 0.86, bal, x, bal, x, top], '#cfc2a2');
+  line(ctx, x, top, x, bal, '#b8ab8a', 0.4);
+  for (const t of [0.3, 0.6]) line(ctx, x - w, top - hh * t, x + w, top - hh * t, '#c8244a', 0.6);
+  // the balcony: a flared corbel, a floor and a lattice rail
+  poly(ctx, [x - w, bal + 0.2, x - 2.9, bal - 0.8, x + 2.9, bal - 0.8, x + w, bal + 0.2], '#d8cbaa');
+  ellipse(ctx, x, bal - 0.8, 3.1, 1.1, '#efe6cc');
+  for (let i = 0; i < 6; i++) line(ctx, x - 2.6 + i * 1.04, bal - 0.8, x - 2.6 + i * 1.04, bal - 2.4, '#8a7c5c', 0.4);
+  line(ctx, x - 2.8, bal - 2.4, x + 2.8, bal - 2.4, '#8a7c5c', 0.5);
+  // the upper shaft, thinner, and a sharp conical cap
+  const bt = bal - 2.4, ut = bt - h * 0.12;
+  poly(ctx, [x - 1, bt, x - 0.9, ut, x, ut, x, bt], '#f4ecd6');
+  poly(ctx, [x + 1, bt, x + 0.9, ut, x, ut, x, bt], '#cfc2a2');
+  poly(ctx, [x - 1.5, ut, x, ut - h * 0.24, x, ut + 0.3], shade(cap, 0.1));
+  poly(ctx, [x + 1.5, ut, x, ut - h * 0.24, x, ut + 0.3], shade(cap, -0.28));
+  line(ctx, x - 1.6, ut + 0.1, x + 1.6, ut + 0.1, '#f0c43a', 0.6);
+  const tip = ut - h * 0.24;
+  line(ctx, x, tip, x, tip - 1.8, '#f0c43a', 0.5);
+  ctx.strokeStyle = ink('#f0c43a');
+  ctx.lineWidth = 0.55;
+  ctx.beginPath();
+  ctx.arc(x, tip - 2.7, 0.95, -0.35 * Math.PI, 1.35 * Math.PI, false);
+  ctx.stroke();
+}
+
+/** A pointed-arch window or doorway on the right (or left) face of a box at (x, y) of width w and height h. */
+function otArch(ctx: Ctx, face: 'L' | 'R', x: number, y: number, w: number, h: number, u0: number, u1: number, v0: number, v1: number, frame: string, inner: string) {
+  const P = (u: number, v: number) => (face === 'R' ? [x + (u * w) / 2, y + (w / 4) * (1 - u) - v * h] : [x - w / 2 + (u * w) / 2, y + (w / 4) * u - v * h]);
+  const um = (u0 + u1) / 2, vm = v1 - (u1 - u0) * 0.5 * (w / h) * 0.7;
+  poly(ctx, [...P(u0, v0), ...P(u1, v0), ...P(u1, vm), ...P(um, v1), ...P(u0, vm)], frame);
+  const du = (u1 - u0) * 0.2, dv = (v1 - v0) * 0.07;
+  poly(ctx, [...P(u0 + du, v0), ...P(u1 - du, v0), ...P(u1 - du, vm - dv), ...P(um, v1 - dv * 1.6), ...P(u0 + du, vm - dv)], inner);
+}
+
+/** Ottoman city buildings: a stone hamam with clustered domes, timber-and-plaster houses with overhanging upper storeys, a bazaar with striped awnings and a small mosque; the grand one is a mosque complex with half-domes and pencil minarets. */
+function drawOttomanBuilding(ctx: Ctx, x: number, y: number, big: boolean, capital: boolean) {
+  const STONE = '#eadfc6', STONE2 = '#d5c7a4', TQ = '#3f9ab5', RED = '#c8244a', GOLD = '#f0c43a', DOOR = '#2c1c14', LEAD = '#8e9caa', PLASTER = '#f1e6c8', TIMBER = '#5a3a24', TILE = '#b5523a';
+  const faces = (w: number, h: number, base: number) => ({
+    R: (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, base, w, h, u0, u1, v0, v1, c),
+    L: (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, base, w, h, u0, u1, v0, v1, c),
+  });
+  if (big) {
+    const cw = capital ? 20 : 16, ch = capital ? 10 : 9; // the prayer hall
+    const by = y + 1;
+    // a courtyard platform under everything
+    box(ctx, x, y + 4, capital ? 30 : 25, 2.6, '#d9ccab');
+    const ax = capital ? [[-12, 1], [12, 1], [-7, -6], [7, -6]] : [[-11, 2], [11, 2]];
+    const mh = capital ? 36 : 32;
+    // the back minarets stand behind the hall
+    if (capital) for (const [dx, dy] of ax.slice(2)) otMinaret(ctx, x + dx, y + dy + 2, mh);
+    // the hall, its walls banded in cream and rose stone, arched windows in two tiers
+    box(ctx, x, by, cw, ch, STONE);
+    for (const f of [faces(cw, ch, by).R, faces(cw, ch, by).L]) {
+      f(0, 1, 0.06, 0.1, STONE2);
+      f(0, 1, 0.3, 0.34, '#e6b7a8');
+      f(0, 1, 0.9, 1, STONE2);
+      f(0, 1, 0.9, 0.925, RED);
+    }
+    const n = capital ? 4 : 3;
+    for (let i = 0; i < n; i++) {
+      const u0 = 0.08 + i * (0.86 / n), u1 = u0 + 0.86 / n - 0.06;
+      otArch(ctx, 'R', x, by, cw, ch, u0, u1, 0.42, 0.86, TQ, shade(TQ, -0.5));
+      otArch(ctx, 'L', x, by, cw, ch, u0, u1, 0.42, 0.86, TQ, shade(TQ, -0.5));
+      otArch(ctx, 'R', x, by, cw, ch, u0 + 0.02, u1 - 0.02, 0.06, 0.28, '#c9bb98', '#5a4a36');
+    }
+    otArch(ctx, 'R', x, by, cw, ch, 0.42, 0.6, 0.06, 0.34, GOLD, DOOR); // the portal
+    // half-domes cascade down from the great dome
+    const dy0 = by - ch;
+    otDome(ctx, x - cw * 0.4, dy0 + 1.6, cw * 0.3, cw * 0.25, LEAD, false);
+    otDome(ctx, x + cw * 0.4, dy0 + 1.6, cw * 0.3, cw * 0.25, LEAD, false);
+    if (capital) { otDome(ctx, x - cw * 0.22, dy0 - 1.2, cw * 0.2, cw * 0.18, shade(TQ, -0.08), false); otDome(ctx, x + cw * 0.22, dy0 - 1.2, cw * 0.2, cw * 0.18, shade(TQ, -0.08), false); }
+    // the drum, pierced with windows, and the great dome
+    const dr = capital ? 11 : 9.4;
+    box(ctx, x, dy0 - 1.4, dr, 4.2, '#f3e8cc');
+    for (const f of ['R', 'L'] as const) for (let i = 0; i < 3; i++) otArch(ctx, f, x, dy0 - 1.4, dr, 4.2, 0.12 + i * 0.29, 0.3 + i * 0.29, 0.22, 0.86, GOLD, '#2a4a5a');
+    band(ctx, x, dy0 - 1.4, dr, 4.2, 0.9, 1, GOLD);
+    otDome(ctx, x, dy0 - 5.6, capital ? 7.4 : 6.2, capital ? 11 : 9.2, TQ, !capital);
+    // the front minarets stand in front of the hall's corners
+    for (const [dx, dy] of ax.slice(0, 2)) otMinaret(ctx, x + dx, y + dy + 2.4, mh);
+    return;
+  }
+  const v = Math.abs(Math.round(x * 1.7 + y * 2.9)) % 4;
+  if (v === 0) {
+    // a hamam: a low stone bath under a cluster of lead domes pricked with skylights, and a wisp of steam
+    box(ctx, x, y, 12.4, 5, STONE);
+    const f = faces(12.4, 5, y);
+    for (const b of [f.R, f.L]) { b(0, 1, 0.3, 0.42, '#e6b7a8'); b(0, 1, 0.66, 0.78, '#e6b7a8'); b(0, 1, 0.9, 1, STONE2); }
+    otArch(ctx, 'R', x, y, 12.4, 5, 0.38, 0.62, 0, 0.7, STONE2, DOOR);
+    for (const u of [0.12, 0.74]) otArch(ctx, 'R', x, y, 12.4, 5, u, u + 0.14, 0.4, 0.86, '#c9bb98', '#3a4a56');
+    otArch(ctx, 'L', x, y, 12.4, 5, 0.4, 0.58, 0.36, 0.86, '#c9bb98', '#3a4a56');
+    otDome(ctx, x - 4.2, y - 4.6, 3, 3.2, LEAD, false, 3);
+    otDome(ctx, x + 4.6, y - 4, 3.2, 3.4, LEAD, false, 3);
+    otDome(ctx, x + 0.2, y - 5.2, 4.4, 5.2, shade(LEAD, 0.06), true, 5);
+    ellipse(ctx, x - 5.6, y - 14.6, 1.6, 1.1, 'rgba(255,255,255,0.55)');
+    ellipse(ctx, x - 4.6, y - 17.4, 2.1, 1.3, 'rgba(255,255,255,0.4)');
+  } else if (v === 1 || v === 2) {
+    // a timber-and-plaster house: a stone ground floor, an upper storey jutting out on carved brackets, half-timbering, lattice windows
+    const w = 9.4, h1 = 4.6, h2 = 5.6, ow = 12.8;
+    box(ctx, x, y, w, h1, '#ddd0ae');
+    otArch(ctx, 'R', x, y, w, h1, 0.38, 0.66, 0, 0.72, TIMBER, DOOR);
+    otArch(ctx, 'R', x, y, w, h1, 0.08, 0.26, 0.3, 0.72, TIMBER, '#3a4a56');
+    faceQuad(ctx, 'L', x, y, w, h1, 0.3, 0.6, 0.3, 0.72, DOOR);
+    const uy = y - h1;
+    box(ctx, x, uy, ow, h2, PLASTER);
+    faceQuad(ctx, 'R', x, uy, ow, h2, 0, 1, 0, 0.1, TIMBER); // the sill beam over the brackets
+    faceQuad(ctx, 'L', x, uy, ow, h2, 0, 1, 0, 0.1, TIMBER);
+    for (const f of ['R', 'L'] as const) {
+      for (const u of [0.02, 0.34, 0.66, 0.96]) faceQuad(ctx, f, x, uy, ow, h2, u - 0.02, u + 0.03, 0, 1, TIMBER); // posts
+      faceQuad(ctx, f, x, uy, ow, h2, 0, 1, 0.94, 1, TIMBER);
+      faceQuad(ctx, f, x, uy, ow, h2, 0, 1, 0.5, 0.55, TIMBER);
+    }
+    for (const u of [0.12, 0.44, 0.76]) { // lattice windows with turquoise shutters on the right face
+      faceQuad(ctx, 'R', x, uy, ow, h2, u, u + 0.16, 0.6, 0.9, v === 1 ? TQ : '#8a3a30');
+      faceQuad(ctx, 'R', x, uy, ow, h2, u + 0.025, u + 0.135, 0.64, 0.86, '#2a3a44');
+      faceQuad(ctx, 'R', x, uy, ow, h2, u + 0.075, u + 0.085, 0.64, 0.86, TIMBER);
+    }
+    faceQuad(ctx, 'L', x, uy, ow, h2, 0.3, 0.5, 0.6, 0.9, '#2a3a44');
+    faceQuad(ctx, 'L', x, uy, ow, h2, 0.3, 0.5, 0.6, 0.9, '#2a3a44');
+    for (const u of [0.1, 0.4, 0.7, 0.9]) ellipse(ctx, x + (u * ow) / 2, uy + (ow / 4) * (1 - u) + 0.6, 0.55, 0.9, '#3a2418'); // bracket ends under the overhang
+    roof(ctx, x, uy - h2, ow + 2.6, 5.2, TILE);
+    line(ctx, x - (ow + 2.6) / 2, uy - h2, x, uy - h2 + (ow + 2.6) / 4, shade(TILE, -0.45), 0.6);
+    line(ctx, x + (ow + 2.6) / 2, uy - h2, x, uy - h2 + (ow + 2.6) / 4, shade(TILE, -0.55), 0.6);
+    if (v === 2) { box(ctx, x + 3.4, uy - h2 - 3.6, 2.2, 3, '#d8ccb0'); box(ctx, x + 3.4, uy - h2 - 6.2, 2.8, 0.9, TIMBER); } // a chimney
+  } else if (v === 3 && (Math.round(x) + Math.round(y)) % 2 === 0) {
+    // a small neighbourhood mosque: a domed cube with one slender minaret
+    box(ctx, x, y, 9.4, 6, STONE);
+    const f = faces(9.4, 6, y);
+    for (const b of [f.R, f.L]) { b(0, 1, 0.88, 1, RED); b(0, 1, 0.3, 0.34, '#e6b7a8'); }
+    otArch(ctx, 'R', x, y, 9.4, 6, 0.36, 0.64, 0, 0.64, TQ, DOOR);
+    for (const u of [0.08, 0.72]) otArch(ctx, 'R', x, y, 9.4, 6, u, u + 0.2, 0.38, 0.78, GOLD, '#2a4a5a');
+    otArch(ctx, 'L', x, y, 9.4, 6, 0.34, 0.62, 0.34, 0.8, GOLD, '#2a4a5a');
+    box(ctx, x, y - 6, 6, 2, '#f3e8cc');
+    otDome(ctx, x, y - 8, 4.2, 5, TQ, true);
+    otMinaret(ctx, x + 6.6, y + 1.8, 22);
+  } else {
+    // a bazaar: a row of arched shops under scalloped awnings striped crimson and cream, carpets and lanterns hanging out
+    const w = 12.4, h = 6.6;
+    box(ctx, x, y, w, h, '#e6d6ae');
+    const f = faces(w, h, y);
+    f.R(0, 1, 0.92, 1, STONE2); f.L(0, 1, 0.92, 1, STONE2);
+    for (let i = 0; i < 3; i++) otArch(ctx, 'R', x, y, w, h, 0.06 + i * 0.32, 0.32 + i * 0.32, 0, 0.6, '#c9b58a', DOOR);
+    otArch(ctx, 'L', x, y, w, h, 0.2, 0.46, 0, 0.58, '#c9b58a', DOOR);
+    otArch(ctx, 'L', x, y, w, h, 0.56, 0.82, 0, 0.58, '#c9b58a', DOOR);
+    // the awnings: slanted strips of striped cloth jutting out over the shopfronts
+    const P = (face: 'L' | 'R', u: number, v0: number) => (face === 'R' ? [x + (u * w) / 2, y + (w / 4) * (1 - u) - v0 * h] : [x - w / 2 + (u * w) / 2, y + (w / 4) * u - v0 * h]);
+    for (const face of ['R', 'L'] as const) {
+      const dx = face === 'R' ? 2 : -2;
+      const n = 8;
+      for (let i = 0; i < n; i++) {
+        const u0 = i / n, u1 = (i + 1) / n, a = P(face, u0, 0.7), b = P(face, u1, 0.7);
+        const c = i % 2 ? '#f4ecd6' : face === 'R' ? RED : shade(RED, 0.05);
+        poly(ctx, [a[0], a[1], b[0], b[1], b[0] + dx, b[1] + 2.8, a[0] + dx, a[1] + 2.8], face === 'L' ? shade(c, 0.06) : shade(c, -0.16));
+        poly(ctx, [a[0] + dx, a[1] + 2.8, (a[0] + b[0]) / 2 + dx, a[1] + 3.8 + (b[1] - a[1]) / 2, b[0] + dx, b[1] + 2.8], face === 'L' ? shade(c, -0.04) : shade(c, -0.26)); // the scalloped valance
+      }
+    }
+    // hanging carpets, lanterns and pots
+    const pr = P('R', 0.14, 0.4), pl = P('L', 0.34, 0.4);
+    poly(ctx, [pr[0] + 1.2, pr[1] + 2.4, pr[0] + 4.4, pr[1] + 1.2, pr[0] + 4.4, pr[1] + 6.4, pr[0] + 1.2, pr[1] + 7.6], TQ);
+    poly(ctx, [pr[0] + 1.2, pr[1] + 4, pr[0] + 4.4, pr[1] + 2.8, pr[0] + 4.4, pr[1] + 3.8, pr[0] + 1.2, pr[1] + 5], '#f4ecd6');
+    ellipse(ctx, pl[0] - 1.6, pl[1] + 5, 0.9, 1.2, '#e8a02a');
+    ellipse(ctx, pl[0] - 1.6, pl[1] + 4.1, 0.4, 0.4, GOLD);
+    ellipse(ctx, x + 5.6, y + 3.6, 1, 0.7, '#b8503a'); // pots
+    ellipse(ctx, x + 6.6, y + 4.1, 0.8, 0.6, '#8a5a34');
+    // a small dome on the flat roof
+    otDome(ctx, x - 1.6, y - h - 0.4, 3.4, 3.6, TQ, true);
   }
 }
 
