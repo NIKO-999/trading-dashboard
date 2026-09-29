@@ -1,5 +1,5 @@
 import { revealAround } from './mapgen';
-import { checkElimination, checkGameOver, citiesOf, income, maxHp } from './rules';
+import { tickPower, checkElimination, checkGameOver, citiesOf, income, maxHp } from './rules';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -17,6 +17,7 @@ export function startTurn(s: GameState) {
     u.moved = false;
     u.attacked = false;
   }
+  tickPower(s, p.id);
   revealAround(s, p.id);
 }
 

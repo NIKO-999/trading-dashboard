@@ -6,7 +6,7 @@ import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
-  moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
+  moveOptions, moveUnit, powerCooldown, powerOf, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, usePower, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
@@ -128,6 +128,7 @@ export class GameView {
       btn('menu', 'Menu', 'dark', () => this.openMenu()),
       btn('globe', 'Empires', 'dark', () => this.openStats()),
       btn('tech', 'Tech Tree', 'blue', () => this.openTech()),
+      (this.powerBtn = btn('power', 'Power', 'power', () => this.openPower())),
       btn('check', 'End Turn', 'blue end-turn', () => void this.onEndTurn()),
     );
   }
@@ -531,10 +532,45 @@ export class GameView {
     this.countTo(e.score, e.scoreBox, sc, (v) => v.toLocaleString());
     this.countTo(e.stars, e.starsBox, p.stars, String);
     this.bottom.classList.toggle('waiting', !this.myTurn());
+    this.updatePowerBtn();
     this.ov.glow = this.harvestable();
     this.updateHint();
     this.version++;
     if (this.sel) this.select(this.sel);
+  }
+
+  private updatePowerBtn() {
+    if (!this.powerBtn) return;
+    const cd = powerCooldown(this.s, this.me);
+    this.powerBtn.classList.toggle('ready', cd <= 0);
+    const label = this.powerBtn.querySelector('.dock-label');
+    if (label) label.textContent = cd <= 0 ? 'Power' : `Power ${cd}`;
+  }
+
+  private openPower() {
+    const pw = powerOf(this.s, this.me);
+    const cd = powerCooldown(this.s, this.me);
+    const ready = cd <= 0 && this.myTurn();
+    modal({
+      title: pw.name,
+      body: [
+        h('p', {}, pw.blurb),
+        h('p', { class: 'muted small' }, cd > 0 ? `Recharging: ready in ${cd} turn${cd === 1 ? '' : 's'}. (It recharges for ${pw.cooldown} turns after each use.)` : `Ready. It recharges for ${pw.cooldown} turns after each use.`),
+      ],
+      dismissable: true,
+      buttons: [
+        ...(ready ? [{ label: 'Use power', primary: true, onClick: () => this.usePowerNow() }] : []),
+        { label: ready ? 'Not now' : 'Close', primary: !ready },
+      ],
+    });
+  }
+
+  private usePowerNow() {
+    if (!this.myTurn() || this.busy) return;
+    this.select(null);
+    this.act(() => usePower(this.s, this.me));
+    this.refresh();
+    this.checkRewards();
   }
 
   /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
@@ -549,6 +585,7 @@ export class GameView {
   }
 
   /** Tiles in my territory where a harvest, farm or mine can be bought right now. */
+  private powerBtn!: HTMLElement;
   private hudEls: { score: HTMLElement; starsLabel: HTMLElement; stars: HTMLElement; turn: HTMLElement; scoreBox: HTMLElement; starsBox: HTMLElement } | null = null;
   private counters = new WeakMap<HTMLElement, { value: number; raf: number }>();
 
@@ -804,6 +841,12 @@ export class GameView {
         case 'toast':
           if (e.player === this.me) toast(e.text, myColor);
           break;
+        case 'power': {
+          const who = TRIBES[this.s.players[e.player].tribe];
+          if (e.player === this.me) { toast(`${e.name}! ${e.text}`, who.color); sfx.play('levelup'); }
+          else if (this.s.players[this.me].met?.includes(e.player)) toast(`The ${who.people} empire used ${e.name}.`, who.color);
+          break;
+        }
         case 'stars':
           if (e.player === this.me) {
             fx.floaters.push({ x: e.x, y: e.y, text: `+${e.amount}★`, color: '#ffd54a', t0: now });

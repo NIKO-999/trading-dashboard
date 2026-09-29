@@ -76,6 +76,10 @@ export interface Player {
   bonusScore: number;
   /** Empires this one has met: seen a unit or city of, or fought (missing in older saves). */
   met?: number[];
+  /** Turns until the Empire Power can be used again (missing in older saves: it then starts on cooldown). */
+  powerCd?: number;
+  /** Temporary boosts and curses from Empire Powers. `left` counts down at the start of this player's turns. */
+  effects?: { stat: 'atk' | 'def' | 'move' | 'strike'; n: number; left: number; who?: 'all' | 'ranged' | 'mounted' | 'naval' }[];
 }
 
 export type GameMode = 'perfection' | 'domination';

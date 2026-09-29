@@ -280,3 +280,12 @@ button:disabled { opacity: 0.45; cursor: default; }
 .idle-row span { flex: 1; opacity: 0.7; font-weight: 300; }
 .idle-row em { font-style: normal; font-size: 0.85rem; color: #ffb4a8; }
 .idle-row:active { background: #2a2a34; }
+
+/* five dock buttons: a little narrower so they all fit a phone */
+.bottom-bar .dock-btn { width: 68px; }
+.bottom-bar .dock-btn .round { width: 58px; height: 58px; }
+.dock-btn.power .round { background: radial-gradient(circle at 38% 28%, #b5a4ff 0%, #6d4ce0 50%, #3a239a 100%); }
+.dock-btn.power:not(.ready) .round { filter: grayscale(0.85) brightness(0.75); }
+.dock-btn.power.ready .round { animation: power-pulse 1.6s ease-in-out infinite; }
+@keyframes power-pulse { 0%, 100% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 0 rgba(150,120,255,0.7); } 50% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 9px rgba(150,120,255,0); } }
+.bottom-bar.waiting .dock-btn.power { opacity: 0.4; pointer-events: none; }

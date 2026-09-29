@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
-import { isLand, isWater, tileAt } from '../src/game/grid.ts';
+import { isLand, isWater, neighbors, tileAt } from '../src/game/grid.ts';
 import { createGame, foundCity } from '../src/game/mapgen.ts';
-import { research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { powerCooldown, powerReady, usePower, attackOptions, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -588,4 +588,38 @@ test('the newest five empires\' bonuses', () => {
   const mt = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([dx, dy]) => tileAt(t, u.x + dx, u.y + dy)).find((x) => x && x.cityId === null)!;
   mt.terrain = 'mountain'; t.players[0].explored.fill(true);
   assert.ok(moveOptions(t, u).some((m) => m.x === mt.x && m.y === mt.y));
+});
+
+test('every empire power works and then recharges', () => {
+  for (const id of TRIBE_IDS) {
+    const s = createGame({ seed: 41, human: id, opponents: ['rome', 'greeks'], mode: 'domination' });
+    startTurn(s);
+    assert.ok(!powerReady(s, 0), `${id} starts on cooldown`);
+    s.players[0].powerCd = 0;
+    // put an enemy next to my unit so buff and convert powers have something to do
+    const mine = s.units.find((u) => u.owner === 0)!;
+    const foe = s.units.find((u) => u.owner === 1)!;
+    const spot = neighbors(s, mine.x, mine.y).find((t) => isLand(t) && !s.units.some((u) => u.x === t.x && u.y === t.y));
+    if (spot) { foe.x = spot.x; foe.y = spot.y; foe.hp = 3; }
+    const stars = s.players[0].stars;
+    assert.ok(usePower(s, 0), id);
+    drain();
+    assert.ok(!powerReady(s, 0), `${id} recharges`);
+    assert.ok(powerCooldown(s, 0) >= 8, id);
+    checkInvariants(s);
+    void stars;
+  }
+  // specific effects
+  const g = (id: 'egypt' | 'mali' | 'rome' | 'maya' | 'vikings' | 'tibet') => { const s = createGame({ seed: 41, human: id, opponents: ['greeks', 'zulu'], mode: 'domination' }); startTurn(s); s.players[0].powerCd = 0; return s; };
+  const m = g('mali'), before = m.players[0].stars; usePower(m, 0);
+  assert.ok(m.players[0].stars >= before + 5);
+  const r = g('rome'), units = r.units.filter((u) => u.owner === 0).length; usePower(r, 0);
+  assert.ok(r.units.filter((u) => u.owner === 0).length > units || citiesOf(r, 0).every((c) => c.units >= c.level + 1));
+  const my = g('maya'); usePower(my, 0);
+  const rival = my.units.find((u) => u.owner === 1)!; const bait = my.units.find((u) => u.owner === 0)!;
+  rival.x = bait.x; rival.y = bait.y === 0 ? 1 : bait.y - 1; rival.attacked = false;
+  assert.equal(attackOptions(my, rival).length, 0, 'eclipse stops rival attacks');
+  const vk = g('vikings'); const u0 = vk.units.find((u) => u.owner === 0)!; const foe0 = vk.units.find((u) => u.owner === 1)!;
+  const plain = previewCombat(vk, u0, foe0).dmg; usePower(vk, 0);
+  assert.ok(previewCombat(vk, u0, foe0).dmg >= plain, 'berserkergang hits harder');
 });
