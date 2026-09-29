@@ -60,8 +60,53 @@
     G.giveStarter(s);
     return s;
   };
+  const BACKUP_KEY = SAVE_KEY + '-backup', CORRUPT_KEY = SAVE_KEY + '-corrupt', SAVE_VERSION = 2;
+  let storageOk = true, saveNotice = '';
+  // 'empty' = nothing stored, 'bad' = stored but unreadable, otherwise the parsed save
+  function readKey(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return { empty: true };
+      const s = JSON.parse(raw);
+      return s && typeof s === 'object' && !Array.isArray(s) ? { s } : { bad: raw };
+    } catch (e) {
+      if (e instanceof SyntaxError) { try { return { bad: localStorage.getItem(key) }; } catch (e2) { /* fall through */ } }
+      storageOk = false; return { empty: true };
+    }
+  }
+  // Make a loaded save safe to run: right types, no half-written items, nothing missing.
+  function sanitizeSave(s) {
+    const d = DEFAULT_SAVE(), out = Object.assign(d, s);
+    const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+    ['heroLv', 'talents', 'best', 'pets', 'equipped'].forEach(k => { if (!isObj(out[k])) out[k] = {}; });
+    if (!Array.isArray(out.team)) out.team = [];
+    out.team = out.team.filter(k => PETS[k] && out.pets[k]);
+    if (!Array.isArray(out.gear)) out.gear = [];
+    out.gear = out.gear.filter(g => g && G.SLOTS.includes(g.slot) && G.RARITY[g.rarity] && Number.isFinite(g.id) && Number.isFinite(g.lv));
+    Object.keys(out.equipped).forEach(sl => { if (!out.gear.some(g => g.id === out.equipped[sl] && g.slot === sl)) delete out.equipped[sl]; });
+    out.gearId = Math.max(out.gearId || 0, ...out.gear.map(g => g.id), 0);
+    ['gold', 'gems', 'energy', 'freeEggs', 'bonusEggs', 'hatches', 'runs', 'unlocked'].forEach(k => { if (!Number.isFinite(out[k]) || out[k] < 0) out[k] = d[k]; });
+    out.unlocked = Math.min(Math.max(1, out.unlocked), CHAPTERS.length);
+    if (out.run && (!isObj(out.run) || !CHAPTERS.some(c => c.id === out.run.chId) || !HEROES[out.run.heroKey])) out.run = null;
+    if (!HEROES[out.hero]) out.hero = HERO_KEYS[0];
+    out.version = SAVE_VERSION;
+    return out;
+  }
   let save = DEFAULT_SAVE();
-  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) save = Object.assign(DEFAULT_SAVE(), s); } catch (e) { /* storage unavailable */ }
+  (function loadSave() {
+    const main = readKey(SAVE_KEY);
+    if (main.s) { save = sanitizeSave(main.s); return; }
+    if (main.bad) {
+      // never overwrite something we could not read: keep a copy, then fall back to the last good backup
+      try { localStorage.setItem(CORRUPT_KEY, main.bad); } catch (e) { /* ignore */ }
+      const bk = readKey(BACKUP_KEY);
+      if (bk.s) { save = sanitizeSave(bk.s); saveNotice = 'Your save was damaged, so the latest backup was restored.'; return; }
+      saveNotice = 'Your save could not be read. A copy was kept and a new game started.';
+      return;
+    }
+    const bk = readKey(BACKUP_KEY);
+    if (bk.s) { save = sanitizeSave(bk.s); saveNotice = 'Your progress was restored from the backup.'; }
+  })();
   if (!HEROES[save.hero]) save.hero = HERO_KEYS[0];
   if (save.freeEggs > 3) { save.bonusEggs += save.freeEggs - 3; save.freeEggs = 3; }
   const SND = window.SFX || { init() {}, play() {}, music() {}, setMusic() {}, setSfx() {} };
@@ -72,7 +117,25 @@
   const energyText = () => (save.unlimited ? '∞' : `${save.energy}/${ENERGY_MAX}`);
   // Unlimited mode: every spend is topped back up the moment it is saved.
   function topUp() { save.gold = Math.max(save.gold, UNL); save.gems = Math.max(save.gems, UNL); save.energy = ENERGY_MAX; save.freeEggs = 3; }
-  function persist() { if (save.unlimited) topUp(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
+  let lastBackupAt = 0;
+  function persist() {
+    if (save.unlimited) topUp();
+    save.version = SAVE_VERSION;
+    try {
+      const json = JSON.stringify(save);
+      const prev = localStorage.getItem(SAVE_KEY);
+      // keep the previous good save as a backup (at most every 20s so it never doubles the writes)
+      if (prev && prev !== json && Date.now() - lastBackupAt > 20000) { localStorage.setItem(BACKUP_KEY, prev); lastBackupAt = Date.now(); }
+      localStorage.setItem(SAVE_KEY, json);
+      storageOk = true;
+    } catch (e) {
+      if (storageOk) { storageOk = false; setTimeout(() => toast('Progress cannot be saved in this browser mode'), 300); }
+    }
+  }
+  // save the moment the player leaves or switches away
+  const saveNow = () => { if (R && !R.over && R.day > 0 && !R.enemies.length) snapshotRun(); else persist(); };
+  window.addEventListener('pagehide', saveNow);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
   const ENERGY_MAX = 30, ENERGY_MS = 5 * 60 * 1000, RUN_COST = 5;
   function tickEnergy() {
     if (save.unlimited) { save.energy = ENERGY_MAX; save.energyTs = Date.now(); return; }
@@ -159,8 +222,26 @@
       bindToggles(root, after); if (after) after();
     });
   }
+  // A save code is the whole save as text. It is a backup that survives clearing the browser or changing phones.
+  const toCode = () => btoa(unescape(encodeURIComponent(JSON.stringify(save))));
+  const fromCode = t => { const s = JSON.parse(decodeURIComponent(escape(atob(t.trim())))); if (!s || typeof s !== 'object' || !Array.isArray(s.gear) || !s.hero) throw new Error('bad'); return s; };
   function settingsModal() {
-    const m = modal(`<div class="ribbon stroke">Settings</div><div class="panel">${soundToggles()}<div class="actions"><button class="btn" id="cl">Close</button></div></div>`);
+    const m = modal(`<div class="ribbon stroke">Settings</div><div class="panel">${soundToggles()}
+      <p style="font-family:var(--font-game);font-size:16px;margin:12px 0 2px">Save backup</p>
+      <p style="font-size:12px;color:#7a6a5a;margin:0 0 6px">Progress saves automatically on this device. Copy your save code to keep a backup or move to another device.</p>
+      <textarea id="scode" rows="3" spellcheck="false" style="width:100%;font:12px monospace;border-radius:8px;border:2px solid #2b1d14;padding:6px" placeholder="Paste a save code here to load it"></textarea>
+      <div class="actions" style="margin-top:8px"><button class="btn small blue" id="scopy">Copy my code</button><button class="btn small yellow" id="sload">Load code</button></div>
+      <div class="actions"><button class="btn" id="cl">Close</button></div></div>`);
+    $('#scopy', m).onclick = async () => {
+      const code = toCode(), ta = $('#scode', m); ta.value = code;
+      try { await navigator.clipboard.writeText(code); toast('Save code copied'); } catch (e) { ta.focus(); ta.select(); toast('Select and copy the code'); }
+    };
+    $('#sload', m).onclick = () => {
+      let s; try { s = fromCode($('#scode', m).value); } catch (e) { SND.play('error'); return toast('That save code is not valid'); }
+      const m2 = modal(`<div class="ribbon stroke">Load save?</div><div class="panel"><p>This replaces the progress on this device with the code's save.</p><div class="actions"><button class="btn grey" id="no">Cancel</button><button class="btn red" id="yes">Load</button></div></div>`);
+      $('#no', m2).onclick = () => m2.remove();
+      $('#yes', m2).onclick = () => { save = sanitizeSave(s); viewCh = null; heroView = null; R = null; S = {}; persist(); m2.remove(); m.remove(); toast('Save loaded'); show('battle'); };
+    };
     bindToggles(m, () => { const sb = $('.snd-btn'); if (sb) sb.innerHTML = SPEAKER(save.music || save.sfx); });
     $('#cl', m).onclick = () => m.remove();
   }
@@ -194,8 +275,11 @@
           <button class="ch-nav r" ${viewCh >= CHAPTERS.length ? 'disabled' : ''}>›</button>
         </div>
         <div class="home-start">
-          <button class="btn big" id="start" ${locked ? 'disabled' : ''}>Start</button>
-          <div class="cost stroke-sm">${ICONS.energy} ${RUN_COST}</div>
+          ${save.run ? `<button class="btn big" id="resume">Continue</button>
+          <div class="cost stroke-sm">Chapter ${save.run.chId} · Day ${save.run.day}</div>
+          <button class="btn small grey" id="start" ${locked ? 'disabled' : ''}>New journey ${ICONS.energy.replace('<svg', '<svg class="ico"')} ${RUN_COST}</button>`
+          : `<button class="btn big" id="start" ${locked ? 'disabled' : ''}>Start</button>
+          <div class="cost stroke-sm">${ICONS.energy} ${RUN_COST}</div>`}
         </div>
       </div></div>`);
     scr.append(tabbar());
@@ -209,11 +293,18 @@
     }, 10000);
     $('.ch-nav.l', scr).onclick = () => { viewCh--; show('battle'); };
     $('.ch-nav.r', scr).onclick = () => { viewCh++; show('battle'); };
-    $('#start', scr).onclick = () => {
+    const begin = () => {
       tickEnergy();
       if (save.energy < RUN_COST) { SND.play('error'); return toast('Not enough energy! Visit the Shop.'); }
       save.energy -= RUN_COST; if (save.energy < ENERGY_MAX && save.energy + RUN_COST >= ENERGY_MAX) save.energyTs = Date.now();
-      save.lastCh = ch.id; persist(); startRun(ch);
+      save.run = null; save.lastCh = ch.id; persist(); startRun(ch);
+    };
+    if ($('#resume', scr)) $('#resume', scr).onclick = resumeRun;
+    $('#start', scr).onclick = () => {
+      if (!save.run) return begin();
+      const m = modal(`<div class="ribbon stroke">New journey?</div><div class="panel"><p>Your unfinished journey (Chapter ${save.run.chId}, day ${save.run.day}) will be lost.</p><div class="actions"><button class="btn grey" id="no">Keep it</button><button class="btn red" id="yes">Start new</button></div></div>`);
+      $('#no', m).onclick = () => m.remove();
+      $('#yes', m).onclick = () => { m.remove(); begin(); };
     };
   }
 
@@ -578,7 +669,7 @@
     const sandbox = `<div class="row cheat"><div class="ri" style="background:linear-gradient(#fff6,#8ef060)">${ICONS.talent}</div><div class="rb"><div class="rn">Unlimited Mode</div><div class="rd">Endless coins, gems, energy, eggs and revives.</div></div><button class="btn small ${save.unlimited ? '' : 'grey'}" data-i="unl">${save.unlimited ? 'ON' : 'OFF'}</button></div>
       <div class="row cheat"><div class="ri" style="background:linear-gradient(#fff6,#8ef060)">${ICONS.armor}</div><div class="rb"><div class="rn">Unlock Everything</div><div class="rd">Every chapter, hero, pet and talent maxed, plus every piece of gear at max level. Turns Unlimited Mode on.</div></div><button class="btn small yellow" data-i="unlockall">Unlock</button></div>`;
     const scr = el(`<div class="screen"><div class="page-h"><div class="t stroke">Shop</div>${resChips()}</div>
-      <div class="list">${sandbox}${items.map(i => `<div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ffb03a)">${ICONS[i.icon]}</div><div class="rb"><div class="rn">${i.name}</div><div class="rd">${i.desc}</div></div><button class="btn small ${i.id === 'gift' ? '' : 'blue'}" data-i="${i.id}" ${i.ok ? '' : 'disabled'}>${i.btn}</button></div>`).join('')}
+      <div class="list">${CHEATS ? sandbox : ''}${items.map(i => `<div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ffb03a)">${ICONS[i.icon]}</div><div class="rb"><div class="rn">${i.name}</div><div class="rd">${i.desc}</div></div><button class="btn small ${i.id === 'gift' ? '' : 'blue'}" data-i="${i.id}" ${i.ok ? '' : 'disabled'}>${i.btn}</button></div>`).join('')}
       <div class="row"><div class="ri" style="background:linear-gradient(#fff6,#ff6b6b)">${ICONS.gear}</div><div class="rb"><div class="rn">Reset progress</div><div class="rd">Start over from scratch</div></div><button class="btn small red" data-i="reset">Reset</button></div>
       </div></div>`);
     scr.append(tabbar()); app.append(scr);
@@ -620,10 +711,33 @@
     if (R.bonus.startSkill) { R.skills[R.bonus.startSkill] = 1; if (R.bonus.startSkill === 'atk') R.atkPct += 18; }
     recalc();
     R.hp = R.maxHp;
-    save.runs++; persist();
+    save.runs++;
+    snapshotRun();
     SND.music('adventure');
     buildRunScreen();
     log(`<b>${bonusOf(R.heroKey).name}</b>: ${bonusOf(R.heroKey).desc}`);
+    runLoop();
+  }
+  // An unfinished journey is stored at every day boundary (and when the player leaves), so it can be continued later.
+  function snapshotRun() {
+    if (!R || R.over) return;
+    const copy = {};
+    for (const k of Object.keys(R)) if (!['enemies', 'ch', 'skip', 'paused'].includes(k) && typeof R[k] !== 'function') copy[k] = R[k];
+    copy.chId = R.ch.id;
+    try { save.run = JSON.parse(JSON.stringify(copy)); } catch (e) { return; }
+    persist();
+  }
+  function resumeRun() {
+    const snap = save.run, ch = snap && CHAPTERS.find(c => c.id === snap.chId);
+    if (!ch || !HEROES[snap.heroKey]) { save.run = null; persist(); toast('That journey could not be restored'); return show('battle'); }
+    R = Object.assign({}, snap, { ch, enemies: [], over: false, skip: false, paused: false, shield: 0, heroDot: null, stunned: false, defPen: 0 });
+    delete R.chId;
+    R.loot = Array.isArray(R.loot) ? R.loot : [];
+    R.hp = clamp(R.hp, 1, R.maxHp);
+    SND.music('adventure');
+    buildRunScreen();
+    updateProgress();
+    log(`Welcome back! Your journey continues from day ${R.day}.`);
     runLoop();
   }
   const xpNeed = lv => Math.round(24 + lv * 16);
@@ -789,6 +903,7 @@
       if (R.over) return;
       await checkLevelUp();
       if (R.day >= R.ch.days) return finishRun(true);
+      snapshotRun();
       await wait(650);
     }
   }
@@ -1357,6 +1472,7 @@
   function finishRun(cleared) {
     if (R.over) return;
     R.over = true;
+    save.run = null;
     setWalking(false);
     SND.music(null);
     if (cleared) SND.play('victory'); else if (!R.sadPlayed) SND.play('defeat');
@@ -1409,8 +1525,13 @@
   // TEMPORARY: while true, a save is unlocked once on load (Unlimited Mode + Unlock Everything).
   // Set to false to end it: Unlimited Mode switches off and earlier balances come back.
   const DEV_AUTO_UNLOCK = true;
-  if (DEV_AUTO_UNLOCK && !save.devApplied) { unlockEverything(); save.devApplied = true; persist(); }
-  else if (!DEV_AUTO_UNLOCK && save.devApplied) { setUnlimited(false); save.devApplied = false; persist(); }
+  // CHEATS = the Shop's Unlimited Mode / Unlock Everything rows. With it off, Unlimited Mode is switched off for good
+  // and the balances from before it come back. Heroes, gear, pets, talents and chapters you unlocked are kept.
+  const CHEATS = true;
+  if (!CHEATS && save.unlimited) setUnlimited(false);
+  if (DEV_AUTO_UNLOCK && CHEATS && !save.devApplied) { unlockEverything(); save.devApplied = true; persist(); }
+  else if ((!DEV_AUTO_UNLOCK || !CHEATS) && save.devApplied) { setUnlimited(false); save.devApplied = false; persist(); }
+  if (saveNotice) setTimeout(() => toast(saveNotice), 900);
   show('battle');
   splash();
   window.__heroGo = { get save() { return save; }, get run() { return R; } };

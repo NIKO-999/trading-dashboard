@@ -31,7 +31,7 @@ All ten are hand-drawn, animated SVG. Each file was built by its own agent, foll
 - **Walking:** between events the road scrolls endlessly (the scene plus a mirrored copy loop seamlessly), with a bouncing walk cycle, dust puffs and footsteps.
 - **Audio:** chiptune music and sound effects are synthesized live with Web Audio in `js/audio.js`, so there are no audio files. There are three tracks: home, adventure and boss. Music and sound can be toggled with the speaker button on the home screen or in the pause menu.
 - **Sandbox:** the Shop has an Unlimited Mode switch (endless coins, gems, energy, eggs and revives, shown as ∞) and an Unlock Everything button (all chapters open, heroes, talents and pets maxed, and every gear piece at max level, including every perk variant). Turning Unlimited Mode off restores your earlier balances.
-- **Saving:** progress is kept in `localStorage`.
+- **Saving:** progress is kept in `localStorage` and written on every change and whenever the page is hidden or closed. An unfinished journey is stored every day and can be continued from the home screen. The game keeps a rolling backup, restores from it if the main save is damaged, and never overwrites a save it cannot read (the bad copy is kept under `herogo-save-v1-corrupt`). Settings has a save code you can copy to back up or move a save. Turning Unlimited Mode off (or setting `CHEATS = false` in `js/game.js`) keeps heroes, gear, pets, talents and chapters, and restores the balances from before it.
 
 ## Files
 - `js/data.js`: skills, chapters, text and icons
