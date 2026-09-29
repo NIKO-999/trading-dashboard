@@ -81,7 +81,17 @@
     { id: 4, name: 'Frostpeak', scene: 'snow', days: 60, mult: 4.2,
       mobs: ['wolf', 'skeleton', 'bandit', 'helmslime'], elites: ['wolf', 'paladin'], boss: 'yeti' },
     { id: 5, name: 'Ember Core', scene: 'volcano', days: 60, mult: 6.8,
-      mobs: ['skeleton', 'bandit', 'cactus', 'goblin', 'wolf'], elites: ['dragon', 'paladin'], boss: 'darkknight' },
+      mobs: ['skeleton', 'bandit', 'cactus', 'goblin', 'wolf'], elites: ['dragon', 'paladin'], boss: 'magmatitan' },
+    { id: 6, name: 'Sunken Ruins', scene: 'ruins', days: 60, mult: 10.5,
+      mobs: ['crab', 'jellyfish', 'merman'], elites: ['siren', 'crab'], boss: 'kraken' },
+    { id: 7, name: 'Crystal Caverns', scene: 'crystal', days: 60, mult: 16,
+      mobs: ['gemslime', 'cavespider', 'shardbat'], elites: ['mimic', 'cavespider'], boss: 'colossus' },
+    { id: 8, name: 'Storm Peaks', scene: 'storm', days: 70, mult: 25,
+      mobs: ['harpy', 'stormwolf', 'gargoyle'], elites: ['stormknight', 'gargoyle'], boss: 'thunderroc' },
+    { id: 9, name: 'Demon Gate', scene: 'hell', days: 70, mult: 38,
+      mobs: ['imp', 'hellhound', 'cultist'], elites: ['warlock', 'hellhound'], boss: 'demonlord' },
+    { id: 10, name: 'Celestial Void', scene: 'void', days: 80, mult: 58,
+      mobs: ['voidwisp', 'starknight', 'watcher'], elites: ['seraph', 'starknight'], boss: 'stardevourer' },
   ];
 
   // Per-enemy stat shape (multipliers on the chapter baseline)
@@ -93,6 +103,49 @@
     paladin: { hp: 1.5, atk: 1.2, def: 1.5 }, wolf: { hp: 1, atk: 1.3, def: 0.8 },
     dragon: { hp: 1.6, atk: 1.4, def: 1.2 }, darkknight: { hp: 1.8, atk: 1.4, def: 1.6 },
     kingslime: { hp: 1.6, atk: 1.1, def: 1 }, yeti: { hp: 1.8, atk: 1.3, def: 1.2 },
+    magmatitan: { hp: 2, atk: 1.5, def: 1.9 },
+    crab: { hp: 1.3, atk: 1, def: 1.6 }, jellyfish: { hp: 0.8, atk: 1.3, def: 0.6 }, merman: { hp: 1.1, atk: 1.3, def: 1 },
+    siren: { hp: 1.5, atk: 1.5, def: 1 }, kraken: { hp: 2, atk: 1.5, def: 1.3 },
+    gemslime: { hp: 1, atk: 1, def: 1.8 }, cavespider: { hp: 0.9, atk: 1.4, def: 0.8 }, shardbat: { hp: 0.7, atk: 1.3, def: 0.6 },
+    mimic: { hp: 1.6, atk: 1.6, def: 1.3 }, colossus: { hp: 2.2, atk: 1.5, def: 2 },
+    harpy: { hp: 0.9, atk: 1.4, def: 0.7 }, stormwolf: { hp: 1.1, atk: 1.4, def: 0.9 }, gargoyle: { hp: 1.3, atk: 1.2, def: 1.7 },
+    stormknight: { hp: 1.6, atk: 1.6, def: 1.5 }, thunderroc: { hp: 2, atk: 1.7, def: 1.1 },
+    imp: { hp: 0.7, atk: 1.3, def: 0.7 }, hellhound: { hp: 1.1, atk: 1.5, def: 0.9 }, cultist: { hp: 0.9, atk: 1.4, def: 0.9 },
+    warlock: { hp: 1.5, atk: 1.7, def: 1 }, demonlord: { hp: 2.2, atk: 1.8, def: 1.5 },
+    voidwisp: { hp: 0.8, atk: 1.4, def: 0.7 }, starknight: { hp: 1.3, atk: 1.5, def: 1.6 }, watcher: { hp: 1, atk: 1.3, def: 1 },
+    seraph: { hp: 1.6, atk: 1.7, def: 1.4 }, stardevourer: { hp: 2.6, atk: 1.9, def: 1.6 },
+  };
+
+  // ---------- Enemy abilities: what makes the hard enemies hard ----------
+  const ABILITY_INFO = {
+    armor:   { name: 'Armored',        icon: 'shield', desc: 'takes 25% less damage' },
+    thorns:  { name: 'Thorns',         icon: 'sword',  desc: 'reflects 15% of the damage it takes' },
+    venom:   { name: 'Venom',          icon: 'poison', desc: 'its hits can poison you' },
+    burn:    { name: 'Scorch',         icon: 'fire',   desc: 'its hits can set you ablaze' },
+    stun:    { name: 'Stunning Blows', icon: 'bolt',   desc: '20% chance to stun you for a turn' },
+    multi:   { name: 'Frenzy',         icon: 'swords', desc: 'attacks twice per turn' },
+    enrage:  { name: 'Enrage',         icon: 'rage',   desc: 'hits 50% harder below half health' },
+    regen:   { name: 'Regrowth',       icon: 'heal',   desc: 'heals a little every round' },
+    charge:  { name: 'Power Attack',   icon: 'meteor', desc: 'charges up, then hits for 250% damage every 4th round' },
+    summon:  { name: 'Summoner',       icon: 'devil',  desc: 'calls minions at 60% and 30% health' },
+    drain:   { name: 'Life Drain',     icon: 'vamp',   desc: 'heals for 30% of the damage it deals' },
+    barrier: { name: 'Barrier',        icon: 'wind',   desc: 'starts with a shield worth 25% of its health' },
+    sunder:  { name: 'Sunder',         icon: 'crit',   desc: 'each hit lowers your DEF by 5% (up to 5 times)' },
+  };
+  const ENEMY_ABILITIES = {
+    helmslime: ['armor'], goblin: ['venom'], bat: ['drain'], cactus: ['thorns'], bandit: ['sunder'], wolf: ['multi'],
+    paladin: ['armor', 'stun'], dragon: ['burn', 'charge'], darkknight: ['armor', 'charge', 'sunder'],
+    kingslime: ['summon', 'regen'], yeti: ['stun', 'enrage', 'charge'],
+    magmatitan: ['burn', 'charge', 'enrage', 'armor'],
+    crab: ['armor'], jellyfish: ['stun'], merman: ['multi'], siren: ['drain', 'venom'], kraken: ['charge', 'regen', 'summon'],
+    gemslime: ['thorns'], cavespider: ['venom', 'multi'], shardbat: ['drain'], mimic: ['multi', 'sunder', 'barrier'],
+    colossus: ['armor', 'charge', 'barrier', 'enrage'],
+    harpy: ['multi'], stormwolf: ['stun'], gargoyle: ['armor', 'thorns'], stormknight: ['stun', 'charge', 'armor'],
+    thunderroc: ['charge', 'multi', 'enrage', 'stun'],
+    imp: ['burn'], hellhound: ['burn', 'multi'], cultist: ['drain'], warlock: ['summon', 'burn', 'barrier'],
+    demonlord: ['burn', 'charge', 'summon', 'enrage'],
+    voidwisp: ['drain'], starknight: ['armor', 'sunder'], watcher: ['stun', 'venom'], seraph: ['barrier', 'charge', 'multi', 'regen'],
+    stardevourer: ['charge', 'enrage', 'barrier', 'summon'],
   };
 
   // ---------- Journal flavour text ----------
@@ -116,6 +169,32 @@
       darkknight: ['A towering knight of cursed steel blocks the way, a ghostly flame burning where its head should be.'],
       kingslime: ['The King of Slimes wobbles forward, crown glinting. "Who dares enter my forest?"'],
       yeti: ['The snow shakes. A furious yeti bursts out of the blizzard!'],
+      magmatitan: ['The ground splits open. A colossus of molten rock hauls itself out of the lava, roaring.'],
+      crab: ['A crab the size of a cart scuttles out of the tide, claws clacking.'],
+      jellyfish: ['Something glows in the flooded hall. A jellyfish, crackling with sparks, drifts toward you.'],
+      merman: ['A merfolk spearman rises from the water and levels his trident.'],
+      siren: ['A sweet song echoes through the ruins. The Siren Witch is watching, and she is not smiling.'],
+      kraken: ['The water drains from the hall. A tentacle the width of a tree slams down. The Abyssal Kraken has woken.'],
+      gemslime: ['A slime studded with gems blocks the tunnel. It looks valuable and very angry.'],
+      cavespider: ['Skittering echoes overhead. A cave spider drops on a silken thread.'],
+      shardbat: ['Glittering wings flash in the dark. Shard bats!'],
+      mimic: ['That treasure chest just blinked. The Mimic bares its teeth and lunges.'],
+      colossus: ['The cavern shakes. The Crystal Colossus assembles itself out of the walls and looks down at you.'],
+      harpy: ['A shriek splits the storm. A harpy dives out of the clouds.'],
+      stormwolf: ['Lightning crawls over its fur. A storm wolf circles you, growling.'],
+      gargoyle: ['One of the statues turns its head. A stone gargoyle unfolds its wings.'],
+      stormknight: ['A knight in storm-blue plate steps out of the rain, lance crackling. "Turn back."'],
+      thunderroc: ['The sky goes white. The Thunder Roc spreads wings wider than the peak itself.'],
+      imp: ['A cackling imp pops out of a crack in the road, pitchfork first.'],
+      hellhound: ['Three burning eyes. A hellhound pads out of the smoke.'],
+      cultist: ['Hooded figures chant around a glowing sigil. One of them turns to you.'],
+      warlock: ['A tall figure with a skull-crowned hood raises his staff. "Kneel."'],
+      demonlord: ['The Demon Gate splits open. The Demon Lord steps through, flames streaming from his shoulders.'],
+      voidwisp: ['A pale flame drifts out of the dark and giggles.'],
+      starknight: ['A cracked suit of white-and-gold armour, with stars showing through the gaps, raises its sword.'],
+      watcher: ['A giant eye opens in the empty air and fixes on you.'],
+      seraph: ['Six wings unfold, three white, three torn and black. The Corrupted Seraph descends.'],
+      stardevourer: ['The stars go out, one by one. The Star Devourer unfolds itself across the sky and opens its jaws.'],
     },
     win: ['Victory! You obtained {g} coins.', 'The enemy falls. {g} coins scatter on the ground.', 'Humans are not that impressive as expected. You obtained {g} coins.'],
     story: [
@@ -148,5 +227,5 @@
     celtic:     { name: 'Wild Hunt', desc: 'ATK +10%. Your pets strike twice as hard.', fx: { atkPct: 10, petMult: 2 } },
   };
 
-  window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT, HERO_BONUS };
+  window.GAME_DATA = { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, ABILITY_INFO, ENEMY_ABILITIES, TEXT, HERO_BONUS };
 })();

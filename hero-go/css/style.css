@@ -484,6 +484,18 @@ svg { display: block; }
 .gitem.huge .glv { font-size: 15px; }
 
 .row.cheat { background: linear-gradient(#eaffd8, #cdf3a8); }
+/* enemy abilities */
+.abil-list { margin-top: 8px; font-size: 12px; line-height: 1.45; color: #5b4a3c; font-weight: 800; }
+.abil-list b { color: #b0361c; }
+.actor.enemy.minion { width: min(19%, calc(91cqh - 118px)); }
+.actor.enraged .art { filter: hue-rotate(-14deg) saturate(1.6) brightness(1.08); }
+.actor.charging .art { animation: charge .35s ease-in-out infinite alternate; }
+@keyframes charge { from { filter: brightness(1) drop-shadow(0 0 0 #ff4d4d); transform: scale(1); } to { filter: brightness(1.45) drop-shadow(0 0 10px #ff4d4d); transform: scale(1.05); } }
+.actor .status svg { width: 16px; height: 16px; }
+.progress.dense .ms { width: 20px; height: 20px; }
+.progress.dense .ms svg { width: 14px; height: 14px; }
+.progress.dense .ms.boss { width: 26px; height: 26px; }
+.progress.dense .ms .d { font-size: 9px; bottom: -11px; }
 .gtot { margin-top: 10px; }
 .gtot .hstat span { display: flex; flex-direction: column; line-height: 1.05; font-size: 15px; }
 .gtot em { font-style: normal; font-size: 11px; color: #8ef060; }

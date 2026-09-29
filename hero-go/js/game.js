@@ -1,7 +1,7 @@
 /* Hero Go! — game engine: meta screens, day-by-day adventure, auto battles. */
 (function () {
   'use strict';
-  const { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, TEXT, HERO_BONUS } = window.GAME_DATA;
+  const { ICONS, SKILLS, CHAPTERS, ENEMY_STATS, ABILITY_INFO, ENEMY_ABILITIES, TEXT, HERO_BONUS } = window.GAME_DATA;
   const HEROES = window.HEROES || {};
   const ENEMIES = window.ENEMIES || {};
   const PETS = window.PETS || {};
@@ -673,10 +673,11 @@
     };
     // progress milestones
     const track = $('.ptrack', S.progress);
+    S.progress.classList.toggle('dense', milestones().length > 6);
     milestones().forEach(m => track.append(el(`<div class="ms ${m.boss ? 'boss' : ''}" data-d="${m.d}" style="left:${m.d / ch.days * 100}%">${m.boss ? ICONS.devil : ICONS.swords}<span class="d">${m.d}</span></div>`)));
     track.append(el(`<div class="cur" style="left:0%">0</div>`));
     // hero + pet actors
-    S.hero = el(`<div class="actor hero"><div class="art">${art.hero(R.heroKey, 'run')}</div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
+    S.hero = el(`<div class="actor hero"><div class="art">${art.hero(R.heroKey, 'run')}</div><div class="status"></div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
     S.actors.append(S.hero);
     if (R.pet) { S.pet = el(`<div class="actor pet"><div class="art">${art.pet(R.pet, 'runpet')}</div></div>`); S.actors.append(S.pet); }
     S.speed.classList.toggle('x1', save.speed === 1);
@@ -709,7 +710,7 @@
     q('.stat.hp .shieldfill').style.width = clamp(R.shield / R.maxHp * 100, 0, 100) + '%';
     q('.stat.hp .pct').textContent = Math.ceil(R.hp / R.maxHp * 100) + '%';
     q('.stat.atk .v').textContent = fmt(effAtk());
-    q('.stat.def .v').textContent = fmt(R.def);
+    q('.stat.def .v').textContent = fmt(effDef());
     S.coins.textContent = fmt(R.coins);
     setBar(S.hero, R.hp, R.maxHp, R.shield);
   }
@@ -960,21 +961,36 @@
     const hp = Math.round(140 * ch.mult * g * s.hp * t.hp * split);
     return {
       key, tier, name: enemyName(key), hp, maxHp: hp, alive: true,
+      abil: (ENEMY_ABILITIES[key] || []).slice(), round: 0, shield: 0, minion: false, enraged: false, sumDone: {},
       atk: Math.round(34 * ch.mult * g * s.atk * t.atk * (tier === 'mob' && n > 1 ? 0.7 : 1)),
       def: Math.round(8 * ch.mult * g * s.def), burn: null, bleed: null, poison: 0, frozen: false,
     };
   }
   const ENEMY_POS = [{ l: 47, b: 8, z: 3 }, { l: 62, b: 19, z: 2, back: true }, { l: 76, b: 3, z: 4 }];
+  const MINION_POS = [{ l: 33, b: 2, z: 5 }, { l: 79, b: 1, z: 5 }];
+  function mountEnemy(e, i, total, minionSlot) {
+    const big = e.tier !== 'mob';
+    const p = e.minion ? MINION_POS[minionSlot % 2] : big ? { l: 52, b: 7, z: 3 } : ENEMY_POS[i];
+    e.el = el(`<div class="actor enemy enter ${big ? 'boss' : ''} ${!big && total === 3 ? 'trio' : ''} ${p.back ? 'back' : ''} ${e.minion ? 'minion' : ''}" style="left:${p.l}%;bottom:${p.b}%;z-index:${p.z}"><div class="art">${art.enemy(e.key, uid())}</div><div class="status"></div><div class="hpbar"><b></b><i></i><span></span></div></div>`);
+    if (e.tier === 'elite') e.el.classList.replace('boss', 'elite');
+    S.actors.append(e.el);
+    setBar(e.el, e.hp, e.maxHp, e.shield || 0);
+  }
   function spawnEnemies(list) {
     R.enemies = list;
-    list.forEach((e, i) => {
-      const big = e.tier !== 'mob';
-      const p = big ? { l: 52, b: 7, z: 3 } : ENEMY_POS[i];
-      e.el = el(`<div class="actor enemy enter ${big ? 'boss' : ''} ${!big && list.length === 3 ? 'trio' : ''} ${p.back ? 'back' : ''}" style="left:${p.l}%;bottom:${p.b}%;z-index:${p.z}"><div class="art">${art.enemy(e.key, uid())}</div><div class="status"></div><div class="hpbar"><i></i><span></span></div></div>`);
-      if (e.tier === 'elite') e.el.classList.replace('boss', 'elite');
-      S.actors.append(e.el);
-      setBar(e.el, e.hp, e.maxHp, 0);
-    });
+    list.forEach((e, i) => mountEnemy(e, i, list.length));
+  }
+  // Boss reinforcements: up to two weakened minions from this chapter's mobs.
+  function summonMinions() {
+    const live = R.enemies.filter(m => m.minion && m.alive).length;
+    const n = 2 - live; if (n <= 0) return;
+    popBanner('REINFORCEMENTS!'); snd('devil');
+    for (let i = 0; i < n; i++) {
+      const m = makeEnemy(pick(R.ch.mobs), 'mob', 2);
+      m.minion = true; m.abil = m.abil.filter(a => a !== 'summon');
+      R.enemies.push(m);
+      mountEnemy(m, 0, 3, R.enemies.filter(x => x.minion).length - 1);
+    }
   }
   const alive = () => R.enemies.filter(e => e.alive);
 
@@ -1032,12 +1048,28 @@
   function damageEnemy(e, amount, cls = '') {
     if (!e.alive) return 0;
     amount = Math.max(1, Math.round(amount));
-    e.hp -= amount;
-    num(e.el, fmt(amount), cls);
+    if (cls !== 'dot' && e.abil.includes('armor')) amount = Math.max(1, Math.round(amount * 0.75)); // Armored
+    // Barrier soaks damage first
+    const soak = Math.min(e.shield || 0, amount);
+    if (soak) { e.shield -= soak; num(e.el, fmt(soak), 'blk'); }
+    const dealt = amount - soak;
     if (cls !== 'dot') snd('hit');
     flashHit(e.el);
-    setBar(e.el, e.hp, e.maxHp, 0);
+    if (dealt <= 0) { setBar(e.el, e.hp, e.maxHp, e.shield || 0); return amount; }
+    amount = dealt;
+    e.hp -= amount;
+    num(e.el, fmt(amount), cls);
+    setBar(e.el, e.hp, e.maxHp, e.shield || 0);
     updateBossBar();
+    // Thorns: never lethal
+    if (cls !== 'dot' && e.abil.includes('thorns') && R.hp > 1) {
+      const r = Math.min(R.hp - 1, Math.max(1, Math.round(amount * 0.15)));
+      R.hp -= r; num(S.hero, fmt(r), 'hero'); updateStats();
+    }
+    // Summoner: reinforcements at 60% and 30%
+    if (e.hp > 0 && e.abil.includes('summon')) {
+      for (const th of [0.6, 0.3]) if (!e.sumDone[th] && e.hp <= e.maxHp * th) { e.sumDone[th] = true; summonMinions(); }
+    }
     // lifesteal
     const ls = (sk('vamp') ? 0.08 + 0.05 * (sk('vamp') - 1) : 0) + (R.sig === 'lifesteal' ? 0.15 : 0) + (R.bonus.lifesteal || 0);
     if (ls && cls !== 'dot') { const h = heal(amount * ls); if (h > 0 && chance(0.35)) num(S.hero, '+' + fmt(h), 'heal'); }
@@ -1046,6 +1078,8 @@
       if (R.bonus.killHeal && R.hp > 0) { const h = heal(R.maxHp * R.bonus.killHeal); if (h) num(S.hero, '+' + fmt(h), 'heal'); }
       e.el.classList.add('dead'); snd('poof');
       setBar(e.el, 0, e.maxHp, 0);
+      // a fallen master takes its minions with it
+      if (!e.minion) R.enemies.filter(m => m.minion && m.alive).forEach(m => { m.alive = false; m.hp = 0; m.el.classList.add('dead'); setBar(m.el, 0, m.maxHp, 0); });
     }
     return amount;
   }
@@ -1077,6 +1111,7 @@
   }
   async function heroTurn(round) {
     const H = HEROES[R.heroKey];
+    if (R.stunned) { R.stunned = false; heroStatus(); num(S.hero, 'Stunned!', 'miss'); await wait(450); return; }
     // Spirit swords open the fight
     if (round === 1 && sk('spirit')) {
       for (let i = 0; i < sk('spirit') + 1; i++) { const t = pick(alive()); if (!t) break; snd('throw'); await projectile(S.hero, t.el, ICONS.sword, '', 220); damageEnemy(t, dmgCalc(effAtk() * 0.8, t.def)); }
@@ -1125,27 +1160,62 @@
       if (H) void H;
     }
   }
+  const effDef = () => Math.max(0, Math.round(R.def * (1 - 0.05 * (R.defPen || 0))));
+  function heroStatus() {
+    const st = $('.status', S.hero); if (!st) return;
+    st.innerHTML = (R.heroDot ? (R.heroDot.kind === 'burn' ? ICONS.fire : ICONS.poison) : '') + (R.stunned ? ICONS.bolt : '') + ((R.defPen || 0) ? ICONS.crit : '');
+  }
+  function setHeroDot(kind) {
+    R.heroDot = { kind, turns: 3, pct: kind === 'burn' ? 0.035 : 0.03 };
+    num(S.hero, kind === 'burn' ? 'Burning!' : 'Poisoned!', 'dot'); heroStatus();
+  }
+
+  // One strike from an enemy. `mult` scales the damage (multi-hit 0.65, power attack 2.5).
+  async function enemyHit(e, mult) {
+    const dodge = (sk('dodge') ? 0.08 + 0.05 * (sk('dodge') - 1) : 0) + (R.bonus.dodge || 0);
+    if (chance(dodge)) { num(S.hero, 'Miss', 'miss'); snd('miss'); return; }
+    let d = dmgCalc(e.atk * mult * (e.enraged ? 1.5 : 1), effDef());
+    if (e.tier !== 'mob' && R.bonus.bigFoeGuard) d = Math.round(d * (1 - R.bonus.bigFoeGuard));
+    if (R.bonus.dmgRed) d = Math.round(d * (1 - Math.min(0.5, R.bonus.dmgRed)));
+    if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) { num(S.hero, fmt(a), 'blk'); snd('block'); } }
+    if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), mult > 2 ? 'hero crit' : 'hero'); snd('hurt'); flashHit(S.hero); if (mult > 2) screenFlash(); }
+    if (R.hp <= 0 && R.bonus.lastStand && !R.lastStandUsed) {
+      R.lastStandUsed = true; R.hp = Math.round(R.maxHp * R.bonus.lastStand);
+      popBanner('LAST STAND!'); auraAt(S.hero, '#ffd27acc'); snd('revive');
+    }
+    if (d > 0 && R.sig === 'thorns' && e.alive) damageEnemy(e, d * 0.3, 'dot'); // Phalanx
+    // what the enemy's hit does besides damage
+    if (d > 0 && R.hp > 0 && e.alive) {
+      if (e.abil.includes('drain')) { const h = Math.round(d * 0.3); e.hp = Math.min(e.maxHp, e.hp + h); setBar(e.el, e.hp, e.maxHp, e.shield || 0); updateBossBar(); num(e.el, '+' + fmt(h), 'heal'); }
+      if (e.abil.includes('venom') && chance(0.4)) setHeroDot('venom');
+      if (e.abil.includes('burn') && chance(0.4)) setHeroDot('burn');
+      if (e.abil.includes('stun') && chance(0.2) && !R.stunned) { R.stunned = true; num(S.hero, 'Stunned!', 'miss'); heroStatus(); }
+      if (e.abil.includes('sunder') && (R.defPen || 0) < 5) { R.defPen = (R.defPen || 0) + 1; num(S.hero, 'DEF down', 'miss'); heroStatus(); }
+    }
+    updateStats();
+    if (R.hp > 0 && sk('counter') && chance(0.2 + 0.1 * (sk('counter') - 1))) { e.el.classList.remove('lunge'); num(S.hero, 'Counter!', 'blk'); await heroStrike(e, 0.8); }
+  }
+
   async function enemyTurn(e) {
     if (!e.alive || R.hp <= 0) return;
     if (e.frozen) { e.frozen = false; e.el.classList.remove('frozen'); statusIcons(e); return; }
-    if (!R.skip) { restart(e.el, 'lunge'); await wait(170); }
-    const dodge = (sk('dodge') ? 0.08 + 0.05 * (sk('dodge') - 1) : 0) + (R.bonus.dodge || 0);
-    if (chance(dodge)) { num(S.hero, 'Miss', 'miss'); snd('miss'); }
-    else {
-      let d = dmgCalc(e.atk, R.def);
-      if (e.tier !== 'mob' && R.bonus.bigFoeGuard) d = Math.round(d * (1 - R.bonus.bigFoeGuard));
-      if (R.bonus.dmgRed) d = Math.round(d * (1 - Math.min(0.5, R.bonus.dmgRed)));
-      if (R.shield > 0) { const a = Math.min(R.shield, d); R.shield -= a; d -= a; if (a) { num(S.hero, fmt(a), 'blk'); snd('block'); } }
-      if (d > 0) { R.hp = Math.max(0, R.hp - d); num(S.hero, fmt(d), 'hero'); snd('hurt'); flashHit(S.hero); }
-      if (R.hp <= 0 && R.bonus.lastStand && !R.lastStandUsed) {
-        R.lastStandUsed = true; R.hp = Math.round(R.maxHp * R.bonus.lastStand);
-        popBanner('LAST STAND!'); auraAt(S.hero, '#ffd27acc'); snd('revive');
-      }
-      if (d > 0 && R.sig === 'thorns' && e.alive) damageEnemy(e, d * 0.3, 'dot'); // Phalanx
-      updateStats();
-      if (R.hp > 0 && sk('counter') && chance(0.2 + 0.1 * (sk('counter') - 1))) { e.el.classList.remove('lunge'); num(S.hero, 'Counter!', 'blk'); await heroStrike(e, 0.8); }
+    e.round = (e.round || 0) + 1;
+    if (e.abil.includes('enrage') && !e.enraged && e.hp <= e.maxHp * 0.5) {
+      e.enraged = true; e.el.classList.add('enraged'); num(e.el, 'ENRAGED!', 'crit'); snd('alarm'); popBanner('ENRAGED!');
+      if (!R.skip) await wait(500);
     }
-    if (!R.skip) { await wait(160); e.el.classList.remove('lunge'); await wait(90); }
+    const power = e.abil.includes('charge') && e.round % 4 === 0;
+    const hits = e.abil.includes('multi') && !power ? 2 : 1;
+    if (power) e.el.classList.remove('charging');
+    for (let h = 0; h < hits && R.hp > 0; h++) {
+      if (!R.skip) { restart(e.el, 'lunge'); await wait(power ? 260 : 170); }
+      await enemyHit(e, power ? 2.5 : hits === 2 ? 0.65 : 1);
+      if (!R.skip) { await wait(160); e.el.classList.remove('lunge'); await wait(90); }
+    }
+    // warn the player one turn before a power attack
+    if (e.alive && e.abil.includes('charge') && e.round % 4 === 3) {
+      e.el.classList.add('charging'); num(e.el, 'Charging!', 'crit'); snd('alarm');
+    }
   }
   function tickDots() {
     for (const e of alive()) {
@@ -1175,8 +1245,14 @@
     setWalking(false);
     if (tier === 'boss') SND.music('boss');
     if (tier !== 'mob') SND.play('alarm');
-    log((TEXT.battle[lead] ? pick(TEXT.battle[lead]) : `A wild ${enemyName(lead)} appears!`) + (tier === 'boss' ? ' <em>BOSS BATTLE!</em>' : tier === 'elite' ? ' <em>An elite foe!</em>' : ''));
-    spawnEnemies(keys.map((k, i) => makeEnemy(k, tier, keys.length > 1 ? i + 1 : 0)));
+    const foes = keys.map((k, i) => makeEnemy(k, tier, keys.length > 1 ? i + 1 : 0));
+    const briefing = tier !== 'mob' && foes[0].abil.length
+      ? `<div class="abil-list">${foes[0].abil.map(a => `<b>${ABILITY_INFO[a].name}</b>: ${ABILITY_INFO[a].desc}`).join('<br>')}</div>` : '';
+    log((TEXT.battle[lead] ? pick(TEXT.battle[lead]) : `A wild ${enemyName(lead)} appears!`) + (tier === 'boss' ? ' <em>BOSS BATTLE!</em>' : tier === 'elite' ? ' <em>An elite foe!</em>' : '') + briefing,
+      tier !== 'mob' ? foes[0].abil.map(a => ({ icon: ABILITY_INFO[a].icon, text: ABILITY_INFO[a].name, cls: 'bad' })) : null);
+    spawnEnemies(foes);
+    foes.forEach(f => { if (f.abil.includes('barrier')) { f.shield = Math.round(f.maxHp * 0.25); setBar(f.el, f.hp, f.maxHp, f.shield); } });
+    R.defPen = 0; R.heroDot = null; R.stunned = false; heroStatus();
     if (tier !== 'mob') popBanner(tier === 'boss' ? 'BOSS!' : 'ELITE!');
     const maxRounds = tier === 'mob' ? 30 : tier === 'elite' ? 15 : 20;
     S.bossBar.classList.toggle('show', true);
@@ -1228,6 +1304,16 @@
       if (angel > 0) { angel--; const h = heal(R.maxHp * 0.06); if (h) { num(S.hero, '+' + fmt(h), 'heal'); auraAt(S.hero, '#fff8c0cc'); snd('heal'); } }
       if (sk('regen')) { const h = heal(R.maxHp * (0.03 + 0.02 * (sk('regen') - 1))); if (h) num(S.hero, '+' + fmt(h), 'heal'); }
       tickDots();
+      for (const e of alive()) if (e.abil.includes('regen')) {
+        const h = Math.round(Math.min(e.maxHp - e.hp, e.maxHp * (e.tier === 'boss' ? 0.03 : 0.05)));
+        if (h > 0) { e.hp += h; setBar(e.el, e.hp, e.maxHp, e.shield || 0); updateBossBar(); num(e.el, '+' + fmt(h), 'heal'); }
+      }
+      if (R.heroDot) { // poison / burn on the hero: hurts, never kills
+        const d = Math.max(1, Math.round(R.maxHp * R.heroDot.pct));
+        if (R.hp > 1) { R.hp = Math.max(1, R.hp - d); num(S.hero, fmt(d), 'dot'); snd('hurt'); }
+        if (--R.heroDot.turns <= 0) R.heroDot = null;
+        heroStatus(); updateStats();
+      }
       if (!alive().length) { result = 'win'; break; }
       await heroTurn(round);
       if (!alive().length) { result = 'win'; break; }
