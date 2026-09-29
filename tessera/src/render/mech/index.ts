@@ -4,6 +4,7 @@ export type { MechRender } from './types';
 
 import { render as egypt } from './egypt';
 import { render as ethiopia } from './ethiopia';
+import { render as greeks } from './greeks';
 import { render as japan } from './japan';
 import { render as khmer } from './khmer';
 import { render as korea } from './korea';
@@ -14,4 +15,4 @@ import { render as tibet } from './tibet';
 import { render as vikings } from './vikings';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { egypt, ethiopia, japan, khmer, korea, mongols, persia, rome, tibet, vikings, zulu };
+export const MECH_RENDER: MechRenderRegistry = { egypt, ethiopia, greeks, japan, khmer, korea, mongols, persia, rome, tibet, vikings, zulu };
