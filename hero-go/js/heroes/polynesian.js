@@ -223,7 +223,7 @@
     s += blk(I, 97, 820, 38, 24, 0) + blk(I, 97, 848, 38, 20, 0) + blk(I, 96, 871, 38, 14, 0);
     s += '<path d="M99,818 V886 M133,816 V884" stroke="#1c0f06" stroke-width="4"/><circle cx="99" cy="832" r="1.8" fill="#f1c75a"/><circle cx="133" cy="832" r="1.8" fill="#f1c75a"/>';
     s += '<path d="M89,808 L93,900" stroke="#ffe08a" stroke-opacity=".45" stroke-width="1.6"/>';
-    s += '<g transform="translate(118 905) scale(.78 .74) translate(-118 -905)">' + foot(I) + '</g>';
+    s += '<g transform="translate(118 905) scale(.78 .9) translate(-118 -905)">' + foot(I) + '</g>';
     return s;
   }
   function legs(I) {
@@ -352,7 +352,7 @@
     /* hand: relaxed, fingers slightly open */
     var fing = [['M40,604 C39,616 38,626 36,637', 9], ['M50,606 C49,620 48,632 47,646', 10], ['M61,606 C62,620 63,634 64,650', 11], ['M71,602 C75,614 78,624 80,635', 10], ['M72,580 C82,586 87,596 86,608', 12]];
     for (var q = 0; q < fing.length; q++) s += '<path d="' + fing[q][0] + '" fill="none" stroke="' + OL + '" stroke-width="' + (fing[q][1] + 3.4) + '" stroke-linecap="round"/>';
-    for (q = 0; q < fing.length; q++) s += '<path d="' + fing[q][0] + '" fill="none" stroke="url(#' + I('skinV') + ')" stroke-width="' + fing[q][1] + '" stroke-linecap="round"/><path d="' + fing[q][0] + '" fill="none" stroke="#e6b06a" stroke-opacity=".28" stroke-width="2.4" stroke-linecap="round" transform="translate(-2 -1)"/>';
+    for (q = 0; q < fing.length; q++) s += '<path d="' + fing[q][0] + '" fill="none" stroke="#4a2e15" stroke-width="' + fing[q][1] + '" stroke-linecap="round"/><path d="' + fing[q][0] + '" fill="none" stroke="#e6b06a" stroke-opacity=".28" stroke-width="2.4" stroke-linecap="round" transform="translate(-2 -1)"/>';
     s += '<path d="M34,566 L72,570 C78,586 76,600 72,612 L36,612 C30,596 30,580 34,566 Z" fill="url(#' + I('skinH') + ')" stroke="' + OL + '" stroke-width="2.4"/>';
     s += '<path d="M34,566 L72,570 C78,586 76,600 72,612 L36,612 C30,596 30,580 34,566 Z" fill="url(#' + I('crk') + ')" opacity=".7"/>';
     s += '<ellipse cx="50" cy="588" rx="12" ry="10" fill="url(#' + I('hi') + ')" opacity=".7"/>';
@@ -462,8 +462,8 @@
   }
   function shoulderTufts(I, side) {
     var r = rng(side > 0 ? 3 : 5), s = '';
-    for (var i = 0; i < 9; i++) {
-      var x = 118 + i * 5.5 + (r() - 0.5) * 6, y = 262 - Math.abs(i - 3) * 2 + (r() - 0.5) * 8;
+    for (var i = 0; i < 6; i++) {
+      var x = 112 + i * 6 + (r() - 0.5) * 6, y = 262 - Math.abs(i - 3) * 2 + (r() - 0.5) * 8;
       var ang = 180 - (60 - i * 8) + (r() - 0.5) * 12;
       s += feather(I, x, y, 40 + r() * 20, 10, ang, i);
     }
@@ -564,11 +564,11 @@
   /* ---------------- scepter (origin: orb centre; shaft runs along +y) ---------------- */
   function prong(I) {
     var s = '';
-    var out = 'M-14,26 C-42,16 -60,-14 -55,-58 C-51,-98 -36,-134 -17,-176 C-25,-134 -34,-102 -36,-66 C-38,-30 -32,-4 -8,10 Z';
+    var out = 'M-12,28 C-44,18 -66,-14 -60,-58 C-56,-98 -38,-136 -16,-178 C-22,-136 -30,-102 -30,-66 C-30,-30 -26,-2 -6,12 Z';
     s += '<path d="' + out + '" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="2.2" stroke-linejoin="round"/>';
-    s += '<path d="M-14,20 C-38,12 -50,-14 -46,-56 C-43,-92 -32,-124 -19,-160" fill="none" stroke="url(#' + I('jadeD') + ')" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 3"/>';
-    s += '<path d="M-55,-58 C-51,-98 -36,-134 -17,-176" fill="none" stroke="url(#' + I('gold') + ')" stroke-width="2"/>';
-    s += '<path d="M-36,-66 C-38,-30 -32,-4 -8,10" fill="none" stroke="#c98a2b" stroke-width="1.4"/>';
+    s += '<path d="M-12,22 C-40,12 -56,-14 -52,-56 C-49,-92 -36,-124 -20,-160" fill="none" stroke="url(#' + I('jadeD') + ')" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 3"/>';
+    s += '<path d="M-60,-58 C-56,-98 -38,-136 -16,-178" fill="none" stroke="url(#' + I('gold') + ')" stroke-width="2"/>';
+    s += '<path d="M-30,-66 C-30,-30 -26,-2 -6,12" fill="none" stroke="#c98a2b" stroke-width="1.4"/>';
     for (var k = 0; k < 6; k++) {
       var y = -10 - k * 24, x = -57 + k * 3.4 - (k > 3 ? 1 : 0);
       s += '<path d="M' + f(x + 1) + ',' + (y - 8) + ' L' + f(x - 9) + ',' + (y + 6) + ' L' + f(x + 2) + ',' + (y + 4) + ' Z" fill="url(#' + I('obsE') + ')" stroke="' + OL + '" stroke-width="1.4"/>';
@@ -631,7 +631,7 @@
   /* ---------------- assemble ---------------- */
   function U(x) { return '<g transform="translate(0 -45)">' + x + '</g>'; }
   var HS = 'translate(225 236) scale(.82) translate(-225 -236)';
-  var SERP = 'translate(161 262) scale(.72) translate(-186 -300)';
+  var SERP = 'translate(142 256) scale(.72) translate(-186 -300)';
   function serpL(I) { return '<g transform="' + SERP + '">' + serpent(I) + '</g>'; }
   function serpR(I) { return '<g transform="translate(442 0) scale(-1 1)">' + serpL(I) + '</g>'; }
   function armLs(I) { return '<g transform="translate(150 0) scale(.82 1) translate(-150 0)">' + armL(I) + '</g>'; }
@@ -642,7 +642,7 @@
     uid = uid == null ? '' : String(uid);
     function I(n) { return 'polynesian-' + n + '-' + uid; }
     var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 300">' + defs(I);
-    s += '<ellipse class="part-shadow" cx="85" cy="291.5" rx="60" ry="4.5" fill="#000" opacity="0.28"/>';
+    s += '<ellipse class="part-shadow" cx="85" cy="289.5" rx="60" ry="4.5" fill="#000" opacity="0.28"/>';
     s += '<g class="part-cape" style="transform-origin: ' + vx(225) + 'px ' + vy(215) + 'px">' + T(mantleBack(I, 201, 880)) + '</g>';
     s += '<g class="part-cape" style="transform-origin: ' + vx(165) + 'px ' + vy(230) + 'px">' + T(U(serpL(I))) + '</g>';
     s += '<g class="part-cape" style="transform-origin: ' + vx(277) + 'px ' + vy(230) + 'px">' + T(U(serpR(I))) + '</g>';
