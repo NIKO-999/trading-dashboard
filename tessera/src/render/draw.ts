@@ -221,6 +221,7 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
   } else {
     sidesGrad(ctx, x, y, LAND_DEPTH, P.fieldSide, shade(P.fieldSide, -0.25));
     diamond(ctx, x, y, P.field);
+    facets(ctx, x, y, t.seed);
     if (t.improvement === 'farm') drawFarm(ctx, x, y + HH);
     if (t.road || t.cityId !== null) drawRoads(ctx, s, t);
   }
@@ -242,6 +243,17 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
     ctx.lineTo(a.x + (C.x - a.x) * k, a.y + (C.y - a.y) * k);
     ctx.closePath();
     ctx.fill();
+  }
+}
+
+/** Faint light and dark triangles across a land tile, so the ground reads as faceted low-poly rock and turf. */
+function facets(ctx: Ctx, x: number, y: number, seed: number) {
+  const corners = [{ x, y }, { x: x + HW, y: y + HH }, { x, y: y + TH }, { x: x - HW, y: y + HH }];
+  for (let i = 0; i < 3; i++) {
+    const k = Math.floor(rand(seed, 200 + i) * 4);
+    const a = corners[k], b = corners[(k + 1) % 4];
+    const p = uv(x, y + HH, (rand(seed, 210 + i) - 0.5) * 0.7, (rand(seed, 220 + i) - 0.5) * 0.7);
+    poly(ctx, [a.x, a.y, b.x, b.y, p.x, p.y], i % 2 ? 'rgba(0,0,0,0.055)' : 'rgba(255,255,255,0.075)');
   }
 }
 

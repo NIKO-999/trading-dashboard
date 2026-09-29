@@ -151,19 +151,38 @@ export function ellipse(ctx: Ctx, x: number, y: number, rx: number, ry: number, 
   ctx.fill();
 }
 
+/** A chunky, glossy gold star: rounded points, a warm top-to-bottom gradient, a dark amber rim and a highlight. */
 export function drawStar(ctx: Ctx, x: number, y: number, r: number, fill = '#ffcf33') {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    const rr = i % 2 ? r * 0.48 : r;
-    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-  }
-  ctx.closePath();
-  ctx.fillStyle = ink(fill);
+  const path = () => {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = (i % 2 ? r * 0.56 : r) * 0.86; // the rim's thickness makes up the rest of the size
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  };
+  path();
+  const g = ctx.createLinearGradient(0, y - r, 0, y + r);
+  g.addColorStop(0, ink(shade(fill, 0.55)));
+  g.addColorStop(0.5, ink(fill));
+  g.addColorStop(1, ink(mix(fill, '#ff8a00', 0.55)));
+  ctx.fillStyle = g;
   ctx.fill();
-  ctx.strokeStyle = '#b87a00';
-  ctx.lineWidth = Math.max(0.6, r * 0.12);
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = ink(mix(fill, '#a85a00', 0.7));
+  ctx.lineWidth = Math.max(0.8, r * 0.22);
   ctx.stroke();
+  if (r >= 4) {
+    ctx.save();
+    ctx.translate(x - r * 0.24, y - r * 0.34);
+    ctx.rotate(-0.5);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.2, r * 0.11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 export function roundRect(ctx: Ctx, x: number, y: number, w: number, h: number, r: number) {

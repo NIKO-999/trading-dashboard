@@ -16,7 +16,7 @@ import { renderDpr, setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache } from '../render/sprites';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
-import { cityLabelAt, unitAtScreen } from '../render/dynamic';
+import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
@@ -282,8 +282,31 @@ export class GameView {
     }, { passive: false, signal });
   }
 
+  /** A tap on one of the round buttons above the selected unit. */
+  private onBubble(kind: BubbleKind) {
+    const sel = this.sel;
+    if (!sel) return;
+    if (kind === 'attack') {
+      sfx.play('tap');
+      toast('Tap a red-marked enemy to attack it.');
+      return;
+    }
+    const t = tileAt(this.s, sel.x, sel.y)!;
+    const id = kind === 'heal' ? 'recover' : 'capture';
+    if (!tileActions(this.s, this.me, t).some((a) => a.id === id && a.enabled)) {
+      sfx.play('error');
+      return;
+    }
+    sfx.play(kind === 'heal' ? 'harvest' : 'build');
+    this.act(() => doAction(this.s, this.me, t, id));
+    this.advanceHints();
+    this.checkRewards();
+  }
+
   private tap(sx: number, sy: number) {
     if (this.busy) return;
+    const bubble = bubbleAt(sx, sy);
+    if (bubble) return this.onBubble(bubble);
     // What was tapped: a unit's figure (units stand about a tile above their tile), a city's
     // label, or else the tile under the finger.
     const figure = unitAtScreen(this.s, this.me, this.cam, sx, sy, this.ov.fx.facing);
@@ -334,11 +357,16 @@ export class GameView {
     this.ov.selected = sel ? { x: sel.x, y: sel.y } : null;
     this.ov.moves = [];
     this.ov.attacks = [];
+    this.ov.bubbles = [];
     if (sel && sel.mode === 'unit' && this.myTurn()) {
       const u = unitAt(this.s, sel.x, sel.y);
       if (u && u.owner === this.me) {
         this.ov.moves = moveOptions(this.s, u);
         this.ov.attacks = attackOptions(this.s, u).map((e) => ({ x: e.x, y: e.y }));
+        const acts = tileActions(this.s, this.me, tileAt(this.s, u.x, u.y)!);
+        if (this.ov.attacks.length) this.ov.bubbles.push('attack');
+        if (acts.some((a) => a.id === 'recover' && a.enabled)) this.ov.bubbles.push('heal');
+        if (acts.some((a) => a.id === 'capture' && a.enabled)) this.ov.bubbles.push('capture');
       }
     }
     this.version++;
@@ -553,7 +581,7 @@ export class GameView {
       const d = def(u);
       const owner = this.s.players[u.owner];
       const status = u.owner === this.me
-        ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? 'Ready to move.' : 'Can still attack.'
+        ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
         : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
       const stats = h('span', { class: 'stat-line' },
@@ -563,8 +591,11 @@ export class GameView {
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range))) : null,
       );
-      this.panel.append(close, head(`${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`,
-        stats, h('br'), status, preview ? ` ${preview}` : null));
+      this.panel.append(close, h('div', { class: 'sheet-head' },
+        h('div', { class: 'sheet-title' },
+          h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
+          `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
+        h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
       this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id)), p.tribe);
       return;
     }

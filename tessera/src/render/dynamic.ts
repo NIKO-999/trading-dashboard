@@ -441,7 +441,18 @@ function diamondPath(ctx: Ctx, x: number, y: number, k: number) {
 function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number) {
   if (ov.selected) {
     const t = tileAt(s, ov.selected.x, ov.selected.y);
-    if (t) {
+    if (t && s.units.some((u) => u.x === t.x && u.y === t.y)) {
+      // a unit is selected: a glowing ring at its feet
+      const c = tileCenter(t.x, t.y);
+      const y = c.y + (isWaterTile(t) ? WATER_DROP : 0) + 3;
+      const pulse = (Math.sin(now / 320) + 1) / 2;
+      glowDisc(ctx, c.x, y, 22, 'rgba(70,210,255,', 0.55 + pulse * 0.2);
+      ctx.strokeStyle = `rgba(160,240,255,${0.75 + pulse * 0.2})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(c.x, y, 15 + pulse * 1.5, 7.5 + pulse * 0.75, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (t) {
       const c = tileCenter(t.x, t.y);
       const y = c.y + (isWaterTile(t) ? WATER_DROP : 0);
       const pulse = (Math.sin(now / 260) + 1) / 2;
@@ -459,16 +470,45 @@ function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number) {
     const t = tileAt(s, m.x, m.y)!;
     const c = tileCenter(m.x, m.y);
     const y = c.y + (isWaterTile(t) ? WATER_DROP : 0);
-    const k = ((now / 1100) + i * 0.07) % 1;
-    ctx.strokeStyle = `rgba(255,255,255,${0.5 * (1 - k)})`;
-    ctx.lineWidth = 1.5;
+    // a glowing blue ring: a soft halo, a bright band with a dark hole, and a slow pulse outward
+    const k = ((now / 1300) + i * 0.05) % 1;
+    glowDisc(ctx, c.x, y + 0.5, 21, 'rgba(90,180,255,', 0.5);
     ctx.beginPath();
-    ctx.ellipse(c.x, y, 8 + k * 7, (8 + k * 7) * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x, y, 14, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(c.x, y, 6.5, 3.25, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(150,205,255,0.78)';
+    ctx.fill('evenodd');
+    ctx.beginPath();
+    ctx.ellipse(c.x, y, 6.5, 3.25, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(16,52,120,0.42)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.ellipse(c.x, y, 14, 7, 0, 0, Math.PI * 2);
     ctx.stroke();
-    softShadow(ctx, c.x, y + 1, 9, 4.5, 0.18);
-    ellipse(ctx, c.x, y, 7.5, 3.8, 'rgba(255,255,255,0.88)');
-    ellipse(ctx, c.x, y - 0.6, 5.5, 2.4, '#ffffff');
+    ctx.strokeStyle = `rgba(190,225,255,${0.6 * (1 - k)})`;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(c.x, y, 14 + k * 8, 7 + k * 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
   });
+}
+
+/** A soft round glow on the ground: `rgb` is 'rgba(r,g,b,' and `alpha` its strength at the centre. */
+function glowDisc(ctx: Ctx, x: number, y: number, rx: number, rgb: string, alpha: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, 0.5);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, `${rgb}${alpha})`);
+  g.addColorStop(0.6, `${rgb}${alpha * 0.4})`);
+  g.addColorStop(1, `${rgb}0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------- effects
@@ -558,6 +598,105 @@ function overlayScale(zoom: number) {
   };
 }
 
+export type BubbleKind = 'attack' | 'heal' | 'capture';
+let bubbleRects: { kind: BubbleKind; x: number; y: number; r: number }[] = [];
+
+/** The action bubble under screen point (sx, sy), if any. */
+export function bubbleAt(sx: number, sy: number): BubbleKind | null {
+  for (const b of bubbleRects) if (Math.hypot(sx - b.x, sy - b.y) <= b.r + 7) return b.kind;
+  return null;
+}
+
+const BUBBLE_COLORS: Record<BubbleKind, [string, string]> = { attack: ['#8fd4ff', '#2f86e6'], heal: ['#ffa3cc', '#e8467f'], capture: ['#95eaa0', '#2ea84a'] };
+
+/** Round pin-shaped buttons above the selected unit showing what it can do: strike, heal or claim. */
+function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], motion: Map<number, Motion>, k: number, us: number, snap: (v: number) => number) {
+  bubbleRects = [];
+  const kinds = ov.bubbles;
+  if (!kinds?.length || !ov.selected) return;
+  const u = units.find((v) => v.x === ov.selected!.x && v.y === ov.selected!.y);
+  const m = u && motion.get(u.id);
+  if (!u || !m) return;
+  const R = 15 * k, gap = 5 * k;
+  const total = kinds.length * R * 2 + (kinds.length - 1) * gap;
+  const tip = cam.toScreen(m.x, m.y - m.lift - 40 * us / 1.3);
+  const bob = Math.sin(ov.now / 380) * 1.6 * k;
+  kinds.forEach((kind, i) => {
+    const cx = snap(tip.x - total / 2 + R + i * (R * 2 + gap));
+    const cy = snap(tip.y - R - 9 * k + bob);
+    const [hi, lo] = BUBBLE_COLORS[kind];
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6 * k;
+    ctx.shadowOffsetY = 2 * k;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, Math.PI * 0.72, Math.PI * 0.28, false); // the circle, open at the bottom
+    ctx.lineTo(cx, cy + R + 7 * k); // ...into a pointed tail
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0, cy - R, 0, cy + R);
+    g.addColorStop(0, hi);
+    g.addColorStop(1, lo);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 2 * k;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, Math.PI * 0.72, Math.PI * 0.28, false);
+    ctx.lineTo(cx, cy + R + 7 * k);
+    ctx.closePath();
+    ctx.stroke();
+    drawBubbleIcon(ctx, kind, cx, cy, R * 0.55);
+    bubbleRects.push({ kind, x: cx, y: cy, r: R });
+  });
+}
+
+function drawBubbleIcon(ctx: Ctx, kind: BubbleKind, x: number, y: number, s: number) {
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#fff';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (kind === 'attack') {
+    // two crossed swords
+    for (const d of [-1, 1]) {
+      ctx.lineWidth = s * 0.34;
+      ctx.beginPath();
+      ctx.moveTo(x - d * s, y - s);
+      ctx.lineTo(x + d * s * 0.55, y + s * 0.55);
+      ctx.stroke();
+      ctx.lineWidth = s * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(x + d * s * 0.05, y + s * 0.15);
+      ctx.lineTo(x + d * s * 0.85, y - s * 0.45);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + d * s * 0.55, y + s * 0.55);
+      ctx.lineTo(x + d * s * 0.85, y + s * 0.85);
+      ctx.stroke();
+    }
+  } else if (kind === 'heal') {
+    ctx.beginPath();
+    ctx.moveTo(x, y + s * 0.95);
+    ctx.bezierCurveTo(x - s * 1.6, y - s * 0.1, x - s * 0.9, y - s * 1.1, x, y - s * 0.35);
+    ctx.bezierCurveTo(x + s * 0.9, y - s * 1.1, x + s * 1.6, y - s * 0.1, x, y + s * 0.95);
+    ctx.fill();
+  } else {
+    // a flag
+    ctx.lineWidth = s * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.6, y + s);
+    ctx.lineTo(x - s * 0.6, y - s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.6, y - s);
+    ctx.lineTo(x + s * 0.95, y - s * 0.4);
+    ctx.lineTo(x - s * 0.6, y + s * 0.15);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
 /** Screen rectangles of the city labels drawn this frame, for tapping a label to open its city. */
 let labelRects: { id: number; x0: number; y0: number; x1: number; y1: number }[] = [];
 
@@ -622,6 +761,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
     const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
     drawHpBadge(ctx, s, u, snap(sp.x), snap(sp.y), kh, hp);
   }
+  drawActionBubbles(ctx, ov, cam, units, motion, k, us, snap);
   for (const f of ov.fx.floaters) {
     const q = (ov.now - f.t0) / FLOAT_MS;
     if (q < 0 || q > 1) continue;
