@@ -241,7 +241,6 @@
         '<path d="M46 108Q56 116 70 120M74 122Q86 118 98 116M106 116Q120 122 130 122M136 120Q148 116 156 108" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".7"/>' +
         hl(72, 38, 14, 6, -40, 0.75) + hl(58, 60, 4, 2.4, -60, 0.7) + circ(90, 30, 2.4, '#fff', 'opacity=".9"') +
         // face
-        '<path d="M38 66L66 76" stroke="' + O + '" stroke-width="0"/>' +
         '<g class="part-eyes" style="transform-origin: 82px 78px">' +
         ell(66, 78, 10, 12, '#fff', S(3.4)) + ell(96, 80, 9, 11, '#fff', S(3.4)) +
         eye(64, 80, 6, 8, '#3a6cff') + eye(94, 82, 5.4, 7.4, '#3a6cff') +
@@ -336,7 +335,7 @@
         '<path d="M50 36L50 4M50 36Q34 36 32 12Q30 26 38 34M50 36Q66 36 68 12Q70 26 62 34" fill="none" stroke="#f4f8ff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>' +
         '<path d="M49 30L49 12" stroke="#fff" stroke-width="1.6" opacity=".9"/>' +
         '<path d="M42 40h16v6l-8 4l-8 -4z" fill="url(#' + I('metal') + ')" ' + S(2.6) + '/>' +
-        '<path d="M50 176q-8 6 -4 14M50 176q8 6 4 14" stroke="#3fb890" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+        '' +
         '</g>' +
         // arm
         '<path d="M84 92Q70 100 56 108" stroke="' + O + '" stroke-width="15" fill="none" stroke-linecap="round"/><path d="M84 92Q70 100 56 108" stroke="url(#' + I('skin') + ')" stroke-width="9" fill="none" stroke-linecap="round"/>' +
@@ -393,7 +392,6 @@
         '<path d="M80 96Q92 92 100 100Q100 112 88 112Q78 108 80 96Z" fill="url(#' + I('shell') + ')" ' + S(3.2) + '/><path d="M118 96Q108 92 100 100Q100 112 112 112Q122 108 118 96Z" fill="url(#' + I('shell') + ')" ' + S(3.2) + '/>' +
         '<path d="M84 100L90 110M90 98L94 110M116 100L110 110M110 98L106 110" stroke="#c0587a" stroke-width="1.6"/>' +
         // pearl necklace
-        '<path d="M80 84Q100 100 120 84" stroke="#fff" stroke-width="0"/>' +
         circ(82, 86, 3, 'url(#' + I('pearl') + ')', S(1.6)) + circ(88, 91, 3, 'url(#' + I('pearl') + ')', S(1.6)) + circ(96, 94, 3.4, 'url(#' + I('pearl') + ')', S(1.6)) + circ(104, 94, 3.4, 'url(#' + I('pearl') + ')', S(1.6)) + circ(112, 91, 3, 'url(#' + I('pearl') + ')', S(1.6)) + circ(118, 86, 3, 'url(#' + I('pearl') + ')', S(1.6)) +
         // back arm (right) casting
         '<path d="M120 88Q140 92 142 112" stroke="' + O + '" stroke-width="13" fill="none" stroke-linecap="round"/><path d="M120 88Q140 92 142 112" stroke="#b8d8ea" stroke-width="7.4" fill="none" stroke-linecap="round"/>' +
@@ -405,6 +403,7 @@
         '<g class="part-head">' +
         // fin ear
         '<path d="M106 50Q126 42 130 56Q120 56 122 68Q112 66 108 62Z" fill="#8af0e0" ' + S(3) + '/><path d="M112 54L124 52M112 60L122 62" stroke="#2a9a9a" stroke-width="1.6"/>' +
+        ell(102, 52, 24, 28, '#1f7f8c', S(4)) + '<path d="M96 30Q118 34 122 56" stroke="#6ff0e0" stroke-width="2" fill="none" opacity=".6"/>' +
         ell(92, 54, 22, 25, 'url(#' + I('skin') + ')', S(4)) +
         '<path d="M106 40Q114 56 104 76Q112 68 112 54Q110 44 106 40Z" fill="#7aa8c8" opacity=".5"/>' +
         // front hair bangs
@@ -427,7 +426,6 @@
         '<path d="M76 34L74 14L84 26L88 6L96 24L104 8L106 28L114 18L110 38Z" fill="url(#' + I('gold') + ')" ' + S(3.2) + '/>' +
         '<path d="M80 30Q92 20 108 32Q94 26 80 30Z" fill="#fff" opacity=".5"/>' +
         circ(88, 10, 4.6, 'url(#' + I('pearl') + ')', S(2)) + circ(75, 17, 3.6, 'url(#' + I('pearl') + ')', S(2)) + circ(104, 12, 4, 'url(#' + I('pearl') + ')', S(2)) + circ(113, 21, 3, 'url(#' + I('pearl') + ')', S(2)) +
-        '<path d="M80 34Q94 22 110 36" stroke="' + O + '" stroke-width="0"/>' +
         '<path d="M78 36Q86 26 94 32Q102 24 110 36Q94 42 78 36Z" fill="url(#' + I('shell') + ')" ' + S(3) + '/><path d="M86 32L88 38M94 30L94 39M102 32L100 38" stroke="#c0587a" stroke-width="1.4"/>' +
         '</g>' +
         // front hair tentacles
@@ -444,8 +442,6 @@
         '<path d="M48 40Q36 40 32 30M48 40Q60 40 64 30" stroke="' + O + '" stroke-width="2.4" fill="none"/>' +
         circ(48, 22, 14, 'url(#' + I('pearl') + ')', S(3.4)) + hl(43, 16, 5, 3, -30, 0.95) + circ(53, 28, 2.4, '#fff', 'opacity=".8"') +
         '<path d="M40 22Q48 14 56 22" stroke="#ff9ae0" stroke-width="1.6" fill="none" opacity=".7"/>' +
-        '<path d="M45 190q-6 4 -2 8" stroke="#3fb890" stroke-width="0"/>' +
-        '<path d="M48 82l-10 -6M48 90l-12 -2M48 98l-10 4" stroke="#3fb890" stroke-width="0"/>' +
         '</g>' +
         '<path d="M88 90Q70 98 54 106" stroke="' + O + '" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M88 90Q70 98 54 106" stroke="#dff2fa" stroke-width="8" fill="none" stroke-linecap="round"/>' +
         ell(52, 106, 8, 7.4, '#dff2fa', S(3)) + '<path d="M46 104q6 3 11 0M46 109q6 3 11 0" stroke="' + O + '" stroke-width="1.6" fill="none"/>' +
@@ -542,7 +538,6 @@
         '<g clip-path="url(#' + I('eyeL') + ')"><path d="M62 90Q76 100 90 92M64 106Q76 112 90 106" stroke="#d83a14" stroke-width="1.2" fill="none" opacity=".6"/><path d="M58 76L96 92L96 60Z" fill="#5a2484"/><path d="M58 76L96 92" stroke="' + O + '" stroke-width="3"/></g>' +
         '<g clip-path="url(#' + I('eyeR') + ')"><path d="M102 92Q116 104 130 94M104 108Q116 112 130 108" stroke="#d83a14" stroke-width="1.2" fill="none" opacity=".6"/><path d="M134 82L98 94L98 60Z" fill="#5a2484"/><path d="M134 82L98 94" stroke="' + O + '" stroke-width="3"/></g>' +
         ell(74, 102, 4.6, 11, O) + ell(114, 104, 4, 10, O) +
-        '<path d="M72 96l0 12M112 98l0 12" stroke="#ff8a1c" stroke-width="0"/>' +
         ell(69, 94, 5, 3.2, '#fff', 'opacity=".95"') + circ(84, 110, 2.6, '#fff', 'opacity=".8"') + ell(111, 96, 4, 2.6, '#fff', 'opacity=".95"') + circ(124, 110, 2.2, '#fff', 'opacity=".8"') +
         '</g>' +
         // brow ridges
@@ -566,16 +561,14 @@
         '<path d="M164 44Q140 8 104 10Q66 12 52 52Q38 84 40 110Q44 130 40 150" fill="none" stroke="' + O + '" stroke-width="8.4" stroke-linecap="round"/>' +
         '<path d="M164 44Q140 8 104 10Q66 12 52 52Q38 84 40 110Q44 130 40 150" fill="none" stroke="url(#' + I('iron') + ')" stroke-width="5" stroke-linecap="round" stroke-dasharray="6 3.6"/>' +
         '<path d="M164 44Q140 8 104 10Q66 12 52 52Q38 84 40 110Q44 130 40 150" fill="none" stroke="#dfe8ea" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="3 7" opacity=".7" transform="translate(-.8 -1)"/>' +
-        '<g transform="translate(168 52) rotate(28)">' +
-        '<path d="M0 -16V22" stroke="' + O + '" stroke-width="10" stroke-linecap="round"/><path d="M0 -16V22" stroke="url(#' + I('iron') + ')" stroke-width="5.6" stroke-linecap="round"/>' +
-        '<path d="M-14 -8H14" stroke="' + O + '" stroke-width="9" stroke-linecap="round"/><path d="M-14 -8H14" stroke="url(#' + I('iron') + ')" stroke-width="4.8" stroke-linecap="round"/>' +
-        '<path d="M-22 10Q-20 30 0 32Q20 30 22 10" fill="none" stroke="' + O + '" stroke-width="10" stroke-linecap="round"/><path d="M-22 10Q-20 30 0 32Q20 30 22 10" fill="none" stroke="url(#' + I('iron') + ')" stroke-width="5.4" stroke-linecap="round"/>' +
-        '<path d="M-30 6L-20 16L-16 4Z M30 6L20 16L16 4Z" fill="url(#' + I('iron') + ')" ' + S(3) + '/>' +
-        '<circle cx="0" cy="-22" r="6" fill="none" stroke="' + O + '" stroke-width="7"/><circle cx="0" cy="-22" r="6" fill="none" stroke="url(#' + I('iron') + ')" stroke-width="3.2"/>' +
-        '<path d="M-2 -10V16" stroke="#fff" stroke-width="1.6" opacity=".5" stroke-linecap="round"/>' +
-        '<path d="M-6 10l3 5M4 18l4 4M-3 22l3 6" stroke="#b8542a" stroke-width="2.6" stroke-linecap="round" opacity=".8"/>' +
-        barn(-8, 24, 3.4) + barn(9, 4, 3) + barn(-3, -2, 2.4) +
-        '<path d="M-22 12Q-30 26 -24 38M22 12Q30 24 24 36" stroke="#3ab84a" stroke-width="3.2" fill="none" stroke-linecap="round"/>' +
+        '<g transform="translate(166 54) rotate(24) scale(1.12)">' +
+        '<path d="M0 -14V22" stroke="' + O + '" stroke-width="10" stroke-linecap="round"/><path d="M0 -14V22" stroke="url(#' + I('iron') + ')" stroke-width="5.6" stroke-linecap="round"/>' +
+        '<path d="M-14 -6H14" stroke="' + O + '" stroke-width="9" stroke-linecap="round"/><path d="M-14 -6H14" stroke="url(#' + I('iron') + ')" stroke-width="4.8" stroke-linecap="round"/>' +
+        '<path d="M-20 10Q-20 28 0 28Q20 28 20 10" fill="none" stroke="' + O + '" stroke-width="10" stroke-linecap="round"/><path d="M-20 10Q-20 28 0 28Q20 28 20 10" fill="none" stroke="url(#' + I('iron') + ')" stroke-width="5.4" stroke-linecap="round"/>' +
+        '<path d="M-25 14L-16 6L-14 18Z M25 14L16 6L14 18Z" fill="url(#' + I('iron') + ')" ' + S(3) + '/>' +
+        '<circle cx="0" cy="-20" r="6" fill="none" stroke="' + O + '" stroke-width="7"/><circle cx="0" cy="-20" r="6" fill="none" stroke="url(#' + I('iron') + ')" stroke-width="3.2"/>' +
+        '<path d="M-1.6 -8V18" stroke="#fff" stroke-width="1.6" opacity=".5" stroke-linecap="round"/>' +
+        barn(-7, 22, 3.2) + barn(8, 2, 2.8) + barn(-14, 0, 2.2) +
         '</g>' +
         // chain ends / links near hanging
         barn(41, 128, 3) +
@@ -615,8 +608,9 @@
         circ(104, 104, 98, 'url(#' + I('aura') + ')') +
         // ---- back arm (right)
         rock([[152, 66], [180, 78], [188, 116], [184, 148], [160, 150], [156, 110]], null, 4.4) +
-        rock([[160, 140], [190, 140], [194, 168], [176, 178], [156, 170]], 'url(#' + I('fist') + ')', 4.4) +
-        '<path d="M166 146l0 12M176 144l0 14M186 146l0 12" stroke="' + O + '" stroke-width="2.6" stroke-linecap="round"/>' +
+        '<path d="M156 146C154 134 170 130 184 134C198 138 200 158 190 170C180 180 162 178 156 166Z" fill="url(#' + I('fist') + ')" ' + S(4.4) + '/>' +
+        rock([[158, 150], [160, 138], [172, 136], [172, 154], [168, 166]], 'url(#' + I('rock2') + ')', 3) +
+        rock([[176, 152], [176, 136], [188, 138], [190, 154], [184, 168]], 'url(#' + I('rock2') + ')', 3) +
         fiss('M166 92L172 108L166 124', 2.4) +
         // ---- legs
         rock([[64, 132], [108, 132], [114, 190], [54, 190], [58, 160]], null, 4.4) +
@@ -639,6 +633,15 @@
         '<path d="M96 60L74 82L80 100M124 58L150 84L146 110M64 142L82 122L108 134L134 128L156 144" stroke="' + O + '" stroke-width="3" fill="none" stroke-linejoin="round"/>' +
         // fissures
         fiss('M58 96L74 100L66 120L84 128', 2.8) + fiss('M150 84L138 96L150 112L136 128', 2.8) + fiss('M100 58L106 74M112 62L120 76L112 84', 2.2) + fiss('M96 138L102 150M120 134L124 148', 2.2) +
+        // ---- chains of fire (diagonal across torso)
+        (function () {
+          var s = '', k, n = 8, x0 = 66, y0 = 92, x1 = 154, y1 = 136;
+          for (k = 0; k <= n; k++) {
+            var t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * 6;
+            s += link(f(x), f(y), f(Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI + (k % 2 ? 90 : 0) * 0), k % 2 ? 0.8 : 1);
+          }
+          return s;
+        })() +
         // core
         circ(104, 104, 34, 'url(#' + I('core') + ')') +
         '<path d="' + poly([[104, 82], [116, 88], [124, 100], [120, 116], [108, 126], [92, 124], [84, 110], [86, 94]]) + '" fill="' + R2 + '" ' + S(3.6) + '/>' +
@@ -648,15 +651,6 @@
         '<path d="M104 82L104 74M124 100L132 100M84 110L76 114M108 126L110 134" stroke="' + O + '" stroke-width="3" stroke-linecap="round"/>' +
         // rune-brands on plates
         '<path d="M150 118l6 -5l0 10zM60 84l-4 6l8 0" fill="none" stroke="#ffb02a" stroke-width="2" opacity=".8"/>' +
-        // ---- chains of fire (diagonal across torso)
-        (function () {
-          var s = '', k, n = 8, x0 = 62, y0 = 64, x1 = 150, y1 = 138;
-          for (k = 0; k <= n; k++) {
-            var t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI) * 6;
-            s += link(f(x), f(y), f(Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI + (k % 2 ? 90 : 0) * 0), k % 2 ? 0.8 : 1);
-          }
-          return s;
-        })() +
         // ---- pauldrons
         rock([[30, 84], [40, 54], [64, 46], [80, 62], [78, 92], [56, 104]], null, 4.6) +
         '<path d="M40 54L64 46L58 66Z" fill="' + RL + '" opacity=".5"/><path d="M78 92L56 104L60 82Z" fill="#000" opacity=".3"/>' +
@@ -698,10 +692,14 @@
         fiss('M40 108L48 120L38 134', 2.4) +
         // wrist chain shackle
         '<path d="M22 138Q46 148 68 138L66 148Q46 158 24 148Z" fill="url(#' + I('lava') + ')" ' + S(3.4) + '/>' +
-        '<path d="M8 152C4 138 16 130 30 132C46 128 62 136 62 152C66 168 54 180 36 180C16 182 4 170 8 152Z" fill="url(#' + I('fist') + ')" ' + S(4.6) + '/>' +
-        '<path d="M14 150Q20 140 30 144M30 144Q40 138 48 146M50 148Q56 156 52 166" stroke="' + O + '" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
-        '<path d="M16 162Q30 172 50 166" stroke="#c8280e" stroke-width="3" fill="none" opacity=".7"/>' +
-        hl(22, 142, 8, 3.2, -30, 0.7) + circ(56, 146, 2, '#fff', 'opacity=".6"') +
+        '<path d="M8 154C4 140 16 132 30 134C46 130 62 138 62 154C66 170 54 182 36 182C16 184 4 172 8 154Z" fill="url(#' + I('fist') + ')" ' + S(4.6) + '/>' +
+        '<path d="M14 168Q34 180 56 168" stroke="#c8280e" stroke-width="3" fill="none" opacity=".7"/>' +
+        rock([[10, 156], [10, 140], [22, 134], [26, 150], [22, 164]], null, 3.4) +
+        rock([[28, 150], [26, 134], [40, 132], [42, 148], [38, 164]], null, 3.4) +
+        rock([[44, 148], [42, 134], [54, 136], [58, 150], [52, 162]], null, 3.4) +
+        '<path d="M12 140L22 134L20 142Z M28 136L40 132L38 140Z M44 136L54 136L52 142Z" fill="' + RL + '" opacity=".55"/>' +
+        fiss('M24 140L24 150M40 138L38 148M50 142L50 152', 1.8) +
+        hl(20, 176, 7, 2.6, -10, 0.55) +
         // dripping lava
         '<path d="M14 172q-2 10 0 16" stroke="#ff8a1c" stroke-width="4" stroke-linecap="round"/>' +
         drop(14, 168, 0.9) + drop(30, 182, 0.8) + drop(48, 176, 0.9) +
@@ -820,11 +818,6 @@
         '<path d="M-12 -30Q-2 -38 8 -30L10 -22H-12Z" fill="#3aa860" opacity=".8"/>' +
         '<path d="M-20 -10Q-10 -16 0 -10" stroke="#3aa860" stroke-width="3.4" fill="none" opacity=".8"/>' +
         '<circle cx="-14" cy="-50" r="3" fill="#ffc0e0" stroke="' + O + '" stroke-width="1.4"/><circle cx="12" cy="-36" r="2.4" fill="#ffc0e0" stroke="' + O + '" stroke-width="1.4"/>' +
-        '</g>';
-    }
-    function arch(x, y, sc) {
-      return '<g transform="translate(' + x + ' ' + y + ') scale(' + sc + ')">' +
-        '<path d="M-44 0V-70H-30V-70Q0 -108 30 -70V0H44V-78Q0 -128 -44 -78Z" fill="url(#' + ID('marble') + ')" stroke="' + O + '" stroke-width="2.6" stroke-linejoin="round" opacity="0"/>' +
         '</g>';
     }
     // --- back row props (behind path)
