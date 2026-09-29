@@ -415,20 +415,15 @@ test('ports, temples and markets cluster too, but farms and mines do not need to
   assert.equal(total() - before, 4);
 });
 
-test('harvesting next to a road brings one more population', () => {
+test('harvesting next to a road gives no extra population', () => {
   const { s, ring, total } = growthSetup();
   const [a] = ring;
   const b = ring.find((t) => t !== a && Math.max(Math.abs(t.x - a.x), Math.abs(t.y - a.y)) === 1)!;
   a.resource = b.resource = 'fruit';
-  let before = total();
+  b.road = true;
+  const before = total();
   assert.ok(doAction(s, 0, a, 'harvest'));
-  assert.equal(total() - before, 1, 'no road nearby');
-  const r = ring.find((t) => t !== a && t !== b && Math.max(Math.abs(t.x - b.x), Math.abs(t.y - b.y)) === 1)!;
-  r.road = true;
-  assert.ok(tileActions(s, 0, b).find((x) => x.id === 'harvest')!.desc.startsWith('+2 population'));
-  before = total();
-  assert.ok(doAction(s, 0, b, 'harvest'));
-  assert.equal(total() - before, 2, 'a road beside it');
+  assert.equal(total() - before, 1, 'a fruit is worth one population, road or no road');
 });
 
 test('roads joined to a city pay milestones and stars, once each', () => {
@@ -436,13 +431,15 @@ test('roads joined to a city pay milestones and stars, once each', () => {
   const chain = ring.slice(0, 8).sort((p, q) => Math.atan2(p.y - city.y, p.x - city.x) - Math.atan2(q.y - city.y, q.x - city.x));
   const base = total();
   const inc0 = cityIncome(s, city), level0 = city.level;
-  for (let i = 0; i < 3; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
-  assert.equal(total() - base, 1, '3 connected roads: +1');
-  for (let i = 3; i < 6; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
-  assert.equal(total() - base, 2, '6 connected roads: +1 more');
-  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 1, 'every 6 roads pay a star (on top of what a higher level pays)');
+  for (let i = 0; i < 4; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  assert.equal(total() - base, 0, 'four roads pay nothing yet');
+  assert.ok(doAction(s, 0, chain[4], 'road'));
+  assert.equal(total() - base, 1, '5 connected roads: +1');
+  for (let i = 5; i < 8; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
+  assert.equal(total() - base, 1, '8 roads: still just the first milestone');
+  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 0, 'no road income below 10 roads');
   payRoadBonuses(s, 0);
-  assert.equal(total() - base, 2, 'nothing is paid twice');
+  assert.equal(total() - base, 1, 'nothing is paid twice');
 });
 
 test('linking two of your cities by road gives both population and income', () => {
@@ -459,12 +456,12 @@ test('linking two of your cities by road gives both population and income', () =
   for (let i = 1; i <= 2; i++) Object.assign(tileAt(s, city.x + dx * i, city.y)!, { terrain: 'field', road: true, village: false, ruin: false, resource: null });
   payRoadBonuses(s, 0);
   const after = [total(), other.pop + Array.from({ length: other.level - 1 }, (_, i) => i + 2).reduce((a, b) => a + b, 0)];
-  assert.equal(after[0] - before[0], 3);
-  assert.equal(after[1] - before[1], 3);
+  assert.equal(after[0] - before[0], 1);
+  assert.equal(after[1] - before[1], 1);
   assert.equal(cityIncome(s, city) - inc[0] - (city.level - level0), 1);
   assert.equal(cityIncome(s, other) - inc[1] - (other.level - otherLevel0), 1);
   payRoadBonuses(s, 0);
-  assert.equal(total() - before[0], 3, 'a link pays once');
+  assert.equal(total() - before[0], 1, 'a link pays once');
 });
 
 test('rival empires build roads to link their own cities', () => {

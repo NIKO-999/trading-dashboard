@@ -36,18 +36,19 @@ export function roadNetwork(s: GameState, c: City): RoadNetwork {
 
 /** Connected road tiles needed for each one-off population reward, cumulative. */
 export const ROAD_MILESTONES: readonly { roads: number; pop: number }[] = [
-  { roads: 3, pop: 1 },
-  { roads: 6, pop: 1 },
-  { roads: 10, pop: 2 },
+  { roads: 5, pop: 1 },
+  { roads: 10, pop: 1 },
   { roads: 15, pop: 2 },
 ];
 /** Population both cities gain the first time a road links them. */
-export const LINK_POP = 3;
+export const LINK_POP = 1;
 /** Every this many connected road tiles pays +1★ a turn. */
-export const ROADS_PER_STAR = 6;
+export const ROADS_PER_STAR = 10;
+/** Only this many links per city pay income. */
+export const MAX_PAYING_LINKS = 2;
 
-/** Stars per turn a city earns from its road network: one per link plus one per 6 connected tiles. */
-export const networkIncome = (n: RoadNetwork) => n.linked.length + Math.floor(n.roads / ROADS_PER_STAR);
+/** Stars per turn a city earns from its road network: one per link (up to two) plus one per 10 connected tiles. */
+export const networkIncome = (n: RoadNetwork) => Math.min(MAX_PAYING_LINKS, n.linked.length) + Math.floor(n.roads / ROADS_PER_STAR);
 
 const CLUSTER_MAX = 4;
 const CLUSTER_NAME: Partial<Record<Improvement, string>> = { lumber: 'Lumber Hut', port: 'Port', temple: 'Temple or Shrine', market: 'Market' };
@@ -59,5 +60,3 @@ export function clusterBonus(s: GameState, t: Tile, kind: Improvement) {
 }
 export const clusterHint = (kind: Improvement) => `+1 more per neighbouring ${CLUSTER_NAME[kind] ?? 'improvement'}`;
 
-/** Harvests worth one population gain one more next to a road, which carries the goods to the city. */
-export const roadHarvestBonus = (s: GameState, t: Tile) => (t.road || neighbors(s, t.x, t.y).some((x) => x.road) ? 1 : 0);

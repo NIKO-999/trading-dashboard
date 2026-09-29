@@ -2,7 +2,7 @@ import { TECH_BY_ID, TECHS } from '../data/techs';
 import { unitFor } from '../data/tribes';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
-import { clusterBonus, clusterHint, LINK_POP, networkIncome, roadHarvestBonus, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
+import { clusterBonus, clusterHint, LINK_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
@@ -237,12 +237,11 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   }
 
   const tribe = p.tribe;
-  const roadHint = roadHarvestBonus(s, t) ? '' : ' +1 more next to a road.';
   // a resource can be developed once: a farm or mine keeps its crop or ore but can't be rebuilt
   if (!t.improvement) switch (t.resource) {
-    case 'fruit': add('harvest', 'Harvest Fruit', `+${1 + roadHarvestBonus(s, t)} population.${roadHint}`, 2, 'gathering', 'fruit'); break;
-    case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1 + roadHarvestBonus(s, t)} population.${tribe === 'zulu' ? '' : roadHint}${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
-    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1 + roadHarvestBonus(s, t)} population.${hasTech(s, pid, 'aquaculture') ? '' : roadHint}`, 2, 'fishing', 'fish'); break;
+    case 'fruit': add('harvest', 'Harvest Fruit', '+1 population.', 2, 'gathering', 'fruit'); break;
+    case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1} population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : ''}`, 2, 'hunting', 'animal'); break;
+    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;
     case 'whale': add('harvest', 'Whaling', 'Gain 10★.', 2, 'whaling', 'whale'); break;
     case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' ? 3 : 2} population.`, 5, 'farming', 'farm'); break;
     case 'ore': add('mine', 'Build Mine', '+2 population.', 5, 'mining', 'mine'); break;
@@ -268,7 +267,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   return acts;
 }
 
-const ROAD_DESC = `Units move twice as fast. Roads joined to a city grow it: ${ROAD_MILESTONES.map((m) => m.roads).join('/')} connected roads give +${ROAD_MILESTONES.map((m) => m.pop).join('/+')} population, linking two of your cities gives +${LINK_POP} each, and every link and every ${ROADS_PER_STAR} roads pay +1★ a turn.`;
+const ROAD_DESC = `Units move twice as fast. Roads joined to a city grow it: ${ROAD_MILESTONES.map((m) => m.roads).join('/')} connected roads give +${ROAD_MILESTONES.map((m) => m.pop).join('/+')} population, linking two of your cities gives +${LINK_POP} each, and each link (up to ${MAX_PAYING_LINKS}) and every ${ROADS_PER_STAR} roads pay +1★ a turn.`;
 
 /**
  * Pays out what a city's road network has earned: one-off population at each milestone of
@@ -346,8 +345,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
       if (r === 'animal' && p.tribe === 'zulu') return grow(2); // Great Hunt
-      if (r === 'fish' && hasTech(s, pid, 'aquaculture')) return grow(2);
-      return grow(1 + roadHarvestBonus(s, t)); // goods carried along a road
+      return grow(r === 'fish' && hasTech(s, pid, 'aquaculture') ? 2 : 1);
     }
     case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
     case 'mine': t.improvement = 'mine'; return grow(2);
