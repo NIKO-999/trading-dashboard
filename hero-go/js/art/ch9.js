@@ -196,7 +196,7 @@
         '<path d="M28 96C28 82 44 66 68 66C88 66 100 82 98 100C96 112 88 118 74 118L40 116C32 114 28 106 28 96Z" fill="url(#' + I('fur') + ')" ' + S(4) + '/>' +
         '<ellipse cx="32" cy="94" rx="7" ry="5.5" fill="' + O + '"/><ellipse cx="30" cy="92" rx="2.4" ry="1.6" fill="#8a7aa0"/>' +
         '<path d="M50 74Q62 68 76 72" stroke="#7a68a0" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>' +
-        crack('M76 80L82 92L76 104') +
+        crack('M76 80L82 92L76 104') + '<path d="M34 90Q40 76 56 72" stroke="#9a8ac0" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".8"/><path d="M32 100Q34 108 44 112" stroke="#6a5a88" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
         // maw open
         '<path d="M40 114C34 122 40 148 62 152C82 154 92 138 92 122Q64 130 40 114Z" fill="url(#' + I('maw') + ')" ' + S(4) + '/>' +
         '<path d="M46 118Q66 128 88 122" fill="none" stroke="' + O + '" stroke-width="3"/>' +
@@ -400,7 +400,7 @@
         lg(I('wing2'), [[0, '#8a1a44'], [1, '#2a0834']]) +
         lg(I('wbone'), [[0, '#5a2a44'], [1, '#1e0a1c']], 0, 0, 1, 0) +
         lg(I('cape'), [[0, '#6a1030'], [0.6, '#3a0a24'], [1, '#160510']], 0, 0, 0.3, 1) +
-        lg(I('blade'), [[0, '#6a5a90'], [0.5, '#2a2044'], [1, '#0e0818']], 0, 0, 1, 0) +
+        lg(I('blade'), [[0, '#a898d0'], [0.5, '#4a3c74'], [1, '#1a1030']], 0, 0, 1, 0) +
         lg(I('fl'), [[0, '#ffe98a'], [0.5, '#ff8a1f'], [1, '#e0361a']], 0, 1, 0, 0) +
         lg(I('lava'), [[0, '#ffe36a'], [0.5, '#ff8a1f'], [1, '#e0361a']]) +
         rg(I('aura'), [[0, '#ff5a2a', 0.5], [0.6, '#c81a3a', 0.28], [1, '#7a1a8a', 0]], 0.5, 0.55, 0.5) +
@@ -525,8 +525,6 @@
         '<path d="M32 8C40 16 52 20 70 24" stroke="#fff6dc" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>' +
         '<path d="M112 38C134 38 152 24 152 2C144 14 128 18 108 24Z" fill="' + U('horn') + '" ' + S(4) + '/>' + ridgesR +
         '<path d="M146 8C138 16 126 20 112 24" stroke="#fff6dc" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>' +
-        // small inner horns
-        '<path d="M78 34L74 12L88 30Z" fill="' + U('horn') + '" ' + S(3.2) + '/><path d="M110 34L114 12L100 30Z" fill="' + U('horn') + '" ' + S(3.2) + '/>' +
         // ears
         '<path d="M60 58L38 52L54 70Z" fill="' + U('skin') + '" ' + S(3.4) + '/><path d="M56 58L46 55L54 65Z" fill="#7a1228"/>' +
         '<path d="M120 58L142 52L126 70Z" fill="' + U('skin2') + '" ' + S(3.4) + '/><path d="M124 58L134 55L126 65Z" fill="#4a0a1c"/>' +
@@ -585,7 +583,7 @@
         '<path d="M-3 -78L-4 -14" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>' +
         // flames
         '<g class="part-cape" style="transform-origin: 0px -10px">' +
-        fire(-14, -22, 6, 22, -3, 1.8) + fire(13, -36, 6, 26, 3, 1.8) + fire(-13, -56, 6, 24, -3, 1.8) + fire(12, -66, 5, 22, 3, 1.8) + fire(0, -84, 6, 22, 0, 1.8) +
+        fire(-13, -38, 5, 20, -3, 1.6) + fire(13, -56, 5, 20, 3, 1.6) + fire(0, -86, 6, 22, 0, 1.8) +
         '</g>' +
         // crossguard
         '<path d="M-22 -8Q-24 -20 -16 -22L-9 -10L9 -10L16 -22Q24 -20 22 -8Q10 -2 0 -2Q-10 -2 -22 -8Z" fill="' + U('gold') + '" ' + S(3.4) + '/>' +

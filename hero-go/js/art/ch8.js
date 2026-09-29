@@ -554,12 +554,12 @@
       b += '<path d="M34 64l12 8M38 60l12 8" stroke="#7a2a10" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>';
       b += '<path d="M62 30l6 12M67 28l6 12" stroke="#e6f4ff" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>';
       // brow
-      b += '<path d="M48 44L84 56" stroke="' + O + '" stroke-width="7.5" stroke-linecap="round"/>';
-      b += P('M46 42L64 36L86 52L84 58Z', 'url(#' + I('gold') + ')', 2.8);
-      b += '<path d="M52 42l30 12" stroke="#fff8c0" stroke-width="1.4" opacity=".7"/>';
+      b += '<path d="M50 58L90 42" stroke="' + O + '" stroke-width="8" stroke-linecap="round"/>';
+      b += P('M48 58L70 46L92 38L94 45L72 58Z', 'url(#' + I('gold') + ')', 2.8);
+      b += '<path d="M54 56l34 -14" stroke="#fff8c0" stroke-width="1.4" opacity=".7"/>';
       // eye
-      b += '<circle cx="70" cy="60" r="17" fill="url(#' + I('eye') + ')"/>';
-      b += '<g class="part-eyes" style="transform-origin: 68px 62px"><path d="M56 58Q66 52 82 62Q76 74 62 72Q54 68 56 58Z" fill="#fff37a" ' + S(3) + '/><ellipse cx="66" cy="63" rx="3" ry="7.5" fill="' + O + '"/><path d="M58 60Q68 55 80 62" stroke="#ff9a1a" stroke-width="2.2" fill="none" opacity=".7"/><ellipse cx="62.5" cy="59.5" rx="2.6" ry="1.8" fill="#fff"/><circle cx="72" cy="68" r="1.4" fill="#fff" opacity=".9"/></g>';
+      b += '<circle cx="72" cy="64" r="17" fill="url(#' + I('eye') + ')"/>';
+      b += '<g class="part-eyes" style="transform-origin: 70px 64px"><path d="M55 64Q68 61 86 52Q84 72 68 74Q54 72 55 64Z" fill="#fff37a" ' + S(3) + '/><ellipse cx="67" cy="65" rx="3" ry="7" transform="rotate(-14 67 65)" fill="' + O + '"/><path d="M58 65Q70 62 84 55" stroke="#ff7a1a" stroke-width="2.4" fill="none" opacity=".75"/><ellipse cx="63" cy="62" rx="2.6" ry="1.8" fill="#fff"/><circle cx="74" cy="70" r="1.4" fill="#fff" opacity=".9"/></g>';
       b += hl(60, 40, 9, 2.6, -18, 0.7);
       b += '</g>';
 
