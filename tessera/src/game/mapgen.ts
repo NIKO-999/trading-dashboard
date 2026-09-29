@@ -7,6 +7,34 @@ import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, 
 
 export type MapSize = 'normal' | 'large' | 'huge';
 
+/** How the land is laid out. 'balanced' lets each empire's own terrain decide; the rest reshape the whole world. */
+export type MapTerrain = 'balanced' | 'continents' | 'islands' | 'archipelago' | 'pangaea' | 'lakes' | 'highlands' | 'forests' | 'plains';
+
+export const TERRAIN_STYLES: { id: MapTerrain; name: string; blurb: string }[] = [
+  { id: 'balanced', name: 'Balanced', blurb: 'Each empire’s homeland shapes the land around it.' },
+  { id: 'continents', name: 'Continents', blurb: 'A few big landmasses with seas between them.' },
+  { id: 'islands', name: 'Islands', blurb: 'Many islands. Boats matter.' },
+  { id: 'archipelago', name: 'Archipelago', blurb: 'Tiny islands scattered over open sea. Sail or starve.' },
+  { id: 'pangaea', name: 'Pangaea', blurb: 'One huge landmass. Everyone is a neighbour.' },
+  { id: 'lakes', name: 'Lakes', blurb: 'Solid land dotted with lakes and inland seas.' },
+  { id: 'highlands', name: 'Highlands', blurb: 'Mountains everywhere: ore and high ground.' },
+  { id: 'forests', name: 'Forests', blurb: 'Deep woods: game and lumber, slow going.' },
+  { id: 'plains', name: 'Plains', blurb: 'Wide open fields, few mountains and woods.' },
+];
+
+interface Style { target?: number; blobs: number; radius: number; bias: number; lakes: number; field: number; forest: number; mountain: number; cap: number }
+const STYLE: Record<MapTerrain, Style> = {
+  balanced: { blobs: 1, radius: 1, bias: 0, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
+  continents: { target: 0.56, blobs: 0.55, radius: 1.5, bias: -0.08, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
+  islands: { target: 0.48, blobs: 1.5, radius: 0.65, bias: 0.1, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
+  archipelago: { target: 0.3, blobs: 2.1, radius: 0.42, bias: 0.16, lakes: 0, field: 1, forest: 1, mountain: 0.8, cap: 1.15 },
+  pangaea: { target: 0.9, blobs: 1.3, radius: 2.3, bias: -0.22, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
+  lakes: { target: 0.84, blobs: 1.2, radius: 1.5, bias: -0.16, lakes: 0.5, field: 1, forest: 1, mountain: 1, cap: 1 },
+  highlands: { target: 0.88, blobs: 1, radius: 1.2, bias: -0.06, lakes: 0, field: 0.7, forest: 0.7, mountain: 3.6, cap: 1 },
+  forests: { target: 0.88, blobs: 1, radius: 1.2, bias: -0.06, lakes: 0, field: 0.7, forest: 3.4, mountain: 0.6, cap: 1 },
+  plains: { target: 0.88, blobs: 1, radius: 1.3, bias: -0.06, lakes: 0, field: 2.4, forest: 0.5, mountain: 0.25, cap: 1 },
+};
+
 export interface NewGameOptions {
   seed?: number;
   human: TribeId | null; // null = all AI (used by simulations)
@@ -16,6 +44,7 @@ export interface NewGameOptions {
   difficulty?: Difficulty;
   maxTurns?: number;
   mapSize?: MapSize;
+  terrain?: MapTerrain;
 }
 
 // Map edge length by map size and number of empires.
@@ -66,7 +95,7 @@ export function createGame(opts: NewGameOptions): GameState {
   };
 
   const capitals = placeCapitals(rng, size, tribes.length);
-  generateTerrain(state, rng, capitals, tribes);
+  generateTerrain(state, rng, capitals, tribes, STYLE[opts.terrain ?? 'balanced']);
 
   capitals.forEach((c, i) => {
     const city = foundCity(state, c.x, c.y, i, true);
@@ -98,16 +127,19 @@ function placeCapitals(rng: Rng, size: number, n: number) {
   return best;
 }
 
-function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: number }[], tribes: TribeId[]) {
+function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: number }[], tribes: TribeId[], style: Style) {
   const { size } = state;
   // Land-ness field: a few random blobs plus a strong bump around each capital.
-  const blobs = Array.from({ length: Math.round(size * 0.9) }, () => ({
+  const blobs = Array.from({ length: Math.round(size * 0.9 * style.blobs) }, () => ({
     x: rng.next() * size,
     y: rng.next() * size,
-    r: 1.5 + rng.next() * 3.5,
+    r: (1.5 + rng.next() * 3.5) * style.radius,
     w: 0.6 + rng.next() * 0.6,
   }));
+  // lakes: round dips in the land field
+  const lakes = Array.from({ length: Math.round(size * style.lakes) }, () => ({ x: rng.next() * size, y: rng.next() * size, r: 1 + rng.next() * 1.8 }));
 
+  const landVals: number[] = [];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       // Biome: nearest capital, with a little jitter so borders aren't straight lines.
@@ -126,14 +158,18 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
 
       let land = 0;
       for (const b of blobs) land += b.w * Math.exp(-(((x - b.x) ** 2 + (y - b.y) ** 2) / (b.r * b.r)));
-      for (const c of capitals) land += 1.6 * Math.exp(-(((x - c.x) ** 2 + (y - c.y) ** 2) / 5));
+      for (const c of capitals) land += 1.6 * style.cap * Math.exp(-(((x - c.x) ** 2 + (y - c.y) ** 2) / 5));
+      for (const l of lakes) if (!capitals.some((c) => Math.hypot(c.x - x, c.y - y) < 2.6)) land -= 1.5 * Math.exp(-(((x - l.x) ** 2 + (y - l.y) ** 2) / (l.r * l.r)));
       const edge = Math.min(x, y, size - 1 - x, size - 1 - y);
       if (edge === 0) land -= 0.35;
       land += (rng.next() - 0.5) * 0.5;
-      const isLandTile = land > 0.35 + waterShare * 1.1;
+      // a styled map keeps a set share of land: decide once every tile has its land value (below)
+      if (style.target !== undefined) land -= (waterShare - 0.2) * 0.6;
+      const isLandTile = style.target !== undefined ? true : land > 0.35 + waterShare * 1.1 + style.bias;
+      landVals.push(land);
 
       let terrain: Terrain;
-      if (isLandTile) terrain = weighted(rng, { field: w.field, forest: w.forest, mountain: w.mountain });
+      if (isLandTile) terrain = weighted(rng, { field: w.field * style.field, forest: w.forest * style.forest, mountain: w.mountain * style.mountain });
       else terrain = 'ocean';
 
       state.tiles.push({
@@ -142,6 +178,16 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
         cityId: null, owner: null, seed: rng.int(1_000_000),
       });
     }
+  }
+
+  if (style.target !== undefined) {
+    // sea level = the land value that leaves `target` of the map dry
+    const sorted = [...landVals].sort((a, b) => b - a);
+    const sea = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * style.target))];
+    state.tiles.forEach((t, i) => {
+      if (landVals[i] > sea) return;
+      t.terrain = 'ocean';
+    });
   }
 
   // Capitals and their ring are always land; capital tile is a field.

@@ -294,3 +294,10 @@ button:disabled { opacity: 0.45; cursor: default; }
 .tt-node.unique { box-shadow: 0 0 0 3px #f0c43a, 0 0 14px rgba(240,196,58,0.55); }
 .tt-node.unique.locked { box-shadow: 0 0 0 2px #8a7a3a; }
 .tt-node.unique.owned { box-shadow: 0 0 0 3px #f0c43a, 0 0 18px rgba(240,196,58,0.8); }
+
+/* map terrain choice: a wrapping row of pills with a one-line description */
+.seg-block { margin: 14px 0; }
+.seg-block .seg-label { margin-bottom: 8px; }
+.seg.wrap { flex-wrap: wrap; gap: 2px; }
+.seg.wrap button { padding: 8px 11px 5px; font-size: 0.95rem; }
+.terrain-note { margin: 8px 2px 0; }

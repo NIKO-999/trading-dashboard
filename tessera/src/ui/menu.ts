@@ -3,7 +3,7 @@ import { POWERS } from '../data/powers';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
-import type { MapSize } from '../game/mapgen';
+import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
 import { sfx } from '../audio/sfx';
@@ -23,6 +23,7 @@ export interface NewGameChoice {
   mode: GameMode;
   difficulty: Difficulty;
   mapSize: MapSize;
+  terrain: MapTerrain;
   hotseat: boolean; // pass & play on one device
   seats: Record<TribeId, Seat>; // pass & play: who plays each empire
 }
@@ -148,7 +149,7 @@ const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
 
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
-    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', hotseat,
+    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat,
     seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
@@ -213,6 +214,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
       detail,
       choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
       seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']], () => choice.mapSize, (v) => (choice.mapSize = v)),
+      h('div', { class: 'seg-block' },
+        h('div', { class: 'seg-label' }, 'Terrain'),
+        h('div', { class: 'seg wrap' }, ...TERRAIN_STYLES.map((t) => h('button', { class: choice.terrain === t.id ? 'on' : '', onclick: () => { choice.terrain = t.id; render(); } }, t.name))),
+        h('p', { class: 'muted small terrain-note' }, TERRAIN_STYLES.find((t) => t.id === choice.terrain)!.blurb)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
       start,

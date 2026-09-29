@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, neighbors, tileAt } from '../src/game/grid.ts';
-import { createGame, foundCity } from '../src/game/mapgen.ts';
+import { createGame, foundCity, TERRAIN_STYLES } from '../src/game/mapgen.ts';
 import { researchStatus, powerCooldown, powerReady, usePower, attackOptions, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
@@ -657,4 +657,28 @@ test('every empire has a three-tech skill line only it can research', () => {
   const tl = tileAt(idn, me.x, me.y)!; void tl;
   startTurn(idn); // Ayurveda: units on your land recover 2 HP a turn
   assert.ok(me.hp >= 1);
+});
+
+test('every terrain style makes a playable map', () => {
+  for (const st of TERRAIN_STYLES) {
+    for (const seed of [3, 8, 21]) {
+      const s = createGame({ seed, human: null, opponents: ['rome', 'polynesia', 'zulu', 'inuit'], mode: 'perfection', terrain: st.id });
+      for (const c of s.cities) {
+        const t = tileAt(s, c.x, c.y)!;
+        assert.ok(isLand(t), `${st.id}: capital on land`);
+        assert.ok(neighbors(s, c.x, c.y).some(isLand), `${st.id}: capital has land around it`);
+      }
+      const land = s.tiles.filter(isLand).length / s.tiles.length;
+      assert.ok(land > 0.2 && land < 1.001, `${st.id}: land share ${land}`);
+      startTurn(s);
+      let g = 0;
+      while (!s.over && g++ < 800) { aiTurn(s); checkInvariants(s); endTurn(s); drain(); }
+      assert.ok(s.over, st.id);
+    }
+  }
+  // the styles really differ
+  const share = (terrain: 'archipelago' | 'pangaea') => { const s = createGame({ seed: 4, human: null, opponents: ['rome', 'egypt', 'aztec'], mode: 'domination', terrain }); return s.tiles.filter(isLand).length / s.tiles.length; };
+  assert.ok(share('archipelago') < share('pangaea') - 0.3);
+  const mtn = (terrain: 'highlands' | 'plains') => { const s = createGame({ seed: 4, human: null, opponents: ['rome', 'egypt', 'aztec'], mode: 'domination', terrain }); return s.tiles.filter((t) => t.terrain === 'mountain').length; };
+  assert.ok(mtn('highlands') > mtn('plains') * 4);
 });
