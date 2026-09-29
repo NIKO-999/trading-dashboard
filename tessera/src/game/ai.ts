@@ -1,5 +1,5 @@
 import { UNITS } from '../data/units';
-import { hookAi } from './mech';
+import { cityVisibleTo, hookAi } from './mech';
 import { dist, isLand, neighbors, tileAt } from './grid';
 import { roadNetwork } from './network';
 import {
@@ -366,7 +366,7 @@ function findGoals(s: GameState, u: Unit): Goal[] {
     if (t.ruin) goals.push({ x: t.x, y: t.y, w: 2 });
     if (t.cityId !== null) {
       const c = s.cities.find((k) => k.id === t.cityId)!;
-      if (c.owner !== pid) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 });
+      if (c.owner !== pid && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 }); // mist may hide it
     }
   }
   for (const e of s.units) {

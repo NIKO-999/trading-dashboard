@@ -1,6 +1,7 @@
 // World rendering in a flat, low-poly isometric style. The terrain, scenery and cloud cover are
 // drawn into a cached layer that is only rebuilt when the game state or camera changes; units,
 // effects and labels are drawn on top every frame so they can animate cheaply.
+import { cityVisibleTo } from '../game/mech';
 import { MECH_RENDER } from './mech';
 import { TRIBES, type BiomePalette } from '../data/tribes';
 import { UNITS } from '../data/units';
@@ -211,7 +212,7 @@ function drawStaticTop(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: 
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
   for (const t of visibleTiles(s, cam, vw, vh)) {
     if (!explored(t.x, t.y)) drawFog(ctx, s, t, explored);
-    else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x));
+    else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x), viewer);
   }
   ctx.restore();
 }
@@ -500,7 +501,7 @@ export function outlineTile(ctx: Ctx, s: GameState, tx: number, ty: number, colo
 
 // ---------------------------------------------------------------- scenery
 
-function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
+function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1) {
   const c = tileCenter(t.x, t.y);
   const P = TRIBES[t.biome].palette;
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
@@ -518,7 +519,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
   if (t.ruin) drawRuin(ctx, t, c.x, c.y);
   if (t.cityId !== null) {
     const city = cityById(s, t.cityId);
-    if (city) drawCity(ctx, s, city, c.x, c.y);
+    if (city && cityVisibleTo(s, viewer, city)) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it
   }
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }

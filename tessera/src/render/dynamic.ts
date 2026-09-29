@@ -1,6 +1,6 @@
 // Everything on the map that moves: units walking tile by tile, swimming fish and whales,
 // water glints, selection rings, combat effects, plus the crisp screen-space labels on top.
-import { unitVisibleTo } from '../game/mech';
+import { cityVisibleTo, unitVisibleTo } from '../game/mech';
 import { MECH_RENDER } from './mech';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
@@ -111,7 +111,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.restore();
 
   // City labels go under the units, so a unit standing in front of a city is never hidden.
-  drawCityLabels(ctx, s, cam, dpr, explored, onScreen);
+  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen);
 
   ctx.save();
   ctx.translate(cam.x, cam.y);
@@ -798,13 +798,13 @@ export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: numb
   return best;
 }
 
-function drawCityLabels(ctx: Ctx, s: GameState, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
+function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
   const snap = (v: number) => Math.round(v * dpr) / dpr;
   const { k, detail } = overlayScale(cam.zoom);
   labelRects = [];
   for (const c of s.cities) {
     const p = tileCenter(c.x, c.y);
-    if (!explored(c.x, c.y) || !onScreen(p)) continue;
+    if (!explored(c.x, c.y) || !onScreen(p) || !cityVisibleTo(s, viewer, c)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
     const r = drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
     labelRects.push({ id: c.id, ...r });
