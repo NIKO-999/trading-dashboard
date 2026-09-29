@@ -48,6 +48,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
+    case 'hwacha': return drawCatapult(ctx, tribe, x, y);
     case 'rider':
     case 'buffalorider':
     case 'horsearcher':
@@ -152,6 +153,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     case 'india': torso = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; legs = IND_CREAM; sleeves = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; break; // white cotton dhoti; bare-chested but for gold, or quilted and mailed
     case 'tibet': torso = TB_MAG_BODY; legs = '#3e3038'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'khampa' ? '#efe6d0' : kind === 'explorer' ? TB_MAG_BODY : TB_MAGD; break; // a wrap-front chuba over dark wool trousers, the tied-off sleeve showing a white shirt
     case 'khmer': [torso, legs, sleeves] = khColors(kind, L.skin); break; // silk sampot, bare or gilt-lamellar chest
+    case 'korea': torso = kind === 'explorer' ? '#efe9d8' : armoured || kind === 'defender' ? T.colorDark : T.color; legs = kind === 'explorer' ? KR_WHITE : KR_COT; sleeves = torso; break; // a hanbok jeogori over baggy baji, studded coats for the heavy ranks
     case 'celts': torso = kind === 'explorer' ? '#e6e0cc' : '#b07a3a'; legs = kind === 'explorer' ? '#d8d2b8' : '#3f6a34'; sleeves = torso; break;
   }
   const hip = seated ? y : y - 5 * k;
@@ -183,6 +185,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     }
     if (tribe === 'celts') celtCloak(ctx, x, top, hip, k);
     if (tribe === 'china') cnCloak(ctx, x, top, hip, k); // an embroidered red hem with gold clouds
+    if (tribe === 'korea') krCloak(ctx, x, top, hip, k);
     if (tribe === 'ottoman') otCloak(ctx, x, top, hip, k);
     if (tribe === 'india') indCloak(ctx, x, top, hip, k, kind); // a silk stole with a gold border
     if (tribe === 'khmer') khCloak(ctx, x, top, hip, k, kind); // coral silk with gold and ikat
@@ -252,6 +255,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
         else faceQuad(ctx, f, x + dx * k, y + dy * k, 3.6 * k, 5.2 * k, 0.5, 0.5 + 0.06, 0.55, 0.65, shade(legs, -0.14)); // a fold in the cloth
       }
       if (tribe === 'china') cnLeg(ctx, f, x + dx * k, y + dy * k, k, sv, heavy, kind); // puttees, or a red garter under the greave
+      if (tribe === 'korea') krLeg(ctx, f, x + dx * k, y + dy * k, k, sv, heavy, kind);
       if (tribe === 'mali') mlLeg(ctx, f, x + dx * k, y + dy * k, k, heavy);
       if (tribe === 'swahili') swLeg(ctx, f, x + dx * k, y + dy * k, k, heavy, kind);
       if (tribe === 'celts') celtTrews(ctx, f, x + dx * k, y + dy * k, k, legs, sv, kind === 'explorer');
@@ -291,6 +295,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
     if (tribe === 'india') indShoes(ctx, x, y, k);
     if (tribe === 'tibet') tbToes(ctx, x, y, k);
     if (tribe === 'khmer') khShoes(ctx, x, y, k);
+    if (tribe === 'korea') krToes(ctx, x, y, k);
     if (tribe === 'polynesia') {
       // koru curls tattooed on the calves and a plaited flax anklet
       for (const [dx, dy, f] of leg) {
@@ -313,6 +318,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   box(ctx, x - 5.9 * k, hip + 0.9 * k, 2.4 * k, 2 * k, glove);
   if (tribe === 'celts') celtSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, true);
   if (tribe === 'china') cnSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, sleeves);
+  if (tribe === 'korea') krSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, heavy, sleeves);
   if (tribe === 'aboriginal') aboArm(ctx, x - 5.9 * k, hip - 1 * k, k, false, kind);
   if (tribe === 'mali') mlSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
   if (tribe === 'swahili') swSleeve(ctx, x - 5.9 * k, hip - 1 * k, k, kind, false);
@@ -346,6 +352,7 @@ function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, 
   box(ctx, x + 6 * k, hip + 2.5 * k, 2.4 * k, 2 * k, glove);
   if (tribe === 'celts') celtSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, false);
   if (tribe === 'china') cnSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, sleeves);
+  if (tribe === 'korea') krSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, heavy, sleeves);
   if (tribe === 'aboriginal') aboArm(ctx, x + 6 * k, hip + 0.6 * k, k, true, kind);
   if (tribe === 'mali') mlSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
   if (tribe === 'swahili') swSleeve(ctx, x + 6 * k, hip + 0.6 * k, k, kind, true);
@@ -729,6 +736,7 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
     }
     case 'celts': celtTorso(ctx, kind, x, y, w, h); break;
     case 'china': cnTorso(ctx, kind, x, y, w, h); break;
+    case 'korea': krTorso(ctx, kind, x, y, w, h); break;
     case 'zulu': {
       band(ctx, x, y, w, h, 0, 0.36, '#5a3a22'); // hide kilt
       for (let i = 0; i < 6; i++) { // umutsha: a fringe of dangling cow tails
@@ -932,6 +940,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
     }
     case 'celts': celtFace(ctx, kind, x, y, w, h); break;
     case 'china': cnFace(ctx, kind, x, y, w, h); break;
+    case 'korea': krFace(ctx, kind, x, y, w, h); break;
     case 'india': indFace(ctx, kind, x, y, w, h); break;
     case 'khmer': khFace(ctx, kind, x, y, w, h); break;
     case 'zulu':
@@ -1371,6 +1380,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
     }
     case 'celts': celtHeadgear(ctx, kind, x, top, k, hw); break;
     case 'china': cnHeadgear(ctx, kind, x, top, k, hw); break;
+    case 'korea': krHeadgear(ctx, kind, x, top, k, hw); break;
     case 'zulu': {
       box(ctx, x, top + 2.8 * k, hw + 1 * k, 2.4 * k, '#6a4a2a'); // fur headband
       faceQuad(ctx, 'R', x, top + 2.8 * k, hw + 1 * k, 2.4 * k, 0.3, 0.45, 0, 1, '#c9a45a');
@@ -1390,7 +1400,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
       break;
     }
   }
-  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'maya' ? 22 : tribe === 'khmer' ? 27 : tribe === 'china' ? 7 : tribe === 'india' ? 28 : tribe === 'mali' ? 17 : tribe === 'swahili' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
+  if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'maya' ? 22 : tribe === 'khmer' ? 27 : tribe === 'china' ? 7 : tribe === 'korea' ? 14 : tribe === 'india' ? 28 : tribe === 'mali' ? 17 : tribe === 'swahili' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
 }
 
 function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
@@ -1405,6 +1415,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
   }
   if (isAbo(tribe) && (kind === 'archer' || kind === 'explorer' || kind === 'woomera')) aboBack(ctx, kind, x, y, k);
   else if (tribe === 'china' && (kind === 'archer' || kind === 'explorer' || kind === 'crossbowman')) cnBack(ctx, kind, x, y, k);
+  else if (tribe === 'korea' && (kind === 'archer' || kind === 'explorer')) krBack(ctx, kind, x, y, k);
   else if (tribe === 'ottoman' && (kind === 'archer' || kind === 'explorer' || kind === 'janissary')) otBack(ctx, kind, x, y, k);
   else if (isLk(tribe) && (kind === 'archer' || kind === 'explorer')) lkBack(ctx, kind, x, y, k);
   else if (isSw(tribe) && (kind === 'archer' || kind === 'explorer')) swBack(ctx, kind, x, y, k);
@@ -1456,6 +1467,7 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
   drawWeapon(ctx, kind, tribe, b, k);
   if (shieldFirst) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
   else if (tribe === 'ottoman' && (kind === 'warrior' || kind === 'swordsman')) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
+  else if (tribe === 'korea' && kind === 'warrior') drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
 }
 
 
@@ -1608,6 +1620,7 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
   if (tribe === 'khmer' && khWeapon(ctx, kind, b, k)) return;
   if (tribe === 'celts' && celtWeapon(ctx, kind, b, k)) return;
   if (tribe === 'china' && cnWeapon(ctx, kind, b, k)) return;
+  if (tribe === 'korea' && krWeapon(ctx, kind, b, k)) return;
   if (tribe === 'aboriginal' && aboWeapon(ctx, kind, b, k)) return;
   if (tribe === 'mali' && mlWeapon(ctx, kind, b, k)) return;
   if (tribe === 'swahili' && swWeapon(ctx, kind, b, k)) return;
@@ -2042,6 +2055,7 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   if (tribe === 'khmer') return khShield(ctx, kind, x, y, k);
   if (tribe === 'celts') return celtShield(ctx, kind, x, y, k);
   if (tribe === 'china') return cnShield(ctx, kind, x, y, k);
+  if (tribe === 'korea') return krShield(ctx, kind, x, y, k);
   if (tribe === 'aboriginal') return aboShield(ctx, kind, x, y, k);
   if (tribe === 'mali') return mlShield(ctx, kind, x, y, k);
   if (tribe === 'swahili') return swShield(ctx, kind, x, y, k);
@@ -4546,11 +4560,13 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   }
   if (tribe === 'celts') celtHorseGear(ctx, kind, x, y);
   if (tribe === 'china') cnHorseGear(ctx, kind, x, y, saddle);
+  if (tribe === 'korea') krHorseGear(ctx, kind, x, y, saddle);
   const b = figure(ctx, kind, tribe, saddle.x, saddle.y, 0.9, true);
   if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, b, 0.9);
   if (kind === 'knight' || kind === 'rider') drawShield(ctx, tribe, kind, b.off.x - 1.5, b.off.y + 1.5, 0.7);
   if (tribe === 'celts') celtLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
   else if (tribe === 'china') cnLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);
+  else if (tribe === 'korea') krLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);
   else if (tribe === 'polynesia') maoriSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);
   else if (ab) aboRiderSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
   else if (ml) mlRiderSpear(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
@@ -4643,6 +4659,7 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   if (tribe === 'lakota') return lkCatapult(ctx, x, y);
   if (tribe === 'tibet') return tbCatapult(ctx, x, y);
   if (isMy(tribe)) return myCatapult(ctx, x, y);
+  if (tribe === 'korea') return krHwacha(ctx, x, y);
   const T = TRIBES[tribe];
   const wheels = (hub: string) => {
     for (const [wx, wy] of [[-7, 1], [6, 3]]) {
@@ -5259,6 +5276,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   if (tribe === 'khmer') return khBoat(ctx, kind, x, y);
   if (tribe === 'celts') return drawCurragh(ctx, kind, x, y);
   if (tribe === 'china') return drawChinaBoat(ctx, kind, x, y);
+  if (tribe === 'korea') return drawKoreanBoat(ctx, kind, x, y);
   if (tribe === 'aboriginal') return drawAboriginalCanoe(ctx, kind, x, y);
   if (tribe === 'mali') return drawMaliBoat(ctx, kind, x, y);
   if (tribe === 'swahili') return drawSwahiliBoat(ctx, kind, x, y);
@@ -13221,6 +13239,562 @@ function swWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
   return false;
 }
 
+// ---------------------------------------------------------------- Korea: hanbok, gat, studded armour, hwacha, the turtle ship and the tiger
+const KR_LAV = '#a58af0', KR_VIO = '#4f3a9a', KR_VIO_D = '#2c2164', KR_BLUE = '#2a4fa0', KR_BLUE_D = '#18275e', KR_RED = '#c8372d', KR_RED_D = '#8a1f1c';
+const KR_WHITE = '#f3efe2', KR_COT = '#e2dcc8', KR_GOLD = '#e2b640', KR_BRZ = '#c99a44', KR_GRN = '#2f8a6a', KR_GRN_D = '#1c5a48';
+const KR_STEEL = '#b9c1cc', KR_TIGER = '#e6982e', KR_WOOD = '#6a4426', KR_LAC = '#3a1f1a', KR_TILE = '#4a5a8a', KR_YEL = '#e8c23a';
+
+const krQ = (t: number, a: number, c: number, b: number) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * b;
+
+/** A quadratic stroke: the workhorse for the soft curves of eaves, sabres, horns and ribbons. */
+function krArc(ctx: Ctx, x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, color: string) {
+  ctx.strokeStyle = ink(color);
+  ctx.lineWidth = w;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(cx, cy, x1, y1);
+  ctx.stroke();
+}
+
+/** The taegeuk: a red and blue swirl in a circle, the emblem of the Morning Calm. */
+function krTaegeuk(ctx: Ctx, cx: number, cy: number, r: number, rot = -0.5, red = KR_RED, blue = KR_BLUE) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  const disc = (x: number, y: number, rr: number, a0: number, a1: number, c: string) => {
+    ctx.fillStyle = ink(c);
+    ctx.beginPath();
+    ctx.arc(x, y, rr, a0, a1);
+    ctx.closePath();
+    ctx.fill();
+  };
+  disc(0, 0, r, 0, Math.PI * 2, blue);
+  disc(0, 0, r, Math.PI, Math.PI * 2, red);
+  disc(-r / 2, 0, r / 2, 0, Math.PI * 2, red);
+  disc(r / 2, 0, r / 2, 0, Math.PI * 2, blue);
+  ctx.restore();
+}
+
+/** A tiger's face in the folk-painting manner: round golden eyes, bold curling stripes, a white muzzle and small whiskers. */
+function krTigerFace(ctx: Ctx, cx: number, cy: number, rx: number, ry: number, base = KR_TIGER) {
+  const X = (u: number) => cx + u * rx, Y = (v: number) => cy + v * ry, blk = '#1a1210';
+  for (const s of [-1, 1]) { ellipse(ctx, X(s * 0.74), Y(-0.84), rx * 0.26, ry * 0.24, shade(base, -0.3)); ellipse(ctx, X(s * 0.74), Y(-0.82), rx * 0.12, ry * 0.12, '#f4e6d2'); }
+  ellipse(ctx, cx, cy, rx, ry, base);
+  ellipse(ctx, X(-0.3), Y(-0.5), rx * 0.5, ry * 0.3, shade(base, 0.2));
+  for (const s of [-1, 1]) ellipse(ctx, X(s * 0.56), Y(0.4), rx * 0.42, ry * 0.36, '#f8f0dc'); // pale cheeks
+  for (const s of [-1, 1]) { // stripes curl in from the rim
+    krArc(ctx, X(s * 1.0), Y(-0.1), X(s * 0.86), Y(0.02), X(s * 0.66), Y(-0.06), ry * 0.2, blk);
+    krArc(ctx, X(s * 0.98), Y(0.34), X(s * 0.84), Y(0.42), X(s * 0.7), Y(0.34), ry * 0.16, blk);
+    krArc(ctx, X(s * 0.86), Y(-0.66), X(s * 0.72), Y(-0.6), X(s * 0.56), Y(-0.44), ry * 0.15, blk);
+  }
+  for (const u of [-0.3, 0, 0.3]) krArc(ctx, X(u * 1.2), Y(-0.98), X(u * 0.9), Y(-0.78), X(u * 0.6), Y(-0.56), ry * 0.12, blk); // brow marks
+  for (const s of [-1, 1]) {
+    ellipse(ctx, X(s * 0.42), Y(-0.1), rx * 0.24, ry * 0.2, '#f8f2dc');
+    ellipse(ctx, X(s * 0.42), Y(-0.1), rx * 0.17, ry * 0.15, '#f2c23a');
+    ellipse(ctx, X(s * 0.42), Y(-0.1), rx * 0.08, ry * 0.12, blk);
+    line(ctx, X(s * 0.66), Y(-0.34), X(s * 0.2), Y(-0.28), blk, ry * 0.08); // heavy brow
+  }
+  poly(ctx, [X(-0.16), Y(0.2), X(0.16), Y(0.2), X(0), Y(0.38)], '#c8506a');
+  krArc(ctx, X(-0.3), Y(0.62), X(-0.08), Y(0.66), X(0), Y(0.42), ry * 0.07, blk);
+  krArc(ctx, X(0.3), Y(0.62), X(0.08), Y(0.66), X(0), Y(0.42), ry * 0.07, blk);
+  poly(ctx, [X(-0.14), Y(0.62), X(-0.06), Y(0.62), X(-0.1), Y(0.76)], '#ffffff');
+  poly(ctx, [X(0.14), Y(0.62), X(0.06), Y(0.62), X(0.1), Y(0.76)], '#ffffff');
+}
+
+function krTorso(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const F = (f: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, x, y, w, h, u0, u1, v0, v1, c);
+  const lam = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender';
+  if (lam) {
+    // dujeong-gap: a coat studded with brass nails over rows of small plates, a skirt of lacquered strips, a red-lined collar
+    const gold = kind === 'giant';
+    const skirt = gold ? '#d6a935' : kind === 'knight' ? KR_BLUE : KR_LAV;
+    for (let i = 0; i < 5; i++) F('R', 0.03 + i * 0.19, 0.03 + i * 0.19 + 0.16, 0.05, 0.31, i % 2 ? shade(skirt, 0.06) : shade(skirt, -0.14));
+    for (let i = 0; i < 4; i++) F('L', 0.03 + i * 0.25, 0.03 + i * 0.25 + 0.21, 0.05, 0.31, i % 2 ? shade(skirt, 0.06) : shade(skirt, -0.14));
+    band(ctx, x, y, w, h, 0, 0.06, KR_RED);
+    for (let i = 0; i < 5; i++) F('R', 0.08 + i * 0.19, 0.12 + i * 0.19, 0.24, 0.29, KR_GOLD); // rivets on the strips
+    band(ctx, x, y, w, h, 0.31, 0.43, KR_LAC);
+    F('R', 0.38, 0.64, 0.3, 0.44, KR_GOLD); // a brass plaque on the belt
+    F('R', 0.45, 0.57, 0.34, 0.4, '#7a4a18');
+    for (let r = 0; r < 5; r++) band(ctx, x, y, w, h, 0.45 + r * 0.09, 0.45 + r * 0.09 + 0.045, r % 2 ? shade(KR_VIO, 0.12) : shade(KR_VIO, -0.1)); // rows of plates
+    for (const v of [0.53, 0.69, 0.85]) {
+      for (const u of [0.13, 0.38, 0.63, 0.88]) F('R', u - 0.035, u + 0.035, v, v + 0.05, KR_GOLD);
+      for (const u of [0.2, 0.5, 0.8]) F('L', u - 0.035, u + 0.035, v, v + 0.05, shade(KR_GOLD, -0.2));
+    }
+    if (kind === 'defender' || gold) { // a tiger-head plate over the heart
+      ellipse(ctx, x + w * 0.27, y + w * 0.125 - 0.7 * h, w * 0.17, w * 0.17, '#5a3a14');
+      ellipse(ctx, x + w * 0.27, y + w * 0.125 - 0.7 * h, w * 0.145, w * 0.145, KR_GOLD);
+      krTigerFace(ctx, x + w * 0.27, y + w * 0.125 - 0.7 * h, w * 0.11, w * 0.11, '#f0b84a');
+    }
+    band(ctx, x, y, w, h, 0.9, 1, KR_RED_D);
+    band(ctx, x, y, w, h, 0.9, 0.93, KR_GOLD);
+    return;
+  }
+  const scholar = kind === 'explorer';
+  const under = scholar ? KR_WHITE : KR_COT;
+  // baji trousers or the long skirt of a dopo, a sash with its knot and tails, and the crossed jacket
+  band(ctx, x, y, w, h, 0, 0.3, under);
+  for (const u of [0.2, 0.46, 0.74]) { F('R', u, u + 0.03, 0.04, 0.3, shade(under, -0.16)); F('L', u, u + 0.03, 0.04, 0.3, shade(under, -0.16)); }
+  band(ctx, x, y, w, h, 0, 0.05, scholar ? KR_BLUE_D : KR_VIO);
+  band(ctx, x, y, w, h, 0.3, 0.4, scholar ? KR_BLUE_D : KR_RED);
+  band(ctx, x, y, w, h, 0.3, 0.32, KR_GOLD);
+  F('R', 0.56, 0.7, 0.28, 0.42, shade(scholar ? KR_BLUE : KR_RED, -0.25)); // the knot
+  F('R', 0.6, 0.66, 0.04, 0.29, scholar ? KR_BLUE : KR_RED);
+  F('R', 0.7, 0.76, 0.06, 0.26, shade(scholar ? KR_BLUE : KR_RED, -0.3));
+  const git = scholar ? KR_BLUE_D : KR_WHITE;
+  facePoly(ctx, 'R', x, y, w, h, [[0.0, 1], [0.22, 1], [0.74, 0.42], [0.54, 0.42]], git); // the crossed lapel
+  facePoly(ctx, 'R', x, y, w, h, [[0.22, 1], [0.28, 1], [0.8, 0.42], [0.74, 0.42]], scholar ? KR_WHITE : shade(KR_LAV, -0.35));
+  // goreum: the coat ribbons hang from a knot on the chest
+  F('R', 0.56, 0.62, 0.42, 0.62, scholar ? KR_BLUE : KR_BLUE);
+  F('R', 0.64, 0.7, 0.42, 0.56, KR_RED);
+  F('R', 0.54, 0.72, 0.6, 0.68, KR_BLUE_D);
+  band(ctx, x, y, w, h, 0.93, 1, KR_WHITE); // the dongjeong collar
+  F('L', 0.06, 0.94, 0.9, 0.93, shade(KR_LAV, -0.3));
+  F('L', 0.48, 0.5, 0.4, 0.92, shade(scholar ? KR_WHITE : KR_LAV, -0.3)); // the back seam
+  if (scholar) { // a folded fan and a jade ornament on the sash
+    F('R', 0.1, 0.24, 0.1, 0.3, KR_GRN);
+    F('R', 0.13, 0.21, 0.16, 0.26, KR_GRN_D);
+    ellipse(ctx, x + w * 0.15, y + w * 0.2 - 0.15 * h, w * 0.05, w * 0.045, KR_YEL);
+  } else if (kind === 'warrior' || kind === 'rider') {
+    ellipse(ctx, x + w * 0.31, y + w * 0.11 - 0.76 * h, w * 0.06, w * 0.065, KR_WHITE);
+    krTaegeuk(ctx, x + w * 0.31, y + w * 0.11 - 0.76 * h, w * 0.055, -0.5);
+  }
+}
+
+/** A hanbok sleeve: a soft bell that curves out from the shoulder and closes on a pale cuff; the armoured wear a red cuff under the bracer. */
+function krSleeve(ctx: Ctx, cx: number, cy: number, k: number, kind: UnitKind, heavy: boolean, sleeve: string) {
+  if (heavy) {
+    faceQuad(ctx, 'R', cx, cy, 2.8 * k, 7 * k, 0, 1, 0.34, 0.44, KR_RED);
+    faceQuad(ctx, 'R', cx, cy, 2.8 * k, 7 * k, 0, 1, 0.44, 0.47, KR_GOLD);
+    return;
+  }
+  const lit = shade(sleeve, 0.12), dk = shade(sleeve, -0.22);
+  const path = (side: number) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + side * 0.2 * k, cy - 4.2 * k);
+    ctx.bezierCurveTo(cx + side * 4.2 * k, cy - 3.4 * k, cx + side * 4.4 * k, cy + 0.2 * k, cx + side * 0.2 * k, cy + 0.9 * k);
+    ctx.lineTo(cx + side * 0.2 * k, cy - 4.2 * k);
+    ctx.closePath();
+  };
+  ctx.fillStyle = ink(lit);
+  path(-1);
+  ctx.fill();
+  ctx.fillStyle = ink(dk);
+  path(1);
+  ctx.fill();
+  const cuff = kind === 'explorer' ? KR_BLUE_D : KR_WHITE;
+  krArc(ctx, cx - 3.4 * k, cy - 0.4 * k, cx - 0.4 * k, cy + 1.6 * k, cx + 0.2 * k, cy + 0.9 * k, 1 * k, cuff); // kkeutdong, the cuff band
+  krArc(ctx, cx + 0.2 * k, cy + 0.9 * k, cx + 2.2 * k, cy + 1.4 * k, cx + 3.6 * k, cy - 0.2 * k, 1 * k, shade(cuff, -0.2));
+  line(ctx, cx - 0.1 * k, cy - 3.6 * k, cx - 0.2 * k, cy + 0.3 * k, shade(sleeve, -0.3), 0.4 * k); // a fold
+}
+
+/** Baji trousers gathered at the ankle by dark bands, and the white beoseon socks; the armoured wear a red garter and boots. */
+function krLeg(ctx: Ctx, f: 'L' | 'R', cx: number, cy: number, k: number, sv: number, heavy: boolean, kind: UnitKind) {
+  const A = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, cx, cy, 3.6 * k, 5.2 * k, u0, u1, v0, v1, c);
+  A(0, 1, 0, 0.22, heavy ? '#2a2430' : KR_WHITE); // the sock or boot
+  A(0, 1, 0, 0.06, '#1c1b22'); // a dark sole
+  if (heavy) {
+    A(0.1, 0.9, 0.62, 0.7, KR_RED);
+    A(0.1, 0.9, 0.7, 0.73, KR_GOLD);
+    return;
+  }
+  const dn = kind === 'explorer' ? KR_BLUE_D : KR_VIO_D;
+  A(0, 1, 0.22, 0.36, dn); // daenim: the leg bands
+  A(0, 1, 0.34, 0.37, KR_LAV);
+  A(0.5, 0.52, 0.4, 0.9, shade(KR_COT, -0.16)); // a crease in the cotton
+}
+
+/** A shoe with an upturned toe, white sock over a black sole. */
+function krToes(ctx: Ctx, x: number, y: number, k: number) {
+  for (const [tx, ty] of [[-2.2, -0.3], [2.2, 0.7]] as const) {
+    poly(ctx, [x + tx * k, y + ty * k + 0.9 * k, x + (tx + 2.1) * k, y + ty * k - 0.1 * k, x + (tx + 3.1) * k, y + ty * k - 2.1 * k, x + (tx + 1.5) * k, y + ty * k - 0.5 * k], '#f3efe2');
+    poly(ctx, [x + (tx + 2.1) * k, y + ty * k - 0.1 * k, x + (tx + 3.1) * k, y + ty * k - 2.1 * k, x + (tx + 2.6) * k, y + ty * k - 0.2 * k], '#c7c1ac');
+    line(ctx, x + tx * k, y + ty * k + 1 * k, x + (tx + 2.4) * k, y + ty * k, '#1c1b22', 0.6 * k);
+  }
+}
+
+/** A hem for the tall ranks' cloak: a blue-and-red border and a taegeuk. */
+function krCloak(ctx: Ctx, x: number, top: number, hip: number, k: number) {
+  poly(ctx, [x - 9.5 * k, hip + 6.5 * k, x - 2 * k, hip + 8.5 * k, x - 2.1 * k, hip + 7.4 * k, x - 9.4 * k, hip + 5.4 * k], KR_BLUE);
+  poly(ctx, [x - 9.4 * k, hip + 5.4 * k, x - 2.1 * k, hip + 7.4 * k, x - 2.15 * k, hip + 7 * k, x - 9.35 * k, hip + 5 * k], KR_RED);
+  krTaegeuk(ctx, x - 6.3 * k, hip + 1.6 * k, 1.5 * k, -0.4);
+  line(ctx, x - 4 * k, top + 0.4 * k, x - 8.4 * k, hip + 5 * k, KR_GOLD, 0.4 * k);
+}
+
+function krFace(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number) {
+  const skin = LOOK.korea.skin, hair = LOOK.korea.hair;
+  const F = (f: 'L' | 'R', u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, f, x, y, w, h, u0, u1, v0, v1, c);
+  for (const u of [0.22, 0.62]) { // gently lidded eyes
+    F('R', u - 0.02, u + 0.22, 0.575, 0.65, skin);
+    F('R', u - 0.02, u + 0.22, 0.41, 0.44, skin);
+    F('R', u + 0.0, u + 0.2, 0.565, 0.59, hair);
+  }
+  for (const u of [0.2, 0.6]) F('R', u, u + 0.28, 0.72, 0.755, hair); // firm brows
+  const elder = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'defender' || kind === 'explorer';
+  F('R', 0.06, 0.2, 0.3, 0.4, mix(skin, '#e0605a', 0.2));
+  if (elder) {
+    const beard = kind === 'explorer' ? '#cfcac0' : hair;
+    F('R', 0.22, 0.44, 0.21, 0.25, beard); // a thin moustache drooping at the corners
+    F('R', 0.56, 0.78, 0.21, 0.25, beard);
+    F('R', 0.4, 0.6, 0.02, 0.19, beard); // and a goatee
+    F('R', 0.44, 0.56, -0.2, 0.03, beard);
+    F('L', 0.7, 1, 0.1, 0.24, beard);
+    if (kind === 'explorer' || kind === 'giant') { // a long wispy beard
+      F('R', 0.46, 0.54, -0.46, -0.2, shade(beard, -0.1));
+      F('R', 0.4, 0.6, -0.3, -0.06, beard);
+    }
+  } else F('R', 0.44, 0.56, 0.2, 0.235, hair);
+}
+
+/** A topknot (sangtu) pinned with a binyeo, under a manggeon headband of horsehair mesh. */
+function krTopknot(ctx: Ctx, x: number, top: number, k: number, hw: number, band2: string) {
+  const hair = LOOK.korea.hair;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, top + 10.5 * k, hw, 10.5 * k, u0, u1, v0, v1, c);
+  const L = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, top + 10.5 * k, hw, 10.5 * k, u0, u1, v0, v1, c);
+  R(0.02, 0.98, 0.8, 0.93, band2);
+  L(0, 1, 0.8, 0.93, shade(band2, -0.25));
+  R(0.02, 0.98, 0.9, 0.93, KR_GOLD);
+  poly(ctx, [x - 5.2 * k, top + 2.4 * k, x - 9 * k, top + 5 * k, x - 9.4 * k, top + 9 * k, x - 7.6 * k, top + 6.4 * k, x - 5 * k, top + 6], band2); // ties trailing
+  ellipse(ctx, x - 0.4 * k, top - 3.2 * k, 3 * k, 2.8 * k, shade(hair, -0.1));
+  ellipse(ctx, x - 1.2 * k, top - 3.8 * k, 1.5 * k, 1.1 * k, shade(hair, 0.55));
+  ellipse(ctx, x - 0.4 * k, top - 0.6 * k, 3.4 * k, 1.1 * k, shade(hair, -0.2));
+  line(ctx, x - 4.4 * k, top - 3.3 * k, x + 3.6 * k, top - 3 * k, KR_BRZ, 0.6 * k); // the pin
+  ellipse(ctx, x + 3.8 * k, top - 3 * k, 0.8 * k, 0.8 * k, KR_RED);
+}
+
+/** The gat: a black horsehair hat, a wide brim over a tall crown, tied with a cord of amber beads. */
+function krGat(ctx: Ctx, x: number, top: number, k: number) {
+  const blk = '#1d1b22', sheen = '#5a566c';
+  const by = top + 0.6 * k, rx = 10.8 * k, ry = 4.4 * k;
+  ellipse(ctx, x, by + 0.8 * k, rx, ry, '#0c0b10');
+  ellipse(ctx, x, by, rx, ry, blk);
+  ctx.strokeStyle = ink(sheen);
+  ctx.lineWidth = 0.4 * k;
+  ctx.beginPath();
+  ctx.ellipse(x, by, rx * 0.86, ry * 0.86, 0, 0.02 * Math.PI, 0.98 * Math.PI);
+  ctx.stroke();
+  for (let i = 1; i < 10; i++) { const a = (i / 10) * Math.PI; line(ctx, x + Math.cos(a) * rx * 0.5, by + Math.sin(a) * ry * 0.5, x + Math.cos(a) * rx * 0.94, by + Math.sin(a) * ry * 0.94, shade(blk, 0.22), 0.3 * k); }
+  const cw = 4 * k, ch = 9.4 * k;
+  poly(ctx, [x - cw, by - 0.4 * k, x - cw * 0.86, by - ch, x, by - ch + 0.5 * k, x, by + 1.2 * k], '#2a2733');
+  poly(ctx, [x + cw, by - 0.4 * k, x + cw * 0.86, by - ch, x, by - ch + 0.5 * k, x, by + 1.2 * k], '#15131a');
+  for (const t of [-0.6, -0.2, 0.2, 0.6]) line(ctx, x + t * cw * 0.9, by - 0.6 * k, x + t * cw * 0.78, by - ch + 0.6 * k, shade(blk, 0.3), 0.3 * k);
+  ellipse(ctx, x, by - ch, cw * 0.86, cw * 0.34, '#33303f');
+  ellipse(ctx, x, by - ch + 0.1 * k, cw * 0.6, cw * 0.2, blk);
+  krArc(ctx, x - rx * 0.9, by + 0.6 * k, x, by + ry * 1.2, x + rx * 0.9, by + 0.6 * k, 0.5 * k, '#6a6680'); // the lit front rim
+  // chin cord with amber beads and a tassel
+  for (const s of [-1, 1]) {
+    krArc(ctx, x + s * 6.4 * k, by + 2.4 * k, x + s * 6.6 * k, by + 8 * k, x + s * 2.4 * k, by + 11.6 * k, 0.5 * k, KR_RED_D);
+    for (const t of [0.35, 0.6, 0.85]) ellipse(ctx, krQ(t, x + s * 6.4 * k, x + s * 6.6 * k, x + s * 2.4 * k), krQ(t, by + 2.4 * k, by + 8 * k, by + 11.6 * k), 0.65 * k, 0.65 * k, '#d98a2a');
+  }
+}
+
+/** The jeonlip, a soldier's hat: a felt dome under a round brim, a cord of lavender silk and a plume. */
+function krJeonlip(ctx: Ctx, x: number, top: number, k: number, plume: 'pom' | 'feather') {
+  const felt = '#2a2540';
+  const by = top + 1 * k, rx = 9.6 * k, ry = 3.9 * k;
+  ellipse(ctx, x, by + 0.8 * k, rx, ry, '#0e0c18');
+  ellipse(ctx, x, by, rx, ry, shade(felt, -0.1));
+  ctx.strokeStyle = ink(KR_LAV);
+  ctx.lineWidth = 0.6 * k;
+  ctx.beginPath();
+  ctx.ellipse(x, by, rx * 0.97, ry * 0.97, 0, 0.02 * Math.PI, 0.98 * Math.PI);
+  ctx.stroke();
+  const dome = (side: number, c: string) => {
+    ctx.fillStyle = ink(c);
+    ctx.beginPath();
+    ctx.moveTo(x, by + 1 * k);
+    ctx.lineTo(x + side * 6.2 * k, by);
+    ctx.bezierCurveTo(x + side * 6.8 * k, by - 5 * k, x + side * 3.8 * k, by - 6.6 * k, x, by - 6.6 * k);
+    ctx.closePath();
+    ctx.fill();
+  };
+  dome(-1, shade(felt, 0.12));
+  dome(1, shade(felt, -0.14));
+  poly(ctx, [x - 6.2 * k, by, x + 6.2 * k, by, x + 6.2 * k, by - 1.5 * k, x - 6.2 * k, by - 1.5 * k], KR_LAV); // the silk band
+  poly(ctx, [x, by + 1 * k, x + 6.2 * k, by, x + 6.2 * k, by - 1.5 * k, x, by - 0.5 * k], shade(KR_LAV, -0.3));
+  ellipse(ctx, x + 1.4 * k, by - 0.4 * k, 1 * k, 0.9 * k, KR_GRN); // a jade ornament
+  ellipse(ctx, x + 1.4 * k, by - 0.4 * k, 0.4 * k, 0.4 * k, KR_GOLD);
+  for (const s of [-1, 1]) {
+    krArc(ctx, x + s * 5.6 * k, by + 1.4 * k, x + s * 6.2 * k, by + 7.4 * k, x + s * 2.4 * k, by + 11.2 * k, 0.5 * k, KR_BLUE);
+    for (const t of [0.4, 0.7]) ellipse(ctx, krQ(t, x + s * 5.6 * k, x + s * 6.2 * k, x + s * 2.4 * k), krQ(t, by + 1.4 * k, by + 7.4 * k, by + 11.2 * k), 0.6 * k, 0.6 * k, '#d98a2a');
+  }
+  if (plume === 'pom') { // a tuft of red horsehair (sangmo)
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI / 2 + (i - 4) * 0.36;
+      krArc(ctx, x, by - 6.6 * k, x + Math.cos(a) * 3.4 * k, by - 6.6 * k + Math.sin(a) * 6 * k, x + Math.cos(a) * 6.2 * k, by - 6.6 * k + Math.sin(a) * 3 * k + Math.abs(i - 4) * 1.2 * k, 0.9 * k, i % 2 ? '#e0553a' : KR_RED);
+    }
+    ellipse(ctx, x, by - 6.6 * k, 1.2 * k, 1 * k, KR_GOLD);
+  } else { // a long peacock feather sweeping up and back
+    krArc(ctx, x + 2 * k, by - 5 * k, x - 2 * k, by - 14 * k, x - 8 * k, by - 10 * k, 1.5 * k, KR_GRN_D);
+    krArc(ctx, x + 2 * k, by - 5 * k, x - 2 * k, by - 14 * k, x - 8 * k, by - 10 * k, 0.5 * k, '#8fd6a8');
+    ellipse(ctx, x - 7.4 * k, by - 9.6 * k, 1.5 * k, 1.9 * k, KR_BLUE);
+    ellipse(ctx, x - 7.4 * k, by - 9.6 * k, 0.7 * k, 1 * k, KR_YEL);
+    ellipse(ctx, x, by - 6.6 * k, 1 * k, 0.9 * k, KR_RED);
+  }
+}
+
+/** The jubal, a Joseon helmet: a tall iron dome with a gilt finial and a fountain of red horsehair, ear flaps and a curtain of plates. */
+function krJubal(ctx: Ctx, x: number, top: number, k: number, hw: number, o: { metal: string; plume: 'pom' | 'grand' | 'wings'; neck: boolean; gilt?: boolean }) {
+  const metal = o.metal, HW = hw + 1.2 * k;
+  const R = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'R', x, top + 10.5 * k, HW, 10.5 * k, u0, u1, v0, v1, c);
+  const L = (u0: number, u1: number, v0: number, v1: number, c: string) => faceQuad(ctx, 'L', x, top + 10.5 * k, HW, 10.5 * k, u0, u1, v0, v1, c);
+  if (o.neck) { // a curtain of plates over the nape, lined in violet
+    poly(ctx, [x - 5.4 * k, top + 2.6 * k, x - 9 * k, top + 10.8 * k, x - 4.4 * k, top + 12 * k, x - 2.4 * k, top + 6 * k], shade(KR_VIO, -0.3));
+    poly(ctx, [x - 5.4 * k, top + 2.6 * k, x - 9 * k, top + 10.8 * k, x - 7.6 * k, top + 11 * k, x - 4.8 * k, top + 3.4 * k], shade(KR_VIO, 0.05));
+    for (const t of [0.3, 0.55, 0.8]) line(ctx, x - (5.4 + 3.6 * t) * k, top + (2.6 + 8.2 * t) * k, x - (2.4 + 2 * t) * k, top + (6 + 6 * t) * k, shade(KR_VIO, -0.6), 0.45 * k);
+    line(ctx, x - 9 * k, top + 10.8 * k, x - 4.4 * k, top + 12 * k, KR_RED, 0.9 * k);
+  }
+  box(ctx, x, top + 2.4 * k, HW, 4 * k, metal, metal);
+  const cy = top - 0.4 * k, rx = HW / 2, apex = top - 6.6 * k;
+  const prof = (side: -1 | 1) => {
+    const pts: number[] = [];
+    for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push(x + side * rx * Math.pow(1 - t, 0.5), cy - (cy - apex) * t); }
+    return [...pts, x, cy + rx * 0.5];
+  };
+  poly(ctx, prof(-1), shade(metal, 0.2));
+  poly(ctx, prof(1), shade(metal, -0.18));
+  for (const t of [0.5, 0.25]) line(ctx, x + rx * t * 0.2, apex + 2 * k, x + rx * t * 1.1, cy + 0.4 * k, shade(metal, -0.5), 0.4 * k); // plate ribs
+  line(ctx, x - rx * 0.5, cy - 3 * k, x - rx * 0.2, apex + 3 * k, shade(metal, 0.7), 0.6 * k); // glint
+  R(0, 1, 0.74, 1, shade(metal, 0.1));
+  R(0, 1, 0.74, 0.81, o.gilt ? KR_GOLD : KR_RED);
+  L(0, 1, 0.74, 1, shade(metal, -0.1));
+  L(0, 1, 0.74, 0.81, shade(o.gilt ? KR_GOLD : KR_RED, -0.3));
+  for (const u of [0.12, 0.3, 0.5, 0.7, 0.88]) R(u, u + 0.05, 0.86, 0.92, KR_GOLD);
+  R(0.02, 0.16, 0.2, 0.74, metal); // ear flaps
+  R(0.84, 0.98, 0.2, 0.74, metal);
+  R(0.02, 0.16, 0.2, 0.26, KR_RED);
+  R(0.84, 0.98, 0.2, 0.26, KR_RED);
+  L(0.4, 1, 0.16, 0.74, shade(metal, -0.14));
+  const ax = x, ay = apex;
+  poly(ctx, [ax - 1.2 * k, ay + 1.4 * k, ax, ay - 3 * k, ax + 1.2 * k, ay + 1.4 * k], KR_GOLD); // the finial
+  ellipse(ctx, ax, ay + 0.8 * k, 1.5 * k, 0.9 * k, shade(KR_GOLD, -0.2));
+  const strands = (n: number, len: number) => {
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + (i - (n - 1) / 2) * (2.4 / n);
+      krArc(ctx, ax, ay - 2.4 * k, ax + Math.cos(a) * len * 0.55 * k, ay - 2.4 * k + Math.sin(a) * len * k, ax + Math.cos(a) * len * 0.95 * k, ay - 2.4 * k + Math.sin(a) * len * 0.35 * k + Math.abs(i - (n - 1) / 2) * 1.1 * k, 0.9 * k, i % 2 ? '#e0553a' : KR_RED);
+    }
+  };
+  if (o.plume === 'pom') strands(9, 6.4);
+  else if (o.plume === 'grand') {
+    strands(11, 8);
+    krArc(ctx, ax + 1 * k, ay - 3 * k, ax - 3 * k, ay - 14 * k, ax - 9 * k, ay - 9 * k, 1.5 * k, KR_GRN_D); // a peacock feather behind
+    krArc(ctx, ax + 1 * k, ay - 3 * k, ax - 3 * k, ay - 14 * k, ax - 9 * k, ay - 9 * k, 0.5 * k, '#8fd6a8');
+    ellipse(ctx, ax - 8.4 * k, ay - 9 * k, 1.5 * k, 1.9 * k, KR_BLUE);
+    ellipse(ctx, ax - 8.4 * k, ay - 9 * k, 0.7 * k, 1 * k, KR_YEL);
+  } else { // gilt wings and a great red tuft
+    for (const s of [-1, 1]) {
+      poly(ctx, [ax + s * 1 * k, ay + 1.6 * k, ax + s * 8.6 * k, ay - 6 * k, ax + s * 6 * k, ay - 0.4 * k, ax + s * 9.6 * k, ay - 1.6 * k, ax + s * 2.4 * k, ay + 3.6 * k], KR_GOLD);
+      poly(ctx, [ax + s * 1 * k, ay + 1.6 * k, ax + s * 8.6 * k, ay - 6 * k, ax + s * 5.6 * k, ay + 0.4 * k], shade(KR_GOLD, 0.4));
+    }
+    strands(11, 8.4);
+  }
+}
+
+function krHeadgear(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number) {
+  switch (kind) {
+    case 'archer': krJeonlip(ctx, x, top, k, 'feather'); break;
+    case 'rider': krJeonlip(ctx, x, top, k, 'pom'); break;
+    case 'defender': krJubal(ctx, x, top, k, hw, { metal: '#7a8494', plume: 'pom', neck: true }); break;
+    case 'swordsman': krJubal(ctx, x, top, k, hw, { metal: '#a2acba', plume: 'grand', neck: true }); break;
+    case 'knight': krJubal(ctx, x, top, k, hw, { metal: '#6a7484', plume: 'grand', neck: true, gilt: true }); break;
+    case 'giant': krJubal(ctx, x, top, k, hw, { metal: '#e0b444', plume: 'wings', neck: true, gilt: true }); break;
+    case 'explorer': krGat(ctx, x, top, k); break;
+    default: krTopknot(ctx, x, top, k, hw, KR_VIO_D); break;
+  }
+}
+
+/** A round painted shield: the tiger for the foot, the taegeuk for the horsemen. */
+function krShield(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  const horse = kind === 'knight' || kind === 'rider';
+  const big = kind === 'defender';
+  const r = (horse ? 5 : big ? 6.4 : 5.2) * k;
+  const cx = x - (horse ? 1 : 2.4) * k, cy = y - (horse ? 5.2 : big ? 5.4 : 4.6) * k;
+  ellipse(ctx, cx + 0.5 * k, cy + 0.6 * k, r, r, '#1c1210');
+  ellipse(ctx, cx, cy, r, r, KR_VIO_D);
+  ellipse(ctx, cx, cy, r * 0.88, r * 0.88, horse ? KR_WHITE : KR_TIGER);
+  if (horse) krTaegeuk(ctx, cx, cy, r * 0.62, -0.5);
+  else krTigerFace(ctx, cx, cy + 0.2 * k, r * 0.76, r * 0.76);
+  ctx.strokeStyle = ink(KR_LAV);
+  ctx.lineWidth = 0.7 * k;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.94, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + 0.2; ellipse(ctx, cx + Math.cos(a) * r * 0.97, cy + Math.sin(a) * r * 0.97, 0.38 * k, 0.38 * k, KR_GOLD); }
+  poly(ctx, [cx - r * 0.6, cy - r * 0.62, cx - r * 0.2, cy - r * 0.86, cx - r * 0.1, cy - r * 0.7], 'rgba(255,255,255,0.28)');
+}
+
+/** A blade curved along a quadratic, wider at the base, with a lit edge and a dark spine. */
+function krBlade(ctx: Ctx, bx: number, by: number, cx: number, cy: number, tx: number, ty: number, w0: number, w1: number, color: string) {
+  const L: number[] = [], R2: number[] = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10, px = krQ(t, bx, cx, tx), py = krQ(t, by, cy, ty);
+    const dx = 2 * (1 - t) * (cx - bx) + 2 * t * (tx - cx), dy = 2 * (1 - t) * (cy - by) + 2 * t * (ty - cy), l = Math.hypot(dx, dy) || 1;
+    const w = w0 + (w1 - w0) * t * t, nx = -dy / l, ny = dx / l;
+    L.push(px + nx * w, py + ny * w);
+    R2.unshift(py - ny * w);
+    R2.unshift(px - nx * w);
+  }
+  poly(ctx, [...L, ...R2], color);
+  const spine: number[] = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10, px = krQ(t, bx, cx, tx), py = krQ(t, by, cy, ty);
+    const dx = 2 * (1 - t) * (cx - bx) + 2 * t * (tx - cx), dy = 2 * (1 - t) * (cy - by) + 2 * t * (ty - cy), l = Math.hypot(dx, dy) || 1;
+    const w = w0 + (w1 - w0) * t * t;
+    spine.push(px - (-dy / l) * w * 0.9, py - (dx / l) * w * 0.9);
+  }
+  ctx.strokeStyle = ink(shade(color, -0.5));
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(spine[0], spine[1]);
+  for (let i = 2; i < spine.length; i += 2) ctx.lineTo(spine[i], spine[i + 1]);
+  ctx.stroke();
+}
+
+/** A hwando: a light, slightly curved single-edged sabre, a lacquered grip wrapped in red silk, a small round guard and a tassel; a lacquered scabbard rides at the hip. */
+function krHwando(ctx: Ctx, x: number, y: number, k: number, big: boolean, hipY: number) {
+  const len = big ? 17 : 14.4;
+  krBlade(ctx, x + 0.2 * k, y - 1.6 * k, x + 0.8 * k, y - len * 0.55 * k, x + 4.8 * k, y - len * k, 1.2 * k, 0.8 * k, KR_STEEL);
+  krArc(ctx, x + 0.8 * k, y - 3 * k, x + 1.2 * k, y - len * 0.5 * k, x + 4.2 * k, y - (len - 1.2) * k, 0.4 * k, '#f4f8ff'); // the lit edge
+  ellipse(ctx, x + 0.3 * k, y - 1.5 * k, 1.9 * k, 1 * k, KR_BRZ); // the guard
+  ellipse(ctx, x + 0.1 * k, y - 1.7 * k, 0.9 * k, 0.5 * k, shade(KR_BRZ, 0.5));
+  poly(ctx, [x - 0.6 * k, y - 2.2 * k, x + 1.2 * k, y - 2.5 * k, x + 1.2 * k, y - 1.6 * k, x - 0.6 * k, y - 1.4 * k], KR_GOLD); // habaki collar
+  line(ctx, x, y + 2.4 * k, x + 0.3 * k, y - 1.2 * k, '#1c1b22', 1.7 * k);
+  for (const t of [0.15, 0.4, 0.65, 0.9]) line(ctx, x - 0.9 * k, y + 2.4 * k - 3.4 * k * t, x + 1 * k, y + 2.2 * k - 3.4 * k * t, KR_RED, 0.45 * k); // silk wrap
+  ellipse(ctx, x - 0.1 * k, y + 3 * k, 1.1 * k, 1.1 * k, KR_BRZ);
+  line(ctx, x - 0.2 * k, y + 3.8 * k, x - 1.2 * k, y + 8.6 * k, KR_BLUE, 0.7 * k);
+  line(ctx, x - 0.2 * k, y + 3.8 * k, x + 0.4 * k, y + 8.8 * k, KR_RED, 0.7 * k);
+  if (hipY) {
+    const x0 = x - 6.3 * k;
+    poly(ctx, [x0 - 3 * k, hipY + 0.5 * k, x0 - 5.2 * k, hipY + 1.2 * k, x0 - 9.6 * k, hipY + 5.2 * k, x0 - 8 * k, hipY + 6 * k], '#231a20');
+    line(ctx, x0 - 5.2 * k, hipY + 1.2 * k, x0 - 7.8 * k, hipY + 3.8 * k, KR_BRZ, 0.7 * k);
+    line(ctx, x0 - 6.4 * k, hipY + 2.4 * k, x0 - 7 * k, hipY + 6.6 * k, KR_GRN, 0.6 * k);
+    ellipse(ctx, x0 - 9 * k, hipY + 5.4 * k, 0.9 * k, 0.9 * k, KR_BRZ);
+  }
+}
+
+/** The gakgung, the horn-and-bamboo bow of Korea: short, deeply recurved so that the tips hook away, strung with a white string; a jade thumb ring guards the draw. */
+function krBow(ctx: Ctx, x: number, y: number, k: number) {
+  const gx = x + 9.2 * k, gy = y - 3 * k;
+  const limb = (s: number, w: number, c: string) => {
+    ctx.strokeStyle = ink(c);
+    ctx.lineWidth = w * k;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.bezierCurveTo(gx + 0.6 * k, gy + s * 4.2 * k, gx - 3.2 * k, gy + s * 5.4 * k, gx - 4.6 * k, gy + s * 8.4 * k);
+    ctx.quadraticCurveTo(gx - 4.8 * k, gy + s * 10.4 * k, gx - 3 * k, gy + s * 11.6 * k);
+    ctx.stroke();
+  };
+  for (const s of [-1, 1]) { limb(s, 2, '#3a2214'); limb(s, 1.1, '#7a4a28'); }
+  for (const s of [-1, 1]) { ctx.strokeStyle = ink('#c9a45a'); ctx.lineWidth = 0.35 * k; ctx.beginPath(); ctx.moveTo(gx - 0.2 * k, gy + s * 2 * k); ctx.bezierCurveTo(gx + 0.2 * k, gy + s * 4.2 * k, gx - 3 * k, gy + s * 5.2 * k, gx - 4.2 * k, gy + s * 7.6 * k); ctx.stroke(); } // horn inlay
+  for (const s of [-1, 1]) ellipse(ctx, gx - 3 * k, gy + s * 11.6 * k, 0.7 * k, 0.7 * k, '#efe6c8'); // bone nocks
+  const nx = x - 3.6 * k, ny = y - 3 * k;
+  line(ctx, gx - 3 * k, gy - 11.6 * k, nx, ny, '#f4efe0', 0.6 * k);
+  line(ctx, gx - 3 * k, gy + 11.6 * k, nx, ny, '#f4efe0', 0.6 * k);
+  for (const v of [-1.4, 0, 1.4]) line(ctx, gx - 1 * k, gy + v * k, gx + 1.4 * k, gy + v * k, KR_RED, 0.7 * k); // a wrapped grip
+  line(ctx, nx, ny, gx + 1.4 * k, ny, '#8a5a2b', 0.9 * k); // the arrow
+  poly(ctx, [gx + 1.2 * k, ny - 1.4 * k, gx + 3.8 * k, ny, gx + 1.2 * k, ny + 1.4 * k], KR_STEEL);
+  poly(ctx, [nx, ny, nx - 2.6 * k, ny - 1.8 * k, nx + 0.4 * k, ny], KR_WHITE);
+  poly(ctx, [nx, ny, nx - 2.6 * k, ny + 1.8 * k, nx + 0.4 * k, ny], KR_BLUE);
+  ring(ctx, nx + 0.4 * k, ny, 0.9 * k, 1.1 * k, '#9ad8b8', 0.7 * k); // the thumb ring
+  ellipse(ctx, nx + 0.4 * k, ny - 1 * k, 0.4 * k, 0.4 * k, '#f4fff8');
+}
+
+/** A chang spear: a long red-lacquered shaft, a leaf head, a red horsehair tassel and a pennant with the taegeuk. */
+function krSpear(ctx: Ctx, x: number, y: number, k: number) {
+  const bx = x + 1 * k, by = y + 5 * k, tx = x + 2.4 * k, ty = y - 19 * k;
+  line(ctx, bx, by, tx, ty, '#6a2a1e', 1.7 * k);
+  line(ctx, bx - 0.4 * k, by, tx - 0.4 * k, ty, '#b04a3a', 0.5 * k);
+  ellipse(ctx, bx, by + 0.2 * k, 1.1 * k, 0.8 * k, KR_BRZ);
+  poly(ctx, [tx, ty - 8.4 * k, tx - 1.8 * k, ty - 2 * k, tx, ty + 0.4 * k], shade(KR_STEEL, 0.22));
+  poly(ctx, [tx, ty - 8.4 * k, tx + 1.8 * k, ty - 2 * k, tx, ty + 0.4 * k], shade(KR_STEEL, -0.25));
+  line(ctx, tx, ty - 7.6 * k, tx, ty - 0.4 * k, shade(KR_STEEL, -0.5), 0.4 * k);
+  poly(ctx, [tx - 1.1 * k, ty + 0.2 * k, tx + 1.1 * k, ty + 0.2 * k, tx + 0.9 * k, ty + 2 * k, tx - 0.9 * k, ty + 2 * k], KR_BRZ);
+  for (let i = 0; i < 6; i++) line(ctx, tx + 0.1 * k, ty + 2.4 * k, tx + (i - 2.5) * 0.9 * k, ty + (6.6 + (i % 2) * 1.2) * k, i % 2 ? '#e0553a' : KR_RED, 0.8 * k);
+  poly(ctx, [tx + 0.4 * k, ty + 8.2 * k, tx + 8.6 * k, ty + 9 * k, tx + 6.6 * k, ty + 10.6 * k, tx + 8.8 * k, ty + 12.6 * k, tx + 0.2 * k, ty + 11.6 * k], KR_WHITE);
+  poly(ctx, [tx + 0.4 * k, ty + 8.2 * k, tx + 8.6 * k, ty + 9 * k, tx + 8.4 * k, ty + 9.7 * k, tx + 0.4 * k, ty + 9 * k], KR_LAV);
+  krTaegeuk(ctx, tx + 3.6 * k, ty + 10.4 * k, 1.1 * k, -0.4);
+}
+
+/** The head of a woldo: socket, crescent blade with a dragon at the spine, and a red tassel. */
+function krWoldoHead(ctx: Ctx, tx: number, ty: number, k: number) {
+  poly(ctx, [tx - 1.2 * k, ty + 1 * k, tx + 1.2 * k, ty + 0.6 * k, tx + 1 * k, ty + 3 * k, tx - 1 * k, ty + 3 * k], KR_BRZ);
+  // the crescent blade: the dull spine to the left, a wide belly to the right, a sharp point
+  ctx.fillStyle = ink(shade(KR_STEEL, 0.05));
+  ctx.beginPath();
+  ctx.moveTo(tx - 0.6 * k, ty + 1 * k);
+  ctx.lineTo(tx - 0.6 * k, ty - 8 * k);
+  ctx.quadraticCurveTo(tx + 1.6 * k, ty - 10.6 * k, tx + 3.4 * k, ty - 9.6 * k);
+  ctx.quadraticCurveTo(tx + 8.6 * k, ty - 6 * k, tx + 7 * k, ty - 0.4 * k);
+  ctx.quadraticCurveTo(tx + 5 * k, ty + 1.2 * k, tx + 1.4 * k, ty + 1 * k);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = ink(shade(KR_STEEL, -0.28));
+  ctx.beginPath();
+  ctx.moveTo(tx + 0.8 * k, ty + 1 * k);
+  ctx.quadraticCurveTo(tx + 3.6 * k, ty - 4 * k, tx + 3.4 * k, ty - 9.6 * k);
+  ctx.quadraticCurveTo(tx + 8.6 * k, ty - 6 * k, tx + 7 * k, ty - 0.4 * k);
+  ctx.quadraticCurveTo(tx + 5 * k, ty + 1.2 * k, tx + 1.4 * k, ty + 1 * k);
+  ctx.closePath();
+  ctx.fill();
+  krArc(ctx, tx + 3.6 * k, ty - 9.2 * k, tx + 8 * k, ty - 6 * k, tx + 6.8 * k, ty - 0.6 * k, 0.45 * k, '#f4f8ff');
+  ellipse(ctx, tx + 0.4 * k, ty - 2.4 * k, 1.5 * k, 1.1 * k, KR_GRN); // a dragon's head at the spine
+  poly(ctx, [tx + 1.2 * k, ty - 2.8 * k, tx + 3 * k, ty - 2.2 * k, tx + 1.4 * k, ty - 1.4 * k], KR_RED);
+  ellipse(ctx, tx + 0.2 * k, ty - 2.8 * k, 0.35 * k, 0.35 * k, KR_YEL);
+  for (let i = 0; i < 7; i++) line(ctx, tx + 0.2 * k, ty + 3.4 * k, tx + (i - 3) * 0.9 * k, ty + (8 + (i % 2) * 1.2) * k, i % 2 ? '#e0553a' : KR_RED, 0.8 * k);
+}
+
+/** A woldo, the moon-blade: a broad crescent cleaver on a long pole, a dragon at the spine, a red tassel; the great ones fly a banner. */
+function krWoldo(ctx: Ctx, x: number, y: number, k: number, banner: boolean) {
+  const bx = x + 0.6 * k, by = y + 5.6 * k, tx = x + 2.4 * k, ty = y - 20 * k;
+  line(ctx, bx, by, tx, ty, '#2a1a14', 1.9 * k);
+  line(ctx, bx - 0.4 * k, by, tx - 0.4 * k, ty, '#7a5a3a', 0.5 * k);
+  for (const t of [0.12, 0.22]) line(ctx, bx + (tx - bx) * t - 1 * k, by + (ty - by) * t + 0.3 * k, bx + (tx - bx) * t + 1 * k, by + (ty - by) * t - 0.3 * k, KR_GOLD, 0.5 * k);
+  ellipse(ctx, bx, by + 0.2 * k, 1.2 * k, 0.9 * k, KR_BRZ);
+  krWoldoHead(ctx, tx, ty, k);
+  if (banner) {
+    line(ctx, tx - 0.4 * k, ty + 11.4 * k, tx + 9 * k, ty + 11.4 * k, '#2a1a14', 0.8 * k);
+    poly(ctx, [tx + 0.4 * k, ty + 11.8 * k, tx + 8.8 * k, ty + 11.8 * k, tx + 8.8 * k, ty + 21 * k, tx + 6.6 * k, ty + 18.6 * k, tx + 4.6 * k, ty + 22 * k, tx + 2.6 * k, ty + 18.6 * k, tx + 0.4 * k, ty + 21 * k], KR_LAV);
+    poly(ctx, [tx + 0.4 * k, ty + 11.8 * k, tx + 2.4 * k, ty + 11.8 * k, tx + 2.4 * k, ty + 18.8 * k, tx + 0.4 * k, ty + 21 * k], shade(KR_LAV, -0.3));
+    poly(ctx, [tx + 0.4 * k, ty + 11.8 * k, tx + 8.8 * k, ty + 11.8 * k, tx + 8.8 * k, ty + 12.8 * k, tx + 0.4 * k, ty + 12.8 * k], KR_BLUE_D);
+    ellipse(ctx, tx + 4.6 * k, ty + 15.6 * k, 2.3 * k, 2.3 * k, KR_WHITE);
+    krTaegeuk(ctx, tx + 4.6 * k, ty + 15.6 * k, 1.9 * k, -0.4);
+  }
+}
+
+/** The scholar's staff: a knotted stick with a gourd flask, a scroll tied in blue silk and a small taegeuk pennant. */
+function krStaff(ctx: Ctx, x: number, y: number, k: number) {
+  const bx = x + 1 * k, by = y + 6 * k, tx = x + 2.4 * k, ty = y - 13 * k;
+  line(ctx, bx, by, tx, ty, '#6a4a2a', 1.7 * k);
+  line(ctx, bx - 0.4 * k, by, tx - 0.4 * k, ty, '#a88a5a', 0.5 * k);
+  for (const t of [0.3, 0.6]) ellipse(ctx, bx + (tx - bx) * t, by + (ty - by) * t, 1.2 * k, 0.8 * k, '#5a3a1e');
+  krArc(ctx, tx, ty, tx + 0.4 * k, ty - 3.2 * k, tx + 3.4 * k, ty - 2.6 * k, 1.5 * k, '#6a4a2a'); // a crook at the head
+  // a gourd flask and a rolled scroll hang from the crook
+  line(ctx, tx + 3.4 * k, ty - 2.4 * k, tx + 3.4 * k, ty + 1 * k, '#3a2a1a', 0.4 * k);
+  ellipse(ctx, tx + 3.4 * k, ty + 3.4 * k, 1.5 * k, 1.9 * k, '#c9a45a');
+  ellipse(ctx, tx + 3.4 * k, ty + 1.6 * k, 1 * k, 1.1 * k, '#c9a45a');
+  line(ctx, tx + 2.8 * k, ty + 2.6 * k, tx + 2.8 * k, ty + 4.6 * k, '#e6cf92', 0.4 * k);
+  poly(ctx, [tx - 1.4 * k, ty + 4 * k, tx + 0.6 * k, ty + 3.4 * k, tx + 0.6 * k, ty + 8.4 * k, tx - 1.4 * k, ty + 9 * k], KR_WHITE);
+  line(ctx, tx - 1.4 * k, ty + 5.4 * k, tx + 0.6 * k, ty + 4.8 * k, KR_BLUE, 0.6 * k);
+  line(ctx, tx - 1.4 * k, ty + 7.6 * k, tx + 0.6 * k, ty + 7 * k, KR_BLUE, 0.6 * k);
+  line(ctx, tx + 0.2 * k, ty - 0.4 * k, tx + 0.2 * k, ty - 5 * k, '#3a2a1a', 0.4 * k);
+  poly(ctx, [tx + 0.2 * k, ty - 5 * k, tx + 6.6 * k, ty - 4.2 * k, tx + 4.6 * k, ty - 3 * k, tx + 6.6 * k, ty - 1.8 * k, tx + 0.2 * k, ty - 2.6 * k], KR_WHITE);
+  krTaegeuk(ctx, tx + 2.4 * k, ty - 3.8 * k, 0.9 * k, -0.4);
+}
+
+function krWeapon(ctx: Ctx, kind: UnitKind, b: Body, k: number): boolean {
+  const { x, y } = b.hand;
+  switch (kind) {
+    case 'warrior': krHwando(ctx, x, y, k, false, 0); return true;
+    case 'swordsman': krHwando(ctx, x, y, k, true, y + 5.2 * k); return true;
+    case 'archer': krBow(ctx, x, y, k); return true;
+    case 'defender': krSpear(ctx, x, y, k); return true;
+    case 'giant': krWoldo(ctx, x, y, k * 0.95, true); return true;
+    case 'explorer': krStaff(ctx, x, y, k); return true;
+  }
+  return false;
+}
+
 /** What the Swahili carry on their backs: a quiver of plaited palm, or the trader's tusk and bolts of cloth. */
 function swBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
   if (kind === 'explorer') {
@@ -13660,7 +14234,408 @@ function swGiraffe(ctx: Ctx, x: number, y: number, k: number, body: string) {
   for (const dx of [10.6, 12.4]) { line(ctx, x + dx * k, y - 38.2 * k, x + (dx - 0.3) * k, y - 41.6 * k, '#b98a5a', 1 * k); ellipse(ctx, x + (dx - 0.3) * k, y - 42 * k, 0.8 * k, 0.8 * k, '#3a2418'); }
 }
 
+/** What the archer and the pathfinder carry on the back: a lacquered quiver of goose-fletched arrows, or a patchwork bojagi bundle of books. */
+function krBack(ctx: Ctx, kind: UnitKind, x: number, y: number, k: number) {
+  if (kind === 'explorer') {
+    const px = x - 6.4 * k, py = y - 8 * k;
+    box(ctx, px, py, 5 * k, 8 * k, '#e6d8b4', '#f1e8cc');
+    const pcs = [[0, 0, KR_RED], [1, 0, KR_BLUE], [0, 1, KR_YEL], [1, 1, KR_GRN], [0, 2, KR_BLUE], [1, 2, KR_RED]] as const; // bojagi patchwork
+    for (const [i, j, c] of pcs) { faceQuad(ctx, 'L', px, py, 5 * k, 8 * k, 0.08 + i * 0.46, 0.5 + i * 0.46, 0.06 + j * 0.3, 0.34 + j * 0.3, c); }
+    for (let i = 0; i < 3; i++) faceQuad(ctx, 'R', px, py, 5 * k, 8 * k, 0.05 + i * 0.32, 0.3 + i * 0.32, 0.1, 0.9, i % 2 ? KR_LAV : KR_WHITE);
+    ellipse(ctx, px, py - 8.4 * k, 2.3 * k, 1.2 * k, KR_LAV); // the knot
+    line(ctx, px - 1 * k, py - 8.6 * k, px - 3.4 * k, py - 10.6 * k, KR_LAV, 1 * k);
+    line(ctx, px + 1 * k, py - 8.6 * k, px + 3 * k, py - 10.4 * k, KR_LAV, 1 * k);
+    return;
+  }
+  const qx = x - 7 * k;
+  box(ctx, qx, y - 8 * k, 4.2 * k, 8 * k, '#3a1f1a', '#5a2e26');
+  band(ctx, qx, y - 8 * k, 4.2 * k, 8 * k, 0.55, 0.66, KR_LAV);
+  band(ctx, qx, y - 8 * k, 4.2 * k, 8 * k, 0.88, 1, KR_BRZ);
+  for (const i of [-1, 0, 1]) {
+    const tx = qx - 1.6 * k + i * 1.3 * k;
+    line(ctx, qx + i * 1 * k, y - 8.4 * k, tx, y - 15 * k, '#c9b58a', 0.7 * k);
+    poly(ctx, [tx, y - 15 * k, tx - 1 * k, y - 17.6 * k, tx + 0.4 * k, y - 16 * k], i % 2 ? KR_WHITE : KR_BLUE);
+    poly(ctx, [tx, y - 15 * k, tx + 1.2 * k, y - 17.4 * k, tx + 0.4 * k, y - 16 * k], shade(i % 2 ? KR_WHITE : KR_BLUE, -0.3));
+  }
+}
 
+/** Harness for the Korean pony: a lavender saddle cloth with a key-fret border, a red chest strap hung with brass discs, a red tuft between the ears. */
+function krHorseGear(ctx: Ctx, kind: UnitKind, x: number, y: number, saddle: { x: number; y: number }) {
+  const knight = kind === 'knight';
+  const sx = saddle.x, sy = saddle.y;
+  poly(ctx, [sx - 6.4, sy - 1, sx + 4, sy - 1, sx + 3.4, sy + 6.6, sx - 1.4, sy + 5, sx - 5.4, sy + 8], KR_LAV);
+  poly(ctx, [sx - 6.4, sy - 1, sx + 4, sy - 1, sx + 3.9, sy + 0.8, sx - 6.2, sy + 0.8], KR_VIO);
+  line(ctx, sx - 5.4, sy + 8, sx - 1.4, sy + 5, KR_VIO, 1);
+  line(ctx, sx - 1.4, sy + 5, sx + 3.4, sy + 6.6, KR_VIO, 1);
+  krTaegeuk(ctx, sx - 1.2, sy + 3.2, 1.6, -0.5);
+  for (let i = 0; i < 4; i++) { line(ctx, sx - 5.4 + i * 1.6, sy + 5.6, sx - 4.2 + i * 1.6, sy + 5.6, KR_WHITE, 0.5); line(ctx, sx - 5.4 + i * 1.6, sy + 5.6, sx - 5.4 + i * 1.6, sy + 6.6, KR_WHITE, 0.5); } // key-fret hem
+  for (let i = 0; i < 5; i++) line(ctx, sx - 4.8 + i * 1.7, sy + 7.6 - i * 0.6, sx - 4.8 + i * 1.7, sy + 9.6 - i * 0.6, i % 2 ? KR_BLUE : KR_RED, 0.6);
+  if (knight) for (const [i, c] of [[0, KR_RED], [1, KR_WHITE]] as const) band(ctx, x - 1, y + 3 - 6 * 0.95, 17 * 0.95, 7 * 0.95, 0.06 + i * 0.05, 0.1 + i * 0.05, c);
+  line(ctx, x + 3.5, y - 9.6, x + 8, y - 3.4, KR_RED, 1);
+  for (const t of [0.15, 0.5, 0.85]) ellipse(ctx, x + 3.5 + 4.5 * t, y - 9.6 + 6.2 * t, 1.1, 1.1, KR_BRZ);
+  for (const [dx, c] of [[-0.8, KR_BLUE], [0.6, KR_RED]] as const) line(ctx, x + 7.8 + dx, y - 3.6, x + 7.8 + dx * 1.6, y + 0.8, c, 0.8);
+  const hx = x - 1 + 10.5 * 0.95, hy = y + 3 - 15 * 0.95;
+  faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.1, 0.9, 0.86, 0.96, KR_VIO);
+  if (knight) { // a lamellar chamfron with a gold brow
+    faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.05, 0.7, 0.1, 0.8, shade(KR_STEEL, -0.1));
+    faceQuad(ctx, 'R', hx, hy, 7 * 0.95, 5 * 0.95, 0.4, 0.55, 0.3, 0.9, KR_GOLD);
+  }
+  for (let i = 0; i < 7; i++) krArc(ctx, hx + 0.4, hy - 4.4, hx + (i - 3) * 0.7 + 0.4, hy - 8.4, hx + (i - 3) * 1.5 + 0.4, hy - 6 + Math.abs(i - 3) * 0.9, 0.9, i % 2 ? '#e0553a' : KR_RED); // the sangmo
+  ellipse(ctx, hx + 0.4, hy - 4.6, 1.1, 0.9, KR_GOLD);
+  line(ctx, hx + 6.6, hy + 1.6, hx + 6.8, hy + 4.8, KR_RED, 0.9);
+  line(ctx, hx + 5.4, hy + 1.8, hx + 5.4, hy + 4.6, KR_BLUE, 0.9);
+}
+
+/** The cavalry spear: a long shaft, a leaf head, a red tassel and a lavender pennon marked with the taegeuk. */
+function krLance(ctx: Ctx, hx: number, hy: number, thick: number, knight: boolean) {
+  const tx = hx + 8, ty = hy - 20;
+  line(ctx, hx - 3, hy + 6, tx, ty, '#6a2a1e', thick);
+  line(ctx, hx - 3.6, hy + 6, tx - 0.6, ty, '#c0503a', 0.5);
+  for (const t of [0.1, 0.16, 0.22]) line(ctx, hx - 3 + 11 * t - 1, hy + 6 - 26 * t + 0.4, hx - 3 + 11 * t + 1, hy + 6 - 26 * t - 0.4, KR_GOLD, 0.7);
+  ellipse(ctx, hx - 0.4, hy + 0.4, 2.4, 1.4, KR_BRZ);
+  if (knight) krWoldoHead(ctx, tx - 1, ty + 1, 0.8); // the officer's moon-blade
+  else {
+    poly(ctx, [tx + 0.4, ty - 6.8, tx - 1.5, ty - 0.6, tx + 0.4, ty + 0.8], shade(KR_STEEL, 0.25));
+    poly(ctx, [tx + 0.4, ty - 6.8, tx + 2.2, ty - 0.6, tx + 0.4, ty + 0.8], shade(KR_STEEL, -0.25));
+    for (let i = 0; i < 5; i++) line(ctx, tx + 0.4, ty + 1.4, tx + (i - 2) * 0.9, ty + 5 + (i % 2), i % 2 ? '#e0553a' : KR_RED, 0.8);
+  }
+  poly(ctx, [tx - 0.2, ty + 5.6, tx + 7.6, ty + 6.6, tx + 5.2, ty + 8.2, tx + 7.6, ty + 10.2, tx - 0.6, ty + 9.4], KR_LAV);
+  poly(ctx, [tx - 0.2, ty + 5.6, tx + 7.6, ty + 6.6, tx + 7.2, ty + 7.2, tx - 0.3, ty + 6.4], KR_VIO);
+  krTaegeuk(ctx, tx + 3, ty + 7.9, 1.2, -0.4);
+}
+
+/** A wheel with an iron tyre, eight spokes and a red hub: the wheel of the hwacha cart. */
+function krWheel(ctx: Ctx, cx: number, cy: number, rx: number, ry: number) {
+  ellipse(ctx, cx, cy, rx + 0.6, ry + 0.6, '#1c1410');
+  ellipse(ctx, cx, cy, rx, ry, '#7a5230');
+  ellipse(ctx, cx, cy, rx * 0.82, ry * 0.82, '#3f2814');
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4 + 0.2;
+    line(ctx, cx - Math.cos(a) * rx * 0.86, cy - Math.sin(a) * ry * 0.86, cx + Math.cos(a) * rx * 0.86, cy + Math.sin(a) * ry * 0.86, '#a8783f', 0.7);
+  }
+  ellipse(ctx, cx, cy, rx * 0.34, ry * 0.36, KR_RED);
+  ellipse(ctx, cx - 0.3, cy - 0.4, rx * 0.12, ry * 0.12, '#f4b0a0');
+}
+
+/** The hwacha: a two-wheeled cart bearing a honeycomb rack of rocket-arrows, a lavender banner and a trail of fuses. */
+function krHwacha(ctx: Ctx, x: number, y: number) {
+  // hauling shafts behind the cart, resting on the ground
+  line(ctx, x - 4, y - 2.6, x - 17, y + 5, '#4a2e16', 1.7);
+  line(ctx, x - 1, y - 1.6, x - 13, y + 6.4, '#5a3a1e', 1.7);
+  line(ctx, x - 17.6, y + 4.2, x - 14.6, y + 6.4, '#4a2e16', 1.2);
+  box(ctx, x, y - 2, 19, 4, KR_WOOD);
+  faceQuad(ctx, 'R', x, y - 2, 19, 4, 0, 1, 0.55, 0.8, KR_LAV);
+  faceQuad(ctx, 'L', x, y - 2, 19, 4, 0, 1, 0.55, 0.8, shade(KR_LAV, -0.1));
+  for (const u of [0.15, 0.4, 0.65, 0.9]) faceQuad(ctx, 'R', x, y - 2, 19, 4, u, u + 0.06, 0.1, 0.5, KR_VIO);
+  krWheel(ctx, x - 7, y + 1, 4.1, 4.7);
+  krWheel(ctx, x + 6, y + 3, 4.1, 4.7);
+  // the timber A-frame that props the rack
+  line(ctx, x - 4, y - 3, x - 2, y - 13, '#4a2e16', 2.2);
+  line(ctx, x + 4.6, y - 2, x + 4, y - 14, '#5a3a1e', 2.2);
+  line(ctx, x - 3.6, y - 8, x + 4.4, y - 8, '#3a2210', 1.1);
+  // the rack: a stout box tilted skyward, its end face a honeycomb of tubes, each holding a rocket-arrow
+  const px = x - 7.4, py = y - 7.6, th = -0.6;
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(th);
+  const bh = 14, L = 11;
+  ctx.fillStyle = ink('#a06a38');
+  ctx.fillRect(0, -bh / 2, L, bh / 2);
+  ctx.fillStyle = ink('#6a4222');
+  ctx.fillRect(0, 0, L, bh / 2);
+  ctx.fillStyle = ink('#c8925a');
+  ctx.fillRect(0, -bh / 2, L, 1.2);
+  for (const bx of [1.2, 8]) { // painted iron-bound bands
+    ctx.fillStyle = ink(KR_LAV);
+    ctx.fillRect(bx, -bh / 2, 1.8, bh);
+    ctx.fillStyle = ink(KR_VIO);
+    ctx.fillRect(bx, bh / 2 - 1.4, 1.8, 1.4);
+  }
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 2; c++) ellipse(ctx, 3.4 + c * 2.6, -bh / 2 + 3 + r * 4, 0.6, 0.6, '#e8c874'); // nail heads
+  // the end face, seen at an angle
+  poly(ctx, [L, -bh / 2, L + 6, -bh / 2 - 3.2, L + 6, bh / 2 - 3.2, L, bh / 2], '#3a2412');
+  poly(ctx, [L, -bh / 2, L + 6, -bh / 2 - 3.2, L + 6, -bh / 2 - 2.2, L, -bh / 2 + 1], '#c8925a');
+  poly(ctx, [L, bh / 2, L + 6, bh / 2 - 3.2, L + 6, bh / 2 - 2.4, L, bh / 2 - 0.8], '#8a5a30');
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) {
+    const hx = L + 0.9 + c * 1.35, hy = -bh / 2 + 1.9 + r * 2.35 - c * 0.75, ex = 4.4 + ((r + c) % 2) * 1.4;
+    ellipse(ctx, hx, hy, 0.62, 0.85, '#120a06');
+    line(ctx, hx, hy, hx + ex, hy, '#d8b887', 0.5); // the arrow shaft
+    line(ctx, hx + 1.2, hy, hx + 2.2, hy, KR_RED, 0.95); // its rocket tube
+    poly(ctx, [hx + ex - 0.2, hy - 0.8, hx + ex + 1.9, hy, hx + ex - 0.2, hy + 0.8], KR_STEEL);
+  }
+  ctx.restore();
+  // fuse cords trail down from the rack to the cart, and a puff of smoke drifts off the tubes
+  line(ctx, x + 3, y - 20, x + 6, y - 6, KR_RED, 0.5);
+  line(ctx, x + 4.4, y - 21, x + 7.6, y - 8, '#e0b23a', 0.4);
+  ellipse(ctx, x + 6.6, y - 5.6, 0.8, 0.8, '#e0553a');
+  for (const [sx, sy, r] of [[x + 14.4, y - 25.6, 1.8], [x + 17.4, y - 28.8, 2.4], [x + 21, y - 32, 3]] as const) ellipse(ctx, sx, sy, r, r * 0.8, 'rgba(210,210,218,0.5)');
+  for (const [sx, sy] of [[x + 13.6, y - 24.4], [x + 15.6, y - 27]] as const) ellipse(ctx, sx, sy, 0.5, 0.5, '#f6a13a');
+  // a banner on a pole at the back, with the taegeuk
+  line(ctx, x - 10, y - 3, x - 10, y - 31, '#3a2210', 1.2);
+  ellipse(ctx, x - 10, y - 31.6, 1, 1, KR_GOLD);
+  poly(ctx, [x - 10, y - 30, x - 1.4, y - 29, x - 3.6, y - 25.6, x - 1.6, y - 22.2, x - 10, y - 21.4], KR_LAV);
+  poly(ctx, [x - 10, y - 30, x - 1.4, y - 29, x - 1.6, y - 28.2, x - 10, y - 29], KR_VIO);
+  krTaegeuk(ctx, x - 6, y - 25.4, 2.5, -0.5);
+  // stones and sacks at the back of the deck
+  for (const [ox, oy] of [[-12.4, 1.6], [-10.4, 2.8]] as const) { ellipse(ctx, x + ox, y + oy + 2, 1.6, 1.4, '#c9b58a'); ellipse(ctx, x + ox - 0.5, y + oy + 1.4, 0.5, 0.4, '#efe6c8'); }
+}
+
+/** A tiled roof in side view: a soft concave sweep of grey-blue tile with a heavy ridge, round end tiles along the eave and corners lifted. */
+function krBoatRoof(ctx: Ctx, x: number, y: number, hw: number, h: number) {
+  const rc = KR_TILE;
+  ctx.fillStyle = ink(rc);
+  ctx.beginPath();
+  ctx.moveTo(x - hw - 1.6, y - 1.2);
+  ctx.quadraticCurveTo(x - hw * 0.5, y + 0.4, x - hw * 0.5, y - h * 0.2);
+  ctx.lineTo(x - hw * 0.34, y - h);
+  ctx.lineTo(x + hw * 0.34, y - h);
+  ctx.lineTo(x + hw * 0.5, y - h * 0.2);
+  ctx.quadraticCurveTo(x + hw * 0.5, y + 0.4, x + hw + 1.6, y - 1.2);
+  ctx.lineTo(x + hw, y + 0.9);
+  ctx.lineTo(x - hw, y + 0.9);
+  ctx.closePath();
+  ctx.fill();
+  poly(ctx, [x + hw * 0.5, y - h * 0.2, x + hw * 0.34, y - h, x + hw * 0.34, y - h + 0.8, x + hw * 0.5, y - h * 0.2 + 0.6, x + hw + 1.6, y - 1.2, x + hw, y + 0.9, x + hw * 0.3, y + 0.9], shade(rc, -0.28));
+  for (let i = 1; i < 6; i++) line(ctx, x - hw * 0.5 + (hw * i) / 3, y - h * 0.9, x - hw + (2 * hw * i) / 6, y + 0.6, shade(rc, -0.36), 0.35);
+  line(ctx, x - hw * 0.36, y - h - 0.4, x + hw * 0.36, y - h - 0.4, '#2a3050', 1.1);
+  for (let i = 0; i < 7; i++) ellipse(ctx, x - hw + 0.5 + (i * (hw * 2 - 1)) / 6, y + 0.9, 0.5, 0.5, '#e8e2d0'); // the round eave-end tiles
+}
+
+/** The head of a dragon: scaled neck, a gaping red mouth with teeth, a burning eye, gilt horns and a red mane. */
+function krDragonHead(ctx: Ctx, x: number, y: number, s: number) {
+  const g = KR_GRN, gd = KR_GRN_D;
+  krArc(ctx, x - 9 * s, y + 8 * s, x - 5 * s, y - 1 * s, x - 0.6 * s, y + 0.6 * s, 4.4 * s, gd);
+  krArc(ctx, x - 9 * s, y + 7.4 * s, x - 5 * s, y - 1.6 * s, x - 0.6 * s, y - 0.2 * s, 3.2 * s, g);
+  for (const t of [0.15, 0.35, 0.55, 0.75]) { const px = krQ(t, x - 9 * s, x - 5 * s, x - 0.6 * s), py = krQ(t, y + 7.6 * s, y - 1.4 * s, y - 0.2 * s); ellipse(ctx, px, py - 0.2 * s, 1 * s, 0.6 * s, shade(g, 0.3)); }
+  for (let i = 0; i < 6; i++) { // a red mane streaming back
+    const a = i * 0.32;
+    krArc(ctx, x - 1.8 * s, y - 2.4 * s, x - 5 * s - a * 3 * s, y - 6 * s - a * s, x - 8.6 * s - a * 4 * s, y - 2 * s + i * 0.9 * s, 1 * s, i % 2 ? '#e0553a' : KR_RED);
+  }
+  poly(ctx, [x - 2.4 * s, y - 3.4 * s, x + 7.6 * s, y - 2.2 * s, x + 8.4 * s, y - 0.4 * s, x + 1 * s, y + 0.2 * s], g); // upper jaw
+  poly(ctx, [x - 2.4 * s, y - 3.4 * s, x + 7.6 * s, y - 2.2 * s, x + 7.6 * s, y - 1.6 * s, x - 2.4 * s, y - 2.6 * s], shade(g, 0.3));
+  poly(ctx, [x + 0.4 * s, y + 0.2 * s, x + 8 * s, y + 0.2 * s, x + 6.2 * s, y + 4.2 * s, x - 1 * s, y + 3 * s], gd); // lower jaw
+  poly(ctx, [x + 0.6 * s, y + 0.4 * s, x + 7.2 * s, y + 0.4 * s, x + 5.6 * s, y + 3 * s, x, y + 2.4 * s], '#a01f1c'); // the mouth
+  for (const tx of [2, 4, 6]) poly(ctx, [x + tx * s, y + 0.2 * s, x + (tx + 0.8) * s, y + 0.2 * s, x + (tx + 0.4) * s, y + 1.8 * s], '#ffffff');
+  ellipse(ctx, x + 8 * s, y - 1.6 * s, 1.1 * s, 0.9 * s, shade(g, -0.2)); // nostril bump
+  ellipse(ctx, x + 1.2 * s, y - 2.6 * s, 1.3 * s, 1.1 * s, '#f6d23a');
+  ellipse(ctx, x + 1.4 * s, y - 2.6 * s, 0.5 * s, 0.7 * s, '#101010');
+  line(ctx, x - 0.6 * s, y - 4.2 * s, x + 3 * s, y - 3.2 * s, KR_RED, 0.8 * s);
+  krArc(ctx, x - 1 * s, y - 3.8 * s, x - 3 * s, y - 9 * s, x - 8 * s, y - 8.6 * s, 1.2 * s, KR_GOLD); // horns
+  krArc(ctx, x - 3.4 * s, y - 6.4 * s, x - 3 * s, y - 10.4 * s, x - 5.6 * s, y - 12 * s, 0.9 * s, KR_GOLD);
+  krArc(ctx, x + 7 * s, y - 0.6 * s, x + 11 * s, y - 2 * s, x + 12 * s, y + 3 * s, 0.4 * s, '#f4efe0'); // whiskers
+  krArc(ctx, x + 6 * s, y + 3 * s, x + 10 * s, y + 5 * s, x + 9 * s, y + 8.4 * s, 0.4 * s, '#f4efe0');
+}
+
+/** The battened square sail of a Korean warship: undyed cloth, seams, and a taegeuk. */
+function krSail(ctx: Ctx, mx: number, top: number, bot: number, sw: number, emblem: boolean) {
+  const B = [mx + sw, top + 2.2], C = [mx + sw * 0.94, bot + 1.6];
+  poly(ctx, [mx, top, B[0], B[1], C[0], C[1], mx, bot], KR_COT);
+  poly(ctx, [mx, top, mx + sw * 0.5, top + 1.1, mx + sw * 0.47, bot + 0.8, mx, bot], shade(KR_COT, 0.12));
+  const n = 6;
+  for (let i = 0; i <= n; i++) { const t = i / n; line(ctx, mx, top + (bot - top) * t, mx + sw * (1 - 0.06 * t), top + 2.2 + (bot - top + 1.6 - 2.2) * t, shade(KR_COT, -0.32), 0.4); }
+  line(ctx, mx, top, B[0], B[1], '#3a2210', 1);
+  if (emblem) {
+    krTaegeuk(ctx, mx + sw * 0.5, (top + bot) / 2 + 1, Math.min(sw * 0.2, 4.6), -0.5);
+    ctx.strokeStyle = ink(KR_VIO);
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.arc(mx + sw * 0.5, (top + bot) / 2 + 1, Math.min(sw * 0.2, 4.6) + 0.8, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+/** A ring of dancheong along a rail: red, green, blue and yellow blocks. */
+function krDancheong(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, n: number, h: number) {
+  const cols = [KR_RED, KR_GRN, KR_BLUE, KR_YEL];
+  for (let i = 0; i < n; i++) {
+    const a = i / n, b = (i + 0.85) / n;
+    poly(ctx, [x0 + (x1 - x0) * a, y0 + (y1 - y0) * a, x0 + (x1 - x0) * b, y0 + (y1 - y0) * b, x0 + (x1 - x0) * b, y0 + (y1 - y0) * b + h, x0 + (x1 - x0) * a, y0 + (y1 - y0) * a + h], cols[i % 4]);
+  }
+}
+
+/** Korean craft: a straw-canopied ferry, a tiled-shed panokseon warship with painted shields, and the armoured turtle ship, geobukseon. */
+function drawKoreanBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
+  const tier = kind === 'warship' ? 2 : kind === 'ship' ? 1 : 0;
+  const foam = (w: number, dy: number) => {
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x, y + dy, w, 2.3, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
+  };
+  if (tier === 0) {
+    const w = 13;
+    poly(ctx, [x - w - 4, y - 9, x + w + 4, y - 8.4, x + w - 2, y + 3.4, x - w + 3, y + 3.4], '#6a4a2e');
+    poly(ctx, [x - w - 4, y - 9, x + w + 4, y - 8.4, x + w + 3, y - 5.2, x - w - 3, y - 5.6], '#a07a4c');
+    poly(ctx, [x + w + 4, y - 8.4, x + w + 8.4, y - 11.6, x + w + 6.6, y - 6.6], '#a07a4c'); // lifted bow
+    poly(ctx, [x - w - 4, y - 9, x - w - 8, y - 11.4, x - w - 6.2, y - 6.4], '#a07a4c'); // lifted stern
+    krDancheong(ctx, x - w - 3, y - 8.4, x + w + 3, y - 7.8, 12, 1.4);
+    for (const t of [0.4, 0.7]) line(ctx, x - w + 1, y - 5 + t * 8, x + w - 1, y - 5 + t * 7, shade('#6a4a2e', -0.35), 0.6);
+    foam(w * 0.78, 3.6);
+    // a matted straw canopy with a lavender curtain
+    ctx.fillStyle = ink('#c9a44a');
+    ctx.beginPath(); ctx.moveTo(x - 10, y - 8.6); ctx.quadraticCurveTo(x - 4, y - 19, x + 3, y - 8.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = ink('#8a6a2a');
+    ctx.beginPath(); ctx.moveTo(x - 4, y - 14.6); ctx.quadraticCurveTo(x, y - 13.4, x + 3, y - 8.4); ctx.lineTo(x - 4, y - 8.6); ctx.closePath(); ctx.fill();
+    for (const t of [-7.6, -5.2, -2.8, -0.4]) line(ctx, x + t, y - 8.6, x + t * 0.8 - 1.4, y - 13.4 + Math.abs(t + 4) * 0.35, '#7a5a22', 0.4);
+    poly(ctx, [x + 3, y - 8.4, x + 1.4, y - 12, x + 1.4, y - 8.4], KR_LAV);
+    line(ctx, x + 6, y - 8, x + 6, y - 24, '#5a3b1e', 1.2); // a flag on a pole at the bow
+    poly(ctx, [x + 6, y - 24, x + 13.4, y - 23, x + 11, y - 21, x + 13.4, y - 19, x + 6, y - 19.6], KR_WHITE);
+    krTaegeuk(ctx, x + 9, y - 21.6, 1.7, -0.5);
+    line(ctx, x - w - 5, y - 9.6, x - w - 8.4, y + 5, '#6b4424', 0.9); // a long sculling oar
+    ellipse(ctx, x - w - 8.8, y + 5.6, 1, 2, '#8a5a2b');
+    figure(ctx, 'explorer', 'korea', x - 11.5, y - 7.2, 0.46, true);
+    return;
+  }
+  if (tier === 1) {
+    // panokseon: a tall flat-bottomed hull with a painted parapet, oars, a tiled shed at the stern and a square sail
+    const w = 19;
+    poly(ctx, [x - w - 4, y - 11, x + w + 5, y - 9, x + w, y + 3.6, x - w + 2, y + 3.6], '#4a3020');
+    poly(ctx, [x - w - 4, y - 11, x + w + 5, y - 9, x + w + 4.4, y - 3.6, x - w - 3.6, y - 5.2], '#7a5232');
+    for (let i = 0; i < 12; i++) { const bx = x - w - 2 + i * 3.6; line(ctx, bx, y - 10.6 + i * 0.16, bx - 0.2, y - 5 + i * 0.1, shade('#7a5232', -0.3), 0.4); }
+    poly(ctx, [x + w + 5, y - 9, x + w + 9, y - 13.4, x + w + 7, y - 7.6], '#7a5232');
+    poly(ctx, [x - w - 4, y - 11, x - w - 8, y - 13.6, x - w - 6, y - 8], '#7a5232');
+    krDancheong(ctx, x - w - 3.6, y - 11.6, x + w + 4.6, y - 9.6, 18, 1.5);
+    for (let i = 0; i < 5; i++) { // painted shields: the tiger's face along the parapet
+      const sx = x - w * 0.62 + i * (w * 1.4 / 4), sy = y - 6.8 + (i - 2) * 0.2;
+      ellipse(ctx, sx, sy, 2.3, 2.3, KR_VIO_D);
+      krTigerFace(ctx, sx, sy + 0.1, 1.8, 1.8);
+    }
+    line(ctx, x - w + 1, y + 1.4, x + w - 2, y + 1.6, shade('#4a3020', -0.4), 0.5);
+    foam(w * 0.8, 3.7);
+    // oars sweeping from ports low in the hull
+    for (let i = 0; i < 5; i++) {
+      const ox = x - w + 6 + i * 7.4;
+      line(ctx, ox, y - 2.2, ox - 5.4, y + 5.6, '#6b4424', 0.9);
+      ellipse(ctx, ox - 5.8, y + 6.2, 1, 2, '#8a5a2b');
+    }
+    // the stern shed: pillars, a tiled roof and a banner
+    const sx = x - w * 0.6;
+    box(ctx, sx, y - 11.4, 11, 5.2, '#e6d8b6', '#f0e6c8');
+    for (const f of ['L', 'R'] as const) {
+      for (let i = 0; i <= 3; i++) faceQuad(ctx, f, sx, y - 11.4, 11, 5.2, i * 0.32, i * 0.32 + 0.06, 0, 1, KR_RED);
+      faceQuad(ctx, f, sx, y - 11.4, 11, 5.2, 0, 1, 0.78, 1, KR_GRN);
+      faceQuad(ctx, f, sx, y - 11.4, 11, 5.2, 0, 1, 0.84, 0.9, KR_BLUE);
+    }
+    faceQuad(ctx, 'R', sx, y - 11.4, 11, 5.2, 0.3, 0.7, 0.05, 0.6, '#2a1a14');
+    krBoatRoof(ctx, sx, y - 16.6, 8.2, 4.4);
+    line(ctx, sx - 6.4, y - 15, sx - 6.4, y - 34, '#3a2210', 1.1);
+    poly(ctx, [sx - 6.4, y - 33, sx + 2.4, y - 32, sx, y - 29.6, sx + 2.4, y - 27, sx - 6.4, y - 27.6], KR_LAV);
+    krTaegeuk(ctx, sx - 2.6, y - 30, 1.9, -0.5);
+    // the mast and its square sail
+    const mx = x + 6;
+    line(ctx, mx, y - 7, mx, y - 44, '#5a3b1e', 1.8);
+    krSail(ctx, mx + 0.6, y - 42, y - 15, 15, true);
+    poly(ctx, [mx, y - 44, mx + 7.6, y - 43, mx, y - 41.4], KR_BLUE);
+    ellipse(ctx, mx, y - 45, 0.9, 0.9, KR_GOLD);
+    figure(ctx, 'archer', 'korea', x + w * 0.72, y - 8.4, 0.42, true);
+    figure(ctx, 'swordsman', 'korea', x - 2, y - 8.8, 0.4, true);
+    figure(ctx, 'warrior', 'korea', x + w * 0.3, y - 8.6, 0.42, true);
+    return;
+  }
+  // geobukseon: the turtle ship. A dark hull under a roof of hexagonal iron plates set with spikes, a dragon's head at the bow breathing smoke
+  const w = 20;
+  poly(ctx, [x - w - 2, y - 10, x + w + 1, y - 9, x + w - 4, y + 3.8, x - w + 3, y + 3.8], '#33241c');
+  poly(ctx, [x - w - 2, y - 10, x + w + 1, y - 9, x + w + 0.4, y - 5.8, x - w - 1.6, y - 6.8], '#4a3628');
+  for (const t of [0.4, 0.68]) line(ctx, x - w + 2, y - 6 + t * 9, x + w - 3, y - 6 + t * 8.4, shade('#33241c', 0.2), 0.5);
+  for (let i = 0; i < 9; i++) { // white-and-lavender panel band at the gunwale
+    poly(ctx, [x - w - 1.6 + i * 4.6, y - 9.9 + i * 0.1, x - w + 2.6 + i * 4.6, y - 9.8 + i * 0.1, x - w + 2.6 + i * 4.6, y - 8.4 + i * 0.1, x - w - 1.6 + i * 4.6, y - 8.5 + i * 0.1], i % 2 ? KR_LAV : KR_WHITE);
+  }
+  for (let i = 0; i < 5; i++) { // gun ports with painted eyes, a cannon muzzle in each
+    const gx = x - w * 0.62 + i * (w * 1.36 / 4), gy = y - 3.2;
+    ellipse(ctx, gx, gy, 2.1, 2, KR_RED);
+    ellipse(ctx, gx, gy, 1.5, 1.4, '#120c0a');
+    ellipse(ctx, gx + 0.5, gy + 0.2, 0.9, 0.8, '#5a5a64');
+  }
+  // the shell: a dome of plates, each hexagon set with a spike
+  const cx = x + 0.4, base = y - 9, rx = 17.4, ry = 12.6;
+  ctx.fillStyle = ink('#3e5a52');
+  ctx.beginPath(); ctx.ellipse(cx, base, rx, ry, 0, Math.PI, 0); ctx.closePath(); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(cx, base, rx, ry, 0, Math.PI, 0); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = ink('#22342f');
+  ctx.beginPath(); ctx.moveTo(cx + 2, base - ry - 1); ctx.lineTo(cx + rx + 2, base - ry - 1); ctx.lineTo(cx + rx + 2, base + 1); ctx.lineTo(cx + 2, base + 1); ctx.closePath(); ctx.globalAlpha = 0.42; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.strokeStyle = ink('#15221e');
+  ctx.lineWidth = 0.45;
+  for (let r = 0; r < 5; r++) for (let c = -4; c <= 4; c++) {
+    const hx = cx + c * 4.6 + (r % 2 ? 2.3 : 0), hy = base - 1.6 - r * 3.2;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + Math.PI / 6; const px = hx + Math.cos(a) * 2.7, py = hy + Math.sin(a) * 1.9; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+    ctx.closePath();
+    ctx.stroke();
+    ellipse(ctx, hx, hy - 0.2, 1.7, 1.1, (r + c) % 2 ? '#5a7a70' : '#4a6a60');
+  }
+  ctx.restore();
+  for (let r = 0; r < 4; r++) for (let c = -3; c <= 3; c++) { // spikes
+    const hx = cx + c * 4.6 + (r % 2 ? 2.3 : 0), hy = base - 1.8 - r * 3.2;
+    if (Math.abs(hx - cx) > rx * Math.sqrt(Math.max(0, 1 - Math.pow((base - hy) / ry, 2))) - 2) continue;
+    poly(ctx, [hx - 0.7, hy, hx, hy - 2.4, hx + 0.7, hy], '#e8ecf2');
+  }
+  for (let i = 0; i < 12; i++) { const a = Math.PI + (i + 0.5) / 12 * Math.PI; const hx = cx + Math.cos(a) * rx, hy = base + Math.sin(a) * ry; poly(ctx, [hx - 0.9, hy + 0.4, hx + Math.cos(a) * 1.6, hy + Math.sin(a) * 3, hx + 0.9, hy + 0.4], '#dfe4ec'); }
+  krArc(ctx, cx - rx + 2, base - 3, cx - rx * 0.4, base - ry * 1.15, cx + rx * 0.3, base - ry * 1.05, 0.7, 'rgba(255,255,255,0.35)');
+  // the stern, a banner pole and a small mast
+  poly(ctx, [x - w - 2, y - 10, x - w - 7.4, y - 8, x - w - 2, y - 5], '#4a3628');
+  line(ctx, x - w + 3, y - 10.6, x - w + 3, y - 36, '#3a2210', 1.2);
+  poly(ctx, [x - w + 3, y - 35, x - w + 12.4, y - 34, x - w + 10, y - 31.4, x - w + 12.4, y - 28.6, x - w + 3, y - 29.4], KR_LAV);
+  poly(ctx, [x - w + 3, y - 35, x - w + 12.4, y - 34, x - w + 12.2, y - 33.2, x - w + 3, y - 34], KR_VIO);
+  krTaegeuk(ctx, x - w + 7.6, y - 31.8, 2.2, -0.5);
+  line(ctx, x + 5, y - 19, x + 5, y - 33, '#3a2210', 0.9);
+  poly(ctx, [x + 5, y - 32.6, x + 11, y - 31.6, x + 5, y - 30.4], KR_RED);
+  // a dragon at the bow, smoke pouring from its mouth
+  poly(ctx, [x + w + 1, y - 9, x + w - 1, y - 12, x + w + 2, y - 14, x + w + 3, y - 8], '#33241c');
+  krDragonHead(ctx, x + w + 2, y - 16.4, 0.9);
+  for (const [sx, sy, r] of [[x + w + 9.6, y - 16.2, 1.5], [x + w + 11.4, y - 19, 2], [x + w + 13, y - 22.8, 2.5]] as const) ellipse(ctx, sx, sy, r, r * 0.85, 'rgba(210,210,218,0.55)');
+  // oars
+  for (let i = 0; i < 4; i++) {
+    const ox = x - w + 6 + i * 8.6;
+    line(ctx, ox, y - 1.6, ox - 5.4, y + 5.8, '#6b4424', 0.9);
+    ellipse(ctx, ox - 5.8, y + 6.4, 1, 2, '#8a5a2b');
+  }
+  foam(w * 0.82, 3.8);
+}
+
+/** A tiger in profile: orange, with broad black stripes, a white belly and a ringed tail. */
+function krTiger(ctx: Ctx, x: number, y: number, k: number) {
+  const o = KR_TIGER, blk = '#1a1210', wh = '#f6efdc';
+  // the tail curls up behind
+  krArc(ctx, x - 8 * k, y - 7 * k, x - 16 * k, y - 6 * k, x - 14.4 * k, y - 15 * k, 2.4 * k, shade(o, -0.15));
+  for (const t of [0.35, 0.55, 0.75, 0.92]) { const px = krQ(t, x - 8 * k, x - 16 * k, x - 14.4 * k), py = krQ(t, y - 7 * k, y - 6 * k, y - 15 * k); line(ctx, px - 1.3 * k, py - 0.2 * k, px + 1.3 * k, py + 0.3 * k, blk, 0.9 * k); }
+  ellipse(ctx, x - 14.4 * k, y - 15.4 * k, 1.3 * k, 1.1 * k, blk);
+  // legs, the far ones darker
+  for (const [lx, ly, far] of [[-5.6, -0.6, true], [4.6, -0.2, true], [-3.2, 0.6, false], [6.4, 0.9, false]] as const) {
+    const c = far ? shade(o, -0.28) : o;
+    box(ctx, x + lx * k, y + ly * k, 2.8 * k, 6.4 * k, c);
+    faceQuad(ctx, 'R', x + lx * k, y + ly * k, 2.8 * k, 6.4 * k, 0, 1, 0.5, 0.62, blk);
+    box(ctx, x + lx * k, y + ly * k, 3 * k, 1.5 * k, far ? shade(wh, -0.2) : wh);
+  }
+  ellipse(ctx, x - 0.4 * k, y - 8.6 * k, 9.6 * k, 5.6 * k, shade(o, -0.16));
+  ellipse(ctx, x - 0.6 * k, y - 9.2 * k, 9.2 * k, 5.2 * k, o);
+  ellipse(ctx, x + 0.4 * k, y - 5.4 * k, 7.4 * k, 2.2 * k, wh); // white belly
+  ellipse(ctx, x - 2 * k, y - 12 * k, 5 * k, 1.8 * k, shade(o, 0.16)); // lit back
+  for (const [sx, sw] of [[-7.2, 0], [-4.6, 1], [-2, 0], [0.6, 1], [3.2, 0], [5.4, 1]] as const) { // bold stripes, tapering downward
+    poly(ctx, [x + sx * k, y - 13.4 * k, x + (sx + 1.5) * k, y - 13.6 * k, x + (sx + 0.8 + sw * 0.5) * k, y - 6.6 * k], blk);
+    if (sw) poly(ctx, [x + (sx + 0.8) * k, y - 11.2 * k, x + (sx + 1.2) * k, y - 11.2 * k, x + (sx + 1.4) * k, y - 8 * k], blk);
+  }
+  for (const t of [0.3, 0.7]) line(ctx, x - 8.6 * k, y - 8.6 * k + t * 2 * k, x - 6.6 * k, y - 8.2 * k + t * 2 * k, blk, 0.9 * k); // haunch stripes
+  // the head: a broad face with a white ruff
+  ellipse(ctx, x + 8 * k, y - 9.4 * k, 3.6 * k, 3.4 * k, wh);
+  ellipse(ctx, x + 9.6 * k, y - 12.4 * k, 4.6 * k, 3.9 * k, shade(o, -0.1));
+  ellipse(ctx, x + 9.4 * k, y - 12.8 * k, 4.4 * k, 3.7 * k, o);
+  ellipse(ctx, x + 12.4 * k, y - 10.6 * k, 2.6 * k, 1.9 * k, wh);
+  poly(ctx, [x + 6.4 * k, y - 15.6 * k, x + 5.8 * k, y - 18.6 * k, x + 8.6 * k, y - 16.2 * k], shade(o, -0.3));
+  poly(ctx, [x + 11 * k, y - 16 * k, x + 12.6 * k, y - 18.8 * k, x + 13.4 * k, y - 15.4 * k], o);
+  poly(ctx, [x + 11.6 * k, y - 16 * k, x + 12.5 * k, y - 17.6 * k, x + 12.8 * k, y - 15.8 * k], '#f4d8c0');
+  for (const [a, b] of [[7, -16.4], [9, -16.6], [11, -16.2]] as const) line(ctx, x + a * k, y + b * k, x + (a + 0.4) * k, y + (b + 2.6) * k, blk, 0.9 * k); // brow stripes
+  line(ctx, x + 6.2 * k, y - 12 * k, x + 8.2 * k, y - 11.6 * k, blk, 1 * k); // cheek stripes
+  line(ctx, x + 6.4 * k, y - 10.4 * k, x + 8.4 * k, y - 10.4 * k, blk, 0.9 * k);
+  ellipse(ctx, x + 11.2 * k, y - 13.4 * k, 1.05 * k, 0.9 * k, '#f2c23a');
+  ellipse(ctx, x + 11.3 * k, y - 13.4 * k, 0.3 * k, 0.75 * k, blk);
+  line(ctx, x + 9.4 * k, y - 14.8 * k, x + 12.4 * k, y - 14.2 * k, blk, 0.7 * k);
+  ellipse(ctx, x + 14.6 * k, y - 11.8 * k, 0.9 * k, 0.7 * k, '#c8506a'); // nose
+  line(ctx, x + 14.6 * k, y - 11 * k, x + 14.2 * k, y - 9.8 * k, blk, 0.4 * k);
+  krArc(ctx, x + 14.2 * k, y - 9.8 * k, x + 12.6 * k, y - 9.2 * k, x + 11.6 * k, y - 10 * k, 0.45 * k, blk);
+  for (const dy of [-11, -10.2]) line(ctx, x + 14.4 * k, y + dy * k, x + 17.6 * k, y + (dy - 0.6) * k, '#ffffff', 0.3 * k); // whiskers
+}
 
 // ---------------------------------------------------------------- wildlife (map resources)
 
@@ -13687,7 +14662,7 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   lakota: { body: '#4a3428', feature: 'bison' },
   ottoman: { body: '#d8b884', feature: 'kangal' }, // an Anatolian shepherd dog
   maya: { body: '#dba43a', feature: 'jaguar' }, // a jaguar, rosettes on tawny fur
-  korea: { body: '#c9903a', feature: 'stripes' },
+  korea: { body: '#e6982e', feature: 'tiger' }, // a Siberian tiger
   khmer: { body: '#726c6a', feature: 'buffalo' }, // a water buffalo of the paddies
   swahili: { body: '#d8a648', feature: 'giraffe' }, // a reticulated giraffe of the coastal savannah
   tibet: { body: '#3a2a22', feature: 'yak' }, // a shaggy yak
@@ -13720,6 +14695,7 @@ export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 
   if (spec.feature === 'kangal') return otKangal(ctx, x, y, k, body);
   if (spec.feature === 'peacock') return indPeacock(ctx, x, y, k);
   if (spec.feature === 'buffalo') return khBuffalo(ctx, x, y, 0.95 * k, body);
+  if (spec.feature === 'tiger') return krTiger(ctx, x, y, k);
   if (spec.feature === 'llama') return drawWildLlama(ctx, x, y, k, body);
   if (spec.feature === 'zebu') return mlZebu(ctx, x, y, 0.95 * k, body);
   if (spec.feature === 'giraffe') return swGiraffe(ctx, x, y, 0.92 * k, body);

@@ -1682,6 +1682,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'maya') return myTree(ctx, x, y, k, P, variant);
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'china') return drawChinaTree(ctx, x, y, k, P, variant);
+  if (biome === 'korea') return drawKoreanTree(ctx, x, y, k, P, variant);
   if (biome === 'mali') return mlTree(ctx, x, y, k, P, variant);
   if (biome === 'swahili') return swTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
@@ -2505,6 +2506,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'swahili':
       swBuilding(ctx, x, y, big, roofC, color, capital);
       break;
+    case 'korea':
+      drawKoreanBuilding(ctx, x, y, big, roofC, capital);
+      break;
     case 'zulu': {
       // woven grass beehive huts
       const r = big ? 9 : 6.5;
@@ -2526,7 +2530,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : tribe === 'maya' && big ? 5 : tribe === 'khmer' && big ? 20 : 0; // the flag rides on the dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : tribe === 'maya' && big ? 5 : tribe === 'korea' && big ? 10 : tribe === 'khmer' && big ? 20 : 0; // the flag rides on the dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -4191,6 +4195,392 @@ function drawChinaBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: 
   else if (v === 1) cnPagoda(ctx, x, y, roofC, 3, 8.4);
   else if (v === 2) cnCourtyard(ctx, x, y, roofC);
   else cnPavilion(ctx, x, y, roofC);
+}
+
+// ---------------------------------------------------------------- Korea: pines, blossom, ginkgo and maple; hanok, stone pagodas and a dancheong-painted palace
+
+const KRB_WALL = '#f2ead6', KRB_WOOD = '#7a4a2c', KRB_WOOD_D = '#4a2a18', KRB_STONE = '#bdb9ab', KRB_RED = '#b8382c', KRB_GRN = '#2f8a6a', KRB_BLUE = '#2a4fa0';
+const KRB_YEL = '#e8c23a', KRB_PAPER = '#f8f0d8', KRB_THATCH = '#d9b65a', KRB_INK = '#1e2238';
+
+function krbStroke(ctx: Ctx, x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, c: string) {
+  ctx.strokeStyle = ink(c);
+  ctx.lineWidth = w;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo(cx, cy, x1, y1);
+  ctx.stroke();
+}
+
+/**
+ * The trees of the Korean highlands: red pines with twisted trunks and clumps of needles, apricot (maehwa) in blossom,
+ * golden ginkgo and crimson maple.
+ */
+function drawKoreanTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const kind = [0, 1, 0, 2, 0, 3, 1, 0][((variant % 8) + 8) % 8];
+  const leaf = P.forest;
+  if (kind === 0) {
+    // a red pine: a trunk that twists and leans, scaly orange-red bark, and needles in dark tufted clumps
+    const bark = '#9a5236', dk = shade(bark, -0.4);
+    krbStroke(ctx, x, y, x + 3 * k, y - 4 * k, x + 1.4 * k, y - 8 * k, 3.2 * k, dk);
+    krbStroke(ctx, x + 1.4 * k, y - 8 * k, x - 2.6 * k, y - 12 * k, x - 0.8 * k, y - 16 * k, 2.6 * k, dk);
+    krbStroke(ctx, x - 0.8 * k, y - 16 * k, x + 1.6 * k, y - 20 * k, x + 0.4 * k, y - 24 * k, 1.8 * k, dk);
+    krbStroke(ctx, x - 0.4 * k, y, x + 2.4 * k, y - 4 * k, x + 0.8 * k, y - 8 * k, 1.5 * k, bark);
+    krbStroke(ctx, x + 0.8 * k, y - 8 * k, x - 3 * k, y - 12 * k, x - 1.4 * k, y - 16 * k, 1.2 * k, bark);
+    for (const t of [2, 5, 9, 13, 17]) line(ctx, x - 1.4 * k + (t % 3) * 0.5 * k, y - t * k, x + 1.6 * k, y - (t - 0.6) * k, shade(bark, 0.25), 0.4 * k); // flaking plates
+    line(ctx, x + 1.4 * k, y - 8 * k, x + 7 * k, y - 12 * k, dk, 1.1 * k); // limbs out to the clumps
+    line(ctx, x - 1.4 * k, y - 12 * k, x - 6.4 * k, y - 10 * k, dk, 1.1 * k);
+    line(ctx, x - 0.8 * k, y - 18 * k, x + 4.4 * k, y - 20.6 * k, dk, 0.9 * k);
+    const clump = (cx: number, cy: number, r: number, c: number) => {
+      ellipse(ctx, cx + 0.4 * k, cy + 1.2 * k, r, r * 0.55, shade(leaf, -0.46));
+      ellipse(ctx, cx, cy, r, r * 0.6, shade(leaf, -0.22 + c));
+      ellipse(ctx, cx - r * 0.18, cy - r * 0.16, r * 0.78, r * 0.4, shade(leaf, -0.02 + c));
+      for (let i = 0; i < 18; i++) { // needles radiating from the clump
+        const a = Math.PI + (i / 17) * Math.PI, rr = r * (0.9 + rand(variant + 3, i + Math.round(cx)) * 0.32);
+        line(ctx, cx + Math.cos(a) * r * 0.5, cy + Math.sin(a) * r * 0.3, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.66 - 0.3 * k, i % 2 ? shade(leaf, 0.22 + c) : shade(leaf, 0.05 + c), 0.5 * k);
+      }
+      ellipse(ctx, cx - r * 0.34, cy - r * 0.26, r * 0.32, r * 0.13, shade(leaf, 0.3 + c));
+    };
+    clump(x - 6.4 * k, y - 10 * k, 5.6 * k, -0.04);
+    clump(x + 7 * k, y - 12.6 * k, 5.4 * k, 0);
+    clump(x - 2.4 * k, y - 20 * k, 5 * k, 0.03);
+    clump(x + 4.6 * k, y - 21 * k, 4 * k, 0.04);
+    clump(x + 0.6 * k, y - 26 * k, 3.6 * k, 0.08);
+    return;
+  }
+  if (kind === 1) {
+    // apricot blossom: a black leaning trunk with zigzag limbs starred with white and pink flowers
+    const wood = '#3a2a24';
+    krbStroke(ctx, x, y, x - 2.4 * k, y - 4 * k, x + 0.4 * k, y - 8 * k, 2.8 * k, wood);
+    const br: [number, number, number, number, number][] = [[0.4, -8, -6, -13, 1.4], [0.4, -8, 6.6, -12, 1.4], [-3.4, -12, -3.6, -19, 1.1], [3.4, -11, 4.4, -18.4, 1.1], [-1.2, -14, 1.6, -21.6, 1]];
+    for (const [ax, ay, bx, by, w] of br) { line(ctx, x + ax * k, y + ay * k, x + (ax + bx) * 0.5 * k + 0.8 * k, y + (ay + by) * 0.5 * k, wood, w * k); line(ctx, x + (ax + bx) * 0.5 * k + 0.8 * k, y + (ay + by) * 0.5 * k, x + bx * k, y + by * k, wood, w * 0.8 * k); }
+    const fl = [[-6, -13], [-4.4, -16], [-3.6, -19.4], [-1.4, -15], [1.6, -21.6], [3, -17], [4.4, -18.6], [6.6, -12.4], [5.4, -15], [2, -12.6], [-2.4, -11.6], [-5.6, -18], [0.2, -18], [-0.4, -22], [4, -21]] as const;
+    for (const [bx, by] of fl) ellipse(ctx, x + bx * k, y + by * k, 2.8 * k, 2.3 * k, 'rgba(244,170,190,0.5)');
+    fl.forEach(([bx, by], i) => {
+      ellipse(ctx, x + bx * k, y + by * k, 1.6 * k, 1.4 * k, i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#f8d2dc' : '#f2a2b8');
+      ellipse(ctx, x + (bx + 0.2) * k, y + (by + 0.1) * k, 0.45 * k, 0.45 * k, '#e0b040');
+    });
+    for (const [dx, dy] of [[-4, 0.8], [2, 1.4], [5, 0.4], [-1, 1.8], [3.6, 2.2]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.7 * k, 0.35 * k, '#f8d2dc'); // fallen petals
+    return;
+  }
+  if (kind === 2) {
+    // a ginkgo: a straight grey trunk under a tall cone of gold, its fan-shaped leaves fluttering down
+    const bark = '#7a6a58';
+    line(ctx, x, y, x + 0.4 * k, y - 12 * k, bark, 3 * k);
+    line(ctx, x - 0.8 * k, y, x - 0.4 * k, y - 11 * k, shade(bark, 0.3), 0.6 * k);
+    const cols = ['#e2b52a', '#eccb45', '#d89a22', '#f2dc6a'];
+    const lobes: [number, number, number, number][] = [[0, -12, 7.6, 0], [-3, -15, 6.4, 1], [3.2, -15.6, 6, 2], [0, -19, 5.6, 3], [-2.4, -22, 4, 0], [2, -23, 3.6, 1], [0, -26, 2.8, 3]];
+    for (const [dx, dy, r, c] of lobes) ellipse(ctx, x + dx * k, y + dy * k, r * k, r * 0.72 * k, shade(cols[c], -0.18));
+    for (const [dx, dy, r, c] of lobes) ellipse(ctx, x + (dx - 0.4) * k, y + (dy - 0.6) * k, r * 0.86 * k, r * 0.6 * k, cols[c]);
+    for (let i = 0; i < 20; i++) { // fan leaves
+      const fx = x + (rand(variant, i) - 0.5) * 13 * k, fy = y - (12 + rand(variant + 1, i) * 13) * k;
+      poly(ctx, [fx, fy + 0.6 * k, fx - 1.4 * k, fy - 1 * k, fx - 0.4 * k, fy - 1.5 * k, fx + 0.6 * k, fy - 1.5 * k, fx + 1.4 * k, fy - 1 * k], i % 2 ? '#f6e27a' : '#c8881e');
+    }
+    ellipse(ctx, x - 3 * k, y - 15 * k, 2.6 * k, 1.2 * k, 'rgba(255,255,220,0.35)');
+    for (const [dx, dy] of [[-5, 0.6], [3, 1.4], [6, 0.2], [-1, 1.8], [-3, 2]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1 * k, 0.5 * k, '#f2d04a'); // fallen leaves
+    return;
+  }
+  // a maple: a round crown in crimson, orange and amber, with pointed star-shaped leaves
+  const bark = '#4a3428';
+  line(ctx, x, y, x + 0.4 * k, y - 9 * k, bark, 2.8 * k);
+  line(ctx, x + 0.2 * k, y - 8 * k, x - 4 * k, y - 12 * k, bark, 1.4 * k);
+  line(ctx, x + 0.4 * k, y - 8.4 * k, x + 4.4 * k, y - 12.4 * k, bark, 1.3 * k);
+  const cols = ['#c02c24', '#d8481f', '#e27c2a', '#e8a838'];
+  const lobes: [number, number, number, number][] = [[-4.6, -13, 6.4, 0], [4.6, -13.6, 6, 1], [0, -17.4, 7.2, 2], [-2.6, -21, 4.6, 3], [3, -20.6, 4.6, 1], [0, -12.4, 5.6, 0]];
+  for (const [dx, dy, r, c] of lobes) ellipse(ctx, x + dx * k, y + dy * k, r * k, r * 0.78 * k, shade(cols[c], -0.22));
+  for (const [dx, dy, r, c] of lobes) ellipse(ctx, x + (dx - 0.4) * k, y + (dy - 0.7) * k, r * 0.86 * k, r * 0.64 * k, cols[c]);
+  for (let i = 0; i < 24; i++) { // star-shaped leaves
+    const fx = x + (rand(variant, i + 5) - 0.5) * 16 * k, fy = y - (10.5 + rand(variant + 2, i) * 12) * k, r = 1.2 * k;
+    const pts: number[] = [];
+    for (let j = 0; j < 10; j++) { const a = (j / 10) * Math.PI * 2 - Math.PI / 2, rr = j % 2 ? r * 0.45 : r; pts.push(fx + Math.cos(a) * rr, fy + Math.sin(a) * rr * 0.9); }
+    poly(ctx, pts, cols[i % 4]);
+  }
+  ellipse(ctx, x - 3.4 * k, y - 18 * k, 2.6 * k, 1.2 * k, 'rgba(255,220,180,0.3)');
+  for (const [dx, dy] of [[-4, 0.8], [2.6, 1.4], [5.6, 0.4], [-1, 1.8]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.8 * k, 0.4 * k, '#d8481f'); // fallen leaves
+}
+
+type KrbP = { S: number[]; E: number[]; W: number[]; N: number[]; H: number };
+/** Corners of a rectangular prism on the iso grid: a is the half-length along the right axis, b along the left. */
+const krbBox = (x: number, y: number, a: number, b: number, H = 0): KrbP => ({ S: [x - a + b, y + (a + b) / 2], E: [x + a + b, y + (b - a) / 2], W: [x - a - b, y + (a - b) / 2], N: [x + a - b, y - (a + b) / 2], H });
+const krbL = (p: KrbP, u: number, v: number) => [p.W[0] + (p.S[0] - p.W[0]) * u, p.W[1] + (p.S[1] - p.W[1]) * u - p.H * v];
+const krbR = (p: KrbP, u: number, v: number) => [p.S[0] + (p.E[0] - p.S[0]) * u, p.S[1] + (p.E[1] - p.S[1]) * u - p.H * v];
+type KrbF = (p: KrbP, u: number, v: number) => number[];
+function krbQuad(ctx: Ctx, p: KrbP, f: KrbF, u0: number, u1: number, v0: number, v1: number, c: string) {
+  poly(ctx, [...f(p, u0, v0), ...f(p, u1, v0), ...f(p, u1, v1), ...f(p, u0, v1)], c);
+}
+
+/** A wall block with a stone plinth, plaster above, dark timber posts and a dancheong band under the eave. */
+function krbWall(ctx: Ctx, x: number, y: number, a: number, b: number, H: number, opt: { plinth?: number; wall?: string; dancheong?: boolean; doors?: 'R' | 'both' | 'none'; posts?: number }) {
+  const p = krbBox(x, y, a, b, H), wall = opt.wall ?? KRB_WALL, pl = opt.plinth ?? 0.16;
+  poly(ctx, [...p.W, ...p.S, p.S[0], p.S[1] - H, p.W[0], p.W[1] - H], shade(wall, -0.03));
+  poly(ctx, [...p.S, ...p.E, p.E[0], p.E[1] - H, p.S[0], p.S[1] - H], shade(wall, -0.2));
+  for (const [f, sh] of [[krbL, 0.02], [krbR, -0.12]] as const) {
+    krbQuad(ctx, p, f, 0, 1, 0, pl, shade(KRB_STONE, sh)); // the stacked-stone plinth
+    for (let i = 1; i < 6; i++) { const u = i / 6; const q0 = f(p, u, 0), q1 = f(p, u, pl); line(ctx, q0[0], q0[1], q1[0], q1[1], shade(KRB_STONE, -0.32), 0.3); }
+    const m0 = f(p, 0, pl * 0.5), m1 = f(p, 1, pl * 0.5); line(ctx, m0[0], m0[1], m1[0], m1[1], shade(KRB_STONE, -0.3), 0.3);
+  }
+  const np = opt.posts ?? Math.max(2, Math.round(a / 1.6));
+  for (let i = 0; i <= np; i++) { const u = i / np; krbQuad(ctx, p, krbR, Math.max(0, u - 0.025), Math.min(1, u + 0.025), pl, 1, i % 2 ? KRB_WOOD : shade(KRB_WOOD, -0.1)); }
+  const nl = Math.max(1, Math.round(b / 1.6));
+  for (let i = 0; i <= nl; i++) { const u = i / nl; krbQuad(ctx, p, krbL, Math.max(0, u - 0.03), Math.min(1, u + 0.03), pl, 1, KRB_WOOD); }
+  if (opt.doors !== 'none') {
+    // latticed paper doors between the posts: a wooden frame of squares over pale hanji
+    const n = np, from = n >= 4 ? 1 : 0, to = n >= 4 ? n - 1 : n, dt = opt.dancheong ? 0.56 : 0.77;
+    for (let i = from; i < to; i++) {
+      const u0 = (i + 0.12) / n, u1 = (i + 0.88) / n;
+      krbQuad(ctx, p, krbR, u0, u1, pl + 0.06, dt + 0.03, KRB_WOOD_D);
+      krbQuad(ctx, p, krbR, u0 + 0.02, u1 - 0.02, pl + 0.1, dt, KRB_PAPER);
+      for (let g = 1; g < 3; g++) { const uu = u0 + ((u1 - u0) * g) / 3, q0 = krbR(p, uu, pl + 0.1), q1 = krbR(p, uu, dt); line(ctx, q0[0], q0[1], q1[0], q1[1], KRB_WOOD, 0.35); }
+      for (let g = 1; g < 4; g++) { const vv = pl + 0.1 + ((dt - pl - 0.1) * g) / 4, q0 = krbR(p, u0 + 0.02, vv), q1 = krbR(p, u1 - 0.02, vv); line(ctx, q0[0], q0[1], q1[0], q1[1], KRB_WOOD, 0.35); }
+    }
+    if (opt.doors === 'both' || b >= 2.4) {
+      krbQuad(ctx, p, krbL, 0.22, 0.78, pl + 0.16, dt - 0.01, KRB_WOOD_D);
+      krbQuad(ctx, p, krbL, 0.26, 0.74, pl + 0.2, dt - 0.05, KRB_PAPER);
+      const q0 = krbL(p, 0.5, pl + 0.2), q1 = krbL(p, 0.5, dt - 0.05); line(ctx, q0[0], q0[1], q1[0], q1[1], KRB_WOOD, 0.35);
+    }
+  }
+  if (opt.dancheong) {
+    for (const [f, n] of [[krbL, Math.max(3, Math.round(b * 1.6))], [krbR, Math.max(4, Math.round(a * 1.6))]] as const) {
+      krbQuad(ctx, p, f, 0, 1, 0.6, 0.78, KRB_BLUE);
+      krbQuad(ctx, p, f, 0, 1, 0.72, 0.78, KRB_GRN);
+      for (let i = 0; i < n; i++) {
+        const u0 = (i + 0.2) / n, u1 = (i + 0.8) / n;
+        krbQuad(ctx, p, f, u0, u1, 0.63, 0.71, i % 2 ? KRB_RED : KRB_YEL);
+        const c = f(p, (u0 + u1) / 2, 0.67); ellipse(ctx, c[0], c[1], 0.45, 0.4, i % 2 ? KRB_YEL : '#f4efe0');
+      }
+      const q0 = f(p, 0, 0.6), q1 = f(p, 1, 0.6); line(ctx, q0[0], q0[1], q1[0], q1[1], KRB_INK, 0.35);
+    }
+  }
+  return p;
+}
+
+/**
+ * A hipped-and-gabled tiled roof over a rectangular hall: a heavy ridge along the long side, gently swaying eaves that
+ * lift at the corners, rows of tile, and round end-tiles along the eave.
+ */
+function krbRoof(ctx: Ctx, x: number, y: number, a: number, b: number, h: number, color: string, orn = false) {
+  const p = krbBox(x, y, a, b);
+  const lift = 1 + Math.min(a, b) * 0.08, sag = 0.5 + b * 0.16;
+  const Sx = p.S[0], Sy = p.S[1] - lift * 0.35, Ex = p.E[0] + lift * 0.9, Ey = p.E[1] - lift, Wx = p.W[0] - lift * 0.9, Wy = p.W[1] - lift;
+  const ra = Math.max(a - b, 0.5);
+  const Rsx = x - ra, Rsy = y + ra / 2 - h, Rex = x + ra, Rey = y - ra / 2 - h;
+  const cf = [(Sx + Ex) / 2 + 0.6, (Sy + Ey) / 2 + sag], ch = [(Wx + Sx) / 2 - 0.6, (Wy + Sy) / 2 + sag];
+  const front = (c: string) => {
+    ctx.fillStyle = ink(c);
+    ctx.beginPath();
+    ctx.moveTo(Sx, Sy); ctx.quadraticCurveTo(cf[0], cf[1], Ex, Ey); ctx.lineTo(Rex, Rey); ctx.lineTo(Rsx, Rsy);
+    ctx.closePath(); ctx.fill();
+  };
+  const hip = (c: string) => {
+    ctx.fillStyle = ink(c);
+    ctx.beginPath();
+    ctx.moveTo(Wx, Wy); ctx.quadraticCurveTo(ch[0], ch[1], Sx, Sy); ctx.lineTo(Rsx, Rsy);
+    ctx.closePath(); ctx.fill();
+  };
+  // a dark fascia under the eave, then the tile faces
+  ctx.strokeStyle = ink('#2a2a3a'); ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(Wx, Wy + 0.6); ctx.quadraticCurveTo(ch[0], ch[1] + 0.8, Sx, Sy + 0.7); ctx.quadraticCurveTo(cf[0], cf[1] + 0.8, Ex, Ey + 0.6); ctx.stroke();
+  hip(shade(color, 0.1));
+  front(shade(color, -0.13));
+  const at = (P0: number[], C: number[], P1: number[], t: number) => [(1 - t) * (1 - t) * P0[0] + 2 * (1 - t) * t * C[0] + t * t * P1[0], (1 - t) * (1 - t) * P0[1] + 2 * (1 - t) * t * C[1] + t * t * P1[1]];
+  for (let i = 1; i < 9; i++) { // tile courses
+    const t = i / 9, e = at([Sx, Sy], cf, [Ex, Ey], t);
+    line(ctx, Rsx + (Rex - Rsx) * t, Rsy + (Rey - Rsy) * t, e[0], e[1], shade(color, -0.4), 0.35);
+  }
+  for (let i = 1; i < 5; i++) { const t = i / 5, e = at([Wx, Wy], ch, [Sx, Sy], t); line(ctx, Rsx, Rsy, e[0], e[1], shade(color, -0.12), 0.35); }
+  for (const [P0, P1, c] of [[[Sx, Sy], [Rsx, Rsy], shade(color, -0.5)], [[Ex, Ey], [Rex, Rey], shade(color, -0.5)], [[Wx, Wy], [Rsx, Rsy], shade(color, -0.35)]] as const) line(ctx, P0[0], P0[1], P1[0], P1[1], c, 1); // the hip ridges
+  line(ctx, Rsx, Rsy, Rex, Rey, KRB_INK, 1.5); // the great ridge
+  line(ctx, Rsx, Rsy - 0.7, Rex, Rey - 0.7, shade(color, 0.3), 0.5);
+  for (const [cx, cy, s] of [[Rsx, Rsy, -1], [Rex, Rey, 1]] as const) poly(ctx, [cx - 0.9, cy + 0.4, cx + s * 0.4, cy - 2.4, cx + s * 1.4, cy - 2.1, cx + 0.9, cy + 0.6], KRB_INK); // chimi ridge-end ornaments
+  for (let i = 0; i < 9; i++) { const e = at([Sx, Sy], cf, [Ex, Ey], (i + 0.5) / 9); ellipse(ctx, e[0], e[1] + 0.4, 0.5, 0.45, '#ece6d4'); } // round eave-end tiles
+  for (let i = 0; i < 4; i++) { const e = at([Wx, Wy], ch, [Sx, Sy], (i + 0.5) / 4); ellipse(ctx, e[0], e[1] + 0.4, 0.5, 0.45, '#f4efe0'); }
+  if (orn) for (let i = 1; i < 4; i++) { const t = i / 4; ellipse(ctx, Sx + (Rsx - Sx) * t * 0.9, Sy + (Rsy - Sy) * t * 0.9 - 0.8, 0.5, 0.7, '#d8c898'); } // little jabsang figures on the hip ridge
+}
+
+/** A hanok house: a stone plinth, whitewashed walls, latticed paper doors and a tiled roof, with a tall stone chimney behind. */
+function krbHanok(ctx: Ctx, x: number, y: number, roofC: string) {
+  krbWall(ctx, x - 7.6, y - 1.6, 0.9, 0.9, 6, { plinth: 0.2, doors: 'none', posts: 1 }); // the gulttuk chimney
+  box(ctx, x - 8, y - 5.6, 2.6, 1.2, '#4a4a54');
+  krbWall(ctx, x, y, 6.4, 3.2, 6, { doors: 'R' });
+  krbRoof(ctx, x, y - 6, 7.6, 4.4, 4.8, roofC);
+}
+
+/** A stone pagoda (seoktap): a two-tier plinth and three storeys of grey granite, each under a thick slab roof with lifted corners. */
+function krbPagoda(ctx: Ctx, x: number, y: number) {
+  const st = '#b6b2a4';
+  box(ctx, x, y + 1.6, 15, 2, shade(st, -0.08), shade(st, 0.14));
+  box(ctx, x, y - 0.2, 12, 2.2, st, shade(st, 0.18));
+  let cy = y - 2.2;
+  for (let i = 0; i < 3; i++) {
+    const w = 8.6 - i * 1.6, bh = 4.4 - i * 0.4;
+    box(ctx, x, cy, w, bh, shade(st, 0.06), shade(st, 0.24));
+    for (const f of ['L', 'R'] as const) { faceQuad(ctx, f, x, cy, w, bh, 0, 0.1, 0, 1, shade(st, -0.2)); faceQuad(ctx, f, x, cy, w, bh, 0.9, 1, 0, 1, shade(st, -0.2)); }
+    faceQuad(ctx, 'R', x, cy, w, bh, 0.34, 0.66, 0.2, 0.8, shade(st, -0.38));
+    cy -= bh;
+    const rw = w + 5.2 - i * 0.4;
+    box(ctx, x, cy, rw, 1.3, shade(st, -0.02), shade(st, 0.22));
+    for (const f of ['L', 'R'] as const) for (let j = 0; j < 4; j++) faceQuad(ctx, f, x, cy, rw, 1.3, j * 0.25 + 0.02, j * 0.25 + 0.06, 0.1, 0.9, shade(st, -0.3)); // stepped underside
+    poly(ctx, [x - rw / 2, cy - 1.3, x - rw / 2 - 1.4, cy - 2.7, x - rw / 2 + 2, cy - 1.7], shade(st, 0.24)); // corners lifted
+    poly(ctx, [x + rw / 2, cy - 1.3, x + rw / 2 + 1.4, cy - 2.7, x + rw / 2 - 2, cy - 1.7], shade(st, -0.16));
+    box(ctx, x, cy - 1.3, rw * 0.72, 0.9, shade(st, 0.08), shade(st, 0.26));
+    cy -= 2;
+  }
+  line(ctx, x, cy + 0.6, x, cy - 5, '#7a7a80', 1);
+  ellipse(ctx, x, cy - 1, 1.5, 0.6, '#c8c4b4');
+  ellipse(ctx, x, cy - 2.6, 1.1, 0.5, '#c8c4b4');
+  ellipse(ctx, x, cy - 5.6, 0.9, 1.1, KRB_YEL);
+}
+
+/** A choga: a mud-walled cottage under a rounded thatch, a gourd on the roof and strings of red peppers hung to dry, a jangseung guardian post beside it. */
+function krbCottage(ctx: Ctx, x: number, y: number) {
+  const mud = '#e0cfa4';
+  krbWall(ctx, x, y, 5.4, 3.4, 4.6, { wall: mud, plinth: 0.14, doors: 'R', posts: 3 });
+  const th = KRB_THATCH;
+  const p = krbBox(x, y - 4.6, 7.2, 5.2);
+  const rt = (c: string, left: boolean) => {
+    ctx.fillStyle = ink(c);
+    ctx.beginPath();
+    if (left) { ctx.moveTo(p.W[0] - 0.6, p.W[1] - 0.6); ctx.quadraticCurveTo(p.W[0] + 0.4, p.W[1] - 6.4, x - 2.2, y - 4.6 - 6.6); ctx.lineTo(x + 1.8, y - 4.6 - 7.4); ctx.quadraticCurveTo(p.S[0] - 0.4, p.S[1] - 2, p.S[0], p.S[1] + 1); ctx.lineTo(p.W[0] - 0.6, p.W[1] - 0.6); }
+    else { ctx.moveTo(p.S[0], p.S[1] + 1); ctx.quadraticCurveTo(p.S[0] + 0.4, p.S[1] - 2.4, x + 1.8, y - 4.6 - 7.4); ctx.quadraticCurveTo(p.E[0] - 1, p.E[1] - 4, p.E[0] + 0.6, p.E[1] - 0.4); ctx.quadraticCurveTo(p.E[0] - 1, p.E[1] + 1.6, p.S[0], p.S[1] + 1); }
+    ctx.closePath(); ctx.fill();
+  };
+  rt(shade(th, 0.08), true);
+  rt(shade(th, -0.24), false);
+  ctx.strokeStyle = ink(shade(th, -0.4)); ctx.lineWidth = 0.4;
+  for (let i = 1; i < 8; i++) { const t = i / 8; ctx.beginPath(); ctx.moveTo(x - 2 + t * 4, y - 4.6 - 7 + t * 0.6); ctx.lineTo(p.S[0] + (p.E[0] - p.S[0]) * t, p.S[1] + 0.8 + (p.E[1] - p.S[1]) * t); ctx.stroke(); }
+  line(ctx, x - 2.2, y - 10.4, x + 1.8, y - 11, '#8a6a2a', 1.4); // the roped ridge
+  ellipse(ctx, x + 2.6, y - 8.2, 1.5, 1.2, '#f4ecd0'); // a gourd ripening on the thatch
+  ellipse(ctx, x + 2.4, y - 8.5, 0.7, 0.4, '#ffffff');
+  ellipse(ctx, x - 0.6, y - 9, 1.2, 1, '#e8e0bc');
+  for (let i = 0; i < 4; i++) { line(ctx, x + 1.2 + i * 1.1, y - 4.6 + 0.8 + i * 0.05, x + 1.2 + i * 1.1, y - 4.6 + 2.2, '#3a2a1a', 0.3); ellipse(ctx, x + 1.2 + i * 1.1, y - 4.6 + 3, 0.5, 0.9, '#c8281e'); } // peppers drying
+  for (const [jx, jy, s] of [[x - 9.4, y + 3.2, 1], [x - 7.2, y + 4.4, 0.86]] as const) { // jangseung posts
+    line(ctx, jx, jy, jx, jy - 8 * s, '#6a4a2c', 1.7 * s);
+    ellipse(ctx, jx, jy - 7.2 * s, 1.1 * s, 1.4 * s, '#8a6238');
+    ellipse(ctx, jx - 0.4 * s, jy - 7.4 * s, 0.2 * s, 0.2 * s, '#101010');
+    ellipse(ctx, jx + 0.4 * s, jy - 7.4 * s, 0.2 * s, 0.2 * s, '#101010');
+    line(ctx, jx - 0.4 * s, jy - 6.7 * s, jx + 0.4 * s, jy - 6.7 * s, '#c8281e', 0.3);
+    poly(ctx, [jx - 1.2 * s, jy - 8.4 * s, jx, jy - 9.6 * s, jx + 1.2 * s, jy - 8.4 * s], '#4a2a18');
+  }
+}
+
+/** A pavilion (jeongja): four painted pillars on a stone terrace, railings between them, and a high tiled roof. */
+function krbPavilion(ctx: Ctx, x: number, y: number, roofC: string) {
+  box(ctx, x, y + 0.6, 15, 1.8, shade(KRB_STONE, -0.06), shade(KRB_STONE, 0.14));
+  const p = krbBox(x, y - 1.2, 4.4, 4.4, 0);
+  const pill = (px: number, py: number) => { box(ctx, px, py, 1.2, 8.8, KRB_RED, shade(KRB_RED, 0.2)); box(ctx, px, py - 8.2, 1.5, 1, KRB_GRN); };
+  pill(p.W[0] + 1.5, p.W[1]);
+  pill(p.N[0], p.N[1] + 1);
+  pill(p.S[0], p.S[1] - 0.4);
+  pill(p.E[0] - 1.5, p.E[1]);
+  line(ctx, p.W[0] + 1.5, p.W[1] - 2.6, p.S[0], p.S[1] - 3, KRB_WOOD_D, 0.8); // low railings
+  line(ctx, p.S[0], p.S[1] - 3, p.E[0] - 1.5, p.E[1] - 2.6, KRB_WOOD_D, 0.8);
+  line(ctx, p.W[0] + 1.5, p.W[1] - 1.6, p.S[0], p.S[1] - 2, KRB_WOOD_D, 0.6);
+  line(ctx, p.S[0], p.S[1] - 2, p.E[0] - 1.5, p.E[1] - 1.6, KRB_WOOD_D, 0.6);
+  krbRoof(ctx, x, y - 7.2, 5.8, 5.8, 6, roofC);
+  krbRoof(ctx, x, y - 10.2, 5.8, 5.8, 4.8, roofC);
+  for (const px of [-3.2, 0, 3.2]) { ctx.beginPath(); ctx.moveTo(x + px, y - 7.6); ctx.lineTo(x + px, y - 6.8); ctx.stroke(); }
+}
+
+/** A low wall of plaster over stacked stone, capped with tile: one side of a courtyard. */
+function krbWallSeg(ctx: Ctx, A: number[], B: number[], h: number, sh: number) {
+  poly(ctx, [A[0], A[1], B[0], B[1], B[0], B[1] - h, A[0], A[1] - h], shade(KRB_WALL, sh));
+  poly(ctx, [A[0], A[1], B[0], B[1], B[0], B[1] - h * 0.32, A[0], A[1] - h * 0.32], shade(KRB_STONE, sh - 0.02));
+  for (let i = 1; i < 6; i++) { const t = i / 6; line(ctx, A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t - h * 0.32, shade(KRB_STONE, -0.3), 0.3); }
+  for (const t of [0.34, 0.68]) { line(ctx, A[0], A[1] - h * (0.32 + (t - 0.34) * 0.4), B[0], B[1] - h * (0.32 + (t - 0.34) * 0.4), shade(KRB_WALL, sh - 0.14), 0.3); }
+  poly(ctx, [A[0] - 0.4, A[1] - h + 0.2, B[0] + 0.4, B[1] - h + 0.2, B[0] + 0.4, B[1] - h - 1.1, A[0] - 0.4, A[1] - h - 1.1], shade(KRB_INK, 0.05 + sh * 0.3)); // tile cap
+  for (let i = 0; i < 9; i++) { const t = (i + 0.5) / 9; ellipse(ctx, A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t - h + 0.2, 0.32, 0.3, '#ece6d4'); }
+}
+
+/** A stone lantern: a stepped base, a pillar, a lit chamber and a capped roof. */
+function krbLantern(ctx: Ctx, x: number, y: number, s: number) {
+  const st = '#b6b2a4';
+  box(ctx, x, y, 3.6 * s, 0.9 * s, shade(st, -0.06), shade(st, 0.16));
+  line(ctx, x, y - 0.6 * s, x, y - 3.2 * s, st, 1 * s);
+  box(ctx, x, y - 3 * s, 2.6 * s, 0.7 * s, st, shade(st, 0.2));
+  box(ctx, x, y - 3.7 * s, 1.8 * s, 1.6 * s, shade(st, 0.06), shade(st, 0.2));
+  faceQuad(ctx, 'R', x, y - 3.7 * s, 1.8 * s, 1.6 * s, 0.25, 0.75, 0.25, 0.8, '#f4c84a');
+  poly(ctx, [x - 2.2 * s, y - 5.3 * s, x, y - 7.6 * s, x + 2.2 * s, y - 5.3 * s, x, y - 4.4 * s], shade(st, 0.06));
+  poly(ctx, [x, y - 7.6 * s, x + 2.2 * s, y - 5.3 * s, x, y - 4.4 * s], shade(st, -0.16));
+  ellipse(ctx, x, y - 7.9 * s, 0.5 * s, 0.6 * s, st);
+}
+
+/** A grand hanok: a tiled hall on a stone terrace behind a whitewashed courtyard wall with a painted gate. */
+function krbMansion(ctx: Ctx, x: number, y: number, roofC: string) {
+  const A = 9.4, B = 5.6;
+  const p = krbBox(x, y + 1, A, B, 0);
+  ellipse(ctx, x, y + 1.6, 13.4, 6.6, '#cbbf98');
+  krbWallSeg(ctx, p.W, p.N, 2.8, 0.02);
+  krbWallSeg(ctx, p.N, p.E, 2.8, -0.16);
+  box(ctx, x, y - 0.4, 15, 1.6, shade(KRB_STONE, -0.04), shade(KRB_STONE, 0.14));
+  krbWall(ctx, x, y - 1.2, 6.4, 3.2, 8.6, { dancheong: true, doors: 'R', posts: 6 });
+  krbRoof(ctx, x, y - 9.8, 8, 4.8, 5, roofC, true);
+  krbLantern(ctx, x - 9, y + 5, 0.8);
+  krbWallSeg(ctx, p.W, p.S, 2.8, 0.06);
+  const g0 = [p.S[0] + (p.E[0] - p.S[0]) * 0.34, p.S[1] + (p.E[1] - p.S[1]) * 0.34], g1 = [p.S[0] + (p.E[0] - p.S[0]) * 0.66, p.S[1] + (p.E[1] - p.S[1]) * 0.66];
+  krbWallSeg(ctx, p.S, g0, 2.8, -0.2);
+  krbWallSeg(ctx, g1, p.E, 2.8, -0.2);
+  const gx = (g0[0] + g1[0]) / 2, gy = (g0[1] + g1[1]) / 2;
+  for (const q of [g0, g1]) box(ctx, q[0], q[1], 1.5, 5.2, KRB_RED, shade(KRB_RED, 0.2)); // the gate posts
+  line(ctx, g0[0], g0[1] - 4.4, g1[0], g1[1] - 4.4, KRB_WOOD_D, 1);
+  krbRoof(ctx, gx, gy - 5, 3.4, 2.6, 2.6, roofC);
+  ellipse(ctx, gx, gy - 4.2, 0.6, 0.6, KRB_YEL);
+}
+
+/**
+ * The royal palace: a two-tier stone terrace with balustrades and a stair, a great hall painted in dancheong under a double roof,
+ * a smaller upper storey, and (at the front) a gate on a stone base with an arched passage.
+ */
+function krbPalace(ctx: Ctx, x: number, y: number, roofC: string, capital: boolean) {
+  const st = KRB_STONE;
+  const t1 = krbBox(x, y + 2, 10.6, 5.6, 2.4);
+  poly(ctx, [...t1.W, ...t1.S, t1.S[0], t1.S[1] - 2.4, t1.W[0], t1.W[1] - 2.4], shade(st, -0.06));
+  poly(ctx, [...t1.S, ...t1.E, t1.E[0], t1.E[1] - 2.4, t1.S[0], t1.S[1] - 2.4], shade(st, -0.22));
+  poly(ctx, [t1.W[0], t1.W[1] - 2.4, t1.N[0], t1.N[1] - 2.4, t1.E[0], t1.E[1] - 2.4, t1.S[0], t1.S[1] - 2.4], shade(st, 0.12));
+  for (let i = 1; i < 10; i++) { const u = i / 10, q0 = krbR(t1, u, 0), q1 = krbR(t1, u, 1); line(ctx, q0[0], q0[1], q1[0], q1[1], shade(st, -0.34), 0.3); }
+  const t2 = krbBox(x, y - 0.4, 9.2, 4.6, 2.2);
+  poly(ctx, [...t2.W, ...t2.S, t2.S[0], t2.S[1] - 2.2, t2.W[0], t2.W[1] - 2.2], shade(st, 0.02));
+  poly(ctx, [...t2.S, ...t2.E, t2.E[0], t2.E[1] - 2.2, t2.S[0], t2.S[1] - 2.2], shade(st, -0.16));
+  poly(ctx, [t2.W[0], t2.W[1] - 2.2, t2.N[0], t2.N[1] - 2.2, t2.E[0], t2.E[1] - 2.2, t2.S[0], t2.S[1] - 2.2], shade(st, 0.2));
+  for (let i = 1; i < 8; i++) { const u = i / 8, q0 = krbR(t2, u, 0), q1 = krbR(t2, u, 1); line(ctx, q0[0], q0[1], q1[0], q1[1], shade(st, -0.3), 0.3); }
+  for (const t of [t1, t2]) for (let i = 0; i <= 8; i++) { // balustrade posts round the top
+    const u = i / 8, q = krbR(t, u, 1), r = krbL(t, u, 1);
+    line(ctx, q[0], q[1], q[0], q[1] - 1.5, shade(st, 0.08), 0.8);
+    if (i < 6) line(ctx, r[0], r[1], r[0], r[1] - 1.5, shade(st, 0.2), 0.8);
+  }
+  // the stair on the front face, with its sloping carved ramp in the middle
+  poly(ctx, [x + 0.6, y + 2 + 5.2, x + 4.6, y + 2 + 3.2, x + 4.6, y + 0.8, x + 0.6, y + 2.8], shade(st, 0.1));
+  for (let i = 0; i < 5; i++) line(ctx, x + 0.6 + i * 0.8, y + 7.2 - i * 0.4 - 0.2, x + 0.6 + i * 0.8, y + 5.2 - i * 0.4 - 0.4, shade(st, -0.36), 0.3);
+  poly(ctx, [x + 1.9, y + 6.6, x + 3.3, y + 5.9, x + 3.3, y + 4.4, x + 1.9, y + 5.1], shade(st, -0.05));
+  // the hall
+  const hy = y - 2.6;
+  krbWall(ctx, x, hy, 6.4, 3.2, 10.4, { dancheong: true, doors: 'R', posts: 7, plinth: 0.1 });
+  krbRoof(ctx, x, hy - 10.4, 8, 4.8, 5.2, roofC, true);
+  // an upper storey and its own roof
+  krbWall(ctx, x, hy - 15.4, 3.6, 1.8, 4.4, { dancheong: true, doors: 'R', posts: 3, plinth: 0.02 });
+  krbRoof(ctx, x, hy - 19.8, 5.8, 3.4, 4.4, roofC, true);
+  ellipse(ctx, x, hy - 24.6, 0.9, 0.9, KRB_YEL);
+  for (const dx of [-11.6, 12.4]) krbLantern(ctx, x + dx, y + 4.4, 0.7);
+  if (!capital) return;
+  // the gate: a stone base with a dark arched passage under a tiled tower, at the front of the terrace
+  const gx = x - 10.6, gy = y + 10.4, gp = krbBox(gx, gy, 4.4, 2.4, 3);
+  poly(ctx, [...gp.W, ...gp.S, gp.S[0], gp.S[1] - 3, gp.W[0], gp.W[1] - 3], shade(st, -0.02));
+  poly(ctx, [...gp.S, ...gp.E, gp.E[0], gp.E[1] - 3, gp.S[0], gp.S[1] - 3], shade(st, -0.2));
+  for (let i = 1; i < 7; i++) { const u = i / 7, q0 = krbR(gp, u, 0), q1 = krbR(gp, u, 0.62); line(ctx, q0[0], q0[1], q1[0], q1[1], shade(st, -0.34), 0.3); }
+  const a0 = krbR(gp, 0.3, 0), a1 = krbR(gp, 0.7, 0), a2 = krbR(gp, 0.7, 0.6), a3 = krbR(gp, 0.3, 0.6), am = krbR(gp, 0.5, 0.86);
+  ctx.fillStyle = ink('#1a1218');
+  ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.quadraticCurveTo(am[0], am[1] - 0.6, a3[0], a3[1]); ctx.closePath(); ctx.fill();
+  poly(ctx, [gp.W[0], gp.W[1] - 3, gp.N[0], gp.N[1] - 3, gp.E[0], gp.E[1] - 3, gp.S[0], gp.S[1] - 3], shade(st, 0.2));
+  krbWall(ctx, gx, gy - 3, 3.6, 1.8, 4.6, { dancheong: true, doors: 'R', posts: 3, plinth: 0.02 });
+  krbRoof(ctx, gx, gy - 7.6, 5.4, 3.4, 3.8, roofC, true);
+}
+
+function drawKoreanBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, capital: boolean) {
+  if (big) return capital ? krbPalace(ctx, x, y, roofC, true) : krbMansion(ctx, x, y, roofC);
+  const v = ((Math.round(x * 3 + y * 5) % 4) + 4) % 4;
+  if (v === 0) krbHanok(ctx, x, y, roofC);
+  else if (v === 1) krbPagoda(ctx, x, y);
+  else if (v === 2) krbCottage(ctx, x, y);
+  else krbPavilion(ctx, x, y, roofC);
 }
 
 // ---------------------------------------------------------------- Mali: Sahel trees and sun-baked mud-brick (banco) towns
