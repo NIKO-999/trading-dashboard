@@ -1315,6 +1315,11 @@
   }
 
   // ---------------------------------------------------------------- boot
+  // TEMPORARY: while true, a save is unlocked once on load (Unlimited Mode + Unlock Everything).
+  // Set to false to end it: Unlimited Mode switches off and earlier balances come back.
+  const DEV_AUTO_UNLOCK = true;
+  if (DEV_AUTO_UNLOCK && !save.devApplied) { unlockEverything(); save.devApplied = true; persist(); }
+  else if (!DEV_AUTO_UNLOCK && save.devApplied) { setUnlimited(false); save.devApplied = false; persist(); }
   show('battle');
   splash();
   window.__heroGo = { get save() { return save; }, get run() { return R; } };
