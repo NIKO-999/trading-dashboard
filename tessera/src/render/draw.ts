@@ -1673,6 +1673,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'ottoman') return drawOttomanTree(ctx, x, y, k, P, variant);
   if (biome === 'india') return indianTree(ctx, x, y, k, P, variant);
+  if (biome === 'khmer') return khmerTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
@@ -2394,6 +2395,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     case 'india':
       indianBuilding(ctx, x, y, big, roofC, color, capital);
       break;
+    case 'khmer':
+      khmerBuilding(ctx, x, y, big, roofC, color, capital);
+      break;
     case 'ethiopia': {
       // Aksum: carved granite stelae, stepped stone-and-timber towers with monkey-head beam ends, and round churches
       const stone = '#c9bfa8', beam = '#4a2e16', G = '#2f9a4a', Y = '#e8c21a', R = '#c8372d';
@@ -2522,7 +2526,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
     }
   }
   if (capital) {
-    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : tribe === 'maya' && big ? 5 : 0; // the flag rides on the dome
+    const fo = tribe === 'persia' && big ? 10 : tribe === 'china' && big ? 12 : tribe === 'mali' && big ? (capital ? 12 : 8) : tribe === 'ottoman' && big ? 7 : tribe === 'india' && big ? 9 : tribe === 'swahili' && big ? 14 : tribe === 'maya' && big ? 5 : tribe === 'khmer' && big ? 20 : 0; // the flag rides on the dome
     ctx.strokeStyle = '#3a2a1a';
     ctx.lineWidth = 1.3;
     ctx.beginPath();
@@ -2833,6 +2837,396 @@ function indianBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: str
     ellipse(ctx, x + bx + 0.6, y + 3.8, 1.3, 0.8, c1);
     ellipse(ctx, x + bx + 0.2, y + 3.5, 0.6, 0.4, c2);
   }
+}
+
+// ---------------------------------------------------------------- Khmer trees and buildings
+// Angkor: toddy palms standing over the rice paddies, silk-cotton trees strangling ruined towers, banana groves and
+// lotus ponds; sandstone temples with quincunx towers shaped like lotus buds, carved galleries, stilt houses under thatch
+// and the great reservoirs (barays) that watered the empire.
+
+const KH_STONE = '#cdb891', KH_STONE_D = '#a48e66', KH_STONE_L = '#e4d3ae', KH_LATERITE = '#a2603e', KH_LATERITE_D = '#6f3c26';
+const KH_THATCH_C = '#d4b060', KH_BAMBOO = '#dcc07a', KH_JADE_C = '#2a8f5a', KH_LOTUS_C = '#f6a9c6', KH_LOTUS_DC = '#d9598c', KH_GOLD_C = '#f0c43a';
+
+/** A point on the right (R) or left (L) face of an isometric box at (cx, cy) of width w and height h. */
+function khFaceP(face: 'L' | 'R', cx: number, cy: number, w: number, h: number, u: number, v: number): number[] {
+  return face === 'R' ? [cx + (u * w) / 2, cy + (w / 4) * (1 - u) - v * h] : [cx - w / 2 + (u * w) / 2, cy + (w / 4) * u - v * h];
+}
+
+/** A flat polygon on one face of a box, in that face's (u, v) coordinates. */
+function khFacePoly(ctx: Ctx, face: 'L' | 'R', cx: number, cy: number, w: number, h: number, pts: [number, number][], col: string) {
+  poly(ctx, pts.flatMap(([u, v]) => khFaceP(face, cx, cy, w, h, u, v)), face === 'L' ? shade(col, 0.06) : shade(col, -0.2));
+}
+
+/** A lotus pad seen from above: a green disc with a notch, a paler rim of light. */
+function khPad(ctx: Ctx, x: number, y: number, r: number, c = '#4ea24a') {
+  ellipse(ctx, x, y, r, r * 0.46, shade(c, -0.25));
+  ellipse(ctx, x, y - r * 0.08, r * 0.92, r * 0.4, c);
+  ellipse(ctx, x - r * 0.25, y - r * 0.16, r * 0.4, r * 0.16, shade(c, 0.3));
+  poly(ctx, [x, y, x + r * 1.05, y - r * 0.12, x + r * 1.05, y + r * 0.2], 'rgba(60,120,100,0.75)'); // the notch shows the water
+}
+
+/** An open lotus bloom on its stem: two rings of pink petals round a golden heart. */
+function khLotus(ctx: Ctx, x: number, y: number, s: number, h: number) {
+  line(ctx, x, y, x + 0.2 * s, y - h, '#3f8a3a', 0.7 * s);
+  const by = y - h;
+  for (const [dx, c] of [[-2.2, KH_LOTUS_DC], [2.2, shade(KH_LOTUS_DC, -0.1)]] as const) poly(ctx, [x, by + 0.4 * s, x + dx * s, by - 1.2 * s, x + dx * 0.6 * s, by - 3 * s], c);
+  for (const [dx, c] of [[-1.5, KH_LOTUS_C], [1.5, shade(KH_LOTUS_C, -0.08)]] as const) poly(ctx, [x, by + 0.6 * s, x + dx * s, by - 1.4 * s, x + dx * 0.4 * s, by - 3.6 * s], c);
+  poly(ctx, [x - 0.9 * s, by + 0.5 * s, x, by - 3.9 * s, x + 0.9 * s, by + 0.5 * s], shade(KH_LOTUS_C, 0.3));
+  ellipse(ctx, x, by - 0.2 * s, 0.7 * s, 0.5 * s, KH_GOLD_C);
+}
+
+/** A lotus bud: a pink point wrapped in a green calyx. */
+function khBudD(ctx: Ctx, x: number, y: number, s: number, h: number) {
+  line(ctx, x, y, x, y - h, '#3f8a3a', 0.6 * s);
+  poly(ctx, [x - 1 * s, y - h + 0.4 * s, x, y - h - 3 * s, x + 1 * s, y - h + 0.4 * s], KH_LOTUS_C);
+  poly(ctx, [x, y - h + 0.4 * s, x, y - h - 3 * s, x + 1 * s, y - h + 0.4 * s], shade(KH_LOTUS_C, -0.15));
+  poly(ctx, [x - 1 * s, y - h + 0.4 * s, x, y - h + 1.2 * s, x + 1 * s, y - h + 0.4 * s], '#4a9a3a');
+}
+
+/** A pond: a flat diamond of water with a laterite lip, in the ground plane (rx wide, ry deep). */
+function khPond(ctx: Ctx, x: number, y: number, rx: number, ry: number, water = '#4fc4c0') {
+  poly(ctx, [x - rx - 1.2, y, x, y + ry + 0.8 + 1, x + rx + 1.2, y, x, y - ry - 0.8], KH_LATERITE_D);
+  poly(ctx, [x - rx - 1, y - 0.4, x, y + ry + 0.8, x + rx + 1, y - 0.4, x, y - ry - 0.8 - 0.4], KH_LATERITE);
+  poly(ctx, [x - rx, y, x, y + ry, x + rx, y, x, y - ry], shade(water, -0.2));
+  poly(ctx, [x - rx + 0.8, y - 0.2, x, y + ry - 0.6, x + rx - 0.8, y - 0.2, x, y - ry + 0.6], water);
+  poly(ctx, [x - rx * 0.6, y - 0.4, x - rx * 0.1, y - ry * 0.5, x + rx * 0.2, y - ry * 0.3, x - rx * 0.2, y + ry * 0.1], shade(water, 0.3)); // a glint
+}
+
+/**
+ * The trees of the Khmer land: a tall toddy palm with fan fronds and a clay pot tied to its crown, a silk-cotton tree
+ * whose roots pour over a ruined sandstone tower, a banana clump, a lotus pond and a spreading mango hung with fruit.
+ */
+function khmerTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const v = variant % 5;
+  const leaf = P.forest, bark = P.trunk;
+  const clump = (cx: number, cy: number, r: number, c: string, lit = 0) => {
+    ellipse(ctx, cx + 0.5 * k, cy + 0.8 * k, r * 1.02, r * 0.78, shade(c, -0.32));
+    ellipse(ctx, cx, cy, r, r * 0.78, shade(c, -0.1 + lit));
+    ellipse(ctx, cx - r * 0.2, cy - r * 0.26, r * 0.66, r * 0.48, shade(c, 0.1 + lit));
+    ellipse(ctx, cx - r * 0.36, cy - r * 0.42, r * 0.3, r * 0.2, shade(c, 0.28 + lit));
+  };
+  ctx.lineCap = 'round';
+  if (v === 0) {
+    // sugar palm (Borassus): a straight, thick, ringed trunk swelling near the top, a round crown of stiff fans and a toddy pot
+    const top = y - 28 * k;
+    poly(ctx, [x - 1.9 * k, y, x - 1.5 * k, y - 16 * k, x - 2.3 * k, top + 3 * k, x + 2.3 * k, top + 3 * k, x + 1.7 * k, y - 16 * k, x + 2.1 * k, y], shade(bark, 0.02));
+    poly(ctx, [x + 0.2 * k, y, x + 0.2 * k, top + 3 * k, x + 2.3 * k, top + 3 * k, x + 1.7 * k, y - 16 * k, x + 2.1 * k, y], shade(bark, -0.22));
+    for (let i = 0; i < 12; i++) line(ctx, x - 2 * k, y - (2 + i * 2.1) * k, x + 2.2 * k, y - (2.4 + i * 2.1) * k, shade(bark, -0.38), 0.45 * k); // the growth rings
+    for (const [dx, dy] of [[-2.3, -1], [2.3, -1.4], [-1.6, -3.4], [2, -4.2]] as const) line(ctx, x + dx * k, y + dy * k, x + dx * 1.6 * k, y + (dy + 0.6) * k, shade(bark, -0.3), 0.7 * k); // old frond stubs at the foot
+    for (let i = 0; i < 9; i++) { // fan fronds, each a stiff half-round blade of ribs
+      const a = -Math.PI / 2 + (i - 4) * 0.42;
+      const len = (i % 2 ? 9.4 : 10.8) * k;
+      const ex = x + Math.cos(a) * len, ey = top + Math.sin(a) * len * 0.62 + (Math.abs(i - 4) > 2 ? 2.4 * k : 0);
+      const nx = -Math.sin(a) * 4.2 * k, ny = Math.cos(a) * 2.6 * k;
+      poly(ctx, [x, top + 1 * k, ex + nx, ey + ny, ex - nx, ey - ny], i % 2 ? shade(leaf, 0.06) : shade(leaf, 0.24));
+      poly(ctx, [x, top + 1 * k, ex, ey, ex - nx, ey - ny], shade(leaf, -0.2));
+      for (const f of [-0.6, -0.2, 0.2, 0.6]) line(ctx, x, top + 1 * k, ex + nx * f, ey + ny * f, shade(leaf, -0.42), 0.35 * k);
+    }
+    for (const [dx, dy] of [[-1.6, 2.6], [0.6, 3.4], [1.9, 2.4]] as const) { ellipse(ctx, x + dx * k, top + dy * k, 1.5 * k, 1.5 * k, '#5a3a24'); ellipse(ctx, x + (dx - 0.4) * k, top + (dy - 0.4) * k, 0.5 * k, 0.5 * k, '#8a6444'); } // hanging fruit
+    line(ctx, x + 2 * k, top + 3 * k, x + 4.6 * k, top + 6 * k, '#e8dcb4', 0.4 * k); // the tapper's cord
+    ellipse(ctx, x + 4.8 * k, top + 8 * k, 1.5 * k, 1.9 * k, '#b46a3a'); // and his clay pot
+    ellipse(ctx, x + 4.8 * k, top + 6.4 * k, 1 * k, 0.5 * k, '#6a3a1e');
+    return;
+  }
+  if (v === 1) {
+    // silk-cotton tree over a ruined tower: buttress roots the colour of smooth grey stone flow over sandstone blocks
+    const rootC = '#8b8478', rootL = '#b1a998';
+    const root = (rx: number, sw: number, th: number, sx = 0.5) => {
+      for (const [c, w, o] of [[shade(rootC, -0.1), th, 0], [rootL, th * 0.32, -0.7]] as const) {
+        ctx.strokeStyle = ink(c);
+        ctx.lineWidth = w * k;
+        ctx.beginPath();
+        ctx.moveTo(x + (rx * sx + o) * k, y - 21 * k);
+        ctx.quadraticCurveTo(x + (rx + sw * 3 + o) * k, y - 12 * k, x + (rx + sw + o) * k, y + 1 * k);
+        ctx.stroke();
+      }
+    };
+    root(-8, -1.6, 2.2); root(8.4, 1.6, 2.2);
+    box(ctx, x, y, 12 * k, 3 * k, KH_STONE_D);
+    box(ctx, x, y - 3 * k, 9 * k, 6 * k, KH_STONE);
+    for (const [u, vv] of [[0.2, 0.3], [0.6, 0.55], [0.4, 0.75]] as const) faceQuad(ctx, 'R', x, y - 3 * k, 9 * k, 6 * k, u, u + 0.24, vv, vv + 0.14, shade(KH_STONE, -0.25)); // carved courses
+    faceQuad(ctx, 'R', x, y - 3 * k, 9 * k, 6 * k, 0.4, 0.62, 0, 0.5, '#3a2a1a'); // a doorway
+    box(ctx, x - 2 * k, y - 9 * k, 5.4 * k, 4 * k, shade(KH_STONE, -0.06)); // a fallen upper course, leaning
+    for (const [rx, sw, th] of [[-5.2, -1.6, 3.2], [-1.6, 1, 3.6], [2.4, -1.2, 3.8], [5.6, 1.8, 3]] as const) root(rx, sw, th);
+    ellipse(ctx, x, y - 20 * k, 5.2 * k, 3.4 * k, shade(rootC, -0.05)); // the swollen trunk
+    ellipse(ctx, x - 1.4 * k, y - 21 * k, 2.4 * k, 1.4 * k, rootL);
+    line(ctx, x - 3 * k, y - 19 * k, x - 7.4 * k, y - 24 * k, rootC, 2.4 * k);
+    line(ctx, x + 3 * k, y - 19 * k, x + 7 * k, y - 24 * k, rootC, 2.4 * k);
+    clump(x - 6.4 * k, y - 26 * k, 5.4 * k, leaf, 0.02);
+    clump(x + 6.6 * k, y - 26 * k, 5.6 * k, leaf, -0.04);
+    clump(x, y - 28 * k, 6.8 * k, leaf, 0.06);
+    return;
+  }
+  if (v === 2) {
+    // banana clump: three pseudo-stems, arching paddle leaves torn at the edges, a purple flower and a hanging bunch
+    for (const [bx, bh, lean] of [[-3.6, 10, -0.6], [3.2, 12, 0.5], [0, 14, 0]] as const) {
+      const tx = x + (bx + lean * 3) * k, ty = y - bh * k;
+      poly(ctx, [x + (bx - 1.1) * k, y, tx - 0.9 * k, ty, tx + 0.9 * k, ty, x + (bx + 1.1) * k, y], shade('#8ab24a', -0.06));
+      poly(ctx, [x + bx * k, y, tx, ty, tx + 0.9 * k, ty, x + (bx + 1.1) * k, y], shade('#8ab24a', -0.28));
+      for (let i = 0; i < 5; i++) { // leaves
+        const a = -Math.PI / 2 + (i - 2) * 0.72 + (bx < 0 ? -0.15 : 0.15);
+        const ex = tx + Math.cos(a) * 9.4 * k, ey = ty + Math.sin(a) * 4.4 * k + 5 * k;
+        const mx = tx + Math.cos(a) * 5.4 * k, my = ty + Math.sin(a) * 5 * k - 1 * k;
+        ctx.strokeStyle = ink(i % 2 ? shade(leaf, 0.02) : shade(leaf, 0.14));
+        ctx.lineWidth = 3.6 * k;
+        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo(mx, my, ex, ey); ctx.stroke();
+        ctx.strokeStyle = ink(shade(leaf, -0.3));
+        ctx.lineWidth = 0.4 * k;
+        ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo(mx, my, ex, ey); ctx.stroke();
+      }
+    }
+    line(ctx, x + 0.6 * k, y - 12 * k, x + 2.2 * k, y - 6.6 * k, '#6a8a3a', 0.9 * k); // the flower stalk
+    poly(ctx, [x + 2.2 * k, y - 8.4 * k, x + 4.6 * k, y - 5.4 * k, x + 2.2 * k, y - 3.6 * k, x + 0.8 * k, y - 6.4 * k], '#7a2a5a'); // the purple bud
+    for (const [dx, dy] of [[-0.4, -8.4], [1, -9.4], [0.2, -10.4]] as const) ellipse(ctx, x + dx * k, y + dy * k, 1.1 * k, 0.6 * k, '#8fbf4a'); // the green hands of bananas
+    return;
+  }
+  if (v === 3) {
+    // a lotus pond: dark water, floating pads and blooms, a bud or two; a white egret stands at the edge
+    khPond(ctx, x, y - 1 * k, 10 * k, 4.6 * k);
+    for (const [dx, dy, r] of [[-4.4, -0.6, 2.4], [-1, 1.4, 2.6], [3, -1.2, 2.2], [5, 1, 2], [-6, 1.6, 1.8], [1.2, -2.4, 1.8]] as const) khPad(ctx, x + dx * k, y + dy * k, r * k);
+    khLotus(ctx, x - 3.6 * k, y - 0.4 * k, 0.9 * k, 6.4 * k);
+    khLotus(ctx, x + 3.6 * k, y - 0.8 * k, 0.8 * k, 5.4 * k);
+    khBudD(ctx, x + 0.6 * k, y + 0.4 * k, 0.8 * k, 7.6 * k);
+    khBudD(ctx, x - 0.4 * k, y - 2.4 * k, 0.7 * k, 5 * k);
+    const ex = x + 8.4 * k, ey = y + 2.4 * k;
+    line(ctx, ex, ey, ex, ey - 4 * k, '#4a4030', 0.5 * k);
+    ellipse(ctx, ex, ey - 5.4 * k, 1.9 * k, 1.5 * k, '#ffffff');
+    line(ctx, ex + 0.8 * k, ey - 6.4 * k, ex + 1.6 * k, ey - 9.6 * k, '#ffffff', 0.9 * k);
+    ellipse(ctx, ex + 1.8 * k, ey - 10 * k, 0.8 * k, 0.7 * k, '#ffffff');
+    poly(ctx, [ex + 2.4 * k, ey - 10.2 * k, ex + 4.4 * k, ey - 9.8 * k, ex + 2.4 * k, ey - 9.4 * k], '#e8b02a');
+    return;
+  }
+  // mango: a thick fluted trunk forking under a broad umbrella crown, pale new leaves and long-stalked fruit
+  poly(ctx, [x - 2 * k, y, x - 1.4 * k, y - 8 * k, x + 1.4 * k, y - 8 * k, x + 2 * k, y], shade(bark, 0.05));
+  poly(ctx, [x + 0.2 * k, y, x + 0.2 * k, y - 8 * k, x + 1.4 * k, y - 8 * k, x + 2 * k, y], shade(bark, -0.2));
+  line(ctx, x - 0.4 * k, y - 7 * k, x - 6 * k, y - 12 * k, bark, 1.7 * k);
+  line(ctx, x + 0.4 * k, y - 7 * k, x + 6 * k, y - 12 * k, bark, 1.7 * k);
+  line(ctx, x, y - 7.6 * k, x + 0.4 * k, y - 13 * k, bark, 1.5 * k);
+  const mc = shade(leaf, -0.08);
+  clump(x - 7 * k, y - 14.6 * k, 5.4 * k, mc, -0.02);
+  clump(x + 7 * k, y - 14.4 * k, 5.6 * k, mc, -0.05);
+  clump(x, y - 17.6 * k, 7.6 * k, mc, 0.04);
+  clump(x - 3.6 * k, y - 21.6 * k, 4.6 * k, mc, 0.1);
+  clump(x + 4 * k, y - 21 * k, 4.2 * k, mc, 0.06);
+  for (const [fx, fy] of [[-6, -18], [-1, -23.6], [5, -19], [7.6, -14.6]] as const) ellipse(ctx, x + fx * k, y + fy * k, 1.8 * k, 1 * k, '#c9c26a'); // new leaves, pale gold-green
+  for (const [fx, fy, c] of [[-6.6, -10.6, '#e8a02a'], [-2.6, -12.4, '#8fbf4a'], [3.2, -12, '#e8862a'], [6.8, -10.4, '#8fbf4a'], [0.6, -13.6, '#f2b33a'], [-4.6, -13.6, '#f2b33a']] as const) {
+    line(ctx, x + fx * k, y + (fy - 3) * k, x + fx * k, y + (fy - 0.8) * k, shade(leaf, -0.4), 0.4 * k);
+    ellipse(ctx, x + fx * k, y + fy * k, 0.9 * k, 1.4 * k, c);
+    ellipse(ctx, x + (fx - 0.3) * k, y + (fy - 0.5) * k, 0.3 * k, 0.5 * k, shade(c, 0.5));
+  }
+}
+
+/** A lotus-bud prang: stacked tiers of sandstone with false doors, crowned by an ogive bud ringed with petal bands. */
+function khPrang(ctx: Ctx, x: number, y: number, w: number, h: number, gilt = false) {
+  const tiers: [number, number][] = [[1, 0.26], [0.8, 0.22], [0.6, 0.2]];
+  let cy = y;
+  tiers.forEach(([tw, th], i) => {
+    const bw = w * tw, bh = h * th;
+    box(ctx, x, cy, bw, bh, i % 2 ? shade(KH_STONE, -0.02) : KH_STONE, KH_STONE_L);
+    khFacePoly(ctx, 'R', x, cy, bw, bh, [[0.3, 0.06], [0.7, 0.06], [0.7, 0.7], [0.5, 0.92], [0.3, 0.7]], KH_STONE_L); // a pointed frame round a false door
+    khFacePoly(ctx, 'R', x, cy, bw, bh, [[0.36, 0.08], [0.64, 0.08], [0.64, 0.64], [0.5, 0.8], [0.36, 0.64]], '#3a2a1a');
+    faceQuad(ctx, 'L', x, cy, bw, bh, 0.28, 0.72, 0.16, 0.7, shade(KH_STONE, -0.3)); // a niche on the shaded side
+    faceQuad(ctx, 'L', x, cy, bw, bh, 0.34, 0.66, 0.22, 0.64, shade(KH_STONE, -0.42));
+    band(ctx, x, cy, bw, bh, 0.88, 1, KH_STONE_L);
+    band(ctx, x, cy, bw, bh, 0, 0.08, KH_STONE_D);
+    faceQuad(ctx, 'R', x, cy, bw, bh, 0.05, 0.16, 0.12, 0.7, KH_STONE_D); // pilasters at the corner
+    cy -= bh;
+  });
+  const bw = w * 0.3, bh = h * 0.32, top = cy - bh;
+  const col = gilt ? '#e8b93c' : KH_STONE;
+  ellipse(ctx, x, cy + 0.4, bw * 1.15, bw * 0.55, shade(col, -0.25));
+  const half = (s: number) => {
+    ctx.beginPath();
+    ctx.moveTo(x, cy + 0.4);
+    ctx.lineTo(x + s * bw * 1.1, cy + 0.4);
+    ctx.bezierCurveTo(x + s * bw * 1.35, cy - bh * 0.4, x + s * bw * 0.6, cy - bh * 0.8, x, top);
+    ctx.closePath();
+  };
+  half(-1);
+  ctx.fillStyle = ink(shade(col, 0.1));
+  ctx.fill();
+  half(1);
+  ctx.fillStyle = ink(shade(col, -0.22));
+  ctx.fill();
+  ctx.lineCap = 'round';
+  for (const t of [0.22, 0.44, 0.66]) { // the petal rings
+    const wr = bw * (1.18 - t * 1.05);
+    ctx.strokeStyle = ink(shade(col, -0.4));
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.ellipse(x, cy - bh * t + 0.4, Math.max(0.4, wr), Math.max(0.3, wr * 0.32), 0, 0.05 * Math.PI, 0.95 * Math.PI);
+    ctx.stroke();
+  }
+  for (const s of [-0.5, 0.5]) { // seams between the petals
+    ctx.strokeStyle = ink(shade(col, -0.35));
+    ctx.lineWidth = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(x + s * bw * 0.9, cy + 0.2);
+    ctx.bezierCurveTo(x + s * bw * 1.1, cy - bh * 0.4, x + s * bw * 0.4, cy - bh * 0.8, x, top);
+    ctx.stroke();
+  }
+  ellipse(ctx, x - bw * 0.42, cy - bh * 0.42, bw * 0.14, bh * 0.22, 'rgba(255,255,255,0.35)');
+  line(ctx, x, top, x, top - h * 0.14, KH_GOLD_C, Math.max(0.5, w * 0.08)); // the gilt finial
+  ellipse(ctx, x, top - h * 0.14, Math.max(0.6, w * 0.1), Math.max(0.6, w * 0.1), KH_GOLD_C);
+}
+
+/** A gallery: sandstone walls with pilasters, balustered windows, a carved bas-relief frieze and a stepped roof. */
+function khGallery(ctx: Ctx, x: number, y: number, w: number, h: number, coral: string) {
+  box(ctx, x, y, w, h, KH_STONE, KH_STONE_D);
+  band(ctx, x, y, w, h, 0, 0.1, KH_LATERITE); // a laterite plinth
+  const nB = Math.max(4, Math.round(w / 3.2));
+  for (let i = 0; i < nB; i++) {
+    const u = 0.04 + i * (0.92 / nB), uw = 0.92 / nB;
+    faceQuad(ctx, 'R', x, y, w, h, u, u + 0.03, 0.1, 0.94, KH_STONE_L); // pilaster
+    if (i % 2 === 0) { // a window with turned balusters
+      faceQuad(ctx, 'R', x, y, w, h, u + 0.05, u + uw - 0.03, 0.3, 0.62, '#2a1e14');
+      for (let j = 1; j < 4; j++) faceQuad(ctx, 'R', x, y, w, h, u + 0.05 + (uw - 0.08) * (j / 4) - 0.006, u + 0.05 + (uw - 0.08) * (j / 4) + 0.014, 0.3, 0.62, KH_STONE_L);
+      faceQuad(ctx, 'R', x, y, w, h, u + 0.04, u + uw - 0.02, 0.62, 0.68, KH_STONE_L);
+    } else { // a panel of bas-relief: a little dancer under a lintel
+      faceQuad(ctx, 'R', x, y, w, h, u + 0.04, u + uw - 0.01, 0.18, 0.66, shade(KH_STONE, -0.16));
+      const [px, py] = khFaceP('R', x, y, w, h, u + uw * 0.5 + 0.01, 0.5);
+      ellipse(ctx, px, py - 0.6, 0.55, 0.6, shade(KH_STONE, 0.1));
+      poly(ctx, [px - 0.5, py - 0.1, px + 0.5, py - 0.1, px + 1.1, py + 1.9, px - 1.1, py + 1.9], shade(KH_STONE, 0.05));
+    }
+  }
+  for (let i = 0; i < 3; i++) { // the shaded side: three tall relief panels
+    const u0 = 0.08 + i * 0.3;
+    faceQuad(ctx, 'L', x, y, w, h, u0, u0 + 0.24, 0.16, 0.7, shade(KH_STONE, -0.2));
+    faceQuad(ctx, 'L', x, y, w, h, u0 + 0.03, u0 + 0.21, 0.2, 0.66, shade(KH_STONE, -0.08));
+    const [px, py] = khFaceP('L', x, y, w, h, u0 + 0.12, 0.44);
+    ellipse(ctx, px, py - 1.2, 0.6, 0.65, shade(KH_STONE, 0.14));
+    poly(ctx, [px - 0.5, py - 0.6, px + 0.5, py - 0.6, px + 1.3, py + 2.2, px - 1.3, py + 2.2], shade(KH_STONE, 0.05));
+  }
+  for (const f of ['L', 'R'] as const) { // the frieze under the eaves: a coral band, gold dots
+    faceQuad(ctx, f, x, y, w, h, 0, 1, 0.76, 0.84, KH_STONE_D);
+    faceQuad(ctx, f, x, y, w, h, 0, 1, 0.84, 0.94, coral);
+    faceQuad(ctx, f, x, y, w, h, 0, 1, 0.94, 1, KH_STONE_L);
+    for (let i = 0; i < nB * 2; i++) { const u = 0.03 + i * (0.94 / (nB * 2)); faceQuad(ctx, f, x, y, w, h, u, u + 0.02, 0.87, 0.91, KH_GOLD_C); }
+  }
+  // the stepped roof: two diminishing parapets with an eave of coral tile
+  box(ctx, x, y - h, w - 2, 1.6, shade(KH_STONE, 0.06), KH_STONE_L);
+  band(ctx, x, y - h, w - 2, 1.6, 0.5, 1, shade(coral, -0.1));
+  box(ctx, x, y - h - 1.6, w - 5, 1.4, shade(KH_STONE, 0.1), KH_STONE_L);
+  band(ctx, x, y - h - 1.6, w - 5, 1.4, 0.4, 1, KH_STONE_L);
+}
+
+/** A flag of the empire: a coral cloth on a gilt pole. */
+function khBanner(ctx: Ctx, x: number, y: number, h: number, coral: string) {
+  line(ctx, x, y, x, y - h, '#5a3a1e', 0.9);
+  poly(ctx, [x, y - h, x + 5, y - h + 1, x + 3.6, y - h + 2.8, x + 5, y - h + 4.8, x, y - h + 4.2], coral);
+  ellipse(ctx, x, y - h - 0.6, 0.7, 0.8, KH_GOLD_C);
+}
+
+/** A stilt house: bamboo walls and a high floor on posts under a steep thatched roof with crossed gable horns. */
+function khStilt(ctx: Ctx, x: number, y: number, coral: string, roofC: string) {
+  const rp = 4.6; // the height of the floor above the ground
+  for (const [px, py] of [[-5.2, 0.2], [5.2, 0.2], [0, 3], [-5.2, -2.2], [0, -2.4]] as const) line(ctx, x + px, y + py, x + px, y + py - rp, shade(roofC, -0.2), 1.1); // the posts
+  ellipse(ctx, x + 3.2, y + 2, 1.6, 1.3, '#b46a3a'); // a water jar and a pile of firewood under the floor
+  ellipse(ctx, x + 3.2, y + 1, 1.1, 0.45, '#5a3a24');
+  for (const [dx, dy] of [[-2.8, 1.4], [-1.8, 1.8], [-2.4, 0.6]] as const) line(ctx, x + dx - 1.3, y + dy, x + dx + 1.3, y + dy - 0.4, '#8a6a3a', 1);
+  box(ctx, x, y - rp, 12.4, 1.2, roofC, shade(roofC, 0.2)); // the floor
+  line(ctx, x + 5.4, y - rp + 2.6, x + 8.4, y + 4, shade(roofC, -0.1), 0.7); // a ladder
+  line(ctx, x + 6.4, y - rp + 2.4, x + 9.4, y + 3.8, shade(roofC, -0.1), 0.7);
+  for (const t of [0.3, 0.6]) line(ctx, x + 5.8 + t * 2.8, y - rp + 2.6 + t * 6, x + 6.8 + t * 2.8, y - rp + 2.4 + t * 6, shade(roofC, -0.3), 0.5);
+  const wy = y - rp - 1.2;
+  box(ctx, x, wy, 10.2, 4.6, KH_BAMBOO);
+  for (const u of [0.14, 0.3, 0.46, 0.62, 0.78, 0.92]) faceQuad(ctx, 'R', x, wy, 10.2, 4.6, u, u + 0.02, 0, 1, shade(KH_BAMBOO, -0.32));
+  for (const v of [0.33, 0.66]) band(ctx, x, wy, 10.2, 4.6, v, v + 0.03, shade(KH_BAMBOO, -0.22));
+  faceQuad(ctx, 'R', x, wy, 10.2, 4.6, 0.3, 0.54, 0, 0.8, '#2a1e14'); // the door, hung with a coral cloth
+  khFacePoly(ctx, 'R', x, wy, 10.2, 4.6, [[0.3, 0.84], [0.54, 0.84], [0.54, 0.3], [0.42, 0.42], [0.3, 0.3]], coral);
+  faceQuad(ctx, 'L', x, wy, 10.2, 4.6, 0.3, 0.66, 0.34, 0.72, '#2a1e14');
+  for (const u of [0.44, 0.52]) faceQuad(ctx, 'L', x, wy, 10.2, 4.6, u, u + 0.02, 0.34, 0.72, KH_BAMBOO);
+  band(ctx, x, wy, 10.2, 4.6, 0.9, 1, shade(roofC, 0.1));
+  // the roof: deep thatch, its eaves overhanging, thatched ridge lines, crossed horns at the gable
+  const rw = 9, rh = 7.4, ry0 = wy - 4.6;
+  roof(ctx, x, ry0, rw * 2, rh, KH_THATCH_C);
+  for (const f of [0.25, 0.5, 0.75]) {
+    line(ctx, x, ry0 - rh, x - rw * (1 - f), ry0 + (rw / 2) * f - 0.2, shade(KH_THATCH_C, -0.3), 0.4);
+    line(ctx, x, ry0 - rh, x + rw * (1 - f), ry0 + (rw / 2) * f - 0.2, shade(KH_THATCH_C, -0.5), 0.4);
+  }
+  line(ctx, x - rw, ry0, x, ry0 + rw / 2, shade(KH_THATCH_C, 0.35), 0.7);
+  line(ctx, x, ry0 + rw / 2, x + rw, ry0, shade(KH_THATCH_C, -0.4), 0.7);
+  line(ctx, x - 1.8, ry0 - rh - 2.6, x + 0.4, ry0 - rh + 0.4, shade(roofC, -0.2), 0.8);
+  line(ctx, x + 1.8, ry0 - rh - 2.6, x - 0.4, ry0 - rh + 0.4, shade(roofC, -0.2), 0.8);
+}
+
+/** A little wayside shrine: a laterite base and a single lotus-bud prang, a coral cloth tied to it, an offering of lotus. */
+function khShrine(ctx: Ctx, x: number, y: number, coral: string) {
+  box(ctx, x, y + 1.6, 12.6, 2.2, KH_LATERITE, shade(KH_LATERITE, 0.2));
+  box(ctx, x, y - 0.4, 10.2, 1.8, KH_STONE_D, KH_STONE);
+  khPrang(ctx, x, y - 1.2, 8.4, 14);
+  khBudD(ctx, x + 4.2, y + 3.2, 0.7, 2.8);
+  khBanner(ctx, x + 5.6, y + 2.4, 9, coral);
+}
+
+/** A baray edge: a reservoir of still water with a laterite bank and steps, lotus pads and blooms, a stone naga post. */
+function khBaray(ctx: Ctx, x: number, y: number, coral: string) {
+  khPond(ctx, x, y + 1, 9.2, 4.6);
+  for (const [dx, dy, r] of [[-3.8, 0.4, 2.2], [0.4, 2.2, 2.4], [3.4, -0.4, 2], [-1, -1.6, 1.8], [5, 1.6, 1.6]] as const) khPad(ctx, x + dx, y + dy, r);
+  khLotus(ctx, x - 3, y + 0.8, 0.85, 5.4);
+  khLotus(ctx, x + 3.2, y + 0.2, 0.75, 4.4);
+  khBudD(ctx, x + 0.4, y + 1.2, 0.7, 6.4);
+  for (const i of [0, 1, 2]) box(ctx, x + 9.2 + i * 0.4, y + 5.4 - i * 1.2 + 0.4, 3.2, 1.1, i % 2 ? KH_STONE_D : KH_STONE); // stone steps down to the water on the right bank
+  box(ctx, x - 9.6, y + 0.4, 2.2, 6, KH_STONE); // a stone post at the corner, capped by a jade naga head
+  ellipse(ctx, x - 9.6, y - 6.4, 1.9, 1.6, KH_JADE_C);
+  poly(ctx, [x - 8.4, y - 6.8, x - 6.4, y - 6, x - 8.4, y - 5.4], shade(KH_JADE_C, -0.1));
+  ellipse(ctx, x - 9.4, y - 6.9, 0.35, 0.35, '#ffe36a');
+  khBanner(ctx, x - 9.6, y - 6.4, 5, coral);
+}
+
+/**
+ * Khmer city buildings: stilt houses, wayside prang shrines and barays with lotus for the small ones; the great
+ * building is a sandstone temple, a carved gallery under a quincunx of lotus-bud towers, and the capital a
+ * temple-mountain of three terraces, a naga stair and five towers in gold.
+ */
+function khmerBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, color: string, capital: boolean) {
+  if (big) {
+    if (!capital) {
+      // the terraced platform, the gallery, and five prangs
+      box(ctx, x, y + 3.4, 28, 2.8, KH_LATERITE);
+      box(ctx, x, y + 1.2, 24.4, 2.8, KH_STONE_D, KH_STONE);
+      for (let i = 0; i < 6; i++) faceQuad(ctx, 'R', x, y + 1.2, 24.4, 2.8, 0.3 + i * 0.07, 0.34 + i * 0.07, 0, 1, i % 2 ? KH_STONE : KH_STONE_L); // a stair up the front
+      const gy = y - 0.8;
+      khGallery(ctx, x, gy, 20, 6, color);
+      const ry = gy - 6 - 3; // the middle of the roof lid
+      khPrang(ctx, x, ry - 3, 4.6, 10);
+      khPrang(ctx, x - 5.8, ry, 4.8, 10.6);
+      khPrang(ctx, x + 5.8, ry, 4.8, 10.6);
+      khPrang(ctx, x, ry, 6.4, 17);
+      khPrang(ctx, x, ry + 3, 4.8, 10.6);
+      khBanner(ctx, x + 10.4, y + 2.2, 11, color);
+      return;
+    }
+    // the temple-mountain: three terraces, a great gallery, four corner prangs and the central tower gilded at the tip
+    box(ctx, x, y + 7, 38, 3, KH_LATERITE_D, KH_LATERITE);
+    box(ctx, x, y + 4.4, 33, 3.2, KH_LATERITE);
+    for (let i = 0; i < 6; i++) faceQuad(ctx, 'R', x, y + 4.4, 33, 3.2, 0.33 + i * 0.06, 0.36 + i * 0.06, 0, 1, i % 2 ? KH_STONE : KH_STONE_L); // the stair
+    box(ctx, x, y + 1.4, 29, 3.4, KH_STONE_D, KH_STONE);
+    for (const f of ['L', 'R'] as const) for (let i = 0; i < 9; i++) { const u = 0.06 + i * 0.105; faceQuad(ctx, f, x, y + 1.4, 29, 3.4, u, u + 0.04, 0.12, 0.9, KH_STONE_L); } // a colonnade of posts
+    // the stair up the lowest terrace, guarded by two seven-headed nagas on pedestals
+    for (let i = 0; i < 6; i++) faceQuad(ctx, 'R', x, y + 7, 38, 3, 0.38 + i * 0.04, 0.4 + i * 0.04, 0, 1, i % 2 ? KH_STONE : KH_STONE_L);
+    for (const u of [0.32, 0.66]) {
+      const [nx, ny] = khFaceP('R', x, y + 7, 38, 3, u, 0);
+      box(ctx, nx, ny + 1.8, 2.6, 2.4, KH_STONE_D, KH_STONE);
+      line(ctx, nx, ny - 0.6, nx, ny - 3.2, KH_JADE_C, 1.8);
+      for (let i = 0; i < 5; i++) { const a = -Math.PI * 0.95 + i * 0.44; ellipse(ctx, nx + Math.cos(a) * 2.2, ny - 4.2 + Math.sin(a) * 1.9, 0.85, 0.7, i % 2 ? shade(KH_JADE_C, 0.2) : KH_JADE_C); }
+      ellipse(ctx, nx, ny - 3.6, 1.4, 1.2, shade(KH_JADE_C, -0.1));
+    }
+    const gy = y - 1.4;
+    khGallery(ctx, x, gy, 24, 7, color);
+    for (const dx of [-12.4, 12.4]) khPrang(ctx, x + dx, gy + 2.6, 3.8, 8.6); // small towers at the ends of the terrace
+    const ry = gy - 7 - 3;
+    khPrang(ctx, x, ry - 3.6, 5.2, 12);
+    khPrang(ctx, x - 7, ry, 5.6, 13);
+    khPrang(ctx, x + 7, ry, 5.6, 13);
+    khPrang(ctx, x, ry, 8, 27, true);
+    khPrang(ctx, x, ry + 3.6, 5.6, 13);
+    return;
+  }
+  const v = Math.abs(Math.round(x * 1.7 + y * 2.9)) % 3;
+  if (v === 0) return khStilt(ctx, x, y + 1, color, roofC);
+  if (v === 1) return khShrine(ctx, x, y, color);
+  khBaray(ctx, x, y, color);
 }
 
 // ---------------------------------------------------------------- Persian trees and buildings
