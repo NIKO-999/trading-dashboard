@@ -13,7 +13,9 @@ export default defineConfig({
       manifest: {
         name: 'Tessera — Tile Empires',
         short_name: 'Tessera',
-        description: 'Lead one of five empires across a tiled world. Explore, harvest, research and conquer.',
+        id: './',
+        description: 'Lead one of ten empires across a tiled world. Explore, harvest, research and conquer.',
+        categories: ['games', 'strategy'],
         theme_color: '#0b0d1a',
         background_color: '#0b0d1a',
         display: 'standalone',

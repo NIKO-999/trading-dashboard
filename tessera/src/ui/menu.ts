@@ -4,6 +4,7 @@ import type { MapSize } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
 import { sfx } from '../audio/sfx';
+import { canOfferInstall, installApp } from './install';
 import { setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, setDirectDraw } from '../render/sprites';
@@ -109,6 +110,7 @@ export function showTitle(handlers: MenuHandlers) {
       h('button', { class: 'pill', onclick: () => showSetup(handlers, false) }, 'NEW GAME'),
       h('button', { class: 'pill', onclick: () => showSetup(handlers, true) }, 'PASS & PLAY'),
     ),
+    ...(canOfferInstall() ? [h('button', { class: 'install-btn', onclick: () => void installApp() }, 'Install app')] : []),
     h('div', { class: 'title-version' }, `v${__APP_VERSION__.replace(/\.0$/, '')}`),
     h('div', { class: 'title-dock' },
       dockButton('menu', 'Settings', () => showSettings(handlers)),

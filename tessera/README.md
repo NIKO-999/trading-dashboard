@@ -3,7 +3,7 @@
 A turn-based 4X strategy game for phones, built as an installable, offline-capable PWA.
 It is separate from the rest of this repo, with its own `package.json` and build.
 
-Lead one of five empires, each with its own biome, starting tech, unique unit and bonus:
+Lead one of ten empires, each with its own biome, starting tech, unique unit and bonus:
 
 | Empire | Biome | Starts with | Unique unit | Bonus |
 |---|---|---|---|---|
@@ -12,12 +12,19 @@ Lead one of five empires, each with its own biome, starting tech, unique unit an
 | Polynesian | islands | Fishing | Waka (replaces Canoe) | Board boats from any coast |
 | Roman | hills | Riding | Legionary (replaces Warrior) | Roads cost 1★ less |
 | Pirate | rocky coast | Fishing | Buccaneer (replaces Archer) | Boats and ships move +1 and attack +1; ports cost 4★ and earn +1★ a turn |
+| Viking | snowy fjords | Climbing | Berserker (replaces Swordsman) | Units heal 3 HP when they win a fight |
+| Japanese | mountains and blossom | Fishing | Samurai (replaces Swordsman) | +1 defence inside your own borders |
+| Mongol | grass steppe | Riding | Horse Archer (replaces Archer) | Mounted units cost 1★ less |
+| Greek | olive coast | Gathering | Hoplite (replaces Defender) | Every tech costs 1★ less |
+| Zulu | savanna | Hunting | Impi (replaces Warrior) | Hunting grows a city by 2 |
 
 Features:
 - A seeded isometric map with fog of war.
 - Harvestable resources: fruit, animals, fish, crops, ore and whales.
 - Buildings: farms, mines, lumber huts, ports, shrines and markets.
-- Roads, villages to claim, and ruins to explore.
+- Roads that grow the cities they connect (milestones at 5, 10 and 15 connected roads, plus links between your own cities), villages to claim, and ruins to explore.
+- Neighbouring lumber huts, ports, temples and markets give bonus population.
+- Units on mountains defend at ×2.
 - Cities that level up, with a choice of reward at each level.
 - A 25-node radial tech tree.
 - Land and naval combat with retaliation.
@@ -47,3 +54,17 @@ npm run icons     # regenerate public/icons/*
 - `src/render/`: the camera, the canvas renderer and the unit art
 - `src/audio/`: synthesized sound effects
 - `src/ui/`: menus, HUD, action panel, tech tree and modals
+
+
+## Install and host it
+
+Tessera is a standard PWA: a web app manifest, maskable icons, a service worker that caches everything
+(so it runs offline after the first visit) and iPhone home-screen support. `npm run build` produces the
+whole site in `dist/`; host that folder over HTTPS.
+
+- **Vercel:** New Project, import this repo, set **Root Directory** to `tessera`. `tessera/vercel.json` does the rest.
+- **GitHub Pages:** Settings, Pages, Source: *GitHub Actions*; then run the *Deploy Tessera to GitHub Pages* workflow from the Actions tab.
+- **Anything else** that serves static files over HTTPS works (Netlify, Cloudflare Pages, your own server).
+
+To install it once it is hosted: on **iPhone** open the address in Safari, tap Share, then *Add to Home Screen*;
+on **Android or desktop Chrome** use the *Install app* button on the title screen (or the browser menu).
