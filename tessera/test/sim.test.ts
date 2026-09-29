@@ -582,7 +582,7 @@ test('the newest five empires\' bonuses', () => {
   assert.ok(research(k, 0, 'hunting'));
   assert.ok(cap.pop + cap.level * 100 > pop);
   // Tibet: mountains are open without Climbing
-  const t = g('tibet'), u = t.units.find((v) => v.owner === 0 && v.kind === 'warrior')!, cc = t.cities.find((c) => c.owner === 0)!;
+  const t = g('tibet'), u = t.units.find((v) => v.owner === 0 && v.kind === 'warrior')!;
   t.players[0].techs = [];
   t.units = [u]; u.moved = false; u.attacked = false;
   const mt = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).map(([dx, dy]) => tileAt(t, u.x + dx, u.y + dy)).find((x) => x && x.cityId === null)!;
