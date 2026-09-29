@@ -14,6 +14,7 @@ import { render as inuit } from './inuit';
 import { render as japan } from './japan';
 import { render as khmer } from './khmer';
 import { render as korea } from './korea';
+import { render as lakota } from './lakota';
 import { render as mali } from './mali';
 import { render as maya } from './maya';
 import { render as mongols } from './mongols';
@@ -24,4 +25,4 @@ import { render as tibet } from './tibet';
 import { render as vikings } from './vikings';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, mali, maya, mongols, ottoman, persia, rome, tibet, vikings, zulu };
+export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, lakota, mali, maya, mongols, ottoman, persia, rome, tibet, vikings, zulu };
