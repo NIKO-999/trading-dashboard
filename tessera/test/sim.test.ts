@@ -520,3 +520,24 @@ test('claiming a city that already sits on your road network is not a windfall',
   assert.ok(total() - before <= 1, 'the old city gets at most the one-pop link reward, nothing more');
   assert.equal(founded.level, 1);
 });
+
+test('the five newest empires\' bonuses', () => {
+  const place = (tribe: 'celts' | 'ethiopia', terrain: 'forest' | 'mountain') => {
+    const s = createGame({ seed: 11, human: tribe, opponents: ['rome'], mode: 'domination' });
+    const u = s.units.find((v) => v.owner === 0)!;
+    const cap = s.cities.find((c) => c.owner === 0)!;
+    u.x = cap.x + 1; u.y = cap.y; // stand beside the city, not on its walls
+    tileAt(s, u.x, u.y)!.terrain = terrain;
+    return defenseBonus(s, u);
+  };
+  assert.equal(place('celts', 'forest'), 2); // Sacred Groves, no Archery needed
+  assert.equal(place('ethiopia', 'mountain'), 2.5); // Highland Fortress
+  const r = createGame({ seed: 11, human: 'rome', opponents: ['celts'], mode: 'domination' });
+  const ru = r.units.find((v) => v.owner === 0)!;
+  const rc = r.cities.find((c) => c.owner === 0)!;
+  ru.x = rc.x + 1; ru.y = rc.y;
+  tileAt(r, ru.x, ru.y)!.terrain = 'mountain';
+  assert.equal(defenseBonus(r, ru), 2);
+  // every new empire's unique unit is trainable data
+  for (const id of ['persia', 'celts', 'inuit', 'inca', 'ethiopia'] as const) assert.ok(TRIBE_IDS.includes(id));
+});
