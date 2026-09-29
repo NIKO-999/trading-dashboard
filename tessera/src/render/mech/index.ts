@@ -2,4 +2,6 @@
 import type { MechRenderRegistry } from './types';
 export type { MechRender } from './types';
 
-export const MECH_RENDER: MechRenderRegistry = {};
+import { render as japan } from './japan';
+
+export const MECH_RENDER: MechRenderRegistry = { japan };
