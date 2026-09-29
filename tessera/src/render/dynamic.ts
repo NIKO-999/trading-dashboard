@@ -603,7 +603,7 @@ let bubbleRects: { kind: BubbleKind; x: number; y: number; r: number }[] = [];
 
 /** The action bubble under screen point (sx, sy), if any. */
 export function bubbleAt(sx: number, sy: number): BubbleKind | null {
-  for (const b of bubbleRects) if (Math.hypot(sx - b.x, sy - b.y) <= b.r + 7) return b.kind;
+  for (const b of bubbleRects) if (Math.hypot(sx - b.x, sy - b.y) <= b.r + 3) return b.kind;
   return null;
 }
 
@@ -623,7 +623,7 @@ function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], mo
   const bob = Math.sin(ov.now / 380) * 1.6 * k;
   kinds.forEach((kind, i) => {
     const cx = snap(tip.x - total / 2 + R + i * (R * 2 + gap));
-    const cy = snap(tip.y - R - 9 * k + bob);
+    const cy = snap(tip.y - R - 27 * k + bob); // well clear of the tile above the unit, which a tap may be aiming for
     const off = !!ov.bubblesOff?.includes(kind);
     const [hi, lo] = off ? ['#cfd4dc', '#8d95a3'] : BUBBLE_COLORS[kind];
     ctx.save();
