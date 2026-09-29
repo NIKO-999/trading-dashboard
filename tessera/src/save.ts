@@ -56,9 +56,9 @@ export interface Settings {
   hints: boolean;
   fastAi: boolean;
   sound: boolean;
-  direct: boolean; // draw the map straight onto the screen instead of through cached layers (see setDirectDraw)
+  cached: boolean; // draw the map through cached layers instead of straight onto the screen (see setDirectDraw)
   flat: boolean; // crisp art: flat colours and hard-edged shadows (see setCrispArt)
   sharp: 1 | 4 | 5; // minimum pixels per CSS pixel for drawing (1 = follow the screen; see renderDpr)
 }
-export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, direct: false, flat: true, sharp: 1, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
+export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, cached: false, flat: true, sharp: 1, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
 export const saveSettings = (s: Settings) => write(SETTINGS_KEY, s);

@@ -305,12 +305,12 @@ function showSettings(handlers: MenuHandlers) {
     return row;
   };
   const directRow = () => {
-    const opts: [boolean, string][] = [[false, 'Cached'], [true, 'Direct']];
+    const opts: [boolean, string][] = [[false, 'Direct'], [true, 'Cached']];
     const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Map drawing'));
     const group = h('div', { class: 'seg' });
     const draw = () => {
       group.innerHTML = '';
-      for (const [v, text] of opts) group.append(h('button', { class: st.direct === v ? 'on' : '', onclick: () => { st.direct = v; saveSettings(st); setDirectDraw(v); draw(); } }, text));
+      for (const [v, text] of opts) group.append(h('button', { class: st.cached === v ? 'on' : '', onclick: () => { st.cached = v; saveSettings(st); setDirectDraw(!v); draw(); } }, text));
     };
     draw();
     row.append(group);
