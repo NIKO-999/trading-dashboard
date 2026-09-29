@@ -129,6 +129,7 @@ export class WorldRenderer {
     const reuse = fresh && covers && (zoomSame || (interacting && Math.abs(Math.log(scale)) < 0.35));
 
     let blit: (layer: HTMLCanvasElement) => void;
+    let exact = false; // copied 1:1 onto whole device pixels, so no smoothing is wanted
     if (!reuse) {
       const layerDpr = Math.min(dpr, Math.sqrt(LAYER_PIXEL_BUDGET / (W * H)));
       const PW = Math.round(W * layerDpr), PH = Math.round(H * layerDpr);
@@ -151,20 +152,26 @@ export class WorldRenderer {
       this.cam = { x: cam.x, y: cam.y, zoom: cam.zoom };
       this.size = { vw, vh, mx, my, dpr };
       blit = (layer) => ctx.drawImage(layer, -mx, -my, W, H);
+      exact = true;
     } else if (zoomSame) {
       // shift by whole device pixels so the cached layers stay pin-sharp while panning
       const sx = Math.round(tx * dpr) / dpr, sy = Math.round(ty * dpr) / dpr;
       blit = (layer) => ctx.drawImage(layer, sx, sy, W, H);
+      exact = true;
     } else {
       blit = (layer) => ctx.drawImage(layer, tx, ty, lw, lh);
     }
     // Only a pinch stretches the cached layers (by 0.7-1.4x): plain bilinear looks the same there and
     // is several times cheaper than 'high' on a full-screen bitmap. Everything else is copied 1:1.
     ctx.imageSmoothingQuality = 'low';
+    ctx.imageSmoothingEnabled = !exact; // a 1:1 copy must not be blurred; a pinch stretch still is
     drawSky(ctx, cam, vw, vh, ov.now);
     blit(this.ground);
+    ctx.imageSmoothingEnabled = true;
     drawWaterLife(ctx, s, viewer, cam, ov, vw, vh);
+    ctx.imageSmoothingEnabled = !exact;
     blit(this.top);
+    ctx.imageSmoothingEnabled = true;
     drawDynamic(ctx, s, viewer, cam, ov, vw, vh, dpr);
   }
 }

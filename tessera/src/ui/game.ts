@@ -44,8 +44,8 @@ export class GameView {
   private wantedDpr = 0; // what renderDpr asked for, before the canvas-size cap
   private touching = 0; // fingers currently on the map
   private inputAbort = new AbortController(); // ends every input listener when this game closes
-  private slowFrames = 0;
-  private frameAvg = 0;
+  private frameAvg = 0; // recent time to draw a frame (ms)
+  private tagAt = 0;
   private lastPointerAt = 0; // when a finger last touched or moved on the map
   private wasTouching = false;
   private sel: Selection | null = null;
@@ -136,7 +136,7 @@ export class GameView {
     // iOS refuses canvases much past 16 million pixels, so a high density gives way on big screens
     const dpr = Math.min(this.wantedDpr, Math.sqrt(16_000_000 / (window.innerWidth * window.innerHeight)));
     this.dpr = dpr;
-    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+dpr.toFixed(2)}×`;
+    this.showTag();
     const oldW = this.vw, oldH = this.vh;
     this.vw = window.innerWidth;
     this.vh = window.innerHeight;
@@ -153,6 +153,12 @@ export class GameView {
       this.cam.y += (this.vh - oldH) / 2;
     }
     this.version++;
+  }
+
+  /** The tiny corner tag: version, drawing density, drawing mode and how long a frame takes to draw. */
+  private showTag() {
+    const ms = this.frameAvg > 0 ? ` · ${isDirectDraw() ? 'direct' : 'cached'} ${this.frameAvg.toFixed(0)}ms` : '';
+    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${ms}`;
   }
 
   private loop = (now: number = performance.now()) => {
@@ -172,32 +178,16 @@ export class GameView {
     // finger-up (a system gesture, an app switch), and a stuck "touching" must never leave the map
     // as a stretched, blurry copy: once the fingers rest for a moment it is redrawn sharp.
     const interacting = this.touching > 0 && now - this.lastPointerAt < 200;
-    if (camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion || now - this.lastFrame > 33) {
+    if (camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion || now - this.lastFrame > (isDirectDraw() ? 50 : 33)) {
       const t0 = performance.now();
       this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, interacting);
-      this.watchSpeed(performance.now() - t0);
+      this.frameAvg = this.frameAvg ? this.frameAvg * 0.9 + (performance.now() - t0) * 0.1 : performance.now() - t0;
+      if (now - this.tagAt > 1000) { this.tagAt = now; this.showTag(); }
       this.drawnVersion = this.version;
       this.lastFrame = now;
     }
     this.raf = requestAnimationFrame(this.loop);
   };
-
-  /**
-   * Direct drawing paints the whole map every frame. If a phone is too slow for that, fall back to
-   * the cached layers by itself (for this session only) rather than let the game stutter.
-   */
-  private watchSpeed(ms: number) {
-    if (!isDirectDraw()) return;
-    // a running average over ~2 seconds of frames, so a few heavy frames (a battle, a level-up) don't count
-    this.frameAvg = this.frameAvg * 0.96 + ms * 0.04;
-    this.slowFrames++;
-    if (this.slowFrames < 120 || this.frameAvg < 30) return;
-    this.slowFrames = 0;
-    this.frameAvg = 0;
-    setDirectDraw(false);
-    this.version++;
-    toast('This phone is busy: switched to faster cached map drawing. You can change it in Menu.');
-  }
 
   /** Drops finished effects. Returns true while any effect is still playing. */
   private pruneFx(now: number) {
