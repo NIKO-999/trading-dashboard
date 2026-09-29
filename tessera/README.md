@@ -35,6 +35,7 @@ Lead one of twenty-six empires, each with its own biome, starting tech, unique u
 | Tibetan | high plateau | Climbing | Khampa Rider (replaces Rider) | Cross mountains without Climbing |
 
 Features:
+- Original generative music for every empire, in the scales and instruments of its culture (Hijaz-style modes and ney for Egypt, in-scale koto and shakuhachi for Japan, a raga with sitar and tanpura for India, throat-song pulses for the Inuit, a didgeridoo drone for the Aboriginal nations, and so on). It is synthesised live, works offline, and can be switched off under Music.
 - A seeded isometric map with fog of war.
 - Harvestable resources: fruit, animals, fish, crops, ore and whales.
 - Buildings: farms, mines, lumber huts, ports, shrines and markets.

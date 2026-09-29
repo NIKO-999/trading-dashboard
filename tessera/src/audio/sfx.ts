@@ -11,6 +11,13 @@ class Sound {
   private out: GainNode | null = null;
   private noiseBuf: AudioBuffer | null = null;
   private last = new Map<SoundName, number>();
+  /** Called once audio has been unlocked by a tap (the music engine starts here). */
+  onReady: (() => void) | null = null;
+
+  /** The shared audio context, once unlocked. */
+  context() {
+    return this.ac;
+  }
 
   /** Must be called from a user gesture before anything can play (browser autoplay rules). */
   unlock() {
@@ -27,6 +34,7 @@ class Sound {
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     }
     if (this.ac.state === 'suspended') void this.ac.resume();
+    this.onReady?.();
   }
 
   private tone(freq: number, dur: number, wave: Wave, vol: number, at: number, slideTo?: number) {

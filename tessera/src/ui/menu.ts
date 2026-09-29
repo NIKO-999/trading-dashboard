@@ -1,3 +1,4 @@
+import { music } from '../audio/music';
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { MapSize } from '../game/mapgen';
@@ -179,6 +180,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
           onclick: () => {
             if (choice.hotseat) choice.seats[id] = NEXT_SEAT[seat];
             choice.tribe = id;
+            music.play(id); // tapping an empire plays its theme
             render();
           },
         },
@@ -283,12 +285,13 @@ function showAbout(handlers: MenuHandlers) {
 
 function showSettings(handlers: MenuHandlers) {
   const st = loadSettings();
-  const toggle = (label: string, key: 'sound' | 'hints' | 'fastAi') => {
+  const toggle = (label: string, key: 'sound' | 'music' | 'hints' | 'fastAi') => {
     const b = h('button', { class: `toggle${st[key] ? ' on' : ''}` }, st[key] ? 'On' : 'Off');
     b.addEventListener('click', () => {
       st[key] = !st[key];
       saveSettings(st);
       if (key === 'sound') sfx.enabled = st.sound;
+      if (key === 'music') { music.setEnabled(st.music); if (st.music) music.play('menu'); }
       b.className = `toggle${st[key] ? ' on' : ''}`;
       b.textContent = st[key] ? 'On' : 'Off';
     });
@@ -333,6 +336,6 @@ function showSettings(handlers: MenuHandlers) {
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), directRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
+    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Music', 'music'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), directRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
   );
 }

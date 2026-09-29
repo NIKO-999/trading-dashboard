@@ -3,6 +3,7 @@ import { TRIBE_IDS } from './data/tribes';
 import { createGame } from './game/mapgen';
 import { startTurn } from './game/turn';
 import type { GameState } from './game/types';
+import { music } from './audio/music';
 import { sfx } from './audio/sfx';
 import { setSharpness } from './render/common';
 import { setCrispArt } from './render/prims';
@@ -20,6 +21,8 @@ import './style.css';
 
 registerSW({ immediate: true });
 sfx.enabled = loadSettings().sound;
+music.enabled = loadSettings().music;
+if (import.meta.env.DEV) Object.assign(window, { __music: music });
 setSharpness(loadSettings().sharp);
 setCrispArt(loadSettings().flat);
 setDirectDraw(!loadSettings().cached);
@@ -70,6 +73,7 @@ let current: GameState | null = null;
 if (typeof hot?.snapshot === 'function') hot.snapshot(() => (current && !current.over ? { state: current } : {}));
 
 function title() {
+  music.play('menu');
   const canvas = document.getElementById('game') as HTMLCanvasElement;
   canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
   showTitle({

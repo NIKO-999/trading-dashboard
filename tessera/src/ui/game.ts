@@ -17,6 +17,7 @@ import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
+import { music } from '../audio/music';
 import { sfx, type SoundName } from '../audio/sfx';
 import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
@@ -74,6 +75,7 @@ export class GameView {
     window.addEventListener('resize', this.ro);
     window.visualViewport?.addEventListener('resize', this.ro);
     this.bindInput();
+    music.play(s.players[this.me].tribe);
     const cap = citiesOf(s, this.me).find((c) => c.capital) ?? citiesOf(s, this.me)[0];
     this.cam.zoom = Math.min(2.2, Math.max(1.2, this.vw / 250));
     if (cap) this.cam.centerOn(cap.x, cap.y, this.vw, this.vh * 0.95);
@@ -999,6 +1001,7 @@ export class GameView {
   private beginTurnFor(pid: number, chime: boolean) {
     const switched = pid !== this.me;
     this.me = pid;
+    music.play(this.s.players[pid].tribe);
     this.select(null);
     if (switched || this.hotseat) {
       const cap = citiesOf(this.s, pid).find((c) => c.capital) ?? citiesOf(this.s, pid)[0];
@@ -1131,6 +1134,7 @@ export class GameView {
     const onOff = (name: string, on: boolean) => `${name}: ${on ? 'On' : 'Off'}`;
     const hintsLabel = h('span', {}, onOff('Hints', this.settings.hints));
     const soundLabel = h('span', {}, onOff('Sound', this.settings.sound));
+    const musicLabel = h('span', {}, onOff('Music', this.settings.music));
     const SHARP = [[1, 'Auto'], [4, 'High'], [5, 'Max']] as const;
     const sharpText = () => `Sharpness: ${SHARP.find(([v]) => v === this.settings.sharp)?.[1] ?? 'Auto'}`;
     const sharpLabel = h('span', {}, sharpText());
@@ -1150,6 +1154,7 @@ export class GameView {
         // toggles flip in place and keep the menu open
         { label: hintsLabel, keepOpen: true, onClick: () => { this.settings.hints = !this.settings.hints; saveSettings(this.settings); this.updateHint(); hintsLabel.textContent = onOff('Hints', this.settings.hints); } },
         { label: soundLabel, keepOpen: true, onClick: () => { this.settings.sound = !this.settings.sound; sfx.enabled = this.settings.sound; saveSettings(this.settings); soundLabel.textContent = onOff('Sound', this.settings.sound); } },
+        { label: musicLabel, keepOpen: true, onClick: () => { this.settings.music = !this.settings.music; music.setEnabled(this.settings.music); if (this.settings.music) music.play(this.s.players[this.me].tribe); saveSettings(this.settings); musicLabel.textContent = onOff('Music', this.settings.music); } },
         { label: sharpLabel, keepOpen: true, onClick: () => {
           const i = SHARP.findIndex(([v]) => v === this.settings.sharp);
           this.settings.sharp = SHARP[(i + 1) % SHARP.length][0];
