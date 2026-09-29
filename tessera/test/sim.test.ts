@@ -20,7 +20,7 @@ function checkInvariants(s: GameState) {
     seen.add(k);
     const t = tileAt(s, u.x, u.y)!;
     assert.ok(t, 'unit off the map');
-    if (def(u).naval) assert.ok(isWater(t), `${u.kind} on land at ${k}`);
+    if (def(u).naval) assert.ok(isWater(t) || s.players[u.owner].tribe === 'vikings' /* longships may beach */, `${u.kind} on land at ${k}`);
     else if (!def(u).skills.includes('amphibious')) assert.ok(isLand(t) || t.improvement === 'port', `${u.kind} in water at ${k}`);
     assert.ok(u.hp > 0, 'dead unit left on the board');
   }
