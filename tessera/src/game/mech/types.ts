@@ -67,7 +67,7 @@ export interface Mechanic {
   income?(s: GameState, owner: number): number;
   /** Extra tile actions for `owner`'s tile menu. Give them ids starting with `mech:`. */
   actions?(s: GameState, owner: number, t: Tile): Action[];
-  /** Perform one of this mechanic's `mech:` actions; return true if done. You must charge the cost yourself. */
+  /** Perform one of this mechanic's `mech:` actions; return true if done. You the core has already charged the action cost. */
   doAction?(s: GameState, owner: number, t: Tile, id: string): boolean;
   /** Called for all empires' mechanics: return a reason to stop `pid` taking this action (e.g. 'Hyper-inflation'). */
   block?(s: GameState, owner: number, pid: number, actionId: string, t: Tile): string | undefined;

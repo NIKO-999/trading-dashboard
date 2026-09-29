@@ -4,6 +4,7 @@ export type { MechRender } from './types';
 
 import { render as japan } from './japan';
 import { render as korea } from './korea';
+import { render as rome } from './rome';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { japan, korea, zulu };
+export const MECH_RENDER: MechRenderRegistry = { japan, korea, rome, zulu };
