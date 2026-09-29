@@ -1,4 +1,5 @@
 import { TRIBES, unitFor } from '../data/tribes';
+import { CLIMATES, type ClimateTerrain } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { perkSum } from './perks';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
@@ -8,7 +9,7 @@ import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, 
 export type MapSize = 'normal' | 'large' | 'huge';
 
 /** How the land is laid out. 'balanced' lets each empire's own terrain decide; the rest reshape the whole world. */
-export type MapTerrain = 'balanced' | 'continents' | 'islands' | 'archipelago' | 'pangaea' | 'lakes' | 'highlands' | 'forests' | 'plains';
+export type MapTerrain = 'balanced' | 'continents' | 'islands' | 'archipelago' | 'pangaea' | 'lakes' | 'highlands' | 'forests' | 'plains' | 'deserts' | 'wetlands' | 'frozen';
 
 export const TERRAIN_STYLES: { id: MapTerrain; name: string; blurb: string }[] = [
   { id: 'balanced', name: 'Balanced', blurb: 'Each empire’s homeland shapes the land around it.' },
@@ -20,9 +21,12 @@ export const TERRAIN_STYLES: { id: MapTerrain; name: string; blurb: string }[] =
   { id: 'highlands', name: 'Highlands', blurb: 'Mountains everywhere: ore and high ground.' },
   { id: 'forests', name: 'Forests', blurb: 'Deep woods: game and lumber, slow going.' },
   { id: 'plains', name: 'Plains', blurb: 'Wide open fields, few mountains and woods.' },
+  { id: 'deserts', name: 'Deserts', blurb: 'Seas of sand with oases. Irrigate to farm.' },
+  { id: 'wetlands', name: 'Wetlands', blurb: 'Marsh and bog: slow going, good cover.' },
+  { id: 'frozen', name: 'Frozen', blurb: 'Tundra and ice: reindeer, ore and frostbite.' },
 ];
 
-interface Style { target?: number; blobs: number; radius: number; bias: number; lakes: number; field: number; forest: number; mountain: number; cap: number }
+interface Style { climate?: Partial<Record<ClimateTerrain, number>>; target?: number; blobs: number; radius: number; bias: number; lakes: number; field: number; forest: number; mountain: number; cap: number }
 const STYLE: Record<MapTerrain, Style> = {
   balanced: { blobs: 1, radius: 1, bias: 0, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
   continents: { target: 0.56, blobs: 0.55, radius: 1.5, bias: -0.08, lakes: 0, field: 1, forest: 1, mountain: 1, cap: 1 },
@@ -32,6 +36,9 @@ const STYLE: Record<MapTerrain, Style> = {
   lakes: { target: 0.84, blobs: 1.2, radius: 1.5, bias: -0.16, lakes: 0.5, field: 1, forest: 1, mountain: 1, cap: 1 },
   highlands: { target: 0.88, blobs: 1, radius: 1.2, bias: -0.06, lakes: 0, field: 0.7, forest: 0.7, mountain: 3.6, cap: 1 },
   forests: { target: 0.88, blobs: 1, radius: 1.2, bias: -0.06, lakes: 0, field: 0.7, forest: 3.4, mountain: 0.6, cap: 1 },
+  deserts: { target: 0.88, blobs: 1, radius: 1.3, bias: -0.06, lakes: 0, field: 1.6, forest: 0.4, mountain: 0.6, cap: 1, climate: { desert: 0.75 } },
+  wetlands: { target: 0.88, blobs: 1, radius: 1.3, bias: -0.06, lakes: 0.3, field: 1, forest: 1.3, mountain: 0.4, cap: 1, climate: { swamp: 0.6 } },
+  frozen: { target: 0.88, blobs: 1, radius: 1.3, bias: -0.06, lakes: 0, field: 1, forest: 0.8, mountain: 1.4, cap: 1, climate: { tundra: 0.75 } },
   plains: { target: 0.88, blobs: 1, radius: 1.3, bias: -0.06, lakes: 0, field: 2.4, forest: 0.5, mountain: 0.25, cap: 1 },
 };
 
@@ -190,9 +197,27 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
     });
   }
 
+  // Climate patches: some of the fields turn to desert, swamp or tundra, in smooth patches rather than speckles.
+  const phases = CLIMATES.map(() => Array.from({ length: 6 }, () => rng.next() * Math.PI * 2));
+  const patch = (k: number, x: number, y: number) => {
+    const p = phases[k];
+    return Math.sin(x * 0.55 + p[0]) + Math.cos(y * 0.5 + p[1]) + Math.sin((x + y) * 0.32 + p[2]) + 0.6 * Math.sin((x - y) * 0.8 + p[3]) + 0.4 * Math.cos(x * 1.3 + y * 0.9 + p[4]);
+  };
+  const share = (tribe: TribeId, c: ClimateTerrain) => style.climate ? (style.climate[c] ?? 0) : (TRIBES[tribe].climate?.[c] ?? 0);
+  CLIMATES.forEach((c, k) => {
+    for (const tribe of new Set(state.tiles.map((t) => t.biome))) {
+      const want = share(tribe, c);
+      if (want <= 0) continue;
+      const fields = state.tiles.filter((t) => t.biome === tribe && (t.terrain === 'field' || (c === 'swamp' && t.terrain === 'forest' && want > 0.2)));
+      if (!fields.length) continue;
+      const scored = fields.map((t) => ({ t, v: patch(k, t.x, t.y) + (rng.next() - 0.5) * 0.5 })).sort((a, b) => b.v - a.v);
+      for (const { t } of scored.slice(0, Math.round(fields.length * want))) if (t.terrain === 'field' || t.terrain === 'forest') t.terrain = c;
+    }
+  });
+
   // Capitals and their ring are always land; capital tile is a field.
   for (const c of capitals) {
-    for (const t of area(state, c.x, c.y, 1)) if (isWater(t)) t.terrain = rng.chance(0.7) ? 'field' : 'forest';
+    for (const t of area(state, c.x, c.y, 1)) if (isWater(t) || isClimateTile(t)) t.terrain = rng.chance(0.7) ? 'field' : 'forest';
     tileAt(state, c.x, c.y)!.terrain = 'field';
   }
 
@@ -210,6 +235,14 @@ function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: n
       else if (roll('crop', 0.12)) t.resource = 'crop';
     } else if (t.terrain === 'forest') {
       if (roll('animal', 0.2)) t.resource = 'animal';
+    } else if (t.terrain === 'desert') {
+      if (roll('ore', 0.16)) t.resource = 'ore';
+      else if (rng.chance(0.05)) t.resource = 'fruit'; // an oasis
+    } else if (t.terrain === 'swamp') {
+      if (roll('animal', 0.18)) t.resource = 'animal';
+    } else if (t.terrain === 'tundra') {
+      if (roll('animal', 0.16)) t.resource = 'animal';
+      else if (roll('ore', 0.1)) t.resource = 'ore';
     } else if (t.terrain === 'mountain') {
       if (roll('ore', 0.14)) t.resource = 'ore';
     } else if (t.terrain === 'shallow') {
@@ -291,6 +324,8 @@ function ensureGrowthResources(state: GameState, rng: Rng) {
         case 'forest': return 'animal';
         case 'shallow': return 'fish';
         case 'mountain': return 'ore';
+        case 'desert': return 'fruit'; // an oasis
+        case 'swamp': case 'tundra': return 'animal';
         default: return null;
       }
     };
@@ -408,3 +443,5 @@ export function meet(state: GameState, a: number, b: number) {
   if (!(pa.met ??= []).includes(b)) pa.met.push(b);
   if (!(pb.met ??= []).includes(a)) pb.met.push(a);
 }
+
+const isClimateTile = (t: Tile) => t.terrain === 'desert' || t.terrain === 'swamp' || t.terrain === 'tundra';

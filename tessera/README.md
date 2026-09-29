@@ -39,6 +39,7 @@ Every empire also has an **Empire Power**, an active move only that people can m
 Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 26.
 
 Features:
+- Three climate terrains beyond field, forest and mountain: **desert** (no farms; ore and oases; irrigate it into a field), **swamp** (units entering stop, but it gives cover; drain it into a field) and **tundra** (reindeer and ore; units left in the cold outside your borders lose 1 HP a turn). Each empire's homeland carries its own mix (Egypt and the Aboriginal nations are half desert, the Inuit mostly tundra, the Maya and Khmer boggy), and the Terrain option can make a whole world of Deserts, Wetlands or Frozen land.
 - Map terrain options on the New Game screen: Balanced (each empire's homeland shapes the land), Continents, Islands, Archipelago, Pangaea, Lakes, Highlands, Forests and Plains.
 - Original generative music for every empire, in the scales and instruments of its culture (Hijaz-style modes and ney for Egypt, in-scale koto and shakuhachi for Japan, a raga with sitar and tanpura for India, throat-song pulses for the Inuit, a didgeridoo drone for the Aboriginal nations, and so on). It is synthesised live, works offline, and can be switched off under Music.
 - A seeded isometric map with fog of war.

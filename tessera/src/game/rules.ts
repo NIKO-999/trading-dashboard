@@ -301,6 +301,8 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
       const desc = `+${gain} population${p.tribe === 'pirates' ? ' and +1★ income' : ''}. ${clusterHint('port')}. Units can board boats here.`;
       add('port', 'Port', desc, PORT_COST(s, pid), 'fishing', 'port');
     }
+    if (t.terrain === 'desert') add('irrigate', 'Irrigate', 'Turn desert into a fertile field. +1 population.', 3, 'farming', 'crop');
+    if (t.terrain === 'swamp') add('drain', 'Drain Marsh', 'Turn swamp into a field and gain 1★.', 2, 'forestry', 'axe');
     if (t.terrain === 'mountain') add('shrine', 'Mountain Shrine', `+${1 + clusterBonus(s, t, 'temple')} population, +100 score. ${clusterHint('temple')}.`, 8, 'meditation', 'temple');
     if (t.terrain === 'field' && !t.village && !t.ruin) {
       add('temple', 'Temple', `+${1 + clusterBonus(s, t, 'temple')} population, +100 score. ${clusterHint('temple')}.`, 10, 'masonry', 'temple');
@@ -401,6 +403,10 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     case 'clear':
       t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 });
       return p.tribe === 'aboriginal' ? grow(1) : true; // Firestick Farming
+    case 'irrigate': t.terrain = 'field'; return grow(1);
+    case 'drain':
+      t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 });
+      return true;
     case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b, 'port'); }
     case 'shrine':
     case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b, 'temple'); }
@@ -551,6 +557,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
             stop = true;
           }
           if (to.terrain === 'forest' && !d.skills.includes('forestwalk') && !(hasRoad(from) && hasRoad(to))) stop = true;
+          if (to.terrain === 'swamp' && !d.skills.includes('amphibious') && !(hasRoad(from) && hasRoad(to))) stop = true; // bogged down
           if (hasRoad(from) && hasRoad(to) && isLand(from)) cost = 0.5;
         }
       }
@@ -658,6 +665,7 @@ function baseDefense(s: GameState, u: Unit, t: Tile) {
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
   if (t.terrain === 'mountain') return tribe === 'ethiopia' ? MOUNTAIN_DEFENSE + 0.5 : MOUNTAIN_DEFENSE; // Highland Fortress // high ground: the best cover on the map
   if (isWater(t) && hasTech(s, u.owner, 'aquaculture')) return 1.5;
+  if (t.terrain === 'swamp') return 1.5; // cover in the reeds
   return 1;
 }
 

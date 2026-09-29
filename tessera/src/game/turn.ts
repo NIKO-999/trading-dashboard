@@ -20,6 +20,14 @@ export function startTurn(s: GameState) {
     u.moved = false;
     u.attacked = false;
   }
+  for (const u of s.units) { // tundra: cold nips at units left out beyond your borders
+    if (u.owner !== p.id || u.hp <= 1) continue;
+    const t = tileAt(s, u.x, u.y)!;
+    if (t.terrain === 'tundra' && !t.road && t.cityId === null && tileOwnerPlayer(s, t) !== p.id) {
+      u.hp -= 1;
+      emit({ type: 'damage', unitId: u.id, x: u.x, y: u.y, amount: 1 });
+    }
+  }
   const heal = perkSum(s, p.id, 'heal'); // healing perks of the skill line
   if (heal > 0) {
     for (const u of s.units) {

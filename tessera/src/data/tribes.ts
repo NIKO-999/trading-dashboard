@@ -1,4 +1,5 @@
-import type { Resource, Terrain, TribeId, UnitKind } from '../game/types';
+import type { BaseTerrain, Resource, TribeId, UnitKind } from '../game/types';
+import type { ClimateTerrain } from './terrain';
 
 export interface BiomePalette {
   field: string; // top colour of field tiles
@@ -24,7 +25,8 @@ export interface TribeDef {
   replaces: UnitKind; // the standard unit the unique unit stands in for
   bonus: string;
   blurb: string;
-  terrain: Record<Terrain, number>; // relative weights for land/water generation
+  terrain: Record<BaseTerrain, number>; // relative weights for land/water generation
+  climate?: Partial<Record<ClimateTerrain, number>>; // share of this homeland's fields that are desert, swamp or tundra
   resources: Partial<Record<Resource, number>>; // spawn chance multipliers
   palette: BiomePalette;
   cityNames: string[];
@@ -33,6 +35,7 @@ export interface TribeDef {
 export const TRIBES: Record<TribeId, TribeDef> = {
   egypt: {
     id: 'egypt',
+    climate: { desert: 0.5 },
     name: 'Kingdom of the Nile',
     people: 'Egyptian',
     color: '#e0a526',
@@ -50,6 +53,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   aztec: {
     id: 'aztec',
+    climate: { desert: 0.1 },
     name: 'Jaguar Empire',
     people: 'Aztec',
     color: '#1faa6b',
@@ -67,6 +71,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   polynesia: {
     id: 'polynesia',
+    climate: { swamp: 0.08 },
     name: 'Iwi of Aotearoa',
     people: 'Māori',
     color: '#33333d',
@@ -84,6 +89,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   rome: {
     id: 'rome',
+    climate: { swamp: 0.05 },
     name: 'Eternal Republic',
     people: 'Roman',
     color: '#c1272d',
@@ -101,6 +107,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   pirates: {
     id: 'pirates',
+    climate: { swamp: 0.15 },
     name: 'Brethren of the Coast',
     people: 'Pirate',
     color: '#7a8394',
@@ -118,6 +125,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   vikings: {
     id: 'vikings',
+    climate: { swamp: 0.05, tundra: 0.25 },
     name: 'Northern Jarldom',
     people: 'Viking',
     color: '#3a78c9',
@@ -152,6 +160,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   mongols: {
     id: 'mongols',
+    climate: { desert: 0.2, tundra: 0.08 },
     name: 'Horde of the Endless Sky',
     people: 'Mongol',
     color: '#e0762a',
@@ -169,6 +178,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   greeks: {
     id: 'greeks',
+    climate: { desert: 0.05 },
     name: 'League of the Aegean',
     people: 'Greek',
     color: '#19a3b8',
@@ -186,6 +196,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   zulu: {
     id: 'zulu',
+    climate: { desert: 0.08 },
     name: 'Kingdom of the Heavens',
     people: 'Zulu',
     color: '#8a9a2b',
@@ -203,6 +214,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   persia: {
     id: 'persia',
+    climate: { desert: 0.3 },
     name: 'Empire of the Lion and Sun',
     people: 'Persian',
     color: '#e0559c',
@@ -220,6 +232,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   celts: {
     id: 'celts',
+    climate: { swamp: 0.15 },
     name: 'Clans of the Oak',
     people: 'Celtic',
     color: '#a8743a',
@@ -237,6 +250,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   inuit: {
     id: 'inuit',
+    climate: { tundra: 0.6 },
     name: 'Folk of the Ice',
     people: 'Inuit',
     color: '#7fd0f5',
@@ -254,6 +268,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   inca: {
     id: 'inca',
+    climate: { desert: 0.1 },
     name: 'Realm of the Four Quarters',
     people: 'Inca',
     color: '#7b2145',
@@ -271,6 +286,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   ethiopia: {
     id: 'ethiopia',
+    climate: { desert: 0.15 },
     name: 'Kingdom of Aksum',
     people: 'Aksumite',
     color: '#c9d43a',
@@ -288,6 +304,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   aboriginal: {
     id: 'aboriginal',
+    climate: { desert: 0.5 },
     name: 'Nations of the Red Country',
     people: 'Aboriginal',
     color: '#b8502e',
@@ -305,6 +322,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   china: {
     id: 'china',
+    climate: { swamp: 0.1 },
     name: 'Dynasty of the Middle Kingdom',
     people: 'Chinese',
     color: '#33418f',
@@ -322,6 +340,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   india: {
     id: 'india',
+    climate: { swamp: 0.12 },
     name: 'Realm of the Ganges',
     people: 'Indian',
     color: '#1c8f7a',
@@ -339,6 +358,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   mali: {
     id: 'mali',
+    climate: { desert: 0.35 },
     name: 'Empire of Mali',
     people: 'Malian',
     color: '#f0c93a',
@@ -356,6 +376,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   lakota: {
     id: 'lakota',
+    climate: { tundra: 0.08 },
     name: 'Nations of the Plains',
     people: 'Lakota',
     color: '#e6dcc6',
@@ -373,6 +394,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   ottoman: {
     id: 'ottoman',
+    climate: { desert: 0.15 },
     name: 'Sublime Empire',
     people: 'Ottoman',
     color: '#c8244a',
@@ -390,6 +412,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   maya: {
     id: 'maya',
+    climate: { swamp: 0.22 },
     name: 'City-States of the Jaguar Throne',
     people: 'Maya',
     color: '#00b8c4',
@@ -407,6 +430,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   korea: {
     id: 'korea',
+    climate: { tundra: 0.05 },
     name: 'Kingdom of the Morning Calm',
     people: 'Korean',
     color: '#a58af0',
@@ -424,6 +448,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   khmer: {
     id: 'khmer',
+    climate: { swamp: 0.22 },
     name: 'Empire of Angkor',
     people: 'Khmer',
     color: '#ff8a6b',
@@ -441,6 +466,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   swahili: {
     id: 'swahili',
+    climate: { desert: 0.08, swamp: 0.1 },
     name: 'Sultanates of the Swahili Coast',
     people: 'Swahili',
     color: '#7a4a2a',
@@ -458,6 +484,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   tibet: {
     id: 'tibet',
+    climate: { tundra: 0.35 },
     name: 'Snow Land of the Plateau',
     people: 'Tibetan',
     color: '#d040b0',

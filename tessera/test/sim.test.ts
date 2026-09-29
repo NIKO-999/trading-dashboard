@@ -682,3 +682,38 @@ test('every terrain style makes a playable map', () => {
   const mtn = (terrain: 'highlands' | 'plains') => { const s = createGame({ seed: 4, human: null, opponents: ['rome', 'egypt', 'aztec'], mode: 'domination', terrain }); return s.tiles.filter((t) => t.terrain === 'mountain').length; };
   assert.ok(mtn('highlands') > mtn('plains') * 4);
 });
+
+test('desert, swamp and tundra play differently', () => {
+  const count = (terrain: 'deserts' | 'wetlands' | 'frozen', t: string) => { const s = createGame({ seed: 6, human: null, opponents: ['rome', 'egypt', 'aztec'], mode: 'domination', terrain }); return s.tiles.filter((x) => x.terrain === t).length; };
+  assert.ok(count('deserts', 'desert') > 20 && count('wetlands', 'swamp') > 20 && count('frozen', 'tundra') > 20);
+  const g = () => { const s = createGame({ seed: 9, human: 'rome', opponents: ['greeks'], mode: 'domination' }); startTurn(s); return s; };
+  // swamp stops a unit that enters it
+  const s = g();
+  const u = s.units.find((v) => v.owner === 0)!;
+  s.units = [u]; u.moved = u.attacked = false; s.players[0].explored.fill(true);
+  const around = neighbors(s, u.x, u.y).filter((t) => isLand(t) && t.cityId === null);
+  const [a, b] = [around[0], neighbors(s, around[0].x, around[0].y).find((t) => isLand(t) && t.cityId === null && (t.x !== u.x || t.y !== u.y) && !around.includes(t))];
+  if (b) {
+    a.terrain = 'swamp'; b.terrain = 'field'; a.resource = b.resource = null; u.kind = 'rider';
+    const opts = moveOptions(s, u);
+    assert.ok(opts.some((m) => m.x === a.x && m.y === a.y), 'can enter swamp');
+    assert.ok(!opts.some((m) => m.x === b.x && m.y === b.y) || dist2(u, b) === 1, 'swamp ends the move');
+  }
+  // irrigate turns desert into a field and grows the city; drain turns swamp into a field
+  const c = g(), city = c.cities.find((k) => k.owner === 0)!;
+  c.players[0].stars = 30; c.players[0].techs.push('farming', 'forestry');
+  const own = c.tiles.filter((t) => t.owner === city.id && t.cityId === null && isLand(t) && !t.improvement && !t.village);
+  const [d, w] = [own[0], own[1]];
+  d.terrain = 'desert'; d.resource = null; w.terrain = 'swamp'; w.resource = null; w.ruin = false; d.ruin = false;
+  const pop = city.pop + city.level * 50;
+  assert.ok(doAction(c, 0, d, 'irrigate') && (d.terrain as string) === 'field' && city.pop + city.level * 50 > pop);
+  const st = c.players[0].stars;
+  assert.ok(doAction(c, 0, w, 'drain') && (w.terrain as string) === 'field' && c.players[0].stars >= st - 2 + 1);
+  // tundra frostbite beyond your borders
+  const f = g(), fu = f.units.find((v) => v.owner === 0)!;
+  const far = f.tiles.find((t) => isLand(t) && t.owner === null && !f.units.some((x) => x.x === t.x && x.y === t.y))!;
+  far.terrain = 'tundra'; far.road = false; fu.x = far.x; fu.y = far.y; fu.hp = 8;
+  endTurn(f); drain(); f.current = 0; startTurn(f);
+  assert.equal(fu.hp, 7, 'the cold bites');
+});
+const dist2 = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);

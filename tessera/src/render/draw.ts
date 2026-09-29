@@ -9,6 +9,7 @@ import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
 import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawCritter, drawUnitSprite } from './units';
+import { CLIMATE_INFO, isClimate } from '../data/terrain';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
@@ -237,8 +238,10 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
       surf(ctx, a, b, x, top + HH, t.seed + dx * 7 + dy * 13);
     }
   } else {
-    sidesGrad(ctx, x, y, LAND_DEPTH, P.fieldSide, shade(P.fieldSide, -0.25));
-    diamond(ctx, x, y, P.field);
+    const cl = isClimate(t.terrain) ? CLIMATE_INFO[t.terrain] : null; // desert, swamp and tundra have their own ground
+    const side = cl ? mix(cl.side, P.fieldSide, 0.15) : P.fieldSide;
+    sidesGrad(ctx, x, y, LAND_DEPTH, side, shade(side, -0.25));
+    diamond(ctx, x, y, cl ? mix(cl.top, P.field, 0.12) : P.field);
     facets(ctx, x, y, t.seed);
     if (t.improvement === 'farm') drawFarm(ctx, x, y + HH);
     if (t.road || t.cityId !== null) drawRoads(ctx, s, t);
@@ -501,8 +504,12 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean) {
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
   if (t.terrain === 'forest' && t.improvement !== 'lumber') drawForest(ctx, t, c.x, c.y, P);
   if (t.terrain === 'mountain') drawMountains(ctx, t, c.x, c.y, P);
+  if (isClimate(t.terrain)) drawClimate(ctx, t, c.x, c.y);
   // once a farm or mine is built it replaces the wild crop or ore it was built on
-  if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') drawResource(ctx, t, c.x, c.y, t.biome);
+  if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') {
+    if (t.terrain === 'desert' && t.resource === 'fruit') drawOasis(ctx, t, c.x, c.y);
+    else drawResource(ctx, t, c.x, c.y, t.biome);
+  }
   if (t.improvement === 'farm') drawFarmCrops(ctx, c.x, c.y, t.seed);
   else if (t.improvement) drawImprovement(ctx, s, t, c.x, c.y);
   if (t.village) drawVillage(ctx, c.x, c.y);
@@ -5669,4 +5676,104 @@ function myBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string,
     case 4: return myShrine(ctx, x, y);
     default: return myHouse(ctx, x, y, roofC, Math.abs(Math.round(x)) % 2);
   }
+}
+
+
+// ---------------------------------------------------------------- climate terrain: desert, swamp, tundra
+
+function drawClimate(ctx: Ctx, t: Tile, x: number, y: number) {
+  const r = (i: number) => rand(t.seed, 40 + i);
+  const at = (i: number, span = 0.34) => uv(x, y, (r(i) - 0.5) * span * 2, (r(i + 7) - 0.5) * span * 2);
+  if (t.terrain === 'desert') {
+    // long soft dunes with a shaded lee side
+    for (let i = 0; i < 3; i++) {
+      const p = at(i * 2, 0.3);
+      const w = 8 + r(i + 20) * 7, h = 3 + r(i + 30) * 2.6;
+      poly(ctx, [p.x - w, p.y + 1.5, p.x - w * 0.2, p.y - h, p.x + w * 0.35, p.y - h * 0.8, p.x + w, p.y + 1.5], '#f0dca4');
+      poly(ctx, [p.x + w * 0.35, p.y - h * 0.8, p.x + w, p.y + 1.5, p.x + w * 0.1, p.y + 1.8], '#d3b475');
+    }
+    // a saguaro cactus, or bleached bones, or a dry shrub
+    const k = Math.floor(r(50) * 3), p = at(60, 0.25);
+    if (k === 0) {
+      const h = 11 + r(51) * 4;
+      ellipse(ctx, p.x, p.y + 1.5, 4.5, 1.8, 'rgba(0,0,0,0.16)');
+      box(ctx, p.x, p.y, 3.4, h, '#4f8a4a');
+      box(ctx, p.x - 5, p.y - h * 0.4, 2.6, 5.5, '#4f8a4a');
+      box(ctx, p.x + 5, p.y - h * 0.62, 2.6, 5, '#4f8a4a');
+      line(ctx, p.x - 1.8, p.y - h * 0.4 - 2, p.x - 3.6, p.y - h * 0.4 - 2, '#4f8a4a', 2.4);
+      line(ctx, p.x + 1.8, p.y - h * 0.62 - 2, p.x + 3.8, p.y - h * 0.62 - 2, '#4f8a4a', 2.4);
+      ellipse(ctx, p.x, p.y - h - 0.6, 1.6, 1.2, '#f28ab2');
+    } else if (k === 1) {
+      for (let i = 0; i < 5; i++) line(ctx, p.x, p.y, p.x + (i - 2) * 3.2, p.y - 5 - (i % 2) * 2, '#a2894a', 1.1);
+    } else {
+      ellipse(ctx, p.x, p.y + 1, 5, 2, '#b89a68');
+      poly(ctx, [p.x - 4, p.y, p.x - 2, p.y - 5, p.x + 3, p.y - 3, p.x + 4, p.y + 1], '#cbb48a');
+    }
+  } else if (t.terrain === 'swamp') {
+    // murky pools with lily pads
+    for (let i = 0; i < 2; i++) {
+      const p = at(i * 3, 0.26);
+      const w = 8 + r(i + 20) * 5;
+      ellipse(ctx, p.x, p.y, w + 1.6, (w + 1.6) * 0.42, '#4a5a3a');
+      ellipse(ctx, p.x, p.y, w, w * 0.42, '#3f7a72');
+      ellipse(ctx, p.x - w * 0.3, p.y - 0.6, w * 0.4, w * 0.13, '#5fa39a');
+      for (let j = 0; j < 2; j++) ellipse(ctx, p.x + (j ? 3.4 : -2.5), p.y + (j ? 0.6 : -0.4), 2.2, 0.9, '#6fae52');
+      if (i === 0) ellipse(ctx, p.x + 3.4, p.y - 0.2, 0.8, 0.6, '#f4e7ee');
+    }
+    // reeds with brown cattail heads
+    const q = at(60, 0.3);
+    for (let i = 0; i < 5; i++) {
+      const bx = q.x + (i - 2) * 2.2, h = 8 + ((i * 7 + Math.floor(r(61) * 9)) % 5);
+      line(ctx, bx, q.y + 1, bx + (i - 2) * 0.5, q.y - h, '#7a9a4a', 1.1);
+      ellipse(ctx, bx + (i - 2) * 0.5, q.y - h, 0.9, 2.2, '#7a4a26');
+    }
+    // a dead tree hung with moss
+    if (r(70) > 0.4) {
+      const p = at(72, 0.28);
+      ellipse(ctx, p.x, p.y + 1.4, 4, 1.5, 'rgba(0,0,0,0.16)');
+      line(ctx, p.x, p.y, p.x - 0.5, p.y - 14, '#4a3a2a', 2.2);
+      line(ctx, p.x - 0.3, p.y - 9, p.x - 5, p.y - 13, '#4a3a2a', 1.3);
+      line(ctx, p.x, p.y - 11, p.x + 4.5, p.y - 15, '#4a3a2a', 1.3);
+      line(ctx, p.x - 5, p.y - 13, p.x - 5.6, p.y - 8, '#87a666', 0.9);
+      line(ctx, p.x + 4.5, p.y - 15, p.x + 5, p.y - 10, '#87a666', 0.9);
+    }
+    ctx.globalAlpha = 0.22;
+    const m = at(80, 0.3);
+    ellipse(ctx, m.x, m.y - 2, 11, 3.2, '#e8f2ee');
+    ctx.globalAlpha = 1;
+  } else {
+    // tundra: drifts, ice and lonely stones
+    for (let i = 0; i < 3; i++) {
+      const p = at(i * 2, 0.32), w = 5 + r(i + 20) * 6;
+      ellipse(ctx, p.x, p.y + 1, w, w * 0.36, '#c5d6e2');
+      ellipse(ctx, p.x - 0.6, p.y, w * 0.9, w * 0.32, '#ffffff');
+    }
+    const ice = at(30, 0.26);
+    poly(ctx, [ice.x - 8, ice.y, ice.x - 2, ice.y - 3.4, ice.x + 8, ice.y - 0.6, ice.x + 3, ice.y + 3], '#bfe4f2');
+    poly(ctx, [ice.x - 4, ice.y - 0.4, ice.x - 1, ice.y - 2, ice.x + 2, ice.y - 0.8], '#eaf8ff');
+    const k = at(40, 0.3);
+    poly(ctx, [k.x - 4, k.y + 1, k.x - 3, k.y - 4, k.x + 1, k.y - 6, k.x + 5, k.y - 3, k.x + 4, k.y + 1], '#7f8c99');
+    poly(ctx, [k.x - 3, k.y - 4, k.x + 1, k.y - 6, k.x + 5, k.y - 3, k.x + 1, k.y - 3.4], '#ffffff');
+    if (r(50) > 0.35) {
+      const s = at(52, 0.3);
+      for (let i = 0; i < 4; i++) line(ctx, s.x, s.y, s.x + (i - 1.5) * 2.6, s.y - 4 - (i % 2) * 1.6, '#6a5a4a', 0.9);
+      ellipse(ctx, s.x, s.y - 0.4, 3.2, 1, '#ffffff');
+    }
+  }
+}
+
+function drawOasis(ctx: Ctx, t: Tile, x: number, y: number) {
+  ellipse(ctx, x, y + 2, 13, 5.6, '#a9b866');
+  ellipse(ctx, x, y + 2, 11, 4.6, '#3fb6c4');
+  ellipse(ctx, x - 3, y + 1.2, 5, 1.5, '#8fe0e6');
+  for (const [dx, dy, lean] of [[-9, -1, -1], [8, 0, 1], [-1, -6, 0.3]] as const) {
+    const bx = x + dx, by = y + dy;
+    line(ctx, bx, by, bx + lean * 2, by - 12, '#7a5a34', 1.9);
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i - 2) * 0.62;
+      poly(ctx, [bx + lean * 2, by - 12, bx + lean * 2 + Math.cos(a) * 8, by - 12 + Math.sin(a) * 4 + 3.5, bx + lean * 2 + Math.cos(a) * 3, by - 10.5], i % 2 ? '#3f8a3a' : '#57a04a');
+    }
+    ellipse(ctx, bx + lean * 2, by - 11, 1.1, 1.1, '#c98a2a');
+  }
+  void t;
 }

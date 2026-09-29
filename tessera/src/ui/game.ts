@@ -1,5 +1,6 @@
 import { TECH_BY_ID } from '../data/techs';
 import { portraitKind, TRIBES } from '../data/tribes';
+import { CLIMATE_INFO, isClimate } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
@@ -1259,7 +1260,7 @@ export class GameView {
 function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
   const where = owner === null ? 'Unclaimed land.' : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
-  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean' };
+  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra' };
   const res: Record<string, [string, string]> = {
     fruit: ['Wild Fruit', 'Harvest with Gathering.'],
     crop: ['Crops', 'Farm with Farming.'],
@@ -1278,7 +1279,8 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
   if (t.resource) return { title: `${res[t.resource][0]}`, desc: `${res[t.resource][1]} ${where}` };
   const extra = t.terrain === 'mountain' && !hasTech(s, viewer, 'climbing') ? ` Needs ${TECH_BY_ID.climbing.name} to enter.`
     : t.terrain === 'ocean' && !hasTech(s, viewer, 'sailing') ? ' Needs a Galley (Sailing) to cross.' : '';
-  return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}` };
+  const climate = isClimate(t.terrain) ? ` ${CLIMATE_INFO[t.terrain].blurb}` : '';
+  return { title: terrain[t.terrain] + (t.road ? ' (road)' : ''), desc: `${where}${extra}${climate}` };
 }
 
 function projectileFor(kind: UnitKind, tribe: TribeId): Fx['projectiles'][number]['kind'] {
