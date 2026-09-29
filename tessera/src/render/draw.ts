@@ -696,6 +696,7 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'persia') return drawPersianTree(ctx, x, y, k, P, variant);
   if (biome === 'inuit') return drawTundraTree(ctx, x, y, k, P, variant);
   if (biome === 'inca') return incaTree(ctx, x, y, k, P, variant);
+  if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'polynesia') {
     if (variant % 2 === 0) {
       // ponga, the silver tree fern: a straight scaly trunk, a skirt of dead fronds and a crown of long drooping ones
@@ -1481,6 +1482,9 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       }
       break;
     }
+    case 'celts':
+      drawCeltBuilding(ctx, x, y, big, roofC, capital);
+      break;
     case 'zulu': {
       // woven grass beehive huts
       const r = big ? 9 : 6.5;
@@ -1691,6 +1695,241 @@ function drawPersianBuilding(ctx: Ctx, x: number, y: number, big: boolean, capit
     faceL(0.2, 0.8, 0.28, 0.62, h, TURQ);
     faceL(0.4, 0.6, 0.36, 0.54, h, '#f4efe0');
     persianDome(ctx, x - 2.6, y - h + 0.4, 2.6, 4.6, TURQ);
+  }
+}
+
+// ---------------------------------------------------------------- Celtic scenery
+const celtInk = (c: string) => c;
+function celtRing(ctx: Ctx, x: number, y: number, rx: number, ry: number, color: string, w: number) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = w;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+
+/**
+ * The sacred grove: gnarled oaks with a flared root-plate, a hollow in the bark, limbs that
+ * reach into lumpy clumps of leaf, and balls of mistletoe hanging from the boughs; now and
+ * then a dark yew heavy with red berries.
+ */
+function drawCeltTree(ctx: Ctx, x: number, y: number, k: number, P: BiomePalette, variant: number) {
+  const leaf = P.forest, bark = P.trunk;
+  const clump = (cx: number, cy: number, r: number, lit = 0) => {
+    ellipse(ctx, cx + 0.6 * k, cy + 0.9 * k, r * 1.02, r * 0.82, shade(leaf, -0.34));
+    ellipse(ctx, cx, cy, r, r * 0.8, shade(leaf, -0.12 + lit));
+    ellipse(ctx, cx - r * 0.22, cy - r * 0.26, r * 0.66, r * 0.5, shade(leaf, 0.1 + lit));
+    ellipse(ctx, cx - r * 0.36, cy - r * 0.42, r * 0.3, r * 0.2, shade(leaf, 0.3 + lit));
+    for (let i = 0; i < 4; i++) ellipse(ctx, cx + (rand(variant + 7, i + cx) - 0.5) * r * 1.2, cy + (rand(variant + 3, i + cy) - 0.2) * r * 0.7, r * 0.12, r * 0.09, shade(leaf, -0.4)); // leaf-gaps in shadow
+  };
+  const mistletoe = (mx: number, my: number, r: number) => {
+    line(ctx, mx, my - r * 1.6, mx, my - r * 0.4, shade(bark, 0.1), 0.5 * k);
+    ellipse(ctx, mx, my, r, r * 0.9, '#7f9a2a');
+    ellipse(ctx, mx - r * 0.25, my - r * 0.25, r * 0.7, r * 0.6, '#b4d04a');
+    for (const [dx, dy] of [[-0.5, 0.2], [0.4, -0.1], [0.1, 0.6]] as const) ellipse(ctx, mx + dx * r, my + dy * r, r * 0.16, r * 0.16, '#fbfbf0'); // pearly berries
+  };
+  if (variant % 4 === 3) {
+    // a yew: a squat trunk under a dense, dark, rounded crown dotted with red arils
+    const yc = shade(leaf, -0.36);
+    ctx.fillStyle = shade(bark, -0.2);
+    ctx.fillRect(x - 1.2 * k, y - 4 * k, 2.4 * k, 4 * k);
+    ellipse(ctx, x, y - 6 * k, 6.2 * k, 5 * k, shade(yc, -0.2));
+    ellipse(ctx, x - 0.4 * k, y - 8.6 * k, 5.6 * k, 5.6 * k, yc);
+    ellipse(ctx, x + 0.2 * k, y - 12.4 * k, 4.2 * k, 4.6 * k, shade(yc, 0.06));
+    ellipse(ctx, x - 1.4 * k, y - 13.4 * k, 1.9 * k, 2 * k, shade(yc, 0.22));
+    for (const [dx, dy] of [[-3, -6], [2.6, -8], [-1, -10.5], [3, -5], [0.6, -13], [-3.6, -9]] as const) ellipse(ctx, x + dx * k, y + dy * k, 0.55 * k, 0.55 * k, '#d8382e');
+    return;
+  }
+  const young = variant % 4 === 2;
+  const s = young ? 0.72 : 1;
+  const H = 11.5 * s * k;
+  // the root-plate and trunk, lit on the left and dark on the right
+  poly(ctx, [x - 3.6 * s * k, y + 0.7 * k, x - 1.8 * s * k, y - 3 * k, x - 2.4 * s * k, y - 7.4 * s * k, x - 1.3 * s * k, y - H, x, y - H, x, y + 1.4 * k], shade(bark, 0.08));
+  poly(ctx, [x, y - H, x + 1.5 * s * k, y - H, x + 1.1 * s * k, y - 7.4 * s * k, x + 2.1 * s * k, y - 3 * k, x + 3.8 * s * k, y + 0.9 * k, x, y + 1.4 * k], shade(bark, -0.22));
+  ellipse(ctx, x - 0.5 * s * k, y - 5.4 * s * k, 0.9 * s * k, 1.3 * s * k, '#231509'); // the hollow
+  ellipse(ctx, x - 0.5 * s * k, y - 6.2 * s * k, 0.7 * s * k, 0.5 * s * k, shade(bark, -0.5));
+  for (const [dx, dy] of [[-1.6, -3], [1.2, -8], [-1.4, -9.4], [1.6, -4.4]] as const) line(ctx, x + dx * s * k, y + dy * s * k, x + (dx + 0.3) * s * k, y + (dy - 1.6) * s * k, shade(bark, -0.5), 0.5 * k); // furrows
+  line(ctx, x - 3.4 * s * k, y + 0.6 * k, x - 5 * s * k, y + 1.2 * k, shade(bark, -0.1), 1 * k); // roots gripping the ground
+  line(ctx, x + 3.6 * s * k, y + 0.8 * k, x + 5.4 * s * k, y + 1.4 * k, shade(bark, -0.3), 1 * k);
+  ellipse(ctx, x - 4 * s * k, y + 0.6 * k, 1.6 * k, 0.6 * k, '#4f8a3a'); // moss at the foot
+  // limbs that twist out to the clumps
+  const top = y - H;
+  line(ctx, x - 0.4 * k, top + 1 * k, x - 6.6 * s * k, top - 4.4 * s * k, bark, 2 * s * k);
+  line(ctx, x + 0.6 * k, top + 1 * k, x + 6.4 * s * k, top - 3.4 * s * k, shade(bark, -0.2), 1.8 * s * k);
+  line(ctx, x, top, x + 0.6 * k, top - 6 * s * k, bark, 1.8 * s * k);
+  const back = [x - 0.6 * k, top - 10.2 * s * k, 6.4 * s * k] as const;
+  clump(back[0], back[1], back[2], -0.04);
+  clump(x - 7.2 * s * k, top - 3.6 * s * k, 6 * s * k);
+  clump(x + 7.2 * s * k, top - 2.4 * s * k, 5.8 * s * k, -0.05);
+  if (!young) clump(x + 0.4 * k, top - 3.6 * k, 6.6 * k, 0.02);
+  else clump(x + 0.2 * k, top - 3 * k, 5 * k, 0.02);
+  if (!young) { mistletoe(x + 4.6 * k, top + 2.6 * k, 1.6 * k); mistletoe(x - 5 * k, top + 3 * k, 1.4 * k); mistletoe(x + 0.6 * k, top - 8.4 * k, 1.2 * k); }
+  else mistletoe(x + 3.6 * k * s, top + 2.4 * k, 1.3 * k);
+  if (!young) for (const [dx, dy] of [[-3, 0.6], [3, 1.6], [7.6, -0.6]] as const) ellipse(ctx, x + dx * k, top + dy * k, 0.55 * k, 0.75 * k, '#8a6a2a'); // acorns
+}
+
+/** Stones set in a ring: grey, lichen-crowned and leaning a little. */
+function standingStones(ctx: Ctx, x: number, y: number, k: number) {
+  const n = 6;
+  const stones = Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2 + 0.4; return { a, sx: x + Math.cos(a) * 7 * k, sy: y + Math.sin(a) * 3.5 * k, h: (5 + ((i * 7) % 4)) * k, w: (1.9 + (i % 2) * 0.7) * k, lean: ((i % 3) - 1) * 0.5 * k }; }).sort((p, q) => p.sy - q.sy);
+  ellipse(ctx, x, y + 0.6 * k, 9.4 * k, 4.6 * k, '#5b9a44'); // trodden grass
+  ellipse(ctx, x, y + 0.4 * k, 8 * k, 3.8 * k, '#6fb04f');
+  let altar = false;
+  for (const s of stones) {
+    if (!altar && s.sy > y) { altar = true; box(ctx, x, y + 0.6 * k, 4.4 * k, 1.6 * k, '#9aa0a0'); } // a low altar slab in the middle
+    const l = s.sx - s.w, r = s.sx + s.w, bY = s.sy + 0.8 * k, tY = bY - s.h;
+    poly(ctx, [l, bY, l + s.lean * 0.4, tY + 1.4 * k, s.sx + s.lean, tY, s.sx, bY + 0.6 * k], '#b6bbb8');
+    poly(ctx, [s.sx, bY + 0.6 * k, s.sx + s.lean, tY, r + s.lean * 0.4, tY + 1.6 * k, r, bY], '#8b9290');
+    ellipse(ctx, s.sx + s.lean, tY + 0.6 * k, s.w * 0.6, 0.7 * k, '#7fa05a'); // lichen on the crown
+    line(ctx, s.sx - s.w * 0.2, bY - s.h * 0.35, s.sx - s.w * 0.1, bY - s.h * 0.7, '#6a716f', 0.4 * k); // a weathered crack
+  }
+  if (!altar) box(ctx, x, y + 0.6 * k, 4.4 * k, 1.6 * k, '#9aa0a0');
+}
+
+/** A carved high cross: a ringed head, a tapering shaft and a stepped plinth, its faces covered with knotwork. */
+function highCross(ctx: Ctx, x: number, y: number) {
+  const lit = '#b4b9b6', dk = '#8b9290', kn = '#6a716f';
+  box(ctx, x, y + 1, 9, 2.4, '#9aa0a0');
+  box(ctx, x, y - 1.2, 6, 2.4, '#a6acaa');
+  poly(ctx, [x - 1.8, y - 3.6, x - 1.4, y - 17, x, y - 17, x, y - 3.6], lit); // shaft
+  poly(ctx, [x, y - 3.6, x, y - 17, x + 1.4, y - 17, x + 1.8, y - 3.6], dk);
+  poly(ctx, [x - 5.6, y - 13.8, x - 5.6, y - 10.6, x, y - 10.6, x, y - 13.8], lit); // arms
+  poly(ctx, [x, y - 13.8, x, y - 10.6, x + 5.6, y - 10.6, x + 5.6, y - 13.8], dk);
+  poly(ctx, [x - 1.4, y - 20.4, x - 1.4, y - 17, x, y - 17, x, y - 20.4], lit); // head
+  poly(ctx, [x, y - 20.4, x, y - 17, x + 1.4, y - 17, x + 1.4, y - 20.4], dk);
+  ctx.strokeStyle = lit;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x, y - 12.2, 4.4, Math.PI * 0.5, Math.PI * 1.5); ctx.stroke(); // the ring: lit half...
+  ctx.strokeStyle = dk;
+  ctx.beginPath(); ctx.arc(x, y - 12.2, 4.4, -Math.PI * 0.5, Math.PI * 0.5); ctx.stroke(); // ...dark half
+  ctx.strokeStyle = kn;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.arc(x, y - 12.2, 2.2, 0, Math.PI * 2); ctx.stroke(); // a boss of interlace at the crossing
+  for (const t of [0.15, 0.35, 0.55, 0.75]) { // knotwork down the shaft
+    line(ctx, x - 1, y - 4.4 - t * 11, x + 1, y - 5.6 - t * 11, kn, 0.5);
+    line(ctx, x + 1, y - 4.4 - t * 11, x - 1, y - 5.6 - t * 11, kn, 0.5);
+  }
+  ellipse(ctx, x, y - 12.2, 0.9, 0.9, kn);
+  ellipse(ctx, x - 4, y + 1.6, 2.2, 0.7, '#5b9a44'); // moss on the plinth
+}
+
+/** A round thatched house: a whitewashed wattle-and-daub drum under a steep thatch cone. */
+function roundHouse(ctx: Ctx, x: number, y: number, r: number, wallH: number, roofH: number, thatch: string, opts: { wall?: string; band?: string; big?: boolean } = {}) {
+  const wall = opts.wall ?? '#efe4c8';
+  const R = r * 1.24; // the thatch overhangs the wall
+  // wall drum
+  ellipse(ctx, x, y + 0.4, r + 0.6, r * 0.5 + 0.4, shade(wall, -0.42));
+  ctx.fillStyle = celtInk(shade(wall, 0.04));
+  ctx.fillRect(x - r, y - wallH, r, wallH);
+  ctx.fillStyle = celtInk(shade(wall, -0.2));
+  ctx.fillRect(x, y - wallH, r, wallH);
+  ellipse(ctx, x, y, r, r * 0.5, shade(wall, 0.02));
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.5, 0, 0, Math.PI); ctx.lineTo(x - r, y - wallH); ctx.ellipse(x, y - wallH, r, r * 0.5, 0, Math.PI, 0, true); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = celtInk(shade(wall, -0.2));
+  ctx.fillRect(x, y - wallH - r, r + 1, wallH + r * 2);
+  ctx.fillStyle = celtInk(shade(wall, 0.04));
+  ctx.fillRect(x - r - 1, y - wallH - r, r + 1, wallH + r * 2);
+  // timber posts and a wattle panel bound between them
+  for (let i = -3; i <= 3; i++) {
+    const a = (i / 3) * 1.25, px = x + Math.sin(a) * r, py = y + Math.cos(a) * r * 0.5;
+    line(ctx, px, py, px, py - wallH, '#6a4a2a', Math.max(0.6, r * 0.09));
+  }
+  ctx.strokeStyle = celtInk('#9a7a4a');
+  ctx.lineWidth = 0.5;
+  for (const f of [0.3, 0.6]) { ctx.beginPath(); ctx.ellipse(x, y - wallH * f, r, r * 0.5, 0, 0.1, Math.PI - 0.1); ctx.stroke(); }
+  if (opts.band) { ctx.fillStyle = celtInk(opts.band); ctx.beginPath(); ctx.ellipse(x, y - wallH + 0.6, r, r * 0.5, 0, 0, Math.PI); ctx.lineTo(x - r, y - wallH - 0.8); ctx.ellipse(x, y - wallH - 0.8, r, r * 0.5, 0, Math.PI, 0, true); ctx.closePath(); ctx.fill(); }
+  ctx.restore();
+  // the doorway: a dark arch under a lintel
+  const dx = x + r * 0.34, dy = y + r * 0.47;
+  ctx.fillStyle = celtInk('#2a1a10');
+  ctx.beginPath(); ctx.moveTo(dx - r * 0.2, dy); ctx.lineTo(dx - r * 0.2, dy - wallH * 0.66); ctx.quadraticCurveTo(dx, dy - wallH * 0.92, dx + r * 0.2, dy - wallH * 0.66); ctx.lineTo(dx + r * 0.2, dy); ctx.closePath(); ctx.fill();
+  line(ctx, dx - r * 0.28, dy - wallH * 0.7, dx + r * 0.28, dy - wallH * 0.7, '#6a4a2a', 0.9);
+  // the thatched cone
+  const ey = y - wallH, ay = ey - roofH;
+  const cone = (c: string, side: number) => {
+    ctx.fillStyle = celtInk(c);
+    ctx.beginPath();
+    if (side <= 0) { ctx.moveTo(x, ay); ctx.lineTo(x - R, ey); ctx.ellipse(x, ey, R, R * 0.5, 0, Math.PI, Math.PI / 2, true); ctx.lineTo(x, ay); }
+    else { ctx.moveTo(x, ay); ctx.lineTo(x + R, ey); ctx.ellipse(x, ey, R, R * 0.5, 0, 0, Math.PI / 2, false); ctx.lineTo(x, ay); }
+    ctx.closePath(); ctx.fill();
+  };
+  ctx.fillStyle = celtInk(shade(thatch, -0.3));
+  ellipse(ctx, x, ey + 0.6, R + 0.4, R * 0.5 + 0.4, shade(thatch, -0.35));
+  cone(shade(thatch, 0.1), -1);
+  cone(shade(thatch, -0.24), 1);
+  // rows of straw laid down the slope, bound with rings of withy
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI, ex = x - Math.cos(a) * R, ey2 = ey + Math.sin(a) * R * 0.5;
+    ctx.strokeStyle = celtInk(shade(thatch, i > 5 ? -0.42 : -0.32));
+    ctx.beginPath(); ctx.moveTo(x, ay + roofH * 0.05); ctx.lineTo(ex, ey2); ctx.stroke();
+  }
+  for (const f of [0.38, 0.68]) {
+    ctx.strokeStyle = celtInk(shade(thatch, -0.45));
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    const rr = R * f;
+    ctx.ellipse(x, ey - roofH * (1 - f) + 0, rr + 0.2, rr * 0.5, 0, 0.12, Math.PI - 0.12);
+    ctx.stroke();
+  }
+  // ragged eave and a smoke-blackened crown
+  ctx.strokeStyle = celtInk(shade(thatch, -0.5));
+  ctx.lineWidth = 0.6;
+  for (let i = 1; i < 12; i++) { const a = (i / 12) * Math.PI, ex = x - Math.cos(a) * R, ey2 = ey + Math.sin(a) * R * 0.5; ctx.beginPath(); ctx.moveTo(ex, ey2 - 0.4); ctx.lineTo(ex + (i % 2 ? 0.3 : -0.3), ey2 + 1.3); ctx.stroke(); }
+  ellipse(ctx, x, ay + 0.8, r * 0.18, r * 0.1, '#3a2a18');
+  // crossed finial sticks
+  line(ctx, x - 1.4, ay - 1.6, x + 1.4, ay + 0.2, '#5a3a1e', 0.8);
+  line(ctx, x + 1.4, ay - 1.6, x - 1.4, ay + 0.2, '#5a3a1e', 0.9);
+}
+
+/** A ring of pointed stakes, front half only: the palisade. */
+function palisade(ctx: Ctx, x: number, y: number, r: number, h: number, from = 0.12, to = 0.88) {
+  const n = Math.max(8, Math.round(r * 1.5));
+  for (let i = 0; i <= n; i++) {
+    const t = from + (to - from) * (i / n), a = t * Math.PI, px = x - Math.cos(a) * r, py = y + Math.sin(a) * r * 0.5;
+    const hh = h * (0.85 + ((i * 5) % 3) * 0.12);
+    poly(ctx, [px - 0.9, py, px - 0.9, py - hh, px, py - hh - 1.6, px + 0.9, py - hh, px + 0.9, py], i % 2 ? '#8a6a3f' : '#a58250');
+    poly(ctx, [px, py - hh - 1.6, px + 0.9, py - hh, px + 0.9, py, px, py], '#5e4425');
+  }
+  ctx.strokeStyle = celtInk('#4a3320');
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) { const t = from + (to - from) * (i / n), a = t * Math.PI, px = x - Math.cos(a) * r, py = y + Math.sin(a) * r * 0.5 - h * 0.45; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+  ctx.stroke(); // the binding rail
+}
+
+function drawCeltBuilding(ctx: Ctx, x: number, y: number, big: boolean, roofC: string, capital: boolean) {
+  const key = `${x},${y}`;
+  if (big) {
+    // the great hall: a broad roundhouse under a tall thatch cone with a painted tartan band and shields by the door, inside a palisade
+    roundHouse(ctx, x, y, 9, 8.5, 11, roofC, { band: '#b02e28', big: true });
+    for (const [sx, sy, c] of [[x + 3.4, y + 3.6, '#3f7a3a'], [x + 7.2, y + 2.4, '#b02e28']] as const) { ellipse(ctx, sx, sy, 1.7, 1.7, c); celtRing(ctx, sx, sy, 1.7, 1.7, "#c9974a", 0.5); ellipse(ctx, sx, sy, 0.5, 0.5, '#e8c25a'); }
+    palisade(ctx, x, y + 1, 12.5, 4.4, 0.1, 0.9);
+    if (capital) return;
+    ellipse(ctx, x + 0.4, y - 25, 2.2, 1.4, 'rgba(230,230,235,0.55)'); // a wisp of hearth smoke
+    ellipse(ctx, x + 1.6, y - 28, 1.6, 1.1, 'rgba(230,230,235,0.4)');
+    return;
+  }
+  switch (key) {
+    case '0,8': standingStones(ctx, x, y, 0.9); break;
+    case '7,-7': highCross(ctx, x, y); break;
+    case '10,2':
+      roundHouse(ctx, x, y, 5.4, 6.4, 7.6, roofC, { wall: '#e6d9b8' });
+      palisade(ctx, x, y + 1, 8.4, 3, 0.05, 0.95); // a stake-fenced yard
+      break;
+    case '-14,-3': { // a granary: a straw stack beside a small thatched store on staddle stones
+      for (const [px, py] of [[-3, 1.5], [3, 1.5], [0, 3]] as const) ellipse(ctx, x + px, y + py, 1.3, 0.7, '#8a9090');
+      roundHouse(ctx, x - 1.4, y - 1, 4.6, 4, 6.5, roofC, { wall: '#c9a878' });
+      ellipse(ctx, x + 6.4, y + 1.4, 3.4, 1.6, shade(roofC, -0.3));
+      poly(ctx, [x + 3, y + 1.2, x + 6.4, y - 8, x + 9.8, y + 1.2], shade(roofC, 0.08));
+      poly(ctx, [x + 6.4, y - 8, x + 9.8, y + 1.2, x + 6.4, y + 2.6], shade(roofC, -0.26));
+      line(ctx, x + 6.4, y - 8, x + 6.4, y - 10.4, '#5a3a1e', 0.8);
+      break;
+    }
+    default:
+      roundHouse(ctx, x, y, key === '-6,-8' ? 4.8 : 5.4, 6.4, key === '-6,-8' ? 6.8 : 7.6, roofC, { band: key === '-10,2' ? '#3f7a3a' : undefined });
   }
 }
 
