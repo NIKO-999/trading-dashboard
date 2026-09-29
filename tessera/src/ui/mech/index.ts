@@ -18,7 +18,8 @@ import { ui as mali } from './mali';
 import { ui as maya } from './maya';
 import { ui as ottoman } from './ottoman';
 import { ui as persia } from './persia';
+import { ui as swahili } from './swahili';
 import { ui as tibet } from './tibet';
 import { ui as vikings } from './vikings';
 
-export const MECH_UI: MechUiRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, lakota, mali, maya, ottoman, persia, tibet, vikings };
+export const MECH_UI: MechUiRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, lakota, mali, maya, ottoman, persia, swahili, tibet, vikings };
