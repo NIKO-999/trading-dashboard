@@ -1145,6 +1145,7 @@ const FRUIT: Record<TribeId, string> = {
   egypt: '#8e3f1c', aztec: '#f29a2e', polynesia: '#f2c53a', rome: '#e2324a', pirates: '#78c43e',
   vikings: '#3a4fb8', japan: '#f28a2e', mongols: '#d23a3a', greeks: '#5a3a6a', zulu: '#f2b33a',
   persia: '#d7443a', celts: '#7a2a5a', inuit: '#e85a6a', inca: '#f2c53a', ethiopia: '#b8324a', aboriginal: '#7a2a4a',
+  china: '#e8423a', india: '#e8a02a', mali: '#f2b33a', lakota: '#8a2a4a', ottoman: '#c8244a',
 };
 
 /** A round, softly lit fruit with a stalk and a leaf. */

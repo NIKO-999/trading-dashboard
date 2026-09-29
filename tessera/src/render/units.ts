@@ -23,6 +23,11 @@ const LOOK: Record<TribeId, Look> = {
   inca: { skin: '#b5754a', hair: '#141012' },
   ethiopia: { skin: '#8a5a36', hair: '#15100c' },
   aboriginal: { skin: '#6e4229', hair: '#17110d' },
+  china: { skin: '#e6bf8e', hair: '#141214' },
+  india: { skin: '#b8763f', hair: '#15100c' },
+  mali: { skin: '#5e3a22', hair: '#120d0a' },
+  lakota: { skin: '#a8683a', hair: '#141012' },
+  ottoman: { skin: '#dcae82', hair: '#1c1410' },
 };
 
 const GOLD = '#f0c43a';
@@ -6709,6 +6714,11 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   inca: { body: '#e8dcc0', feature: 'llama' },
   ethiopia: { body: '#7a4530', feature: 'ibex' },
   aboriginal: { body: '#b5623a', feature: 'kangaroo' }, // a red kangaroo
+  china: { body: '#e8e8e2', feature: 'snout' },
+  india: { body: '#7a7a80', feature: 'tusks' },
+  mali: { body: '#c9a06a', feature: 'horns' },
+  lakota: { body: '#4a3428', feature: 'horns' },
+  ottoman: { body: '#8a6a4a', feature: 'horns' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

@@ -18,10 +18,10 @@ export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) =
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
 export const isExplored = (s: GameState, pid: number, x: number, y: number) => s.players[pid].explored[y * s.size + x];
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
-const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher'];
+const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider'];
 
 /** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
-export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0);
+export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0);
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
 export const seaBonus = (s: GameState, u: Unit) => (def(u).naval && s.players[u.owner].tribe === 'pirates' ? 1 : 0);
@@ -31,7 +31,9 @@ const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pira
 
 export function cityIncome(s: GameState, c: City) {
   let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0) + c.parks;
-  inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length;
+  const tribe = s.players[c.owner].tribe;
+  inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'market').length * (tribe === 'china' ? 2 : 1); // Silk Road
+  if (tribe === 'mali') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'mine').length; // Gold of the Sahel
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
   inc += networkIncome(roadNetwork(s, c));
@@ -346,7 +348,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     case 'capture': return capture(s, u!, t);
     case 'recover': {
       const before = u!.hp;
-      u!.hp = Math.min(maxHp(u!), u!.hp + (tileOwnerPlayer(s, t) === pid ? 4 : 2));
+      u!.hp = Math.min(maxHp(u!), u!.hp + (tileOwnerPlayer(s, t) === pid ? 4 : 2) + (s.players[pid].tribe === 'india' ? 2 : 0)); // Ahimsa
       u!.moved = u!.attacked = true;
       emit({ type: 'heal', unitId: u!.id, x: u!.x, y: u!.y, amount: u!.hp - before });
       return true;
@@ -481,7 +483,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const range = d.move + seaBonus(s, u);
+  const range = d.move + seaBonus(s, u) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0); // Horse Nation
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {

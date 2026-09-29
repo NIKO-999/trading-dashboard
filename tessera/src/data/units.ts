@@ -53,6 +53,11 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   clansman: U({ kind: 'clansman', name: 'Clansman', cost: 2, hp: 12, atk: 2, def: 1.5, move: 1, range: 1, skills: ['dash', 'forestwalk'], tech: null, blurb: 'Celtic warrior of the oak groves. Slips through forest.' }),
   harpooner: U({ kind: 'harpooner', name: 'Harpooner', cost: 3, hp: 10, atk: 2, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inuit hunter with a barbed harpoon. Hits from two tiles.' }),
   slinger: U({ kind: 'slinger', name: 'Slinger', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Inca sling-warrior. Hurls stones harder than an archer shoots.' }),
+  crossbowman: U({ kind: 'crossbowman', name: 'Crossbowman', cost: 4, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Chinese crossbow infantry. Shoots harder than an archer.' }),
+  elephant: U({ kind: 'elephant', name: 'War Elephant', cost: 8, hp: 20, atk: 3, def: 1.5, move: 2, range: 1, skills: ['persist', 'fortify'], tech: 'chivalry', blurb: 'Indian war elephant. Tough, fast and keeps charging after a kill.' }),
+  sofa: U({ kind: 'sofa', name: 'Sofa', cost: 3, hp: 12, atk: 2.5, def: 2, move: 1, range: 1, skills: ['dash', 'fortify'], tech: null, blurb: 'Malian guardian warrior. A warrior that is a little tougher.' }),
+  buffalorider: U({ kind: 'buffalorider', name: 'Horse Warrior', cost: 3, hp: 10, atk: 2.5, def: 1, move: 2, range: 1, skills: ['dash', 'escape', 'fortify'], tech: 'riding', blurb: 'Lakota mounted hunter and warrior. Swift and hard-hitting.' }),
+  janissary: U({ kind: 'janissary', name: 'Janissary', cost: 4, hp: 10, atk: 3, def: 1, move: 1, range: 2, skills: ['dash', 'fortify'], tech: 'archery', blurb: 'Ottoman gunpowder infantry. Fires from two tiles away.' }),
   woomera: U({ kind: 'woomera', name: 'Woomera Hunter', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'forestwalk'], tech: 'archery', blurb: 'Aboriginal hunter with a spear-thrower. Throws far and moves freely through forest.' }),
   shotelai: U({ kind: 'shotelai', name: 'Shotelai', cost: 5, hp: 15, atk: 3.5, def: 2.5, move: 1, range: 1, skills: ['dash'], tech: 'smithing', blurb: 'Ethiopian sickle-sword fighter that cuts around shields.' }),
 };

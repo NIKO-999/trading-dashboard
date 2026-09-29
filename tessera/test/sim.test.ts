@@ -68,10 +68,10 @@ test('every capital and village starts with enough resources to level up', () =>
   assert.ok(checked > 500, `checked ${checked} settlements`);
 });
 
-test('a 16-empire game runs 30 AI turns cleanly', () => {
+test('a 21-empire game runs 30 AI turns cleanly', () => {
   const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
-  assert.equal(s.players.length, 16);
-  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 16, 'every empire gets its own capital');
+  assert.equal(s.players.length, 21);
+  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 21, 'every empire gets its own capital');
   startTurn(s);
   let guard = 0;
   while (!s.over && guard++ < 2000) {
@@ -541,3 +541,29 @@ test('the five newest empires\' bonuses', () => {
   // every new empire's unique unit is trainable data
   for (const id of ['persia', 'celts', 'inuit', 'inca', 'ethiopia'] as const) assert.ok(TRIBE_IDS.includes(id));
 });
+
+test('the last five empires\' bonuses', () => {
+  const g = (tribe: 'china' | 'india' | 'mali' | 'lakota' | 'ottoman') => createGame({ seed: 21, human: tribe, opponents: ['rome'], mode: 'domination' });
+  const ref = createGame({ seed: 21, human: 'rome', opponents: ['greeks'], mode: 'domination' });
+  // Ottoman: catapults cost 3★ less
+  assert.equal(trainCost(g('ottoman'), 0, 'catapult'), trainCost(ref, 0, 'catapult') - 3);
+  // Lakota: mounted units move one further
+  const l = g('lakota'), r = createGame({ seed: 21, human: 'rome', opponents: ['greeks'], mode: 'domination' });
+  const mk = (s: GameState) => spawnUnit(s, 'rider', 0, s.cities[0].x + 1, s.cities[0].y, null);
+  const reach = (s: GameState) => Math.max(...moveOptions(s, mk(s)).map((m) => Math.abs(m.x - s.cities[0].x) + Math.abs(m.y - s.cities[0].y)));
+  s_open(l); s_open(r);
+  assert.ok(reach(l) >= reach(r));
+  // China: a market pays double; Mali: a mine pays 1★
+  const c = g('china'), city = c.cities[0];
+  const base = cityIncome(c, city);
+  const tile = c.tiles.find((t) => t.owner === city.id && t.cityId === null && t.improvement === null)!;
+  tile.improvement = 'market';
+  assert.equal(cityIncome(c, city), base + 2);
+  const m = g('mali'), mc = m.cities[0], mb = cityIncome(m, mc);
+  m.tiles.find((t) => t.owner === mc.id && t.cityId === null && t.improvement === null)!.improvement = 'mine';
+  assert.equal(cityIncome(m, mc), mb + 1);
+});
+
+function s_open(s: GameState) {
+  s.players[0].explored.fill(true);
+}

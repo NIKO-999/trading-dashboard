@@ -19,9 +19,9 @@ export interface NewGameOptions {
 
 // Map edge length by map size and number of empires.
 const SIZES: Record<MapSize, Record<number, number>> = {
-  normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22, 11: 23, 12: 24, 13: 25, 14: 26, 15: 27, 16: 28 },
-  large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26, 11: 27, 12: 28, 13: 29, 14: 30, 15: 31, 16: 32 },
-  huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30, 11: 31, 12: 32, 13: 33, 14: 34, 15: 35, 16: 36 },
+  normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22, 11: 23, 12: 24, 13: 25, 14: 26, 15: 27, 16: 28, 17: 29, 18: 30, 19: 31, 20: 32, 21: 33 },
+  large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26, 11: 27, 12: 28, 13: 29, 14: 30, 15: 31, 16: 32, 17: 33, 18: 34, 19: 35, 20: 36, 21: 37 },
+  huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30, 11: 31, 12: 32, 13: 33, 14: 34, 15: 35, 16: 36, 17: 37, 18: 38, 19: 39, 20: 40, 21: 41 },
 };
 
 export function createGame(opts: NewGameOptions): GameState {
@@ -191,6 +191,11 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
     inuit: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'animal' }],
     inca: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'crop' }, { terrain: 'field', res: 'fruit' }],
     aboriginal: [{ terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'fruit' }, { terrain: 'shallow', res: 'fish' }],
+    china: [{ terrain: 'field', res: 'crop' }, { terrain: 'field', res: 'fruit' }, { terrain: 'mountain', res: 'ore' }],
+    india: [{ terrain: 'field', res: 'fruit' }, { terrain: 'field', res: 'crop' }, { terrain: 'shallow', res: 'fish' }],
+    mali: [{ terrain: 'field', res: 'crop' }, { terrain: 'forest', res: 'animal' }, { terrain: 'mountain', res: 'ore' }],
+    lakota: [{ terrain: 'field', res: 'animal' }, { terrain: 'field', res: 'animal' }, { terrain: 'field', res: 'fruit' }],
+    ottoman: [{ terrain: 'field', res: 'crop' }, { terrain: 'field', res: 'fruit' }, { terrain: 'mountain', res: 'ore' }],
     ethiopia: [{ terrain: 'field', res: 'crop' }, { terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'fruit' }],
   };
   const free = rng.shuffle(ring.filter((t) => !t.resource));
