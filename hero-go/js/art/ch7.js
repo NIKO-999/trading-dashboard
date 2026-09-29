@@ -133,10 +133,10 @@
       body += shard(122, 104, 12, 30, -14, AM) + shard(142, 98, 14, 38, 6, SA) + shard(162, 108, 12, 28, 26, RS);
       body += '<path d="M116 122 Q140 108 166 122 M112 138 Q140 124 170 138 M118 152 Q142 142 166 152" stroke="#c48aff" stroke-width="2.4" fill="none" opacity=".5" stroke-linecap="round"/>';
       body += '<path d="M130 128 l10 -8 l10 8 l-10 14 Z" fill="#ff6ae8" opacity=".85" ' + S(2) + '/>' + hl(130, 108, 8, 4, -20, 0.35);
+      near.forEach(function (l) { body += leg(l, '#5a3a82', 8); body += '<path d="M' + l[1][0] + ' ' + l[1][1] + ' L' + l[2][0] + ' ' + l[2][1] + '" stroke="#a884d8" stroke-width="2" stroke-linecap="round" opacity=".5" transform="translate(-1 0)"/>' + shard(l[1][0], l[1][1], 8, 17, l[1][0] < l[0][0] ? -34 : 34, l[1][0] < 60 ? SA : EM, 2); });
       // cephalothorax
       body += '<path d="' + fluff(84, 138, 28, 24, 12, 0.1) + '" fill="url(#' + I('fur') + ')" ' + S(4) + '/>';
       body += hl(70, 124, 9, 4, -30, 0.35);
-      near.forEach(function (l) { body += leg(l, '#5a3a82', 8); body += '<path d="M' + l[1][0] + ' ' + l[1][1] + ' L' + l[2][0] + ' ' + l[2][1] + '" stroke="#a884d8" stroke-width="2" stroke-linecap="round" opacity=".5" transform="translate(-1 0)"/>' + shard(l[1][0], l[1][1], 8, 17, l[1][0] < l[0][0] ? -34 : 34, l[1][0] < 60 ? SA : EM, 2); });
       // fangs + palps
       body += '<path d="M62 152 Q54 164 58 174 Q66 166 68 154 Z" fill="#f4f0ff" ' + S(3) + '/>' +
         '<path d="M78 156 Q72 168 78 178 Q86 168 84 156 Z" fill="#f4f0ff" ' + S(3) + '/>' +
@@ -361,7 +361,7 @@
       b += slab('100,132 148,132 152,166 158,188 96,188 98,166', 'url(#' + I('amd') + ')',
         fd('120,132 148,132 152,166 158,188 132,188', 0.32) + fl('100,134 112,134 110,186 96,188', 0.12) + fd('96,176 158,178 158,190 96,190', 0.35) +
         ln('M102 168 L152 166 M110 178 L112 188 M130 176 L130 188', O, 1.6, 0.6)) +
-        '<polygon points="104,146 144,146 148,164 100,164" fill="url(#' + I('rock') + ')" ' + S(2.6) + '/>';
+        '<polygon points="104,146 144,146 148,164 100,164" fill="url(#' + I('sa') + ')" ' + S(2.6) + '/>' + fd('104,146 144,146 148,164 100,164', 0.4) + poly('104,146 144,146 140,152 106,152', '#fff', 'opacity=".3"') + rune(124, 156, 6.5, '#ff9af0');
       b += slab('54,134 104,134 108,168 114,190 46,190 50,166', 'url(#' + I('am') + ')',
         fl('56,136 76,136 68,188 46,190', 0.22) + fd('88,134 104,134 108,168 114,190 84,190', 0.36) + fd('46,178 114,180 114,192 46,192', 0.32) +
         ln('M50 168 L106 166 M60 180 L62 190 M84 178 L84 190', O, 1.8, 0.6) + ln('M62 140 L70 156 L62 168', '#fff', 1.4, 0.6)) +
@@ -415,15 +415,15 @@
       b += '<g class="part-cape" style="transform-origin: 168px 108px">' + chain(166, 110, 178, 128, 176, 148, 5) + '<polygon points="160,104 174,102 174,114 162,114" fill="url(#' + I('metal') + ')" ' + S(2.6) + '/>' + '</g>';
 
       // ---- head ----
-      b += '<g class="part-head" style="transform-origin: 100px 70px">' +
+      b += '<g class="part-head" style="transform-origin: 100px 70px"><g transform="translate(100 76) scale(1.2) translate(-100 -76)">' +
         slab('86,60 116,60 118,74 84,74', 'url(#' + I('rock') + ')', '') +
         // crown spikes (shattered)
-        '<polygon points="78,36 72,12 90,36" fill="url(#' + I('sa') + ')" ' + S(3) + '/>' +
-        '<polygon points="90,36 92,2 106,36" fill="url(#' + I('am') + ')" ' + S(3) + '/>' + poly('92,2 97,36 90,36', '#fff', 'opacity=".4"') +
-        '<polygon points="106,36 118,10 122,36" fill="url(#' + I('sa') + ')" ' + S(3) + '/>' + poly('118,10 121,36 114,36', '#1a0a40', 'opacity=".3"') +
+        '<polygon points="78,36 72,18 90,36" fill="url(#' + I('sa') + ')" ' + S(3) + '/>' +
+        '<polygon points="90,36 92,10 106,36" fill="url(#' + I('am') + ')" ' + S(3) + '/>' + poly('92,10 97,36 90,36', '#fff', 'opacity=".4"') +
+        '<polygon points="106,36 118,16 122,36" fill="url(#' + I('sa') + ')" ' + S(3) + '/>' + poly('118,16 121,36 114,36', '#1a0a40', 'opacity=".3"') +
         '<polygon points="122,38 128,24 124,20 134,38" fill="url(#' + I('am') + ')" ' + S(3) + '/>' +
         '<polygon points="70,40 62,26 78,36" fill="url(#' + I('am') + ')" ' + S(3) + '/>' +
-        '<polygon points="130,10 134,4 138,12 134,18" fill="#8ad0ff" ' + S(1.8) + ' opacity=".9"/>' +
+        '<polygon points="132,16 136,10 140,18 136,24" fill="#8ad0ff" ' + S(1.8) + ' opacity=".9"/>' +
         slab('72,38 130,38 136,50 128,66 112,74 88,74 74,66 68,50', 'url(#' + I('am') + ')',
           fl('72,40 100,40 88,58 68,52', 0.34) + fd('130,38 136,50 128,66 112,74 106,54', 0.36) + fd('74,66 88,74 112,74 100,62', 0.3) +
           ln('M100 40 L100 50 M76 58 L84 64', O, 1.6, 0.5)) +
@@ -439,12 +439,13 @@
         '</g>' +
         // nose / jaw / mouth
         '<path d="M99 60 L96 68 L104 68 Z" fill="#4a2090" ' + S(1.8) + '/>' +
-        '<path d="M80 70 L86 67 L91 71 L97 67 L103 71 L109 67 L115 71 L121 68" fill="none" stroke="' + O + '" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>' +
-        '<path d="M86 68 L91 70 L96 68 M104 68 L109 70 L114 68" stroke="#7ffcff" stroke-width="1.6" fill="none"/>' +
+        '<polygon points="80,67 121,66 118,71 110,73 92,73 84,71" fill="#7ffcff" ' + S(2.4) + '/>' +
+        '<polygon points="82,67 87,71 92,67 97,72 102,67 107,72 112,67 117,71 119,67" fill="#fff" ' + S(1.6) + '/>' +
+        '<path d="M86 71 L86 73 M97 72 L97 74 M107 72 L107 74" stroke="' + O + '" stroke-width="1.4"/>' +
         // scar + chip
         ln('M114 44 L104 56 L109 60', O, 2.2, 0.9) + '<path d="M76 62 l6 -4 l-1 7 z" fill="#2c1466" opacity=".8"/>' +
-        hl(84, 44, 8, 3, -20, 0.6) + moss(106, 34, 16) +
-        '</g>';
+        hl(84, 44, 8, 3, -20, 0.6) +
+        '</g></g>';
 
       // ---- dust & debris ----
       b += '<g fill="#e8d0ff" opacity=".85">' +
@@ -470,7 +471,7 @@
     s += '<defs>' +
       lg('crystal-sky', [[0, '#120c33'], [0.5, '#2a1f5e'], [1, '#43308a']]) +
       lg('crystal-ground', [[0, '#3c3080'], [1, '#170f3c']]) +
-      lg('crystal-rock', [[0, '#1a1246'], [1, '#2c2070']]) +
+      lg('crystal-rock', [[0, '#2e2478'], [1, '#150e40']]) +
       lg('crystal-bed', [[0, '#5a4a96'], [1, '#3a2c70']]) +
       lg('crystal-wood', [[0, '#a8683a'], [1, '#603418']]) +
       lg('crystal-rail', [[0, '#d4dcec'], [0.5, '#8a94b0'], [1, '#4a5274']]) +
@@ -498,7 +499,7 @@
     });
     d += 'L-10 30 Z';
     s += '<path d="' + d + '" fill="url(#crystal-rock)" stroke="' + O + '" stroke-width="3" stroke-linejoin="round"/>';
-    s += '<path d="M-10 26 L410 26" stroke="#5a44b0" stroke-width="2" opacity=".5"/>';
+    s += '<path d="M-10 22 L410 22" stroke="#6a54c8" stroke-width="2.5" opacity=".6"/>';
     for (i = 0; i < 10; i++) s += '<path d="M' + f(r() * 400) + ' ' + f(4 + r() * 16) + 'l6 8" stroke="#5a44b0" stroke-width="2" opacity=".5"/>';
     // glowing crystals on ceiling
     s += halo(60, 34, 34, 22, 'b', 0.6) + shard(60, 26, 10, 26, 180, SA, 2) + shard(72, 26, 7, 16, 170, AM, 1.8);
