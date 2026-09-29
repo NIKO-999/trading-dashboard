@@ -3,6 +3,7 @@ import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { TRAITS } from '../data/traits';
+import { MECH } from '../game/mech';
 import { describePerk } from '../game/perks';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
@@ -152,7 +153,9 @@ const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
 function traitLists(id: TribeId): Node[] {
   const t = TRIBES[id];
   const item = (cls: string, name: string, why: string, effect: string) => h('li', { class: cls }, h('b', {}, name), ' ', h('span', { class: 'why' }, why), h('span', { class: 'effect' }, effect));
+  const m = MECH[id];
   return [
+    ...(m ? [h('h5', { class: 'pros' }, 'Unique mechanic'), h('ul', { class: 'traits' }, item('pro', m.name, '', m.blurb))] : []),
     h('h5', { class: 'pros' }, 'Strengths'),
     h('ul', { class: 'traits' },
       item('pro', 'Signature', '', t.bonus),

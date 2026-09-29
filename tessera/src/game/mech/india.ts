@@ -45,6 +45,7 @@ export const mech: Mechanic = {
     if (!isProvoker(s, owner, u)) { addKarma(s, owner, -1); return; }
     addKarma(s, owner, 1);
     // a sacred beast answers: neutral wildlife near the fallen joins us as an elephant
+    if (s.units.filter((x) => x.owner === owner && x.data?.sacred).length >= 2) return; // the herd answers only so many
     let best: { x: number; y: number; d: number } | null = null;
     for (const t of s.tiles) {
       if (t.resource !== 'animal' || t.cityId !== null || unitAt(s, t.x, t.y) || (t.x === u.x && t.y === u.y)) continue; // not the victim's tile: the killer may step onto it
