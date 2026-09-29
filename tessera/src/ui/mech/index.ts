@@ -8,11 +8,13 @@ import { ui as egypt } from './egypt';
 import { ui as ethiopia } from './ethiopia';
 import { ui as greeks } from './greeks';
 import { ui as india } from './india';
+import { ui as inuit } from './inuit';
 import { ui as khmer } from './khmer';
 import { ui as mali } from './mali';
+import { ui as maya } from './maya';
 import { ui as ottoman } from './ottoman';
 import { ui as persia } from './persia';
 import { ui as tibet } from './tibet';
 import { ui as vikings } from './vikings';
 
-export const MECH_UI: MechUiRegistry = { celts, china, egypt, ethiopia, greeks, india, khmer, mali, ottoman, persia, tibet, vikings };
+export const MECH_UI: MechUiRegistry = { celts, china, egypt, ethiopia, greeks, india, inuit, khmer, mali, maya, ottoman, persia, tibet, vikings };
