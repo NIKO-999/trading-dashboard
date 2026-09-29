@@ -166,7 +166,7 @@ function economyStep(s: GameState, pid: number): boolean {
         case 'chivalry': return 4;
         case 'sailing': return abroad ? 6 : 3;
         case 'philosophy': return 3;
-        default: return 2;
+        default: return id.includes(':') ? 6 : 2; // an empire's own skill line is worth having
       }
     };
     const pick = options.map((t) => ({ t, w: want(t.id) / techCost(s, pid, t.id) })).sort((a, b) => b.w - a.w)[0];

@@ -1,5 +1,6 @@
 import { TRIBES, unitFor } from '../data/tribes';
 import { UNITS } from '../data/units';
+import { perkSum } from './perks';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
@@ -338,8 +339,9 @@ export function spawnUnit(state: GameState, kind: UnitKind, owner: number, x: nu
 
 export function revealAround(state: GameState, playerId: number) {
   const p = state.players[playerId];
+  const extra = p.techs.length > 1 ? perkSum(state, playerId, 'vision') : 0; // skill-line perks
   const mark = (x: number, y: number, r: number) => {
-    for (const t of area(state, x, y, r)) p.explored[t.y * state.size + t.x] = true;
+    for (const t of area(state, x, y, r + extra)) p.explored[t.y * state.size + t.x] = true;
   };
   for (const c of state.cities) if (c.owner === playerId) mark(c.x, c.y, c.borderRadius + 1);
   for (const u of state.units) {

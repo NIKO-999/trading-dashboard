@@ -36,6 +36,8 @@ Lead one of twenty-six empires, each with its own biome, starting tech, unique u
 
 Every empire also has an **Empire Power**, an active move only that people can make (tap the purple Power button; it starts on cooldown and recharges 8-15 turns after each use, and rivals use theirs too). A few: Egypt's *Flood of the Nile* grows every city by its farms, Rome's *Levy of the Legions* raises a free soldier in every city, the Maya's *Eclipse* stops all rival attacks for a turn, Japan's *Way of the Sword* gives a free tech, the Inuit's *Whiteout* slows and weakens every rival army, and Tibet's *Compassion of the Plateau* wins over weakened enemy units next to yours. The Empires screen lists all 26.
 
+Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 26.
+
 Features:
 - Original generative music for every empire, in the scales and instruments of its culture (Hijaz-style modes and ney for Egypt, in-scale koto and shakuhachi for Japan, a raga with sitar and tanpura for India, throat-song pulses for the Inuit, a didgeridoo drone for the Aboriginal nations, and so on). It is synthesised live, works offline, and can be switched off under Music.
 - A seeded isometric map with fog of war.

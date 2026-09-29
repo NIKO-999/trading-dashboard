@@ -1,6 +1,7 @@
-import { TECH_BY_ID, TECHS } from '../data/techs';
+import { TECH_BY_ID, techsFor } from '../data/techs';
 import { POWERS, type PowerFx } from '../data/powers';
 import { unitFor } from '../data/tribes';
+import { perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
 import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
@@ -22,7 +23,14 @@ export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.
 const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa'];
 
 /** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
-export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0);
+const perkCost = (s: GameState, pid: number, k: UnitKind) => {
+  if (!s.players[pid].techs.length) return 0;
+  const tribe = s.players[pid].tribe;
+  const of = (['melee', 'ranged', 'mounted', 'siege'] as const).filter((w) => unitMatches(tribe, k, w));
+  const naval = UNITS[k].naval ? 'naval' : null;
+  return Math.min(UNITS[k].cost - 1, perkSum(s, pid, 'cost', (p) => p.of === naval || (of as readonly string[]).includes(p.of)));
+};
+export const trainCost = (s: GameState, pid: number, k: UnitKind) => UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k);
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
 /** Tibetans scale mountains without Climbing. */
@@ -43,6 +51,15 @@ export function cityIncome(s: GameState, c: City) {
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   if (hasTech(s, c.owner, 'trade')) inc += 1;
   inc += networkIncome(roadNetwork(s, c));
+  if (s.players[c.owner].techs.length) {
+    for (const pk of perksOf(s, c.owner)) {
+      if (pk.k !== 'income') continue;
+      if (pk.per === 'city') inc += pk.n;
+      else if (pk.per === 'capital') inc += c.capital ? pk.n : 0;
+      else if (pk.per === 'road') inc += Math.floor(pk.n * (s.tiles.filter((t) => t.owner === c.id && t.road).length / 4));
+      else inc += Math.floor(pk.n * s.tiles.filter((t) => t.owner === c.id && t.improvement === pk.per).length);
+    }
+  }
   return inc;
 }
 
@@ -65,13 +82,14 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const t = TECH_BY_ID[tech];
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
-  const cost = hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base;
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base) - perkSum(s, pid, 'cost', (p) => p.of === 'tech'));
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
 export function researchStatus(s: GameState, pid: number, tech: string): 'owned' | 'available' | 'locked' {
   if (hasTech(s, pid, tech)) return 'owned';
   const t = TECH_BY_ID[tech];
+  if (t.tribe && t.tribe !== s.players[pid].tribe) return 'locked'; // someone else's skill line
   return t.parent === null || hasTech(s, pid, t.parent) ? 'available' : 'locked';
 }
 
@@ -88,7 +106,7 @@ export function research(s: GameState, pid: number, tech: string) {
   return true;
 }
 
-export const researchable = (s: GameState, pid: number) => TECHS.filter((t) => researchStatus(s, pid, t.id) === 'available');
+export const researchable = (s: GameState, pid: number) => techsFor(s.players[pid].tribe).filter((t) => researchStatus(s, pid, t.id) === 'available');
 
 // ---------------------------------------------------------------- cities
 
@@ -103,6 +121,8 @@ export function addPop(s: GameState, c: City, n: number) {
     c.level++;
     c.pendingRewards.push(c.level);
     emit({ type: 'levelup', player: c.owner, cityId: c.id, level: c.level });
+    const ls = perkSum(s, c.owner, 'levelstar');
+    if (ls) { s.players[c.owner].stars += ls; emit({ type: 'stars', player: c.owner, x: c.x, y: c.y, amount: ls }); }
   }
   while (c.pop < 0 && c.level > 1) {
     c.level--;
@@ -336,7 +356,8 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   p.stars -= act.cost;
   const city = cityById(s, t.owner);
   const u = unitAt(s, t.x, t.y);
-  const grow = (n: number) => {
+  const grow = (n: number, ...tags: string[]) => {
+    if (tags.length && p.techs.length) n += perkSum(s, pid, 'grow', (pk) => tags.includes(pk.on)); // skill-line perks
     emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: n });
     addPop(s, city!, n);
     return true;
@@ -367,21 +388,23 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     case 'harvest': {
       const r = t.resource;
       t.resource = null;
+      const hs = perkSum(s, pid, 'harvestStar');
+      if (hs) { p.stars += hs; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: hs }); }
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
-      if (r === 'animal' && p.tribe === 'zulu') return grow(2); // Great Hunt
-      return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1); // Sea Hunters
+      if (r === 'animal' && p.tribe === 'zulu') return grow(2, 'harvest', 'animal'); // Great Hunt
+      return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1, 'harvest', r ?? ''); // Sea Hunters
     }
-    case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2);
-    case 'mine': t.improvement = 'mine'; return grow(p.tribe === 'inca' ? 3 : 2); // Terraces
-    case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b); }
+    case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
+    case 'mine': t.improvement = 'mine'; return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
+    case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b, 'lumber'); }
     case 'clear':
       t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 });
       return p.tribe === 'aboriginal' ? grow(1) : true; // Firestick Farming
-    case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b); }
+    case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b, 'port'); }
     case 'shrine':
-    case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b); }
-    case 'market': { const b = clusterBonus(s, t, 'market'); t.improvement = 'market'; return b ? grow(b) : (emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }), true); }
+    case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b, 'temple'); }
+    case 'market': { const b = clusterBonus(s, t, 'market'); t.improvement = 'market'; return b || perkSum(s, pid, 'grow', (pk) => pk.on === 'market') ? grow(b, 'market') : (emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }), true); }
   }
   return false;
 }
@@ -493,7 +516,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
-  const range = Math.max(1, d.move + fxBonus(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
+  const range = Math.max(1, d.move + fxBonus(s, u, 'move') + perkUnit(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {
@@ -619,6 +642,15 @@ export const MOUNTAIN_DEFENSE = 2;
 
 export function defenseBonus(s: GameState, u: Unit) {
   const t = tileAt(s, u.x, u.y)!;
+  let extra = 0; // terrain perks from the empire's skill line
+  if (s.players[u.owner].techs.length) {
+    const inCity = t.cityId !== null && cityById(s, t.cityId)?.owner === u.owner;
+    extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity));
+  }
+  return baseDefense(s, u, t) + extra;
+}
+
+function baseDefense(s: GameState, u: Unit, t: Tile) {
   const c = cityById(s, t.cityId);
   if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return c.walls ? 4 : 1.5;
   const tribe = s.players[u.owner].tribe;
@@ -640,8 +672,8 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + fxBonus(s, a, 'atk'));
-  const dd = Math.max(0, unitDef(s, d) + fxBonus(s, d, 'def'));
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + fxBonus(s, a, 'atk') + perkUnit(s, a, 'atk'));
+  const dd = Math.max(0, unitDef(s, d) + fxBonus(s, d, 'def') + perkUnit(s, d, 'def'));
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
   const total = aForce + dForce || 1;
@@ -665,6 +697,8 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     removeUnit(s, d);
     emit({ type: 'death', unitId: d.id, x: d.x, y: d.y, owner: d.owner, kind: d.kind });
     pa.kills++;
+    const ks = perkSum(s, a.owner, 'kill');
+    if (ks) { pa.stars += ks; emit({ type: 'stars', player: a.owner, x: d.x, y: d.y, amount: ks }); }
     if (def(a).skills.includes('plunder')) {
       pa.stars += 2;
       emit({ type: 'stars', player: a.owner, x: d.x, y: d.y, amount: 2 });

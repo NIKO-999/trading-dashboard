@@ -1,4 +1,6 @@
-import { TECHS, TECH_BY_ID } from '../data/techs';
+import { TECH_BY_ID, techsFor } from '../data/techs';
+import { UNIQUE_BY_ID } from '../data/uniqueTechs';
+import type { Perk } from '../game/perks';
 import { portraitKind, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { research, researchStatus, techCost } from '../game/rules';
@@ -19,6 +21,24 @@ const TECH_ICON: Record<string, string> = {
   climbing: 'mountain', mining: 'mine', smithing: 'swordsman', meditation: 'temple', philosophy: 'star',
 };
 
+/** A picture for an empire's own techs, chosen from the first thing they do. */
+function uniqueIcon(id: string): string {
+  const pk: Perk | undefined = UNIQUE_BY_ID[id]?.perks[0];
+  if (!pk) return 'star';
+  switch (pk.k) {
+    case 'atk': return pk.who === 'ranged' ? 'archer' : pk.who === 'mounted' ? 'rider' : pk.who === 'naval' ? 'warship' : pk.who === 'siege' ? 'catapult' : 'swordsman';
+    case 'def': return 'defender';
+    case 'move': return pk.who === 'naval' ? 'ship' : pk.who === 'mounted' ? 'rider' : 'road';
+    case 'income': return pk.per === 'city' || pk.per === 'capital' ? 'star' : pk.per === 'farm' ? 'crop' : pk.per === 'lumber' ? 'lumber' : pk.per;
+    case 'grow': return pk.on === 'harvest' ? 'fruit' : pk.on === 'fish' ? 'fish' : pk.on === 'animal' ? 'animal' : pk.on === 'fruit' ? 'fruit' : pk.on === 'farm' ? 'crop' : pk.on;
+    case 'cost': return pk.of === 'tech' ? 'star' : pk.of === 'naval' ? 'ship' : pk.of === 'mounted' ? 'rider' : pk.of === 'siege' ? 'catapult' : pk.of === 'ranged' ? 'archer' : 'swordsman';
+    case 'terrain': return pk.on === 'forest' ? 'forest' : pk.on === 'mountain' ? 'mountain' : 'defender';
+    case 'heal': return 'temple';
+    case 'kill': return 'swordsman';
+    default: return 'star';
+  }
+}
+
 /** Full-screen radial tech tree. `onChange` runs after a successful research. */
 /**
  * The research screen. With `focus` (e.g. from a locked "Build Farm" button) that tech is
@@ -29,6 +49,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
   const p = s.players[pid];
   const tribe = TRIBES[p.tribe];
   const layer = h('div', { class: 'techtree' });
+  const mine = techsFor(p.tribe); // the shared tree plus this empire's own skill line
   const goal = focus && TECH_BY_ID[focus] ? focus : null;
   let focused = goal;
   const close = () => {
@@ -51,11 +72,11 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     };
     const half = { x: w / 2, y: hgt / 2 };
     let lines = '';
-    for (const t of TECHS) {
+    for (const t of mine) {
       const a = pos(t.id);
       const b = t.parent ? pos(t.parent) : half;
       const on = researchStatus(s, pid, t.id) === 'owned';
-      lines += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${on ? '#22c33a' : '#555'}" stroke-width="${on ? 4 : 3}"/>`;
+      lines += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${on ? '#22c33a' : t.tribe ? '#8a7a3a' : '#555'}" stroke-width="${on ? 4 : 3}"${t.tribe && !on ? ' stroke-dasharray="7 5"' : ''}/>`;
     }
     const board = h('div', { class: 'tt-board', style: { width: `${w}px`, height: `${hgt}px` } });
     board.append(h('div', { class: 'tt-lines', html: `<svg width="${w}" height="${hgt}">${lines}</svg>` }));
@@ -63,18 +84,18 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
       unitPortrait(portraitKind(p.tribe), p.tribe, 58));
     board.append(center);
 
-    for (const t of TECHS) {
+    for (const t of mine) {
       const { x, y } = pos(t.id);
       const st = researchStatus(s, pid, t.id);
       const cost = techCost(s, pid, t.id);
       const affordable = st === 'available' && p.stars >= cost;
       const node = h('button', {
-        class: `tt-node ${st}${affordable ? ' affordable' : ''}${focused === t.id ? ' focus' : ''}`,
+        class: `tt-node ${st}${t.tribe ? ' unique' : ''}${affordable ? ' affordable' : ''}${focused === t.id ? ' focus' : ''}`,
         style: { left: `${x}px`, top: `${y}px`, width: `${nodeSize}px`, height: `${nodeSize}px`, '--tc': tribe.color } as Record<string, string>,
         onclick: () => openTech(t.id),
       },
         st === 'available' ? h('span', { class: 'tt-cost' }, starSpan(cost)) : null,
-        st !== 'locked' ? paint(28, 19, (ctx) => { ctx.translate(14, 10); ctx.scale(0.42, 0.42); drawIcon(ctx, TECH_ICON[t.id], p.tribe, 0, 0); }, `tech:${t.id}:${p.tribe}`) : null,
+        st !== 'locked' ? paint(28, 19, (ctx) => { ctx.translate(14, 10); ctx.scale(0.42, 0.42); drawIcon(ctx, TECH_ICON[t.id] ?? uniqueIcon(t.id), p.tribe, 0, 0); }, `tech:${t.id}:${p.tribe}`) : null,
         h('span', { class: 'tt-name', style: { fontSize: `${Math.min(10.5, (nodeSize - (st === 'available' ? 15 : 9)) / (t.name.length * 0.5)).toFixed(1)}px` } }, t.name),
       );
       board.append(node);
@@ -86,7 +107,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
         hud(),
       ),
       h('div', { class: 'tt-wrap' }, board),
-      h('div', { class: 'tt-foot' }, 'Each new city makes research a little pricier.'),
+      h('div', { class: 'tt-foot' }, `Each new city makes research a little pricier. The dashed gold line is ${tribe.people} only.`),
     );
   };
 
@@ -98,7 +119,9 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     // Egyptians' farms grow cities by 3
     const unlocks = id === 'farming' && p.tribe === 'egypt' ? t.unlocks.replace('+2 pop', '+3 pop')
       : id === 'hunting' && p.tribe === 'zulu' ? t.unlocks.replace('+1 pop', '+2 pop') : t.unlocks;
-    const body: (Node | string)[] = [h('p', {}, unlocks)];
+    const body: (Node | string)[] = t.tribe
+      ? [h('p', { class: 'muted' }, `${tribe.people} skill — ${t.flavor}`), ...UNIQUE_BY_ID[t.id].perks.length ? [h('p', {}, unlocks)] : []]
+      : [h('p', {}, unlocks)];
     if (st === 'locked') body.push(h('p', { class: 'muted' }, `Research ${TECH_BY_ID[t.parent!].name} first.`));
     if (st === 'owned') body.push(h('p', { class: 'muted' }, 'Already known.'));
     /** The first tech still to research on the way to `target` (itself once its parent is known). */

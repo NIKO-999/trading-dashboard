@@ -1,5 +1,6 @@
 import { music } from '../audio/music';
 import { POWERS } from '../data/powers';
+import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { MapSize } from '../game/mapgen';
@@ -256,6 +257,7 @@ function showEmpires(handlers: MenuHandlers) {
             h('p', {}, t.blurb),
             h('p', {}, h('b', {}, 'Starts with: '), t.startTech[0].toUpperCase() + t.startTech.slice(1)),
             h('p', {}, h('b', {}, 'Bonus: '), t.bonus),
+            h('p', {}, h('b', {}, 'Skill line: '), UNIQUE_TECHS.filter((u) => u.tribe === id).map((u) => u.name).join(' → ')),
             h('p', {}, h('b', {}, `Power — ${POWERS[id].name}: `), POWERS[id].blurb, ` (every ${POWERS[id].cooldown} turns)`),
             h('p', {}, h('b', {}, `${UNITS[t.unique].name}`), ` (replaces ${UNITS[t.replaces].name}): ${UNITS[t.unique].blurb}`),
           ),

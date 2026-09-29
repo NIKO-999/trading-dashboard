@@ -289,3 +289,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 .dock-btn.power.ready .round { animation: power-pulse 1.6s ease-in-out infinite; }
 @keyframes power-pulse { 0%, 100% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 0 rgba(150,120,255,0.7); } 50% { box-shadow: 0 6px 16px rgba(0,0,0,0.45), 0 0 0 9px rgba(150,120,255,0); } }
 .bottom-bar.waiting .dock-btn.power { opacity: 0.4; pointer-events: none; }
+
+/* an empire's own skill line on the tech tree */
+.tt-node.unique { box-shadow: 0 0 0 3px #f0c43a, 0 0 14px rgba(240,196,58,0.55); }
+.tt-node.unique.locked { box-shadow: 0 0 0 2px #8a7a3a; }
+.tt-node.unique.owned { box-shadow: 0 0 0 3px #f0c43a, 0 0 18px rgba(240,196,58,0.8); }

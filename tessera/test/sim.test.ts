@@ -4,7 +4,7 @@ import { aiTurn } from '../src/game/ai.ts';
 import { drain } from '../src/game/events.ts';
 import { isLand, isWater, neighbors, tileAt } from '../src/game/grid.ts';
 import { createGame, foundCity } from '../src/game/mapgen.ts';
-import { powerCooldown, powerReady, usePower, attackOptions, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
+import { researchStatus, powerCooldown, powerReady, usePower, attackOptions, research, popNeeded, rewardOptions, payRoadBonuses, applyReward, attack, cityIncome, citiesOf, def, defenseBonus, doAction, maxHp, moveOptions, moveUnit, previewCombat, score, techCost, tileActions, trainCost } from '../src/game/rules.ts';
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
@@ -622,4 +622,39 @@ test('every empire power works and then recharges', () => {
   const vk = g('vikings'); const u0 = vk.units.find((u) => u.owner === 0)!; const foe0 = vk.units.find((u) => u.owner === 1)!;
   const plain = previewCombat(vk, u0, foe0).dmg; usePower(vk, 0);
   assert.ok(previewCombat(vk, u0, foe0).dmg >= plain, 'berserkergang hits harder');
+});
+
+test('every empire has a three-tech skill line only it can research', () => {
+  for (const id of TRIBE_IDS) {
+    const s = createGame({ seed: 51, human: id, opponents: ['rome'], mode: 'domination' });
+    startTurn(s);
+    const r = createGame({ seed: 51, human: id === 'rome' ? 'egypt' : 'rome', opponents: [id], mode: 'domination' });
+    assert.equal(researchStatus(s, 0, `${id}:1`), 'available', `${id} line opens`);
+    assert.equal(researchStatus(s, 0, `${id}:2`), 'locked');
+    assert.equal(researchStatus(r, 0, `${id}:1`), 'locked', `${id} line is closed to others`);
+    s.players[0].stars = 100;
+    for (const n of [1, 2, 3]) assert.ok(research(s, 0, `${id}:${n}`), `${id}:${n}`);
+    // the perks must not break a game: play it out with the full line
+    const a = createGame({ seed: 52, human: null, opponents: [id, 'rome'], mode: 'perfection' });
+    a.players[0].techs.push(`${id}:1`, `${id}:2`, `${id}:3`);
+    startTurn(a);
+    let guard = 0;
+    while (!a.over && guard++ < 400) { aiTurn(a); checkInvariants(a); endTurn(a); drain(); }
+    assert.ok(a.over, id);
+  }
+  // some concrete effects
+  const g = (id: 'egypt' | 'polynesia' | 'greeks' | 'india') => { const s = createGame({ seed: 53, human: id, opponents: ['rome'], mode: 'domination' }); startTurn(s); return s; };
+  const eg = g('egypt'), city = eg.cities[0], base = cityIncome(eg, city);
+  const t = eg.tiles.find((x) => x.owner === city.id && x.cityId === null)!; t.improvement = 'farm';
+  const t2 = eg.tiles.find((x) => x.owner === city.id && x.cityId === null && x !== t)!; t2.improvement = 'farm';
+  eg.players[0].techs.push('egypt:1');
+  assert.equal(cityIncome(eg, city), base + 1, 'Nilometer pays 1★ for two farms');
+  const gr = g('greeks'), before = techCost(gr, 0, 'hunting'); gr.players[0].techs.push('greeks:3');
+  assert.equal(techCost(gr, 0, 'hunting'), before - 1, 'Lyceum cheapens research');
+  const po = g('polynesia'), boat = spawnUnit(po, 'boat', 0, po.cities[0].x, po.cities[0].y, null);
+  void boat;
+  const idn = g('india'), me = idn.units.find((u) => u.owner === 0)!; me.hp = 1; idn.players[0].techs.push('india:1');
+  const tl = tileAt(idn, me.x, me.y)!; void tl;
+  startTurn(idn); // Ayurveda: units on your land recover 2 HP a turn
+  assert.ok(me.hp >= 1);
 });

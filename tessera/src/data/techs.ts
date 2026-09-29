@@ -1,3 +1,7 @@
+import { describePerk } from '../game/perks';
+import type { TribeId } from '../game/types';
+import { UNIQUE_TECHS } from './uniqueTechs';
+
 export interface TechDef {
   id: string;
   name: string;
@@ -5,6 +9,8 @@ export interface TechDef {
   parent: string | null;
   unlocks: string; // human description
   angle: number; // radial layout angle in degrees (0 = right, clockwise)
+  tribe?: TribeId; // set on an empire's own skill line: only that empire can research it
+  flavor?: string;
 }
 
 // Five roots, each with two tier-2 children that each lead to one tier-3 tech.
@@ -43,8 +49,9 @@ export const TECHS: TechDef[] = [
   T('philosophy', 'Philosophy', 3, 'meditation', 0, 'All future techs cost 33% less.'),
 ];
 
-// Re-space the tree evenly: 5 roots at 72° apart, children ±19°, grandchildren ±21°.
-const ROOT_ANGLES: Record<string, number> = { gathering: -90, climbing: -18, fishing: 54, hunting: 126, riding: 198 };
+// Re-space the tree evenly: 5 roots plus the empire's own line, 60° apart; children ±19°, grandchildren ±21°.
+export const UNIQUE_ANGLE = 210;
+const ROOT_ANGLES: Record<string, number> = { gathering: -90, climbing: -30, fishing: 30, hunting: 90, riding: 150 };
 for (const t of TECHS) if (t.tier === 1) t.angle = ROOT_ANGLES[t.id];
 for (const root of TECHS.filter((t) => t.tier === 1)) {
   const kids = TECHS.filter((t) => t.parent === root.id);
@@ -55,4 +62,13 @@ for (const root of TECHS.filter((t) => t.tier === 1)) {
   });
 }
 
-export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries(TECHS.map((t) => [t.id, t]));
+// Each empire's own skill line: a straight chain of three techs on the sixth spoke.
+const UNIQUE_DEFS: TechDef[] = UNIQUE_TECHS.map((u) => ({
+  id: u.id, name: u.name, tier: u.tier, parent: u.tier === 1 ? null : `${u.tribe}:${u.tier - 1}`, angle: UNIQUE_ANGLE, tribe: u.tribe, flavor: u.flavor,
+  unlocks: u.perks.map(describePerk).join(' '),
+}));
+
+export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries([...TECHS, ...UNIQUE_DEFS].map((t) => [t.id, t]));
+
+/** Every tech this empire can research: the shared tree plus its own line. */
+export const techsFor = (tribe: TribeId): TechDef[] => [...TECHS, ...UNIQUE_DEFS.filter((t) => t.tribe === tribe)];
