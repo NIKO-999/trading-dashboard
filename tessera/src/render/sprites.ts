@@ -64,20 +64,14 @@ let direct = false;
 export const setDirectDraw = (on: boolean) => { direct = on; };
 export const isDirectDraw = () => direct;
 
-/** Draws a unit from its cached bitmap, or, in direct mode, straight from its vector art. */
+/**
+ * Draws a unit from its cached bitmap. Even when the map is painted directly, units come from these
+ * pictures: they are made at exactly the on-screen pixel size and copied whole pixels at a time, so
+ * they are as sharp as drawing them fresh, and a busy screen of detailed units stays cheap.
+ */
 export function drawFigure(ctx: CanvasRenderingContext2D, kind: UnitKind, tribe: TribeId, pxScale: number, variant: SpriteVariant, exact: boolean,
   x: number, y: number, scale: number, sx = 1, sy = 1, flip = false, alpha = 1) {
-  if (!direct) return drawSprite(ctx, unitSprite(kind, tribe, pxScale, variant, exact), x, y, scale, sx, sy, flip, alpha);
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(flip ? -sx : sx, sy);
-  ctx.scale(scale, scale);
-  if (alpha < 1) ctx.globalAlpha *= alpha;
-  if (variant === 'spent') setTint('#6f6f6f', 0.45);
-  else if (variant === 'white') setTint('#ffffff', 1);
-  drawUnitSprite(ctx, kind, tribe, 0, 0, { shadow: false });
-  setTint(null);
-  ctx.restore();
+  return drawSprite(ctx, unitSprite(kind, tribe, pxScale, variant, exact), x, y, scale, sx, sy, flip, alpha);
 }
 
 /** Forgets every drawn unit (the art style changed), giving the memory back. */
