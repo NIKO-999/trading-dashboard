@@ -21,6 +21,8 @@ export type UnitKind =
   | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
   // each empire's named champion (see game/heroes)
   | 'hero'
+  // each empire's two extra elite units (see data/elite): 'elite:<tribe>:<name>'
+  | `elite:${string}`
   // every empire's merchants: a land caravan and a sea trader, drawn in each empire's own style (see game/trade)
   | 'trader' | 'tradeship'
   // the role units of the three empire types, drawn in each empire's own style (see game/roles)

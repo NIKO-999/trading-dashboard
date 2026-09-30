@@ -1,4 +1,5 @@
 import type { UnitKind } from '../game/types';
+import { ELITE_LIST } from './elite';
 
 export type Skill = 'dash' | 'escape' | 'fortify' | 'persist' | 'forestwalk' | 'amphibious' | 'carry' | 'plunder' | 'scout';
 
@@ -89,3 +90,8 @@ export const UNITS: Record<UnitKind, UnitDef> = {
 };
 
 export const NAVAL_UPGRADE: Partial<Record<UnitKind, UnitKind>> = { boat: 'ship', waka: 'ship', ship: 'warship' };
+
+// each empire's elite units (see data/elite) join the table
+for (const e of ELITE_LIST) {
+  UNITS[e.kind] = U({ kind: e.kind, name: e.name, cost: e.cost, hp: e.hp, atk: e.atk, def: e.def, move: e.move, range: e.range, naval: !!e.naval, skills: e.skills, tech: e.tech, blurb: e.blurb });
+}

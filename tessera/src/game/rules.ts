@@ -1,5 +1,6 @@
 import { forkRivals, prereqs, TECH_BY_ID, techsFor } from '../data/techs';
 import { unitFor } from '../data/tribes';
+import { elitesFor } from '../data/elite';
 import type { CombatCtx } from './mech/types';
 import { hookActions, hookAfterAttack, hookAfterMove, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
 import { perkRange, perksOf, perkSum, perkUnit, unitMatches } from './perks';
@@ -375,7 +376,7 @@ const TRAIN_BASE: UnitKind[] = ['warrior', 'rider', 'archer', 'defender', 'sword
 
 export function trainableKinds(s: GameState, pid: number): UnitKind[] {
   const tribe = s.players[pid].tribe;
-  return TRAIN_BASE.map((k) => unitFor(tribe, k));
+  return [...TRAIN_BASE.map((k) => unitFor(tribe, k)), ...elitesFor(tribe)]; // plus the empire's own elites (see data/elite)
 }
 
 /** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */

@@ -4,6 +4,7 @@ import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { TribeId, UnitKind } from '../game/types';
 import { drawKraken } from './wild';
+import { ELITE_ART } from './elite';
 import { drawTradeShip, drawTrader } from './trade';
 import { drawRoleUnit } from './roles';
 import { isRoleKind } from '../game/roles';
@@ -49,6 +50,7 @@ const DARK = '#1b1b1f';
 export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, opts: { shadow?: boolean } = {}) {
   const d = UNITS[kind];
   if (opts.shadow !== false) softShadow(ctx, x, y + 1, d.naval ? 20 : 11, d.naval ? 6.5 : 4.4, 0.32);
+  if (kind.startsWith('elite:')) { const art = ELITE_ART[kind]; if (art) return art(ctx, x, y); } // an empire's elites (see render/elite)
   if (kind === 'kraken') return drawKraken(ctx, x, y); // a Great Beast (see render/wild)
   if (kind === 'tradeship') return drawTradeShip(ctx, tribe, x, y); // each empire's merchants (see render/trade)
   if (kind === 'trader') return drawTrader(ctx, tribe, x, y);
