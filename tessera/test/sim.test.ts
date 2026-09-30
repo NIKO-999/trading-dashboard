@@ -718,3 +718,14 @@ test('every empire has historical strengths and weaknesses that change the game'
   // Inca cannot sail as well: canoes move 1 less than the reference
   void g('inca');
 });
+
+test('the Mountains option: none leaves no peak anywhere, few leaves fewer', () => {
+  const count = (m: 'normal' | 'few' | 'none') => {
+    let n = 0;
+    for (const seed of [1, 2, 3]) n += createGame({ seed, human: 'inca', opponents: ['tibet', 'rome', 'mali'], mode: 'perfection', terrain: 'highlands', mountains: m }).tiles.filter((t) => t.terrain === 'mountain').length;
+    return n;
+  };
+  const normal = count('normal'), few = count('few');
+  assert.equal(count('none'), 0);
+  assert.ok(few < normal * 0.7, `few ${few} vs normal ${normal}`);
+});

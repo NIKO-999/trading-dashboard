@@ -31,6 +31,7 @@ export interface NewGameChoice {
   hotseat: boolean; // pass & play on one device
   wild: boolean; // wild events: Great Beasts, volcanoes and mercenary camps (see game/wild)
   rebels?: boolean; // rebellions: restless conquered cities may break away as Rogue States (see game/rebels); on unless set false
+  mountains?: 'normal' | 'few' | 'none'; // how mountainous the map is
   diplomacy?: boolean; // peace, alliances, trade and tribute between empires (see game/diplomacy); on unless set false
   seats: Record<TribeId, Seat>; // pass & play: who plays each empire
 }
@@ -272,6 +273,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         h('p', { class: 'muted small terrain-note' }, TERRAIN_STYLES.find((t) => t.id === choice.terrain)!.blurb)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
+      seg('Mountains', [['normal', 'Normal'], ['few', 'Few'], ['none', 'None']], () => choice.mountains ?? 'normal', (v) => { choice.mountains = v; render(); }),
+      h('p', { class: 'muted small terrain-note' }, choice.mountains === 'none'
+        ? 'No mountains anywhere: open land to march across. Ore turns up in the hills of the plains instead, and mountain wonders and powers (Inca, Tibet) have nowhere to stand.'
+        : choice.mountains === 'few' ? 'About a third of the usual mountains: more open land.' : 'Mountains as the terrain style makes them.'),
       seg('Wild events', [[1, 'On'], [0, 'Off']], () => (choice.wild ? 1 : 0), (v) => { choice.wild = v === 1; render(); }),
       h('p', { class: 'muted small terrain-note' }, choice.wild
         ? 'A Kraken prowls the deep ocean, volcanoes bury the land in fertile ash, and mercenary camps sell veterans to the highest bidder.'

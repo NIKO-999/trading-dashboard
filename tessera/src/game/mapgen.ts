@@ -61,6 +61,8 @@ export interface NewGameOptions {
   rebels?: boolean;
   /** Diplomacy: peace, alliances, trade and tribute between empires that have met (see game/diplomacy). Off unless asked for; the new-game screen defaults it on. */
   diplomacy?: boolean;
+  /** How many mountains: 'normal', 'few' (about a third) or 'none' at all. */
+  mountains?: 'normal' | 'few' | 'none';
 }
 
 // Map edge length by map size and number of empires.
@@ -116,7 +118,9 @@ export function createGame(opts: NewGameOptions): GameState {
   };
 
   const capitals = placeCapitals(rng, size, tribes.length);
-  generateTerrain(state, rng, capitals, tribes, STYLE[opts.terrain ?? 'balanced']);
+  const baseStyle = STYLE[opts.terrain ?? 'balanced'];
+  const peaks = opts.mountains === 'none' ? 0 : opts.mountains === 'few' ? 0.35 : 1;
+  generateTerrain(state, rng, capitals, tribes, { ...baseStyle, mountain: baseStyle.mountain * peaks });
 
   capitals.forEach((c, i) => {
     const city = foundCity(state, c.x, c.y, i, true);
@@ -128,6 +132,7 @@ export function createGame(opts: NewGameOptions): GameState {
 
   placeVillagesAndRuins(state, rng, capitals);
   ensureGrowthResources(state, rng);
+  if (peaks === 0) flattenMountains(state); // homelands may have put a peak down since
   hookSetup(state);
   if (opts.wild) setupWild(state, makeRng(seed ^ 0x5eed)); // its own stream, so the rest of the map is the same either way
   for (const p of players) revealAround(state, p.id);
@@ -152,6 +157,11 @@ function placeCapitals(rng: Rng, size: number, n: number) {
 
 /** Mountains are rarer than each homeland's raw weights suggest: the land is meant to be rich in resources, not rock. */
 const MOUNTAIN_SHARE = 0.45;
+
+/** No mountains at all: any peak a homeland or climate put down becomes open ground (its ore stays, as hills in the plain). */
+function flattenMountains(state: GameState) {
+  for (const t of state.tiles) if (t.terrain === 'mountain') t.terrain = 'field';
+}
 
 function generateTerrain(state: GameState, rng: Rng, capitals: { x: number; y: number }[], tribes: TribeId[], style: Style) {
   const { size } = state;
