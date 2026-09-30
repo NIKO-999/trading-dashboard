@@ -19,7 +19,7 @@ import { WONDER_BY_ID, WONDER_SCORE, WONDERS, wonderHolder, wondersHeldBy, type 
 import { emit } from './events';
 import { dist, isWater, neighbors, tileAt } from './grid';
 import { revealAround } from './mapgen';
-import { describePerk } from './perks';
+import { describePerk, perkSum } from './perks';
 import { addPop, citiesOf, doAction, hasTech, researchable, techCost, tileActions, tileOwnerPlayer, unitAt, type Action } from './rules';
 import { campAt, isLava } from './wild';
 import type { BuiltWonder, GameState, Tile, WonderSite, WonderState } from './types';
@@ -41,7 +41,8 @@ const state = (s: GameState): WonderState => (s.wonders ??= { sites: [], built: 
 export const isHomeWonder = (s: GameState, pid: number, id: string) => WONDER_BY_ID[id].home.includes(s.players[pid].tribe);
 /** Stars `pid` needs to finish wonder `id`: a quarter less for its own history, a quarter more for each wonder it already holds. */
 export const wonderCost = (s: GameState, pid: number, id: string) =>
-  Math.round(WONDER_BY_ID[id].cost * (isHomeWonder(s, pid, id) ? 1 - HOME_DISCOUNT : 1) * (1 + HELD_SURCHARGE * wondersHeldBy(s, pid).filter((w) => w !== id).length));
+  Math.round(WONDER_BY_ID[id].cost * (isHomeWonder(s, pid, id) ? 1 - HOME_DISCOUNT : 1) * (1 + HELD_SURCHARGE * wondersHeldBy(s, pid).filter((w) => w !== id).length)
+    * (1 - perkSum(s, pid, 'wonderpct'))); // Patronage (see game/government)
 export const builtWonder = (s: GameState, id: string): BuiltWonder | undefined => s.wonders?.built.find((b) => b.id === id);
 export const builtAt = (s: GameState, x: number, y: number): BuiltWonder | undefined => s.wonders?.built.find((b) => b.x === x && b.y === y);
 export const siteAt = (s: GameState, x: number, y: number): WonderSite | undefined => s.wonders?.sites.find((w) => w.x === x && w.y === y);

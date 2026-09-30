@@ -12,6 +12,7 @@ import {
   RESTOCK, spawnNeutral, volcanoDue, wildAi, wildRound,
 } from '../src/game/wild';
 import { TRIBE_IDS } from '../src/data/tribes';
+import { perkSum } from '../src/game/perks';
 
 const game = (opts: Partial<Parameters<typeof createGame>[0]> = {}) =>
   createGame({ seed: 11, human: 'rome', opponents: ['egypt', 'vikings'], mode: 'perfection', mapSize: 'huge', wild: true, ...opts });
@@ -114,7 +115,7 @@ test('slaying the Kraken pays a big bounty, and another rises later', () => {
   const stars = s.players[0].stars;
   assert.ok(attack(s, tri, k));
   assert.ok(!s.units.includes(k));
-  assert.equal(s.players[0].stars, stars + BEASTS.kraken!);
+  assert.equal(s.players[0].stars, stars + BEASTS.kraken! + perkSum(s, 0, 'kill')); // and the Chiefdom's +1★ a kill (see game/government)
   assert.equal(s.wild!.respawn.length, 1);
   s.turn += BEAST_RESPAWN;
   wildRound(s);

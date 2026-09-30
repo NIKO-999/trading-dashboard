@@ -711,3 +711,24 @@ Every empire trains three **auxiliaries** (see `game/auxiliaries`), named and dr
 
 **Computer players** train a Scout in the first turns while much of the map is unknown (and send it to ruins and the edge of the fog), research Hunting and train Spearmen in the city nearest the horsemen when mounted units make up a third or more of an enemy host near their cities, research Meditation once their army is large and keep a Healer beside it (two for a very large army), moving it next to the wounded, and Convert the most valuable wounded enemy they can.
 
+## 17. Governments and Policy Cards
+
+*(data/governments.ts, game/government.ts; screen in ui/government.ts.)* A flexible layer on top of the permanent skill tree: a **government** gives a small bonus of its own and a row of **policy slots**; the **cards** slotted into them are ordinary perks, so every rule that reads perks sees them.
+
+| Government | Opens | Slots | Bonus |
+|---|---|---|---|
+| Chiefdom | start | Military, Economic | +1★ for every enemy defeated |
+| Autocracy | Classical | Military, Economic, Wild | capital +1★ a turn; units in the capital defend +0.5 |
+| Oligarchy | Classical | Military ×2, Economic | foot soldiers +0.5 attack |
+| Classical Republic | Classical | Economic ×2, Wild | +1★ a turn from every city of level 3+ |
+| Monarchy | Medieval | Military ×2, Economic, Wild | capital +2★ a turn; units in your cities defend +0.5 |
+| Merchant Republic | Medieval | Military, Economic ×2, Wild | +1★ a turn per market; trade routes pay +25% |
+| Theocracy | Medieval | Military, Economic, Wild ×2 | +1★ a turn per temple; units on your land heal +1 HP a turn |
+
+- **Changing government** costs **6★ + 2★ per city**, takes effect at once, and the next change must wait **5 turns**. Cards already slotted move into the new slots that still take them (a typed slot first, then a Wild one); the rest go back to the hand.
+- **18 cards**, each unlocked by a tech or an era. Military: *Levée* (start; units in your cities defend +0.5), *Conscription* (Tactics; every unit 1★ cheaper, never below 1★), *Bounty Rolls* (Archery; +2★ per kill), *Scorched Earth* (Roads; pillaging a trade trail or a coastal improvement heals the raider 5 HP), *Shield Drill* (Smithing; foot soldiers defend +0.5), *Horse Lords* (Horsemanship; mounted units +0.5 attack), *Field Surgeons* (Meditation; units on your land heal 2 HP a turn). Economic: *Tribute Rolls* (start; capital +1★), *Urban Planning* (Classical; +1 population when a city levels up), *Caravan Guilds* (Roads; trade routes +50%), *Stockyards* (Horsemanship; +1 Horse a turn), *Bloomery* (Mining; +1 Iron a turn), *Pilgrims* (Masonry; +1★ per temple), *Patronage* (Classical; wonders 20% cheaper). Wild: *Survey Corps* (Hunting; Scouts and Voyagers move +1), *Night Watch* (Classical; +1 vision), *Harbour Masters* (Sailing; boats and ships move +1), *Road Tolls* (Roads; +1★ per 4 road tiles).
+- A Military slot takes a Military card, an Economic slot an Economic card, a **Wild slot any card**; Wild cards need a Wild slot.
+- **Putting a card into an empty slot is free and immediate.** Replacing or removing a slotted card is free but allowed **once a turn**, and the card swapped in only counts **from your next turn** (a slot emptied this turn stays idle till then, so removing first doesn't dodge the wait).
+- **Where you see it:** the **Govern** dock button (and the ⚖ chip, orange while a free slot could take a card) opens the Government screen: the government and its bonus, the slots with their cards ("From next turn" on a swapped-in card), the cards in hand (tap one, then a glowing slot; a card with exactly one free slot goes straight in), locked cards with what unlocks them, and every government with its slots, bonus and an Adopt button (or why not: the era needed, turns to wait, or the price). Changes are toasted, and a new government is logged and announced to every empire that has met you.
+- **Computer players** adopt a government that suits them when they can afford it (Oligarchy or Monarchy at war, the Classical or Merchant Republic at peace, Autocracy for a small realm, Theocracy with many temples), fill every free slot with the best card for the moment and swap one card a turn when war or peace has made another clearly better (Conscription, Field Surgeons, Shield Drill at war; Tribute Rolls, Urban Planning, Caravan Guilds, Patronage at peace).
+

@@ -124,6 +124,8 @@ export interface Player {
   sparks?: string[];
   /** The era reached and the Age it brought (see game/eras; missing in older saves). */
   era?: import('./eras').EraState;
+  /** Its government and the policy cards slotted into it (see game/government; missing in older saves: a Chiefdom with empty slots). */
+  gov?: import('../data/governments').GovState;
 }
 
 export interface HeroState {

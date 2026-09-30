@@ -53,6 +53,7 @@ import { celebrateWonder, wonderChip, wonderHud, wondersList } from './wonders';
 import { ChipRow, economyChip, shortChip, skillChip, unrestChip, type HudLine } from './hudchips';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
+import { govChip, govHud, showGovernment } from './government';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
 import { lacksSupply, outOfSupply, shieldWall, SUPPLY_RANGE } from '../game/army';
 import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, traderName, traderPreview } from '../game/trade';
@@ -203,6 +204,7 @@ export class GameView {
       btn('menu', 'Menu', 'dark', () => this.openMenu()),
       btn('globe', 'Empires', 'dark', () => this.openStats()),
       btn('tech', 'Tech Tree', 'blue', () => this.openTech()),
+      btn('column', 'Govern', 'dark gov-dock', () => this.openGovernment()), // governments and policy cards (see ui/government)
       btn('check', 'End Turn', 'blue end-turn', () => void this.onEndTurn()),
     );
   }
@@ -770,7 +772,11 @@ export class GameView {
     const skill = this.skillReadout();
     if (skill) lines.push(skill);
     const era = this.eraReadout(); // the era and its Age (see game/eras)
+    // the government and its cards (see ui/government): ahead of the era while a free slot could take a card
+    const gov: HudLine = { key: 'gov', ...govChip(this.s, this.me), full: govHud(this.s, this.me), onTap: () => this.openGovernment() };
+    if (gov.tone) lines.push(gov);
     if (era) lines.push(era);
+    if (!gov.tone) lines.push(gov);
     const goods = this.goodsReadout(); // Iron, Horses and luxuries (see game/goods)
     if (goods) lines.push(goods);
     const econ = this.economyReadout(); // raised tiles and Districts (see game/levels)
@@ -813,7 +819,7 @@ export class GameView {
     const bits = [have.iron || y.iron ? `⛏${have.iron}` : '', have.horses || y.horses ? `🐎${have.horses}` : '', pay ? `+${pay}★` : ''].filter(Boolean);
     const kinds = (Object.keys(lux) as Luxury[]).map((l) => `${LUXURIES[l].name}${lux[l]! > 1 ? ` ×${lux[l]}` : ''}`);
     return {
-      key: 'goods', icon: '⚖', text: bits.join(' '),
+      key: 'goods', icon: '🏺', text: bits.join(' '),
       full: h('div', { class: 'skill-hud' },
         h('div', {}, h('b', {}, 'Iron: '), `${have.iron}/${STOCK_CAP} (+${y.iron} a turn from Mines). Swordsmen use 2, Catapults 1.`),
         h('div', {}, h('b', {}, 'Horses: '), `${have.horses}/${STOCK_CAP} (+${y.horses} a turn from Pastures). Knights use 2.`),
@@ -1667,6 +1673,16 @@ export class GameView {
   /** The Diplomacy screen (see ui/diplomacy): treaties, trade, tribute and war with the empires I have met. */
   private openDiplomacy() {
     showDiplomacy({
+      s: this.s, me: this.me,
+      canAct: () => this.myTurn() && !this.busy,
+      act: (fn) => { this.act(fn); },
+    });
+  }
+
+  /** The Government screen (see ui/government): the government, its policy slots and the cards to put in them. */
+  private openGovernment() {
+    if (this.busy) return;
+    showGovernment({
       s: this.s, me: this.me,
       canAct: () => this.myTurn() && !this.busy,
       act: (fn) => { this.act(fn); },

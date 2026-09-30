@@ -57,7 +57,7 @@ export const inflationOf = (s: GameState, pid: number): { until: number; pauseUn
 export const trainCost = (s: GameState, pid: number, k: UnitKind) => {
   let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
   if (s.players[pid].techs.length) { // the Trade/Markets fork: Caravan Monopoly surcharges, Mercenary Contracts discount
-    cost += perkSum(s, pid, 'unitcost');
+    cost = Math.max(1, cost + perkSum(s, pid, 'unitcost')); // Conscription (a policy card) takes 1★ off, never below 1★
     const pct = perkSum(s, pid, 'unitpct');
     if (pct) cost = Math.max(1, Math.round(cost * (1 - pct)));
   }
@@ -105,6 +105,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
       if (pk.per === 'city') inc += pk.n;
       else if (pk.per === 'capital') inc += c.capital ? pk.n : 0;
       else if (pk.per === 'road') inc += Math.floor(pk.n * (s.tiles.filter((t) => t.owner === c.id && t.road).length / 4));
+      else if (pk.per === 'bigcity') inc += c.level >= 3 ? pk.n : 0; // a Classical Republic (see game/government)
       else inc += Math.trunc(pk.n * s.tiles.filter((t) => t.owner === c.id && t.improvement === pk.per).length);
     }
   }
@@ -253,6 +254,8 @@ export function addPop(s: GameState, c: City, n: number, carried = false) {
     if (ls) { s.players[c.owner].stars += ls; emit({ type: 'stars', player: c.owner, x: c.x, y: c.y, amount: ls }); }
   }
   if (c.level > before) levelGrowOnLevelUp(s, c, c.level - before); // Vineyards (see game/levels)
+  const lp = c.level > before && skilled ? perkSum(s, c.owner, 'levelpop') : 0; // Urban Planning (see game/government)
+  if (lp > 0) { emit({ type: 'harvest', player: c.owner, x: c.x, y: c.y, pop: lp * (c.level - before) }); addPop(s, c, lp * (c.level - before), true); }
   while (c.pop < 0 && c.level > 1) {
     c.level--;
     c.pop += popNeeded(c.level);
@@ -976,7 +979,7 @@ export function defenseBonus(s: GameState, u: Unit) {
   let extra = 0; // terrain perks from the empire's skill line
   {
     const inCity = t.cityId !== null && cityById(s, t.cityId)?.owner === u.owner;
-    extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity) || (p.on === 'away' && tileOwnerPlayer(s, t) !== u.owner) || (p.on === 'ice' && t.terrain === 'ice'));
+    extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity) || (p.on === 'capital' && inCity && !!cityById(s, t.cityId)?.capital) || (p.on === 'away' && tileOwnerPlayer(s, t) !== u.owner) || (p.on === 'ice' && t.terrain === 'ice'));
   }
   return Math.max(0.5, baseDefense(s, u, t) + extra + govDefense(s, u.owner, t)); // a Marshal (see game/governors)
 }

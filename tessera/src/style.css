@@ -416,3 +416,54 @@ ul.traits .effect { display: block; font-weight: 600; }
 .role-units .role-unit { display: flex; align-items: center; gap: 6px; max-width: 260px; font-size: 0.85rem; line-height: 1.25; }
 .role-line { margin-top: 2px; color: #f5d76e; }
 .supply-line { margin-top: 3px; font-weight: 700; color: #f0a850; }
+
+/* ------------------------------------------------ governments and policy cards (see ui/government) */
+/* a crowded dock (the Govern button plus an empire's own) tucks its buttons in to fit a phone */
+.bottom-bar:has(> .dock-btn:nth-child(6)) { gap: 2px; padding-left: 4px; padding-right: 4px; }
+.bottom-bar:has(> .dock-btn:nth-child(5)) .dock-btn { width: 64px; flex-shrink: 1; min-width: 0; }
+.bottom-bar:has(> .dock-btn:nth-child(5)) .dock-btn .round { width: 56px; height: 56px; }
+.bottom-bar:has(> .dock-btn:nth-child(5)) .dock-label { font-size: 0.85rem; }
+@media (max-width: 420px) {
+  .bottom-bar:has(> .dock-btn:nth-child(6)) .dock-btn .round { width: 52px; height: 52px; }
+  .bottom-bar:has(> .dock-btn:nth-child(6)) .dock-label { font-size: 0.78rem; }
+}
+.modal.gov-card .modal-body { font-size: 1rem; }
+.gov { display: flex; flex-direction: column; gap: 8px; }
+.gov-head { padding: 10px 12px 8px; border-radius: 16px; background: linear-gradient(180deg, #2a2440, #16142a); border: 1px solid rgba(255,220,140,0.25); }
+.gov-name { font-size: 1.45rem; font-weight: 700; font-style: italic; color: #ffe39a; }
+.gov-bonus { margin-top: 2px; font-weight: 600; line-height: 1.25; }
+.gov-flavor { margin-top: 3px; font-style: italic; }
+.gov-h { margin-top: 6px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #aab0c8; }
+.gov-note { margin: 0; line-height: 1.25; }
+.gov-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gov-slot { position: relative; min-height: 86px; padding: 7px 9px 8px; border-radius: 14px; border: 2px dashed var(--sc); background: rgba(255,255,255,0.03); line-height: 1.2; }
+.gov-slot.full { border-style: solid; background: linear-gradient(180deg, color-mix(in srgb, var(--sc) 32%, #111), #0d0e16); }
+.gov-slot.target { box-shadow: 0 0 0 3px #fff, 0 0 16px var(--sc); cursor: pointer; animation: gov-glow 1.2s ease-in-out infinite; }
+@keyframes gov-glow { 50% { box-shadow: 0 0 0 3px #fff, 0 0 4px var(--sc); } }
+.gov-slot.pending { opacity: 0.75; }
+.gov-slot-type { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sc); }
+.gov-slot .gov-card-name { display: block; margin-top: 3px; padding-right: 20px; font-weight: 700; }
+.gov-slot .gov-card-desc { margin-top: 2px; font-size: 0.82rem; color: #d6d9e6; }
+.gov-empty { margin-top: 12px; text-align: center; color: #8b90a0; font-style: italic; }
+.gov-badge { display: inline-block; margin-top: 4px; padding: 2px 7px 1px; border-radius: 999px; background: #d98a2b; color: #fff; font-size: 0.7rem; font-weight: 700; }
+.gov-x { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.45); color: #fff; font-size: 1.1rem; line-height: 1; }
+.gov-hand { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.gov-cardbtn { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 7px 9px 7px; border-radius: 12px; background: #15161f; border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid var(--sc); color: #fff; font: inherit; line-height: 1.2; }
+.gov-cardbtn.held { background: #24324a; box-shadow: 0 0 0 2px #fff; }
+.gov-cardbtn.locked { opacity: 0.42; }
+.gov-card-top { display: flex; justify-content: space-between; gap: 4px; align-items: baseline; }
+.gov-cardbtn .gov-card-name { font-weight: 700; font-size: 0.92rem; }
+.gov-card-type { color: var(--sc); font-size: 0.85rem; }
+.gov-cardbtn .gov-card-desc { margin-top: 2px; font-size: 0.78rem; color: #c9cddc; }
+.gov-card-lock { margin-top: 3px; font-size: 0.72rem; color: #aab0c8; }
+.gov .military { --sc: #ff7a6b; }
+.gov .economic { --sc: #ffcf33; }
+.gov .wild { --sc: #b98cff; }
+.gov-list { display: flex; flex-direction: column; gap: 6px; }
+.gov-row { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 12px; background: #111; line-height: 1.2; }
+.gov-row.mine { background: #1f1c30; box-shadow: inset 0 0 0 1px rgba(255,220,140,0.35); }
+.gov-row-text { flex: 1; min-width: 0; }
+.gov-row .mini-btn { margin-top: 0; flex: none; padding: 7px 10px 4px; font-size: 0.85rem; }
+.gov-now { flex: none; font-size: 0.8rem; font-weight: 700; color: #ffe39a; }
+.gov-pips { margin-left: 6px; display: inline-flex; gap: 3px; vertical-align: 1px; }
+.gov-pip { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; font-size: 0.68rem; color: var(--sc); background: color-mix(in srgb, var(--sc) 20%, #111); }

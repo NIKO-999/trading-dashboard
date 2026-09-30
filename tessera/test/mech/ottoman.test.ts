@@ -120,7 +120,7 @@ test('20-turn all-AI game with Ottoman completes and the AI uses the elite train
   s.players[me].stars = 20;
   s.current = me;
   for (let i = 0; i < 20 * s.players.length && !s.over; i++) { aiTurn(s); endTurn(s); }
-  assert.ok(s.turn >= 10);
+  assert.ok(s.turn >= 10 || s.over); // (the Ottomans may conquer everyone first)
   assert.ok(elitesTrained(s, me) >= 1, 'the AI trained an elite');
   assert.ok(levies(s, me) >= 1);
   JSON.parse(JSON.stringify(s));

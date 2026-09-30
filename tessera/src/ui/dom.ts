@@ -80,6 +80,7 @@ export const ICONS = {
   star: '<svg viewBox="0 0 24 24"><defs><linearGradient id="star-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset="0.5" stop-color="#ffcf33"/><stop offset="1" stop-color="#ff9a1a"/></linearGradient></defs><path d="M12 3.4l2.5 5.3 5.8.8-4.2 4.1 1 5.8L12 16.6l-5.1 2.8 1-5.8-4.2-4.1 5.8-.8z" fill="url(#star-g)" stroke="#b8650a" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="9.6" cy="8.9" rx="1.7" ry="0.95" fill="#fff" opacity="0.6" transform="rotate(-28 9.6 8.9)"/></svg>',
   close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
   lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10.5" rx="2.5" fill="currentColor"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>',
+  column: '<svg viewBox="0 0 24 24"><path d="M3 8.5L12 3l9 5.5z" fill="currentColor"/><rect x="4" y="9.5" width="16" height="2" rx="0.6" fill="currentColor"/><path d="M6.5 12.5v6M10 12.5v6M14 12.5v6M17.5 12.5v6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="3" y="19.5" width="18" height="2" rx="0.6" fill="currentColor"/></svg>',
   globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>',
 };
 

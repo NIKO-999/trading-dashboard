@@ -9,6 +9,7 @@
 import { TRIBES } from '../data/tribes';
 import { neighbors } from './grid';
 import { SPECIALITY, tileLevel } from './levels';
+import { perkSum } from './perks';
 import type { Rng } from './rng';
 import { routesOf } from './trade';
 import type { GameState, Player, Resource, Terrain, Tile, UnitKind } from './types';
@@ -78,6 +79,8 @@ export function stockYield(s: GameState, pid: number): Record<Strategic, number>
     else if (t.improvement === 'pasture') y.horses += Math.max(1, tileLevel(t) - 1) + (herders ? 1 : 0);
     else if (tribe === 'pirates') y.iron += 1;
   }
+  y.iron += perkSum(s, pid, 'stock', (pk) => pk.of === 'iron'); // Bloomery and Stockyards (see game/government)
+  y.horses += perkSum(s, pid, 'stock', (pk) => pk.of === 'horses');
   return y;
 }
 

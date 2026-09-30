@@ -17,6 +17,7 @@ import { TRIBES } from '../data/tribes';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { UNITS } from '../data/units';
 import { emit } from './events';
+import { raidHeal } from './government';
 import { dist, isWater, neighbors } from './grid';
 import type { Mechanic } from './mech/types';
 import { describePerk, MOUNTED_KINDS, type Perk } from './perks';
@@ -79,6 +80,7 @@ function pillage(s: GameState, owner: number, u: Unit, t: Tile) {
   if (host) addPop(s, host, -1);
   u.data = { ...u.data, pillage: s.turn };
   u.attacked = true;
+  raidHeal(s, u); // Scorched Earth (see game/government)
   emit({ type: 'toast', player: owner, text: `Coastal pillage: +${value}★.` });
 }
 

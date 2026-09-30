@@ -23,6 +23,7 @@ import { bridgesBuilt, isRoleUnit, postAt, roleAi, roleTechWant } from './roles'
 import { armyAi, outOfSupply, suppliedAt, supplyExempt } from './army';
 import { auxAi, auxTechWant, isSupport } from './auxiliaries';
 import { levelAi } from './levels';
+import { govAi as policyAi } from './government';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -53,6 +54,7 @@ export function aiStep(s: GameState): boolean {
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
   if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
   if (govAi(s, pid, (c) => s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && dist(c.x, c.y, u.x, u.y) <= 3))) return true; // governors (see game/governors)
+  if (policyAi(s, pid)) return true; // a government to suit war or peace, and its policy cards (see game/government)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {

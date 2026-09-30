@@ -24,6 +24,8 @@ import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { diploOn, hostile, pactOf } from './diplomacy';
 import { emit } from './events';
+import { raidHeal } from './government';
+import { perkSum } from './perks';
 import { dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { citiesOf, cityById, doAction, isExplored, moveOptions, moveUnit, tileActions, unitAt, type Action } from './rules';
 import type { City, GameState, Tile, TradeRoute, TradeState, TribeId, Unit, UnitKind } from './types';
@@ -158,7 +160,12 @@ export function routeYield(s: GameState, r: TradeRoute, cityId: number): number 
   return 0;
 }
 /** Stars a city earns from its trade routes a turn (part of the core city income). */
-export const cityRouteIncome = (s: GameState, c: City) => (s.trade ? routesOfCity(s, c).reduce((n, r) => n + routeYield(s, r, c.id), 0) : 0);
+export function cityRouteIncome(s: GameState, c: City): number {
+  if (!s.trade) return 0;
+  const n = routesOfCity(s, c).reduce((a, r) => a + routeYield(s, r, c.id), 0);
+  const more = n ? perkSum(s, c.owner, 'route') : 0; // Caravan Guilds and a Merchant Republic (see game/government)
+  return more ? Math.floor(n * (1 + more)) : n;
+}
 /** Stars an empire earns from trade routes a turn. */
 export const routeIncome = (s: GameState, pid: number) => citiesOf(s, pid).reduce((n, c) => n + cityRouteIncome(s, c), 0);
 
@@ -331,6 +338,7 @@ export function tradeDoAction(s: GameState, pid: number, t: Tile, id: string): b
     for (const r of rs) cutRoute(s, r, `the ${people(s, pid)}s pillaged the trail`);
     s.players[pid].stars += loot;
     emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: loot });
+    raidHeal(s, u); // Scorched Earth (see game/government)
     emit({ type: 'toast', player: pid, text: `Caravans pillaged: +${loot}★.` });
     u.moved = u.attacked = true;
     return true;
