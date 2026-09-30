@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.44',
+    items: [
+      '🏳 Free Cities: independent city-states (Trade, Military, Science, Culture, Maritime). Tap one to send envoys; the most envoys (3+) makes you Suzerain, and its guards fight for you. (New Game option, on by default.)',
+      '🎉 City Festivals: spend spare Stars on a festival for +1 population and +50 score. Each one costs a little more.',
+    ],
+  },
+  {
     version: '0.43',
     items: [
       '🌄 Natural Wonders: eight rare landmarks (Thundermantle Falls, Glimmerdeep Grotto, Mount Halcyra and more). Be the first to see one for Stars and score; hold it in your borders for its own bonus.',
