@@ -4,6 +4,7 @@ import type { Action, MoveOption } from '../rules';
 import type { City, GameState, Tile, TribeId, Unit } from '../types';
 import { adoptedHooks } from '../culture';
 import type { AttackInfo, CombatCtx, MechRegistry, MoveCtx, Mechanic } from './types';
+import { perkSum } from '../perks';
 import { mech as egypt } from './egypt';
 import { mech as aztec } from './aztec';
 import { mech as polynesia } from './polynesia';
@@ -88,10 +89,18 @@ export function hookBlock(s: GameState, pid: number, actionId: string, t: Tile):
 /** Can `viewer` see this unit? (Fog of war is handled by exploration; this is for cloaking mechanics.) */
 export function unitVisibleTo(s: GameState, viewer: number, u: Unit): boolean {
   if (viewer < 0 || u.owner === viewer) return true;
+  if (canopyHidden(s, viewer, u)) return false;
   let ok = true;
   each(s, (m, o) => { if (m.unitVisible?.(s, o, viewer, u) === false) ok = false; });
   return ok;
 }
+/** Sacred Canopy: a unit in forest is hidden from any enemy without a unit or city right beside it. */
+function canopyHidden(s: GameState, viewer: number, u: Unit): boolean {
+  if (s.tiles[u.y * s.size + u.x]?.terrain !== 'forest' || !s.players[u.owner].techs.includes('fork:canopy') || perkSum(s, u.owner, 'canopy') <= 0) return false;
+  const near = (x: number, y: number) => Math.max(Math.abs(x - u.x), Math.abs(y - u.y)) <= 1;
+  return !s.units.some((e) => e.owner === viewer && near(e.x, e.y)) && !s.cities.some((c) => c.owner === viewer && near(c.x, c.y));
+}
+
 export function cityVisibleTo(s: GameState, viewer: number, c: City): boolean {
   if (viewer < 0 || c.owner === viewer) return true;
   let ok = true;

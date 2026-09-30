@@ -13,15 +13,20 @@
 //     any own city `mech:offer` sacrifices one captive for +1 Population immediately ("Flowery Captives").
 //     The "Sun Age" is global only in the sense of the whole map being lit; it affects Aztecs.
 // Simplifications: no rivers/hills exist, so nothing terrain-based is needed; tile growth is expressed as city pop.
+// Skill line: Solar Ascension (`aztec:3`) makes a Sun Age cost SOLAR_SUN_COST captives and pays SOLAR_CITY_STARS per city
+// each turn while it burns (the `income` hook). Sacrificial Rites and Sun Altars are plain perks (data/uniqueTechs.ts).
 import { emit } from '../events';
 import { area, dist } from '../grid';
-import { addPop, citiesOf, cityById, def, maxHp, moveOptions, moveUnit } from '../rules';
+import { addPop, citiesOf, cityById, def, hasTech, maxHp, moveOptions, moveUnit } from '../rules';
+import { SOLAR_CITY_STARS, SOLAR_SUN_COST } from '../../data/uniqueTechs';
 import type { Action } from '../rules';
 import type { City, GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
 
 export const ALTAR_COST = 5;
 export const SUN_COST = 3; // captives per Sun Age
+/** Captives a Sun Age costs this empire (Solar Ascension lowers it). */
+export const sunCost = (s: GameState, owner: number) => (hasTech(s, owner, 'aztec:3') ? SOLAR_SUN_COST : SUN_COST);
 export const SUN_TURNS = 4; // the turn it is opened plus three more
 export const CARRY_MAX = 2;
 export const KILL_BOUNTY = 2;
@@ -102,7 +107,7 @@ export function sacrificeCheck(s: GameState, owner: number, t: Tile): string | n
   if (!ownCityAt(s, owner, t) || !hasAltar(t)) return 'Needs an altar';
   const m = st(s, owner);
   if (m.sun > 0) return `A Sun Age already burns (${m.sun} turns)`;
-  if (m.captives < SUN_COST) return `Needs ${SUN_COST} captives (${m.captives} delivered)`;
+  if (m.captives < sunCost(s, owner)) return `Needs ${sunCost(s, owner)} captives (${m.captives} delivered)`;
   return null;
 }
 export function offerCheck(s: GameState, owner: number, t: Tile): string | null {
@@ -113,7 +118,7 @@ export function offerCheck(s: GameState, owner: number, t: Tile): string | null 
 
 function openSunAge(s: GameState, owner: number) {
   const m = st(s, owner);
-  m.captives -= SUN_COST;
+  m.captives -= sunCost(s, owner);
   m.sacrificed++;
   m.sun = SUN_TURNS;
   for (const c of s.cities) {
@@ -138,7 +143,10 @@ function offerAt(s: GameState, owner: number, c: City) {
 // ------------------------------------------------------------------ the mechanic
 
 export const mech: Mechanic = {
-  income(s, owner) { return 2 * citiesOf(s, owner).length; }, // tribute of the Triple Alliance
+  income(s, owner) { // tribute of the Triple Alliance; Solar Ascension pays more while a Sun Age burns
+    const n = citiesOf(s, owner).length;
+    return 2 * n + (st(s, owner).sun > 0 && hasTech(s, owner, 'aztec:3') ? SOLAR_CITY_STARS * n : 0);
+  },
   name: 'Blood Altar Ascension',
   blurb: 'Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.',
 
@@ -214,11 +222,11 @@ export const mech: Mechanic = {
     if (!hasAltar(t)) {
       const why = altarCheck(s, owner, t);
       acts.push({ id: 'mech:altar', label: 'Build Altar', cost: ALTAR_COST, icon: 'temple', enabled: !why, reason: why ?? undefined,
-        desc: `Raise a blood altar in this city. Spend ${SUN_COST} captives at an altar to open a Sun Age.` });
+        desc: `Raise a blood altar in this city. Spend ${sunCost(s, owner)} captives at an altar to open a Sun Age.` });
     } else {
       const why = sacrificeCheck(s, owner, t);
       acts.push({ id: 'mech:sacrifice', label: 'Sun Age Sacrifice', cost: 0, icon: 'temple', enabled: !why, reason: why ?? undefined,
-        desc: `Spend ${SUN_COST} captives: for ${SUN_TURNS} turns all Aztec cities gain +1 pop now, the whole map is revealed and Aztec units get +${FRENZY_ATK} attack.` });
+        desc: `Spend ${sunCost(s, owner)} captives: for ${SUN_TURNS} turns all Aztec cities gain +1 pop now, the whole map is revealed and Aztec units get +${FRENZY_ATK} attack.` });
     }
     const why = offerCheck(s, owner, t);
     acts.push({ id: 'mech:offer', label: 'Offer Captive', cost: 0, icon: 'fruit', enabled: !why, reason: why ?? undefined,
@@ -245,7 +253,7 @@ export const mech: Mechanic = {
     if (!mine.length) return false;
     const altars = altarCities(s, owner);
     // Sun Age as soon as an altar has its captives
-    if (m.sun <= 0 && m.captives >= SUN_COST && altars.length) return openSunAge(s, owner);
+    if (m.sun <= 0 && m.captives >= sunCost(s, owner) && altars.length) return openSunAge(s, owner);
     // an altar (capital first) once the treasury allows
     if (!altars.length && p.stars >= ALTAR_COST + 3) {
       const c = mine.find((e) => e.capital) ?? mine[0];
@@ -253,7 +261,7 @@ export const mech: Mechanic = {
       if (!t.improvement) { p.stars -= ALTAR_COST; t.improvement = 'altar'; return true; }
     }
     // no altar to feed (or the age burns already): captives become population
-    if (m.captives > 0 && (!altars.length || m.sun > 0 || m.captives > SUN_COST)) {
+    if (m.captives > 0 && (!altars.length || m.sun > 0 || m.captives > sunCost(s, owner))) {
       const c = [...mine].sort((a, b) => a.level - b.level || a.id - b.id)[0];
       return offerAt(s, owner, c);
     }

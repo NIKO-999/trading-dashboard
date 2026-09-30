@@ -2,6 +2,7 @@ import { emit } from './events';
 import { revealAround } from './mapgen';
 import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
+import { skillTurnStart } from './skills';
 import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
 import { wildRound } from './wild';
@@ -40,6 +41,7 @@ export function startTurn(s: GameState) {
     }
   }
   hookTurnStart(s, p.id);
+  skillTurnStart(s, p.id);
   revealAround(s, p.id);
 }
 

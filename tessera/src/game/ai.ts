@@ -1,11 +1,15 @@
+import { TECH_BY_ID } from '../data/techs';
+import { LINE_PARENT } from '../data/uniqueTechs';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
+import { condActive } from './alignment';
+import { MOUNTED_KINDS, perkSum } from './perks';
 import { cityVisibleTo, hookAi } from './mech';
 import { dist, isLand, neighbors, tileAt } from './grid';
 import { roadNetwork } from './network';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
-  previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt,
+  previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, transmute, transmuteCost, unitCap, unitAt,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
 import { isNeutral, nearBeast, wildAi } from './wild';
@@ -63,6 +67,44 @@ export function aiStep(s: GameState): boolean {
 /** Runs the whole AI turn synchronously (used by simulations). */
 export function aiTurn(s: GameState, maxSteps = 500) {
   for (let i = 0; i < maxSteps && aiStep(s); i++);
+}
+
+/**
+ * How much the AI wants a skill-tree node outside the plain shared techs (null for those): it picks the side of a fork
+ * that suits its land and wars, takes Aether Links it can use, and Wildcards whose condition holds.
+ */
+function skillWant(s: GameState, pid: number, id: string, owned: Tile[], enemiesNear: boolean): number | null {
+  const t = TECH_BY_ID[id];
+  if (!t || t.ring === 'core' || t.ring === 'culture') return null;
+  const p = s.players[pid];
+  const forests = owned.filter((x) => x.terrain === 'forest').length;
+  const count = (pred: (x: Tile) => boolean) => owned.filter(pred).length;
+  const units = s.units.filter((u) => u.owner === pid);
+  const fighting = enemiesNear || condActive(s, pid, 'war');
+  switch (id) {
+    case 'fork:canopy': return p.tribe === 'celts' ? 8 : p.tribe === 'aboriginal' ? 0 : forests >= 4 ? 5 : 1;
+    case 'fork:clearcut': return p.tribe === 'celts' ? 0 : p.tribe === 'aboriginal' ? 7 : forests >= 2 && forests < 4 ? 5 : forests >= 4 ? 3 : 1;
+    case 'fork:caravan': return count((x) => x.improvement === 'market') + (p.techs.includes('trade') ? 5 : 3) - (enemiesNear ? 2 : 0);
+    case 'fork:mercenary': return enemiesNear && fighting && units.length >= s.cities.filter((c) => c.owner === pid).length * 2 ? 4 : 1; // a war army at the gates
+    case 'aether:bombard': return units.some((u) => UNITS[u.kind].naval) ? 5 : 2;
+    case 'aether:grain': return s.cities.filter((c) => c.owner === pid).length >= 3 ? 5 : 2;
+    case 'aether:snipers': return count((x) => x.terrain === 'mountain') >= 2 ? 5 : 2;
+    case 'aether:tidal': return count((x) => x.improvement === 'port') ? 5 : 2;
+    case 'aether:cavalry': return units.filter((u) => MOUNTED_KINDS.includes(u.kind)).length >= 2 ? 5 : 2;
+  }
+  if (t.ring === 'wild') return condActive(s, pid, t.cond!) ? 6 : t.cond === 'late' && s.turn >= 15 ? 5 : 2;
+  return 2;
+}
+
+/** A Transmutation Shift when a fork choice has gone stale: mercenaries in a long peace, clear-cutting with no forest left. */
+function transmuteStep(s: GameState, pid: number): boolean {
+  const p = s.players[pid];
+  if (p.stars < transmuteCost(s, pid) + 12) return false;
+  const peace = s.turn - (p.skill?.war ?? -99) > 8;
+  if (p.techs.includes('fork:mercenary') && peace) return !!transmute(s, pid, 'fork:mercenary');
+  const standing = s.tiles.some((t) => t.terrain === 'forest' && tileOwnerPlayer(s, t) === pid && !t.resource && !t.improvement);
+  if (p.techs.includes('fork:clearcut') && !standing && p.techs.length > 8) return !!transmute(s, pid, 'fork:clearcut');
+  return false;
 }
 
 /** Builds the next missing road tile on the cheapest route between two of the empire's unlinked cities. */
@@ -146,12 +188,27 @@ function economyStep(s: GameState, pid: number): boolean {
   // Link two of our cities by road: the network pays population and stars.
   if (p.stars >= 9 && roadStep(s, pid)) return true;
 
+  // Clear Cutting: standing timber is money.
+  if (perkSum(s, pid, 'clearStar') > 0) {
+    for (const t of s.tiles) {
+      if (t.terrain !== 'forest' || tileOwnerPlayer(s, t) !== pid || t.resource || t.improvement) continue;
+      if (tileActions(s, pid, t).some((a) => a.id === 'clear' && a.enabled) && doAction(s, pid, t, 'clear')) return true;
+    }
+  }
+  if (transmuteStep(s, pid)) return true;
+
   // Research: prefer techs that unlock resources we own, then military.
   const options = researchable(s, pid);
   if (options.length) {
     const owned = s.tiles.filter((t) => tileOwnerPlayer(s, t) === pid);
+    const has = (pred: (t: Tile) => boolean) => owned.some(pred);
     const want = (id: string) => {
-      const has = (pred: (t: Tile) => boolean) => owned.some(pred);
+      const node = skillWant(s, pid, id, owned, enemiesNear);
+      if (node !== null) return node;
+      const line = LINE_PARENT[p.tribe] === id ? 6 : 0; // the empire's own line grows out of this one
+      return Math.max(line, baseWant(id));
+    };
+    const baseWant = (id: string) => {
       switch (id) {
         case 'gathering': return has((t) => t.resource === 'fruit') ? 10 : 2;
         case 'hunting': return has((t) => t.resource === 'animal') ? 10 : 2;
@@ -182,8 +239,8 @@ function economyStep(s: GameState, pid: number): boolean {
   if (wantArmy && trainBest(s, pid, enemiesNear)) return true;
   // Rich and idle: grab expensive upgrades.
   if (p.stars >= 15 && options.length) {
-    const cheapest = options.sort((a, b) => techCost(s, pid, a.id) - techCost(s, pid, b.id))[0];
-    if (research(s, pid, cheapest.id)) return true;
+    const cheapest = options.filter((t) => !t.fork).sort((a, b) => techCost(s, pid, a.id) - techCost(s, pid, b.id))[0]; // a fork is only ever chosen on purpose
+    if (cheapest && research(s, pid, cheapest.id)) return true;
   }
   // Rich with nothing left to research: put the treasury into troops rather than hoard it.
   if (p.stars >= 25 && !options.length && trainBest(s, pid, false)) return true;

@@ -96,6 +96,16 @@ export interface Player {
    * is never alive, takes no turns, meets no one, scores nothing and is left out of every list of empires.
    */
   neutral?: boolean;
+  /** Skill-tree bookkeeping (missing in older saves): when it last fought or lost a city, which Wildcards surged, respecs. */
+  skill?: SkillState;
+}
+
+export interface SkillState {
+  war?: number; // turn this empire last fought
+  lost?: number; // turn it last lost a city
+  surges?: string[]; // Wildcard nodes surging at its last turn start
+  paxOff?: boolean; // Pax Romana was broken at its last turn start
+  respecs?: number;
 }
 
 /** One sub-trait taken from a conquered people (`id` is a key of the culture registry; its perks are copied in, so

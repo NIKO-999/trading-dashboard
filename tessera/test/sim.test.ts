@@ -8,6 +8,7 @@ import { researchStatus, research, popNeeded, rewardOptions, payRoadBonuses, app
 import { spawnUnit } from '../src/game/mapgen.ts';
 import { endTurn, startTurn } from '../src/game/turn.ts';
 import { TRIBE_IDS } from '../src/data/tribes.ts';
+import { TECH_BY_ID } from '../src/data/techs.ts';
 import { TRAITS } from '../src/data/traits.ts';
 import { describePerk } from '../src/game/perks.ts';
 import type { GameState } from '../src/game/types.ts';
@@ -600,6 +601,11 @@ test('every empire has a three-tech skill line only it can research', () => {
     const s = createGame({ seed: 51, human: id, opponents: ['rome'], mode: 'domination' });
     startTurn(s);
     const r = createGame({ seed: 51, human: id === 'rome' ? 'egypt' : 'rome', opponents: [id], mode: 'domination' });
+    // the line grows out of its base tech (the Master Culture ring): closed until that tech is known
+    const base = TECH_BY_ID[`${id}:1`].parent!;
+    s.players[0].techs = s.players[0].techs.filter((x) => x !== base);
+    assert.equal(researchStatus(s, 0, `${id}:1`), 'locked', `${id} line waits for ${base}`);
+    s.players[0].techs.push(base, TECH_BY_ID[base].parent ?? base);
     assert.equal(researchStatus(s, 0, `${id}:1`), 'available', `${id} line opens`);
     assert.equal(researchStatus(s, 0, `${id}:2`), 'locked');
     assert.equal(researchStatus(r, 0, `${id}:1`), 'locked', `${id} line is closed to others`);

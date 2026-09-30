@@ -2,7 +2,7 @@ import { TRIBES, unitFor } from '../data/tribes';
 import { CLIMATES, type ClimateTerrain } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { hookSetup } from './mech';
-import { perkSum } from './perks';
+import { perkRange, perkSum, unitMatches } from './perks';
 import { setupWild } from './wild';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
@@ -436,10 +436,13 @@ export function revealAround(state: GameState, playerId: number) {
     for (const t of area(state, x, y, Math.max(1, r + extra))) p.explored[t.y * state.size + t.x] = true;
   };
   for (const c of state.cities) if (c.owner === playerId) mark(c.x, c.y, c.borderRadius + 1);
+  const fogsight = perkSum(state, playerId, 'fogsight') > 0; // Highland Snipers: ranged units on a peak see as far as they shoot
   for (const u of state.units) {
     if (u.owner !== playerId) continue;
     const t = tileAt(state, u.x, u.y)!;
-    mark(u.x, u.y, t.terrain === 'mountain' || u.kind === 'explorer' ? 2 : 1);
+    let r = t.terrain === 'mountain' || u.kind === 'explorer' ? 2 : 1;
+    if (fogsight && t.terrain === 'mountain' && unitMatches(p.tribe, u.kind, 'ranged')) r = Math.max(r, UNITS[u.kind].range + perkRange(state, u) - extra);
+    mark(u.x, u.y, r);
   }
   // anyone whose units or cities are now in sight has been met
   const seen = (x: number, y: number) => p.explored[y * state.size + x];

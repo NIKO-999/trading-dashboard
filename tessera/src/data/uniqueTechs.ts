@@ -1,5 +1,7 @@
-// Each empire's own skill line: three techs in a chain that only that people can research. They are drawn as a sixth
-// spoke on the tech tree. What they do is a list of perks (see game/perks.ts), so the rules and the AI treat them alike.
+// Each empire's own skill line: three techs in a chain that only that people can research. They form the middle
+// "Master Culture" ring of the skill tree: the chain branches off a relevant base tech (PARENT), so the line opens once
+// that tech is known. What they do is a list of perks (see game/perks.ts), so the rules and the AI treat them alike; a
+// `note` perk describes an effect the empire's own mechanic applies (game/mech/<id>.ts checks for the tech).
 import type { Perk } from '../game/perks';
 import type { TribeId } from '../game/types';
 
@@ -8,11 +10,16 @@ export interface UniqueTech {
   name: string;
   tier: 1 | 2 | 3;
   tribe: TribeId;
+  parent: string; // the tech this one follows: the base tech for tier 1, the previous one after
   flavor: string;
   perks: Perk[];
 }
 
 type Row = [name: string, flavor: string, perks: Perk[]];
+
+// Solar Ascension (the Aztec line's capstone; applied by game/mech/aztec.ts)
+export const SOLAR_SUN_COST = 2;
+export const SOLAR_CITY_STARS = 1;
 
 const LINES: Record<TribeId, [Row, Row, Row]> = {
   egypt: [
@@ -21,9 +28,9 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['Temples of Ra', 'Gold and grain flow to the temple granaries.', [{ k: 'income', per: 'temple', n: 1 }, { k: 'income', per: 'capital', n: 1 }]],
   ],
   aztec: [
-    ['Eagle and Jaguar Orders', 'Elite warrior societies of the empire.', [{ k: 'atk', n: 0.5, who: 'unique' }]],
-    ['Flower Wars', 'Wars fought to take captives and glory.', [{ k: 'kill', n: 1 }]],
-    ['Chinampas', 'Floating gardens feed the lake cities.', [{ k: 'grow', on: 'farm', n: 1 }, { k: 'grow', on: 'fruit', n: 1 }]],
+    ['Sacrificial Rites', 'Every defeated foe is a gift to the sun.', [{ k: 'refund', n: 0.2 }]],
+    ['Sun Altars', 'Gold-leafed altars atop every pyramid.', [{ k: 'income', per: 'altar', n: 2 }, { k: 'levelstar', n: 1 }]],
+    ['Solar Ascension', 'The fifth sun rises over Tenochtitlan.', [{ k: 'note', text: `A Sun Age needs ${SOLAR_SUN_COST} captives instead of 3, and while it burns every city pays +${SOLAR_CITY_STARS}★ a turn.` }]],
   ],
   polynesia: [
     ['Double-Hulled Waka', 'Lashed hulls carry whole families over the ocean.', [{ k: 'move', n: 1, who: 'naval' }]],
@@ -31,9 +38,9 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['Kūmara Gardens', 'Sweet potato and a sea full of fish.', [{ k: 'grow', on: 'fish', n: 1 }, { k: 'income', per: 'port', n: 1 }]],
   ],
   rome: [
-    ['Roman Roads', 'All roads lead to the city.', [{ k: 'income', per: 'road', n: 1 }]],
-    ['Legion Discipline', 'The drill that made the legions.', [{ k: 'def', n: 0.5, who: 'melee' }, { k: 'cost', of: 'melee', n: 1 }]],
-    ['Aqueducts', 'Fresh water and growing cities.', [{ k: 'income', per: 'capital', n: 2 }, { k: 'levelstar', n: 2 }]],
+    ['Paved Highways', 'All roads lead to the city, whatever the ground.', [{ k: 'highway', n: 1 }]],
+    ['Castra Outposts', 'Every marching camp a fortress.', [{ k: 'cost', of: 'melee', n: 1 }, { k: 'note', text: 'Building a Castra is free, it gives +1 more defence, and every standing fort pays +1★ a turn.' }]],
+    ['Pax Romana', 'Peace, order and taxes.', [{ k: 'pax', n: 1 }]],
   ],
   pirates: [
     ['Cutlass Drill', 'Boarding parties who fight like fiends.', [{ k: 'atk', n: 1, who: 'naval' }]],
@@ -76,9 +83,9 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['High Kings', 'Chieftains who rally every clan.', [{ k: 'atk', n: 0.5, who: 'melee' }, { k: 'kill', n: 1 }]],
   ],
   inuit: [
-    ['Harpoon Craft', 'Bone barbs and patient hunters.', [{ k: 'grow', on: 'fish', n: 1 }]],
-    ['Kayak Hunters', 'Nimble skin boats among the floes.', [{ k: 'move', n: 1, who: 'naval' }]],
-    ['Whale Feast', 'One great catch feeds a winter.', [{ k: 'harvestStar', n: 1 }, { k: 'heal', n: 2 }]],
+    ['Glacial Footing', 'Sure feet on the sea ice.', [{ k: 'terrain', on: 'ice', n: 0.5 }, { k: 'note', text: 'Every tile of water you freeze pays +1★.' }]],
+    ['Deep Whaling', 'Umiak crews that hunt the great whales.', [{ k: 'note', text: 'Renewable whale and fish harvests pay 50% more Stars and re-freeze 2 turns sooner.' }]],
+    ['Sub-Zero Aura', 'The cold itself fights for the people of the ice.', [{ k: 'note', text: 'Ice chills enemies for 1 more damage, every chilled enemy pays +1★, and cities freeze a shallow every 2 turns.' }]],
   ],
   inca: [
     ['Mit’a Labour', 'Every household lends its hands.', [{ k: 'grow', on: 'mine', n: 1 }]],
@@ -147,6 +154,17 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
   ],
 };
 
+/** The base tech each empire's line branches off (tied to what the line and the empire's mechanic are about). */
+export const LINE_PARENT: Record<TribeId, string> = {
+  egypt: 'gathering', aztec: 'hunting', polynesia: 'fishing', rome: 'roads', pirates: 'fishing', vikings: 'fishing',
+  japan: 'tactics', mongols: 'riding', greeks: 'tactics', zulu: 'hunting', persia: 'riding', celts: 'hunting',
+  inuit: 'sailing', inca: 'climbing', ethiopia: 'climbing', aboriginal: 'gathering', china: 'gathering', india: 'gathering',
+  mali: 'riding', lakota: 'hunting', ottoman: 'gathering', maya: 'gathering', korea: 'fishing', khmer: 'gathering',
+  swahili: 'fishing', tibet: 'climbing',
+};
+
 export const UNIQUE_TECHS: UniqueTech[] = (Object.keys(LINES) as TribeId[]).flatMap((tribe) =>
-  LINES[tribe].map(([name, flavor, perks], i) => ({ id: `${tribe}:${i + 1}`, name, tier: (i + 1) as 1 | 2 | 3, tribe, flavor, perks })));
+  LINES[tribe].map(([name, flavor, perks], i) => ({
+    id: `${tribe}:${i + 1}`, name, tier: (i + 1) as 1 | 2 | 3, tribe, flavor, perks, parent: i === 0 ? LINE_PARENT[tribe] : `${tribe}:${i}`,
+  })));
 export const UNIQUE_BY_ID: Record<string, UniqueTech> = Object.fromEntries(UNIQUE_TECHS.map((t) => [t.id, t]));

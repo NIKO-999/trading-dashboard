@@ -4,14 +4,23 @@
 //  - A Roman unit standing on a paved road tile may dig in (`mech:castra`, 1★): the tile gets a fort (`improvement: 'fort'`,
 //    `data.castra` = the owner) worth +2 defence to the Roman unit on it. The fort stands only while a Roman unit is on
 //    it: when the unit leaves or dies the fort is dismantled (the road stays).
+//  - Skill line: Castra Outposts (`rome:2`) makes a Castra free and +OUTPOST_DEFENCE stronger, and every standing fort
+//    pays OUTPOST_STARS a turn (the `income` hook). Paved Highways and Pax Romana are perks (data/uniqueTechs.ts).
 import { dist, isLand, tileAt } from '../grid';
-import { def, unitAt } from '../rules';
+import { def, hasTech, unitAt } from '../rules';
 import type { Action } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
 
 export const CASTRA_COST = 1;
 export const CASTRA_DEFENCE = 2;
+export const OUTPOST_DEFENCE = 1;
+export const OUTPOST_STARS = 1;
+const outposts = (s: GameState, owner: number) => hasTech(s, owner, 'rome:2');
+/** What a Castra costs this empire (free with Castra Outposts). */
+export const castraCost = (s: GameState, owner: number) => (outposts(s, owner) ? 0 : CASTRA_COST);
+/** Forts of `owner` standing right now. */
+export const fortsOf = (s: GameState, owner: number) => s.tiles.filter((t) => isCastra(t) && t.data!.castra === owner).length;
 
 /** A tile holding a Roman fort. */
 export const isCastra = (t: Tile) => t.improvement === 'fort' && typeof t.data?.castra === 'number';
@@ -72,8 +81,10 @@ export const mech: Mechanic = {
   stat(s, owner, u, stat) {
     if (stat !== 'def' || !isRoman(s, u, owner) || !u.fortified) return 0;
     const t = tileAt(s, u.x, u.y);
-    return t && isCastra(t) && t.data!.castra === owner ? CASTRA_DEFENCE : 0;
+    return t && isCastra(t) && t.data!.castra === owner ? CASTRA_DEFENCE + (outposts(s, owner) ? OUTPOST_DEFENCE : 0) : 0;
   },
+
+  income(s, owner) { return outposts(s, owner) ? OUTPOST_STARS * fortsOf(s, owner) : 0; },
 
   afterAttack(s, owner) { pave(s, owner); sweep(s); },
   unitDied(s) { sweep(s); },
@@ -83,10 +94,12 @@ export const mech: Mechanic = {
     const u = unitAt(s, t.x, t.y);
     if (!u || !isRoman(s, u, owner) || !isCombat(u) || t.cityId !== null || !isLand(t) || t.terrain === 'mountain') return [];
     if (u.fortified && isCastra(t)) return [];
-    const why = castraCheck(s, owner, t) ?? (s.players[owner].stars < CASTRA_COST ? 'Not enough stars' : null);
+    const cost = castraCost(s, owner);
+    const why = castraCheck(s, owner, t) ?? (s.players[owner].stars < cost ? 'Not enough stars' : null);
+    const bonus = CASTRA_DEFENCE + (outposts(s, owner) ? OUTPOST_DEFENCE : 0);
     return [{
-      id: 'mech:castra', label: 'Build Castra', cost: CASTRA_COST, icon: 'road', enabled: !why, reason: why ?? undefined,
-      desc: `Dig in as a mini-fort: +${CASTRA_DEFENCE} defence while this soldier holds the road. The fort is dismantled when it leaves.`,
+      id: 'mech:castra', label: 'Build Castra', cost, icon: 'road', enabled: !why, reason: why ?? undefined,
+      desc: `Dig in as a mini-fort: +${bonus} defence while this soldier holds the road${outposts(s, owner) ? `, and +${OUTPOST_STARS}★ a turn` : ''}. The fort is dismantled when it leaves.`,
     }];
   },
 
@@ -98,13 +111,14 @@ export const mech: Mechanic = {
   ai(s, owner) {
     pave(s, owner);
     const p = s.players[owner];
-    if (p.stars < CASTRA_COST) return false;
+    const cost = castraCost(s, owner);
+    if (p.stars < cost) return false;
     for (const u of s.units) {
       if (!isRoman(s, u, owner) || !u.moved || u.fortified || !isCombat(u)) continue;
       const t = tileAt(s, u.x, u.y)!;
       if (castraCheck(s, owner, t)) continue;
-      if (s.units.some((e) => e.owner !== owner && dist(e.x, e.y, u.x, u.y) <= 3)) {
-        p.stars -= CASTRA_COST; // the AI acts directly, not through the tile menu
+      if (s.units.some((e) => e.owner !== owner && dist(e.x, e.y, u.x, u.y) <= 3) || (cost === 0 && s.turn % 2 === 0)) { // free forts also pay
+        p.stars -= cost; // the AI acts directly, not through the tile menu
         return fortify(t, u, owner);
       }
     }

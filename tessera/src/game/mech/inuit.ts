@@ -13,6 +13,10 @@ import type { Mechanic } from './types';
 // instant Population, then the node is "thawed" for a few turns until it re-freezes and can be harvested again. The
 // ordinary one-shot Harvest is blocked for Inuit on those tiles (the node is renewable instead of consumed).
 // Simplification: water tiles that carry a resource or improvement are never frozen (they stay fishing grounds).
+// Skill line (data/uniqueTechs.ts; the effects live here): Glacial Footing (`inuit:1`) pays GLACIAL_STARS per tile
+// frozen; Deep Whaling (`inuit:2`) makes the renewable harvest pay 50% more Stars and rest DEEP_REST turns less;
+// Sub-Zero Aura (`inuit:3`) chills for +1 damage, pays AURA_STARS per chilled enemy and freezes around cities every
+// AURA_EVERY turns.
 //
 // Humans: tap an adjacent water tile with a ready land unit and choose "Freeze water" (1 star) or simply move onto the
 // highlighted water tile; tap a fish/whale tile in your borders for "Whale Harvest"/"Fish Harvest". AI: see `ai`.
@@ -25,6 +29,10 @@ export const HARVEST_COST = 2;
 export const WHALE = { stars: 7, pop: 2, rest: 7 };
 export const FISH = { stars: 3, pop: 1, rest: 5 };
 const AI_FREEZES_PER_TURN = 2;
+export const GLACIAL_STARS = 1;
+export const DEEP_REST = 2;
+export const AURA_STARS = 1;
+export const AURA_EVERY = 2;
 
 type Counters = { frozen: number; walked: number; aura: number; whales: number; fish: number; chilled: number; turnFrozen: number };
 const KEYS = ['frozen', 'walked', 'aura', 'whales', 'fish', 'chilled', 'turnFrozen'] as const;
@@ -57,6 +65,10 @@ function freezeTile(s: GameState, owner: number, t: Tile, kind: 'walked' | 'aura
   const c = counters(s, owner);
   c.frozen++;
   c[kind]++;
+  if (hasTech(s, owner, 'inuit:1')) { // Glacial Footing
+    s.players[owner].stars += GLACIAL_STARS;
+    emit({ type: 'stars', player: owner, x: t.x, y: t.y, amount: GLACIAL_STARS });
+  }
   emit({ type: 'toast', player: owner, text: 'The water freezes into a bridge of ice.' });
 }
 
@@ -66,7 +78,12 @@ const isWalker = (u: Unit, owner: number) => u.owner === owner && !def(u).naval 
 const freezers = (s: GameState, owner: number, t: Tile) =>
   s.units.filter((u) => isWalker(u, owner) && !u.moved && !u.attacked && dist(u.x, u.y, t.x, t.y) === 1).sort((a, b) => b.hp - a.hp || a.id - b.id);
 
-const harvestOf = (t: Tile) => (t.resource === 'whale' ? WHALE : FISH);
+/** What a renewable harvest of this node pays `owner` (Deep Whaling: +50% Stars, re-freezes sooner). */
+export function harvestOf(s: GameState, owner: number, t: Tile): { stars: number; pop: number; rest: number } {
+  const h = t.resource === 'whale' ? WHALE : FISH;
+  if (!hasTech(s, owner, 'inuit:2')) return h;
+  return { stars: Math.round(h.stars * 1.5), pop: h.pop, rest: Math.max(1, h.rest - DEEP_REST) };
+}
 
 /** Why the node cannot be harvested right now (stars excluded), or undefined. */
 function nodeBlock(s: GameState, owner: number, t: Tile): string | undefined {
@@ -109,7 +126,8 @@ export const mech: Mechanic = {
       const { inuit: _i, ...rest } = t.data ?? {};
       t.data = r > 1 ? { ...rest, inuit: { rest: r - 1 } } : rest;
     }
-    if (s.turn > 0 && s.turn % FREEZE_EVERY === 0) { // the city aura
+    const aura = hasTech(s, owner, 'inuit:3'); // Sub-Zero Aura
+    if (s.turn > 0 && s.turn % (aura ? AURA_EVERY : FREEZE_EVERY) === 0) { // the city aura
       for (const city of s.cities) {
         if (city.owner !== owner) continue;
         const t = neighbors(s, city.x, city.y).find((n) => n.terrain === 'shallow' && canFreeze(s, n) && !unitAt(s, n.x, n.y));
@@ -120,10 +138,11 @@ export const mech: Mechanic = {
       if (u.owner === owner || u.hp <= 1) continue;
       const t = tileAt(s, u.x, u.y);
       if (!t || !isIce(t) || FIRE_TECHS.some((k) => hasTech(s, u.owner, k))) continue;
-      const n = Math.min(FREEZE_DAMAGE, u.hp - 1);
+      const n = Math.min(FREEZE_DAMAGE + (aura ? 1 : 0), u.hp - 1);
       u.hp -= n;
       c.chilled++;
       emit({ type: 'damage', unitId: u.id, x: u.x, y: u.y, amount: n });
+      if (aura) { s.players[owner].stars += AURA_STARS; emit({ type: 'stars', player: owner, x: u.x, y: u.y, amount: AURA_STARS }); }
     }
   },
 
@@ -152,7 +171,7 @@ export const mech: Mechanic = {
     }
     if (marine(t) && !t.improvement && tileOwnerPlayer(s, t) === owner) {
       const why = nodeBlock(s, owner, t) ?? (s.players[owner].stars < HARVEST_COST ? 'Not enough stars' : undefined);
-      const h = harvestOf(t);
+      const h = harvestOf(s, owner, t);
       const whale = t.resource === 'whale';
       acts.push({
         id: 'mech:harvest', label: whale ? 'Whale Harvest' : 'Fish Harvest', icon: whale ? 'whale' : 'fish', cost: HARVEST_COST,
@@ -175,7 +194,7 @@ export const mech: Mechanic = {
     if (id === 'mech:harvest') {
       if (nodeBlock(s, owner, t)) return false; // the core already charged HARVEST_COST
       const city = cityById(s, t.owner)!;
-      const h = harvestOf(t);
+      const h = harvestOf(s, owner, t);
       s.players[owner].stars += h.stars;
       emit({ type: 'stars', player: owner, x: t.x, y: t.y, amount: h.stars });
       const pop = h.pop + (t.resource === 'fish' && hasTech(s, owner, 'aquaculture') ? 1 : 0);

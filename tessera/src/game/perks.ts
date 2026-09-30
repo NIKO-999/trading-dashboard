@@ -2,12 +2,14 @@
 // both the rules and the map code can ask "how much of X does this empire have?".
 import { TRAITS } from '../data/traits';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
+import { SKILL_BY_ID } from '../data/skills';
+import { condActive } from './alignment';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { GameState, Unit, UnitKind } from './types';
 
 export type PerkWho = 'all' | 'ranged' | 'mounted' | 'naval' | 'melee' | 'siege' | 'unique';
-export type PerkImp = 'farm' | 'mine' | 'temple' | 'port' | 'market' | 'lumber';
+export type PerkImp = 'farm' | 'mine' | 'temple' | 'port' | 'market' | 'lumber' | 'altar';
 
 export type Perk =
   | { k: 'atk' | 'def' | 'move'; n: number; who?: PerkWho }
@@ -15,12 +17,26 @@ export type Perk =
   | { k: 'grow'; on: PerkImp | 'harvest' | 'fish' | 'animal' | 'fruit'; n: number } // extra population when you do it
   | { k: 'cost'; of: 'melee' | 'ranged' | 'mounted' | 'naval' | 'siege' | 'tech' | 'build' | 'temple' | 'road'; n: number } // ★ cheaper (negative: dearer)
   | { k: 'techcost'; tech: string; n: number } // this one tech costs n★ more
-  | { k: 'terrain'; on: 'forest' | 'mountain' | 'own' | 'city' | 'away'; n: number } // added to the defence multiplier (away: outside your borders)
+  | { k: 'terrain'; on: 'forest' | 'mountain' | 'own' | 'city' | 'away' | 'ice'; n: number } // added to the defence multiplier (away: outside your borders)
   | { k: 'heal'; n: number } // HP every unit on your land recovers at the start of your turn
   | { k: 'kill'; n: number } // ★ for every kill
   | { k: 'vision'; n: number } // see one tile further around every unit and city
   | { k: 'levelstar'; n: number } // ★ whenever a city levels up
-  | { k: 'harvestStar'; n: number }; // ★ whenever you harvest a resource
+  | { k: 'harvestStar'; n: number } // ★ whenever you harvest a resource
+  // the skill tree's rings (data/skills.ts and the reworked empire lines)
+  | { k: 'note'; text: string } // an effect an empire mechanic applies itself (game/mech): only describes it
+  | { k: 'range'; n: number; who?: PerkWho; on?: 'mountain' } // attack range (on: only while standing there)
+  | { k: 'fogsight'; n: number } // ranged units on a mountain see as far as they can shoot
+  | { k: 'refund'; n: number } // share of a defeated enemy's ★ cost paid back
+  | { k: 'highway'; n: number } // stepping onto any road costs half a move and never stops for forest or swamp
+  | { k: 'spill'; n: number } // a levelling city's surplus population flows to a smaller road-linked city
+  | { k: 'clearStar'; n: number } // extra ★ for clearing a forest
+  | { k: 'canopy'; n: number } // forests may not be cut; +n★ a turn per forest in your borders (capped at city level); units in forest hide
+  | { k: 'trade'; n: number } // trade Stars (the Trade bonus and markets) earn n times more on top
+  | { k: 'unitcost'; n: number } // every unit costs n★ more
+  | { k: 'unitpct'; n: number } // every unit costs this share less
+  | { k: 'halfgrow'; n: number } // population gains are halved (the odd half is banked)
+  | { k: 'pax'; n: number }; // +n★ a turn per road-linked city while no city has been lost lately
 
 export const MOUNTED_KINDS: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa'];
 const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha'];
@@ -33,7 +49,11 @@ export function perksOf(s: GameState, pid: number): Perk[] {
   for (const t of [...TRAITS[tribe].pros, ...TRAITS[tribe].cons]) out.push(...t.perks); // the empire's historical strengths and weaknesses
   for (const id of s.players[pid].techs) {
     const t = UNIQUE_BY_ID[id];
-    if (t) out.push(...t.perks);
+    if (t) { out.push(...t.perks); continue; }
+    const k = SKILL_BY_ID[id]; // forks, Aether Links and Wildcards (which surge while their condition holds)
+    if (!k) continue;
+    out.push(...k.perks);
+    if (k.surge && k.cond && condActive(s, pid, k.cond)) out.push(...k.surge);
   }
   for (const a of s.players[pid].culture?.adopted ?? []) out.push(...(a.perks ?? [])); // traditions taken from conquered peoples (see culture.ts)
   return out;
@@ -67,12 +87,22 @@ export function perkSum<K extends Perk['k']>(s: GameState, pid: number, k: K, ma
   return n;
 }
 
+/** Extra attack range from perks (Naval Bombardment, Highland Snipers on a mountain). */
+export function perkRange(s: GameState, u: Unit): number {
+  const p = s.players[u.owner];
+  if (!p.techs.length) return 0;
+  const mountain = s.tiles[u.y * s.size + u.x]?.terrain === 'mountain';
+  let n = 0;
+  for (const pk of perksOf(s, u.owner)) if (pk.k === 'range' && (!pk.on || mountain) && unitMatches(p.tribe, u.kind, pk.who)) n += pk.n;
+  return n;
+}
+
 /** One line of plain English for a perk. */
 export function describePerk(p: Perk): string {
   const who = (w?: PerkWho) => ({ all: 'all units', ranged: 'ranged units', mounted: 'mounted units', naval: 'boats and ships', melee: 'foot soldiers', siege: 'siege engines', unique: 'your unique unit' })[w ?? 'all'];
   const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
   const abs = (n: number) => Math.abs(n);
-  const imp = (i: string) => ({ farm: 'farm', mine: 'mine', temple: 'temple', port: 'port', market: 'market', lumber: 'lumber hut' })[i] ?? i;
+  const imp = (i: string) => ({ farm: 'farm', mine: 'mine', temple: 'temple', port: 'port', market: 'market', lumber: 'lumber hut', altar: 'altar' })[i] ?? i;
   switch (p.k) {
     case 'atk': return p.n >= 0 ? `${cap(who(p.who))} hit ${p.n} harder.` : `${cap(who(p.who))} hit ${abs(p.n)} weaker.`;
     case 'def': return p.n >= 0 ? `${cap(who(p.who))} defend ${p.n} better.` : `${cap(who(p.who))} defend ${abs(p.n)} worse.`;
@@ -92,7 +122,7 @@ export function describePerk(p: Perk): string {
     }
     case 'techcost': return `${p.tech[0].toUpperCase()}${p.tech.slice(1)} costs ${p.n}★ more to research.`;
     case 'terrain': {
-      const where = p.on === 'city' ? 'in your cities' : p.on === 'own' ? 'on your own land' : p.on === 'away' ? 'outside your borders' : p.on === 'forest' ? 'in forests' : 'in the mountains';
+      const where = p.on === 'city' ? 'in your cities' : p.on === 'own' ? 'on your own land' : p.on === 'away' ? 'outside your borders' : p.on === 'forest' ? 'in forests' : p.on === 'ice' ? 'on ice' : 'in the mountains';
       return p.n >= 0 ? `Units ${where} defend ${p.n} better.` : `Units ${where} defend ${abs(p.n)} worse.`;
     }
     case 'heal': return `Units on your land heal ${p.n} HP every turn.`;
@@ -100,5 +130,18 @@ export function describePerk(p: Perk): string {
     case 'vision': return p.n >= 0 ? `See ${p.n} tile further around every unit and city.` : `See ${abs(p.n)} tile less around every unit and city.`;
     case 'levelstar': return `+${p.n}★ whenever a city levels up.`;
     case 'harvestStar': return `+${p.n}★ whenever you harvest a resource.`;
+    case 'note': return p.text;
+    case 'range': return `${cap(who(p.who))}${p.on ? ' on a mountain' : ''} shoot ${p.n} tile${p.n === 1 ? '' : 's'} further${p.who === 'naval' ? ', over land too' : ''}.`;
+    case 'fogsight': return 'Ranged units on a mountain see through the fog as far as they can shoot.';
+    case 'refund': return `Every enemy you defeat refunds ${Math.round(p.n * 100)}% of its ★ cost.`;
+    case 'highway': return 'Roads ignore terrain: stepping onto any road costs half a move and never stops for forest or swamp.';
+    case 'spill': return 'When a city levels up, its surplus population spills along the road to a smaller linked city.';
+    case 'clearStar': return `Clearing a forest pays ${p.n}★ more.`;
+    case 'canopy': return `Forests cannot be cut. +${p.n}★ a turn for every forest in your borders (up to half the city's level, rounded up). Your units in forest are hidden from enemies more than 1 tile away.`;
+    case 'trade': return 'Trade Stars (the Trade bonus and markets) are doubled.';
+    case 'unitcost': return `Every unit costs ${p.n}★ more.`;
+    case 'unitpct': return `Every unit costs ${Math.round(p.n * 100)}% less.`;
+    case 'halfgrow': return 'Cities grow at half speed: every 2 population gained counts as 1.';
+    case 'pax': return `+${p.n}★ a turn for every road-linked city while you have not lost a city in the last 5 turns.`;
   }
 }

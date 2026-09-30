@@ -33,11 +33,15 @@
   - Other levels: Grand Garden **or** Treasury (+5★, +8★ from level 6).
 - A city **supports `level + 1` units**; you cannot train more than that. Units belong to the city that trained them; if it is lost they become unsupported.
 
-## 3. Techs and the skill tree
+## 3. Techs and the skill tree (the Constellation)
 
-- The shared tree has **5 roots**, each with two tier-2 branches leading to one tier-3 tech (25 techs). Each empire also has its **own 3-tech skill line** on a sixth spoke (78 in total) — only that empire can learn it.
+The skill tree is drawn as a constellation on a black sky: **three converging rings around the Empire Origin** (your empire's portrait in the centre). Learned stars shine gold (core, forks, your own line) or silver (Aether Links, Wildcards); the rest are faint fine-line outlines whose shape tells the ring (circle core, triangle fork, diamond culture, hexagon link, eight-point star wildcard). The sky is wider than a phone: it scrolls, and **Whole sky** shrinks it to fit.
+
 - **Tech cost** = `tier × (number of your cities) + 4`, so it gets dearer as you expand. Philosophy makes all future techs 33% cheaper; Greeks pay 1 less; empire traits can add or remove Stars.
-- A tech must have its parent researched first (tier-1 techs are always available).
+- A tech needs its parent first (tier-1 techs are always available).
+
+### Inner ring — Core Domain (25 shared techs)
+5 roots, each with two tier-2 branches leading to one tier-3 tech.
 
 | Root | Tier 2 | Tier 3 |
 |---|---|---|
@@ -46,6 +50,37 @@
 | **Fishing** – fish, ports | Sailing (Galleys, open ocean); Whaling (+10★ per whale) | Navigation (Triremes); Aquaculture (fish +2 pop) |
 | **Riding** – Riders | Roads (roads, network income); Horsemanship (mounted +1 defence) | Trade (+1★ per city); Chivalry (Knights) |
 | **Climbing** – walk onto mountains, ×2 defence on them | Mining (mines on ore +2 pop); Meditation (mountain shrines +1 pop) | Smithing (Swordsmen); Philosophy (techs −33%) |
+
+**Forks (tier 3):** two pairs of mutually exclusive nodes. Learning one side **seals** the other (only a Transmutation Shift reopens it); ruins never hand out a fork.
+- *Forestry fork* — **Clear Cutting**: clearing a forest pays 4★ instead of 1 · **Sacred Canopy**: forests cannot be cut, each city earns +1★ a turn per forest in its borders (up to half its level, rounded up), and your units in forest are hidden from enemies not standing right beside them.
+- *Trade/Markets fork* (off Roads) — **Caravan Monopoly**: trade Stars (the Trade bonus and market income) are doubled, but every unit costs 1★ more · **Mercenary Contracts**: every unit costs 25% less, but population growth is halved (every 2 population gained counts as 1; the odd half is banked in the city).
+
+### Middle ring — Master Culture and Aether Links
+- **Each empire's own 3-tech line** (78 in total, only that empire can learn it) now grows out of a relevant base tech, e.g. Aztec from Hunting, Roman from Roads, Inuit from Sailing (see §9 for each line and its base).
+- **Aether Links** open only when **both parent branches are complete** (every listed tech known):
+  - **Naval Bombardment** (Sailing → Navigation + Tactics → Engineering): boats and ships shoot 3 tiles, over land too.
+  - **Grain Supply Lines** (Roads → Trade + Farming → Masonry): when a city levels up, its surplus population rolls along the road to its smallest road-linked city.
+  - **Highland Snipers** (Climbing → Mining + Archery → Spiritualism): ranged units on a mountain shoot 2 tiles further and see through the fog as far as they shoot.
+  - **Tidal Granaries** (Whaling → Aquaculture + Gathering → Farming): every port grows its city by 1 more and pays +1★ a turn.
+  - **Iron Cavalry** (Horsemanship → Chivalry + Mining → Smithing): mounted units hit and defend 0.5 better.
+
+### Outer ring — Alignment (Wildcards, tier 4)
+Each gives its base perk always and **surges** with more while a map condition holds (a toast tells you when a surge starts or stops, and the readout under the score bar lists what is surging):
+
+| Wildcard (after) | Always | Surges while… | Surge |
+|---|---|---|---|
+| Tidecaller (Navigation) | +1★ per port | the map is ≥50% water | ships +1 move, +1 attack |
+| War Host (Chivalry) | +1★ per kill | you fought this turn or last | all units +0.5 attack, heal 2 HP a turn |
+| Star Calendar (Philosophy) | research 1★ cheaper | a Maya era is in force | +2★ per city a turn |
+| Storm Omens (Aquaculture) | +1 vision | a wild event rages (Maya era, Aztec Sun Age, Khmer flood, Malian inflation) | +0.5 defence, +3★ a turn |
+| Greenwood Covenant (Spiritualism) | forest defence +0.5 | forest covers ≥25% of the land | +1★ per lumber hut, heal 1 |
+| Mountain Throne (Smithing) | mountain defence +0.5 | mountains cover ≥15% of the land | +1★ per mine, +0.5 attack |
+| Twilight Empire (Trade) | +1★ per level-up | turn 20 or later | +1★ per city |
+
+### Transmutation Shift (respec)
+Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities` Stars (about 30) to unlearn that star and everything that grew from it (children, links, a line), and get back what those techs would cost now. Use it to switch a fork or reallocate a branch. The computer players transmute a stale fork (mercenaries in a long peace, clear-cutting with no forest left).
+
+**Score:** a core or culture tech scores its tier; forks, links and wildcards score as tier 1.
 
 ## 4. Units and combat
 
@@ -90,7 +125,7 @@
 
 ## 8. How empire mechanics plug in
 
-Every empire has (a) **passive traits** — one signature bonus, extra strengths and weaknesses grounded in its history, (b) a **3-tech unique skill line**, (c) a **unique unit**, and (d) a **game-defining unique mechanic** (with its own actions, readout and AI behaviour). The mechanics are hook-based: they can change movement, combat, income, visibility, tile actions and the AI. Anything listed as "action" appears in the tile menu (tap your own tile, city, unit or a target tile); passive parts show in a one-line readout under the score bar.
+Every empire has (a) **passive traits** — one signature bonus, extra strengths and weaknesses grounded in its history, (b) a **3-tech unique skill line** (the Master Culture ring, growing out of a base tech), (c) a **unique unit**, and (d) a **game-defining unique mechanic** (with its own actions, readout and AI behaviour). The mechanics are hook-based: they can change movement, combat, income, visibility, tile actions and the AI. Anything listed as "action" appears in the tile menu (tap your own tile, city, unit or a target tile); passive parts show in a one-line readout under the score bar.
 
 ## 9. Wild events
 
@@ -107,182 +142,182 @@ An option on the new-game screen (**Wild events**, on by default). Third-party f
 - **Unique mechanic — Dynastic Wonders & Afterlife:** Megaliths rise over fallen heroes and great souls return to the pyramids as Golden Guardians; fields beside water become free farms that flood every 4th turn with stars and +1 population.
 - **Strengths:** Pyramid Builders (Temples and shrines cost 2★ less.)
 - **Weaknesses:** Late to Iron (Smithing costs 2★ more to research. Foot soldiers defend 0.5 worse.); Children of the River (Boats and ships move 1 less.)
-- **Skill line:** T1 Nilometer: +1★ a turn for every 2 farms. → T2 Chariot Corps: Mounted units hit 0.5 harder. Mounted units cost 1★ less. → T3 Temples of Ra: +1★ a turn for every temple. +1★ a turn from your capital.
+- **Skill line** (branches off Gathering): T1 Nilometer: +1★ a turn for every 2 farms. → T2 Chariot Corps: Mounted units hit 0.5 harder. Mounted units cost 1★ less. → T3 Temples of Ra: +1★ a turn for every temple. +1★ a turn from your capital.
 
 ### Aztec (aztec)
 - **Signature bonus:** Sacred Hunt — hunting refunds 1★.
 - **Unique mechanic — Blood Altar Ascension:** Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.
 - **Strengths:** Warriors Take Captives (+1★ for every enemy you defeat.)
 - **Weaknesses:** No Horses (Mounted units cost 2★ more.); Stone-Age Weapons (Smithing costs 2★ more to research. Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Eagle and Jaguar Orders: Your unique unit hit 0.5 harder. → T2 Flower Wars: +1★ for every enemy you defeat. → T3 Chinampas: Every farm grows the city by 1 more. Every fruit harvest grows the city by 1 more.
+- **Skill line** (branches off Hunting): T1 Sacrificial Rites: Every enemy you defeat (killed or taken captive) refunds 20% of its ★ cost. → T2 Sun Altars: +2★ a turn for every altar. +1★ whenever a city levels up. → T3 Solar Ascension: A Sun Age needs 2 captives instead of 3, and while it burns every city pays +1★ a turn.
 
 ### Māori (polynesia)
 - **Signature bonus:** Wayfinding — board boats from any coast, no port needed.
 - **Unique mechanic — Tā Moko & Waka Surge:** The capital is a Great Waka afloat on the sea that sails each turn, drinks the fish and whales around it into its people, and can anchor on a coast; Tāne's Tapu bars farms, mines, huts and ports, paying stars for untouched wilds instead.
 - **Strengths:** Master Navigators (Boats and ships move 1 further.)
 - **Weaknesses:** No Metal (Mining costs 1★ more to research. Smithing costs 1★ more to research.); No Beasts of Burden (Mounted units cost 2★ more.)
-- **Skill line:** T1 Double-Hulled Waka: Boats and ships move 1 further. → T2 Wayfinding Chants: See 1 tile further around every unit and city. → T3 Kūmara Gardens: Every fish harvest grows the city by 1 more. +1★ a turn for every port.
+- **Skill line** (branches off Fishing): T1 Double-Hulled Waka: Boats and ships move 1 further. → T2 Wayfinding Chants: See 1 tile further around every unit and city. → T3 Kūmara Gardens: Every fish harvest grows the city by 1 more. +1★ a turn for every port.
 
 ### Roman (rome)
 - **Signature bonus:** All Roads — roads cost 1★ less.
 - **Unique mechanic — Castra & Via Appia:** Soldiers pave roads as they march, and units on paved roads can dig in as mini-forts.
 - **Strengths:** Legion Discipline (Foot soldiers defend 0.5 better.)
 - **Weaknesses:** Senatorial Politics (Research cost 1★ more.); Reluctant Sailors (Boats and ships move 1 less.)
-- **Skill line:** T1 Roman Roads: +1★ a turn for every 4 road tiles in your borders. → T2 Legion Discipline: Foot soldiers defend 0.5 better. Foot soldiers cost 1★ less. → T3 Aqueducts: +2★ a turn from your capital. +2★ whenever a city levels up.
+- **Skill line** (branches off Roads): T1 Paved Highways: Roads ignore terrain: stepping onto any road costs half a move and never stops for forest or swamp. → T2 Castra Outposts: Foot soldiers cost 1★ less. Building a Castra is free, it gives +1 more defence, and every standing fort pays +1★ a turn. → T3 Pax Romana: +1★ a turn for every road-linked city while you have not lost a city in the last 5 turns.
 
 ### Pirate (pirates)
 - **Signature bonus:** Sea Raiders — boats and ships move 1 extra tile and attack +1; ports cost 4★ and earn +1★ a turn.
 - **Unique mechanic — Flotilla Republic & Black Market Havens:** No land at all: platforms stitch into sea-cities that tow across the waves, and boarded ships join the fleet. Stars come only from tolls and coastal raids, and are spent to recruit people into the platforms.
 - **Strengths:** Loot and Ransom (+1★ for every enemy you defeat.)
 - **Weaknesses:** No Farmland (Every farm grows the city by 1 less.); Sailors, not Soldiers (Foot soldiers defend 0.5 worse.)
-- **Skill line:** T1 Cutlass Drill: Boats and ships hit 1 harder. → T2 Ransom Trade: +1★ for every enemy you defeat. → T3 Pieces of Eight: +1★ a turn for every port. +1★ a turn from your capital.
+- **Skill line** (branches off Fishing): T1 Cutlass Drill: Boats and ships hit 1 harder. → T2 Ransom Trade: +1★ for every enemy you defeat. → T3 Pieces of Eight: +1★ a turn for every port. +1★ a turn from your capital.
 
 ### Viking (vikings)
 - **Signature bonus:** Victory Feast — a unit heals 3 HP whenever it wins a fight.
 - **Unique mechanic — Great Heathen Fleet & Raid Havens:** Longships beach on any shore and found Danelaw havens that siphon 20% of a city's gold; Vikings build no markets or temples, but raze enemy improvements for 3x their cost and carry off a citizen.
 - **Strengths:** Raiders of the Coast (Boats and ships move 1 further.)
 - **Weaknesses:** Short Growing Season (Every farm grows the city by 1 less.); Oral Tradition (Research cost 1★ more.)
-- **Skill line:** T1 Longship Raiders: Boats and ships move 1 further. → T2 Shield Wall: Foot soldiers defend 0.5 better. Units in forests defend 0.5 better. → T3 Valhalla’s Call: +1★ for every enemy you defeat. Units on your land heal 2 HP every turn.
+- **Skill line** (branches off Fishing): T1 Longship Raiders: Boats and ships move 1 further. → T2 Shield Wall: Foot soldiers defend 0.5 better. Units in forests defend 0.5 better. → T3 Valhalla’s Call: +1★ for every enemy you defeat. Units on your land heal 2 HP every turn.
 
 ### Japanese (japan)
 - **Signature bonus:** Home Ground — units get +1 defence inside your borders.
 - **Unique mechanic — Way of the Blade (Kiai):** A critical strike takes no counter-blow, and a dying warrior strikes with fourfold force.
 - **Strengths:** Way of the Warrior (Foot soldiers hit 0.5 harder.)
 - **Weaknesses:** Seclusion (Boats and ships move 1 less.); Rigid Feudal Order (Units outside your borders defend 0.5 worse.)
-- **Skill line:** T1 Bushidō: Your unique unit hit 0.5 harder. Units on your own land defend 0.5 better. → T2 Tea Ceremony: +1★ a turn for every temple. Every temple grows the city by 1 more. → T3 Castle Towns: Units in your cities defend 1 better. +1★ a turn from your capital.
+- **Skill line** (branches off Tactics): T1 Bushidō: Your unique unit hit 0.5 harder. Units on your own land defend 0.5 better. → T2 Tea Ceremony: +1★ a turn for every temple. Every temple grows the city by 1 more. → T3 Castle Towns: Units in your cities defend 1 better. +1★ a turn from your capital.
 
 ### Mongol (mongols)
 - **Signature bonus:** Steppe Riders — mounted units cost 1★ less.
 - **Unique mechanic — Feigned Retreat & Horde Steppe:** Riders strike, pull back and lure the enemy into an ambush set by waiting archers.
 - **Strengths:** Horse Archers (Mounted units hit 0.5 harder.)
 - **Weaknesses:** Nomads, not Builders (Buildings cost 2★ more.); Herders, not Farmers (Every farm grows the city by 2 less.)
-- **Skill line:** T1 Composite Bows: Ranged units hit 0.5 harder. → T2 Yam Relay: Mounted units move 1 further. → T3 Khan’s Tribute: +1★ for every enemy you defeat. Mounted units cost 1★ less.
+- **Skill line** (branches off Riding): T1 Composite Bows: Ranged units hit 0.5 harder. → T2 Yam Relay: Mounted units move 1 further. → T3 Khan’s Tribute: +1★ for every enemy you defeat. Mounted units cost 1★ less.
 
 ### Greek (greeks)
 - **Signature bonus:** Academy — every tech costs 1★ less.
 - **Unique mechanic — Oracle & Polis Democracy:** No permanent capital: the largest city is the seat and all cities vote a global Edict every few turns; equal-sized cities form an Amphictyony that pays +50% Stars on resource improvements.
 - **Strengths:** Phalanx Discipline (Foot soldiers defend 0.5 better.)
 - **Weaknesses:** Quarrelling City-States (Foot soldiers cost 1★ more.); Rocky, Thin Soil (Buildings cost 1★ more.)
-- **Skill line:** T1 Phalanx: Foot soldiers defend 0.5 better. → T2 Agora: +1★ a turn for every market. → T3 Lyceum: Research cost 1★ less. +2★ whenever a city levels up.
+- **Skill line** (branches off Tactics): T1 Phalanx: Foot soldiers defend 0.5 better. → T2 Agora: +1★ a turn for every market. → T3 Lyceum: Research cost 1★ less. +2★ whenever a city levels up.
 
 ### Zulu (zulu)
 - **Signature bonus:** Great Hunt — hunting grows a city by 2 instead of 1.
 - **Unique mechanic — Chest & Horns Formation:** Melee units in a V around an enemy trap it, stopping its counter-attack and dealing triple damage.
 - **Strengths:** Age-Regiments (Your unique unit move 1 further.)
 - **Weaknesses:** No Sea Tradition (Boats and ships move 1 less.); Oral Learning (Research cost 1★ more.); Cattle Economy (Every farm grows the city by 1 less.)
-- **Skill line:** T1 Iklwa Drill: Your unique unit hit 0.5 harder. → T2 Cow-Horn Formation: Your unique unit move 1 further. → T3 Shaka’s Regiments: Foot soldiers hit 0.5 harder. Foot soldiers cost 1★ less.
+- **Skill line** (branches off Hunting): T1 Iklwa Drill: Your unique unit hit 0.5 harder. → T2 Cow-Horn Formation: Your unique unit move 1 further. → T3 Shaka’s Regiments: Foot soldiers hit 0.5 harder. Foot soldiers cost 1★ less.
 
 ### Persian (persia)
 - **Signature bonus:** Royal Tribute — capturing a city pays 3★.
 - **Unique mechanic — Royal Road Network & Satrap Extraction:** A fallen Immortal returns at the capital next turn while Stars flow; conquered cities pay double from their tiles but bleed Population unless garrisoned.
 - **Strengths:** The King’s Eyes and Ears (See 1 tile further around every unit and city.)
 - **Weaknesses:** Multi-Ethnic Levies (Foot soldiers hit 0.5 weaker.); Alexander’s Lesson (Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Royal Post: See 1 tile further around every unit and city. → T2 Immortal Guard: Your unique unit hit 0.5 harder. Your unique unit defend 0.5 better. → T3 Satrapies: +2★ a turn from your capital. +2★ whenever a city levels up.
+- **Skill line** (branches off Riding): T1 Royal Post: See 1 tile further around every unit and city. → T2 Immortal Guard: Your unique unit hit 0.5 harder. Your unique unit defend 0.5 better. → T3 Satrapies: +2★ a turn from your capital. +2★ whenever a city levels up.
 
 ### Celtic (celts)
 - **Signature bonus:** Sacred Groves — your units in a forest defend at ×2.
 - **Unique mechanic — Druidic Ley Lines:** Plant Sacred Groves that spread forest and root enemies who enter it; the Celts never cut trees, and uncut forest beside groves pays stars and slowly grows cities.
 - **Strengths:** Fierce in Battle (Foot soldiers hit 0.5 harder.)
 - **Weaknesses:** Tribal Fragmentation (Research cost 1★ more.); Timber Hillforts (Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Oak Groves: Units in forests defend 0.5 better. → T2 Druidic Lore: Every lumber hut grows the city by 1 more. Units on your land heal 1 HP every turn. → T3 High Kings: Foot soldiers hit 0.5 harder. +1★ for every enemy you defeat.
+- **Skill line** (branches off Hunting): T1 Oak Groves: Units in forests defend 0.5 better. → T2 Druidic Lore: Every lumber hut grows the city by 1 more. Units on your land heal 1 HP every turn. → T3 High Kings: Foot soldiers hit 0.5 harder. +1★ for every enemy you defeat.
 
 ### Inuit (inuit)
 - **Signature bonus:** Sea Hunters — every fish harvest gives +1 extra pop.
 - **Unique mechanic — Glacial Freeze:** Land units and cities freeze water into permanent ice bridges that chill enemies without fire techs; whale and fish nodes pay a huge lump of stars and population, then must re-freeze before reuse.
 - **Strengths:** Masters of the Hunt (+1★ whenever you harvest a resource.)
 - **Weaknesses:** No Agriculture (Every farm grows the city by 2 less.); No Metal (Smithing costs 2★ more to research. Mining costs 2★ more to research.)
-- **Skill line:** T1 Harpoon Craft: Every fish harvest grows the city by 1 more. → T2 Kayak Hunters: Boats and ships move 1 further. → T3 Whale Feast: +1★ whenever you harvest a resource. Units on your land heal 2 HP every turn.
+- **Skill line** (branches off Sailing): T1 Glacial Footing: Units on ice defend 0.5 better. Every tile of water you freeze pays +1★. → T2 Deep Whaling: Renewable whale and fish harvests pay 50% more Stars and re-freeze 2 turns sooner. → T3 Sub-Zero Aura: Ice chills enemies for 1 more damage, every chilled enemy pays +1★, and cities freeze a shallow every 2 turns.
 
 ### Inca (inca)
 - **Signature bonus:** Terraces — every mine adds +1 pop.
 - **Unique mechanic — Highland Terracing & Rope Bridges:** Chaski outposts on peaks sling land units by zipline to other outposts or across 4+ mountains, and mountains never block the Inca. Terrace farms on peaks and forest raise Star income x1.5 or x2 for each extra elevation (lowland, hill, peak) a city works.
 - **Strengths:** Qhapaq Ñan (Roads cost 1★ less.)
 - **Weaknesses:** No Wheel or Horse (Mounted units cost 2★ more.); Landlocked Highlands (Boats and ships move 1 less.)
-- **Skill line:** T1 Mit’a Labour: Every mine grows the city by 1 more. → T2 Andean Roads: +1★ a turn for every 4 road tiles in your borders. → T3 Sapa Inca’s Terraces: Units in the mountains defend 0.5 better. +1★ a turn for every 2 mines.
+- **Skill line** (branches off Climbing): T1 Mit’a Labour: Every mine grows the city by 1 more. → T2 Andean Roads: +1★ a turn for every 4 road tiles in your borders. → T3 Sapa Inca’s Terraces: Units in the mountains defend 0.5 better. +1★ a turn for every 2 mines.
 
 ### Aksumite (ethiopia)
 - **Signature bonus:** Highland Fortress — your units on mountains defend at ×2.5.
 - **Unique mechanic — Monolithic Spire Network:** Stone Stelae ray enemies within three tiles and link into a laser grid, while crossroad tariffs pay Stars for foreign traffic past your borders.
 - **Strengths:** Christian Kingdom (+1★ a turn for every temple. Units in the mountains defend 0.5 better.)
 - **Weaknesses:** Cut Off from the Sea (Boats and ships move 1 less.); Isolated Highlands (See 1 tile less around every unit and city.)
-- **Skill line:** T1 Rock-Hewn Churches: +1★ a turn for every temple. → T2 Shotel Guard: Your unique unit hit 0.5 harder. Your unique unit defend 0.5 better. → T3 Highland Bastion: Units in the mountains defend 0.5 better. Units on your land heal 2 HP every turn.
+- **Skill line** (branches off Climbing): T1 Rock-Hewn Churches: +1★ a turn for every temple. → T2 Shotel Guard: Your unique unit hit 0.5 harder. Your unique unit defend 0.5 better. → T3 Highland Bastion: Units in the mountains defend 0.5 better. Units on your land heal 2 HP every turn.
 
 ### Aboriginal (aboriginal)
 - **Signature bonus:** Firestick Farming — clearing a forest also grows the city by 1.
 - **Unique mechanic — Dreamtime Paths:** Paint invisible Songlines that let your units travel free and unseen; pilgrimages between distant landmarks pay Stars and grow your cities.
 - **Strengths:** Knowledge of Country (See 1 tile further around every unit and city.)
 - **Weaknesses:** No Farming Tradition (Farming costs 2★ more to research. Every farm grows the city by 1 less. Research cost 1★ more.); No Beasts of Burden (Mounted units cost 2★ more. Smithing costs 2★ more to research.)
-- **Skill line:** T1 Bush Tucker: Every fruit harvest grows the city by 1 more. Every animal harvest grows the city by 1 more. → T2 Songlines: See 1 tile further around every unit and city. → T3 Boomerang Masters: Ranged units hit 0.5 harder. Your unique unit hit 0.5 harder.
+- **Skill line** (branches off Gathering): T1 Bush Tucker: Every fruit harvest grows the city by 1 more. Every animal harvest grows the city by 1 more. → T2 Songlines: See 1 tile further around every unit and city. → T3 Boomerang Masters: Ranged units hit 0.5 harder. Your unique unit hit 0.5 harder.
 
 ### Chinese (china)
 - **Signature bonus:** Silk Road — every market earns +1★ more.
 - **Unique mechanic — Dynastic Mandate & Great Wall:** Border walls stop every enemy but siege engines and improved tiles pay +1★ while the Mandate holds (no city lost, no invader). Losing a city brings a Dynastic Shift (a tech refund, then mourning), and invaders halve your income.
 - **Strengths:** Teeming Population (+1★ whenever a city levels up.)
 - **Weaknesses:** Closed Empire (Boats and ships move 1 less.); Slow Bureaucracy (Siege engines cost 1★ more.)
-- **Skill line:** T1 Paper and Printing: Research cost 1★ less. → T2 Silk Guilds: +1★ a turn for every market. → T3 Great Wall: Units on your own land defend 0.5 better. Units in your cities defend 1 better.
+- **Skill line** (branches off Gathering): T1 Paper and Printing: Research cost 1★ less. → T2 Silk Guilds: +1★ a turn for every market. → T3 Great Wall: Units on your own land defend 0.5 better. Units in your cities defend 1 better.
 
 ### Indian (india)
 - **Signature bonus:** Ahimsa — units heal 2 more HP when they rest.
 - **Unique mechanic — Karma & Sacred Beasts:** Defensive kills carry no penalty and turn neutral wildlife into fighting beasts.
 - **Strengths:** Fertile Ganges (Every farm grows the city by 1 more.)
 - **Weaknesses:** Imported Horses (Mounted units cost 2★ more.); Warring Rajas (Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Ayurveda: Units on your land heal 2 HP every turn. → T2 Spice Trade: +1★ a turn for every port. +1★ a turn for every 2 markets. → T3 Elephant Corps: Your unique unit hit 1 harder.
+- **Skill line** (branches off Gathering): T1 Ayurveda: Units on your land heal 2 HP every turn. → T2 Spice Trade: +1★ a turn for every port. +1★ a turn for every 2 markets. → T3 Elephant Corps: Your unique unit hit 1 harder.
 
 ### Malian (mali)
 - **Signature bonus:** Gold of the Sahel — every mine earns +1★ a turn.
 - **Unique mechanic — Salt & Gold Inflation:** Flood a foreign city's markets with gold: its costs double and its production halts for 2 turns. Caravans earn Stars from every tile crossed through foreign or neutral lands, more when it is dangerous.
 - **Strengths:** Hajj Wealth (+1★ whenever a city levels up.)
 - **Weaknesses:** Landlocked Sahel (Boats and ships move 1 less.); Fragile Union (See 1 tile less around every unit and city.)
-- **Skill line:** T1 Gold-Salt Caravans: +1★ a turn for every market. → T2 Timbuktu Scholars: Research cost 1★ less. +1★ whenever a city levels up. → T3 Mansa’s Cavalry: Mounted units hit 0.5 harder. Mounted units move 1 further.
+- **Skill line** (branches off Riding): T1 Gold-Salt Caravans: +1★ a turn for every market. → T2 Timbuktu Scholars: Research cost 1★ less. +1★ whenever a city levels up. → T3 Mansa’s Cavalry: Mounted units hit 0.5 harder. Mounted units move 1 further.
 
 ### Lakota (lakota)
 - **Signature bonus:** Horse Nation — your mounted units move 1 further.
 - **Unique mechanic — Great Plains Migration:** Camps pack up, roll up to 3 tiles a turn and re-settle, leaving enriched soil behind; assign herders to Follow Herds that wander the plains for double Stars.
 - **Strengths:** The Buffalo Nation (Every animal harvest grows the city by 1 more.)
 - **Weaknesses:** Nomads of the Plains (Buildings cost 1★ more.); No Metalworking (Smithing costs 2★ more to research. Farming costs 2★ more to research.)
-- **Skill line:** T1 Buffalo Hunt: Every animal harvest grows the city by 1 more. → T2 Pony Herds: Mounted units cost 1★ less. Mounted units hit 0.5 harder. → T3 Warrior Societies: Foot soldiers hit 0.5 harder. +1★ for every enemy you defeat.
+- **Skill line** (branches off Hunting): T1 Buffalo Hunt: Every animal harvest grows the city by 1 more. → T2 Pony Herds: Mounted units cost 1★ less. Mounted units hit 0.5 harder. → T3 Warrior Societies: Foot soldiers hit 0.5 harder. +1★ for every enemy you defeat.
 
 ### Ottoman (ottoman)
 - **Signature bonus:** Imperial Foundry — catapults cost 3★ less.
 - **Unique mechanic — Sublime Porte & Great Bombards:** Conquered cities train their old peoples’ elite and Great Bombards ignore walls; each conquest pays Devshirme stars (capped) and levies +1 population.
 - **Strengths:** Janissary Corps (Ranged units hit 0.5 harder.)
 - **Weaknesses:** Conservative Ulema (Research cost 1★ more.); Tax-Farming (−1★ a turn for every 2 markets.)
-- **Skill line:** T1 Timar Fiefs: +1★ a turn for every 2 farms. → T2 Great Bombards: Siege engines hit 1 harder. Siege engines cost 1★ less. → T3 Devşirme: Your unique unit hit 0.5 harder. Ranged units cost 1★ less.
+- **Skill line** (branches off Gathering): T1 Timar Fiefs: +1★ a turn for every 2 farms. → T2 Great Bombards: Siege engines hit 1 harder. Siege engines cost 1★ less. → T3 Devşirme: Your unique unit hit 0.5 harder. Ranged units cost 1★ less.
 
 ### Maya (maya)
 - **Signature bonus:** Sky Watchers — every temple earns +1★ a turn.
 - **Unique mechanic — Long Count Prophecies & Katun Cycles:** Every 13 turns an Era rewrites the map (dry seas, storms, a golden age...) and you may pay to choose it; every 5 turns your improvements pay double, and every 20 your cities grow free.
 - **Strengths:** Sky Watchers (See 1 tile further around every unit and city.)
 - **Weaknesses:** No Horses or Iron (Mounted units cost 2★ more. Smithing costs 1★ more to research.); Warring City-States (Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Long Count Calendar: +1★ a turn for every temple. → T2 Observatory: See 1 tile further around every unit and city. Every temple grows the city by 1 more. → T3 Stelae of the Kings: +3★ whenever a city levels up. +1★ a turn from your capital.
+- **Skill line** (branches off Gathering): T1 Long Count Calendar: +1★ a turn for every temple. → T2 Observatory: See 1 tile further around every unit and city. Every temple grows the city by 1 more. → T3 Stelae of the Kings: +3★ whenever a city levels up. +1★ a turn from your capital.
 
 ### Korean (korea)
 - **Signature bonus:** Scholars — every tech you research grows your capital by 1.
 - **Unique mechanic — Singijeon Rocket Fleets:** Rocket salvos arc over fog and cover, setting targets ablaze for turns.
 - **Strengths:** Turtle Ships (Boats and ships hit 1 harder.)
 - **Weaknesses:** Hermit Kingdom (See 1 tile less around every unit and city.); Invaded from All Sides (Units in your cities defend 0.5 worse.)
-- **Skill line:** T1 Hangul: Research cost 1★ less. → T2 Geobukseon Yards: Boats and ships hit 1 harder. Boats and ships defend 1 better. → T3 Hwacha Arsenals: Siege engines hit 1 harder. Siege engines cost 2★ less.
+- **Skill line** (branches off Fishing): T1 Hangul: Research cost 1★ less. → T2 Geobukseon Yards: Boats and ships hit 1 harder. Boats and ships defend 1 better. → T3 Hwacha Arsenals: Siege engines hit 1 harder. Siege engines cost 2★ less.
 
 ### Khmer (khmer)
 - **Signature bonus:** Baray Reservoirs — every farm earns +1★ a turn.
 - **Unique mechanic — Great Reservoir Flooding:** Build barays and dams, then blow a dam to flood enemy armies for 2 turns; water and barays pay +1★ per resource they touch, compounding across linked canals.
 - **Strengths:** Jungle Fighters (Units in forests defend 0.5 better.)
 - **Weaknesses:** Landbound Empire (Boats and ships move 1 less.); Forced Labour (Temples and shrines cost 2★ more.)
-- **Skill line:** T1 Barays: +1★ a turn for every 2 farms. → T2 Temple-Mountains: +1★ a turn for every temple. Every temple grows the city by 1 more. → T3 Naga Guard: Your unique unit defend 1 better.
+- **Skill line** (branches off Gathering): T1 Barays: +1★ a turn for every 2 farms. → T2 Temple-Mountains: +1★ a turn for every temple. Every temple grows the city by 1 more. → T3 Naga Guard: Your unique unit defend 1 better.
 
 ### Swahili (swahili)
 - **Signature bonus:** Monsoon Traders — your boats and ships move 1 further.
 - **Unique mechanic — Monsoon Trade Currents:** The sea wind turns each season: ships sail fast with it and slow against it, and Lighthouses call it. Ships that sail with the wind past fish, whale and port tiles earn double Stars (half against).
 - **Strengths:** Coastal Fortresses (Units in your cities defend 0.5 better.)
 - **Weaknesses:** Traders, not Soldiers (Foot soldiers hit 0.5 weaker.); Rival Sultanates (See 1 tile less around every unit and city.)
-- **Skill line:** T1 Dhow Trade: +1★ a turn for every port. → T2 Coral-Stone Cities: Units in your cities defend 0.5 better. +2★ whenever a city levels up. → T3 Monsoon Winds: Boats and ships move 1 further. +1★ a turn for every port.
+- **Skill line** (branches off Fishing): T1 Dhow Trade: +1★ a turn for every port. → T2 Coral-Stone Cities: Units in your cities defend 0.5 better. +2★ whenever a city levels up. → T3 Monsoon Winds: Boats and ships move 1 further. +1★ a turn for every port.
 
 ### Tibetan (tibet)
 - **Signature bonus:** Roof of the World — your units cross mountains without Climbing.
 - **Unique mechanic — Highland Stupa & Mist:** Sky Mist hides your cities until an enemy stands on an adjacent peak, and stupas extend it. Remote mountain and forest resources pay more Stars the farther they lie from any enemy.
 - **Strengths:** High-Altitude Endurance (Units on your land heal 1 HP every turn.)
 - **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Landlocked Plateau (Boats and ships move 1 less.)
-- **Skill line:** T1 Mani Walls: Units in the mountains defend 0.5 better. → T2 Yak Herds: Every animal harvest grows the city by 1 more. Mounted units cost 1★ less. → T3 Monasteries: +1★ a turn for every temple. Units on your land heal 2 HP every turn.
+- **Skill line** (branches off Climbing): T1 Mani Walls: Units in the mountains defend 0.5 better. → T2 Yak Herds: Every animal harvest grows the city by 1 more. Mounted units cost 1★ less. → T3 Monasteries: +1★ a turn for every temple. Units on your land heal 2 HP every turn.
 
 ## 10. Culture Blending (traditions of the conquered)
 

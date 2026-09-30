@@ -1,45 +1,47 @@
-import { TECH_BY_ID, techsFor } from '../data/techs';
+import { prereqs, TECH_BY_ID, techsFor, type TechDef } from '../data/techs';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
-import type { Perk } from '../game/perks';
 import { portraitKind, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
-import { research, researchStatus, techCost } from '../game/rules';
-import { drawIcon } from '../render/draw';
+import { COND_TEXT, condActive } from '../game/alignment';
+import { research, researchStatus, subBranch, techCost, transmute, transmuteCheck, transmuteCost, transmuteRefund, type ResearchStatus } from '../game/rules';
 import type { GameState } from '../game/types';
-import { h, iconEl, paint, starSpan } from './dom';
+import { ringLabel, skyLayout, skyLinks, type Sky } from './constellation';
+import { h, iconEl, starSpan } from './dom';
 import { modal } from './modal';
 import { unitPortrait } from './menu';
 
-const RADIUS = [0, 0.35, 0.67, 1]; // fraction of the usable radius for tiers 1..3
+// The Constellation View: the skill tree as stars on a pitch-black sky (layout in ui/constellation.ts). Learned stars
+// shine gold (the Core Domain, forks and the empire's own line) or silver (Aether Links and Wildcards); the rest are
+// faint fine-line outlines whose shape tells the ring: circle core, triangle fork, diamond culture, hexagon link,
+// eight-point star wildcard. The sky is wider than a phone: it scrolls, and "Whole sky" shrinks it to fit.
 
-// Picture shown inside a node once it is researched or researchable.
-const TECH_ICON: Record<string, string> = {
-  gathering: 'fruit', farming: 'crop', masonry: 'temple', tactics: 'defender', engineering: 'catapult',
-  hunting: 'animal', archery: 'archer', spiritualism: 'forest', forestry: 'lumber', carpentry: 'market',
-  fishing: 'fish', sailing: 'ship', navigation: 'warship', whaling: 'whale', aquaculture: 'port',
-  riding: 'rider', roads: 'road', trade: 'star', horsemanship: 'chariot', chivalry: 'knight',
-  climbing: 'mountain', mining: 'mine', smithing: 'swordsman', meditation: 'temple', philosophy: 'star',
-};
+const GOLD = new Set<TechDef['ring']>(['core', 'fork', 'culture']);
 
-/** A picture for an empire's own techs, chosen from the first thing they do. */
-function uniqueIcon(id: string): string {
-  const pk: Perk | undefined = UNIQUE_BY_ID[id]?.perks[0];
-  if (!pk) return 'star';
-  switch (pk.k) {
-    case 'atk': return pk.who === 'ranged' ? 'archer' : pk.who === 'mounted' ? 'rider' : pk.who === 'naval' ? 'warship' : pk.who === 'siege' ? 'catapult' : 'swordsman';
-    case 'def': return 'defender';
-    case 'move': return pk.who === 'naval' ? 'ship' : pk.who === 'mounted' ? 'rider' : 'road';
-    case 'income': return pk.per === 'city' || pk.per === 'capital' ? 'star' : pk.per === 'farm' ? 'crop' : pk.per === 'lumber' ? 'lumber' : pk.per;
-    case 'grow': return pk.on === 'harvest' ? 'fruit' : pk.on === 'fish' ? 'fish' : pk.on === 'animal' ? 'animal' : pk.on === 'fruit' ? 'fruit' : pk.on === 'farm' ? 'crop' : pk.on;
-    case 'cost': return pk.of === 'tech' ? 'star' : pk.of === 'naval' ? 'ship' : pk.of === 'mounted' ? 'rider' : pk.of === 'siege' ? 'catapult' : pk.of === 'ranged' ? 'archer' : 'swordsman';
-    case 'terrain': return pk.on === 'forest' ? 'forest' : pk.on === 'mountain' ? 'mountain' : 'defender';
-    case 'heal': return 'temple';
-    case 'kill': return 'swordsman';
-    default: return 'star';
+/** A star's outline for its ring, centred on 0,0 with radius `r`. */
+function glyph(ring: TechDef['ring'], r: number): string {
+  const poly = (n: number, rot: number, inner?: number) => Array.from({ length: n * (inner ? 2 : 1) }, (_, i) => {
+    const a = rot + (i * Math.PI * 2) / (n * (inner ? 2 : 1));
+    const rr = inner && i % 2 ? r * inner : r;
+    return `${(Math.cos(a) * rr).toFixed(1)},${(Math.sin(a) * rr).toFixed(1)}`;
+  }).join(' ');
+  switch (ring) {
+    case 'core': return `<circle r="${r * 0.8}"/>`;
+    case 'fork': return `<polygon points="${poly(3, -Math.PI / 2)}"/>`;
+    case 'culture': return `<polygon points="${poly(4, -Math.PI / 2)}"/>`;
+    case 'aether': return `<polygon points="${poly(6, 0)}"/>`;
+    case 'wild': return `<polygon points="${poly(8, -Math.PI / 2, 0.55)}"/>`;
   }
 }
 
-/** Full-screen radial tech tree. `onChange` runs after a successful research. */
+/** Faint background stars, the same every time. */
+function dust(size: number): string {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  let out = '';
+  for (let i = 0; i < 140; i++) out += `<circle cx="${(rnd() * size).toFixed(1)}" cy="${(rnd() * size).toFixed(1)}" r="${(0.3 + rnd() * 0.9).toFixed(2)}" fill="#fff" opacity="${(0.15 + rnd() * 0.45).toFixed(2)}"/>`;
+  return out;
+}
+
 /**
  * The research screen. With `focus` (e.g. from a locked "Build Farm" button) that tech is
  * highlighted and its card opened; if its parent isn't known yet the card offers to go there,
@@ -49,66 +51,106 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
   const p = s.players[pid];
   const tribe = TRIBES[p.tribe];
   const layer = h('div', { class: 'techtree' });
-  const mine = techsFor(p.tribe); // the shared tree plus this empire's own skill line
+  const mine = techsFor(p.tribe); // the shared tree, forks, links, wildcards and this empire's own line
   const goal = focus && TECH_BY_ID[focus] ? focus : null;
   let focused = goal;
+  let whole = false; // "Whole sky": shrink the constellation to fit the screen
+  let sky: Sky | null = null;
   const close = () => {
     layer.remove();
     onClose();
   };
 
   const render = () => {
+    const keep = layer.querySelector<HTMLElement>('.tt-wrap');
+    const scroll = keep && !keep.classList.contains('whole') ? { x: keep.scrollLeft, y: keep.scrollTop } : null; // keep the view on a redraw
     layer.innerHTML = '';
-    // Lay the tree out on an ellipse so it uses the height of a portrait phone.
-    const w = Math.min(window.innerWidth - 8, 620);
-    const hgt = Math.min(window.innerHeight - 190, w * 1.6);
-    const nodeSize = Math.max(48, Math.min(70, w / 7.3));
-    const rx = w / 2 - nodeSize / 2 - 2;
-    const ry = hgt / 2 - nodeSize / 2 - 2;
-    const pos = (id: string) => {
-      const t = TECH_BY_ID[id];
-      const a = (t.angle * Math.PI) / 180;
-      return { x: w / 2 + Math.cos(a) * rx * RADIUS[t.tier], y: hgt / 2 + Math.sin(a) * ry * RADIUS[t.tier] };
-    };
-    const half = { x: w / 2, y: hgt / 2 };
-    let lines = '';
-    for (const t of mine) {
-      const a = pos(t.id);
-      const b = t.parent ? pos(t.parent) : half;
-      const on = researchStatus(s, pid, t.id) === 'owned';
-      lines += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${on ? '#22c33a' : t.tribe ? '#8a7a3a' : '#555'}" stroke-width="${on ? 4 : 3}"${t.tribe && !on ? ' stroke-dasharray="7 5"' : ''}/>`;
+    const size = Math.max(720, Math.min(window.innerWidth - 8, 900));
+    if (sky?.size !== size) sky = skyLayout(p.tribe, size);
+    const pos = new Map(sky.stars.map((st) => [st.id, st]));
+    const status = new Map<string, ResearchStatus>(mine.map((t) => [t.id, researchStatus(s, pid, t.id)]));
+    const lit = (id: string) => status.get(id) === 'owned';
+
+    let svg = `<rect width="${size}" height="${size}" fill="#000"/>${dust(size)}`;
+    for (const ring of sky.rings) {
+      svg += `<circle cx="${sky.cx}" cy="${sky.cy}" r="${ring.r}" fill="none" stroke="#9fb4ff" stroke-opacity="0.09" stroke-width="1" stroke-dasharray="2 6"/>`;
+      svg += `<text x="${ring.x}" y="${ring.y + 3}" class="tt-ring">${ring.name.toUpperCase()}</text>`;
     }
-    const board = h('div', { class: 'tt-board', style: { width: `${w}px`, height: `${hgt}px` } });
-    board.append(h('div', { class: 'tt-lines', html: `<svg width="${w}" height="${hgt}">${lines}</svg>` }));
-    const center = h('div', { class: 'tt-center', style: { left: `${half.x}px`, top: `${half.y}px`, '--tc': tribe.color } as Record<string, string> },
-      unitPortrait(portraitKind(p.tribe), p.tribe, 58));
-    board.append(center);
+    for (const l of skyLinks(p.tribe)) {
+      const a = pos.get(l.from)!;
+      const b = l.to ? pos.get(l.to)! : { x: sky.cx, y: sky.cy };
+      if (l.kind === 'fork') {
+        const sealed = status.get(l.from) === 'sealed' || status.get(l.to!) === 'sealed';
+        svg += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#ff6a5a" stroke-opacity="${sealed ? 0.25 : 0.55}" stroke-width="1" stroke-dasharray="1 4"/>`;
+        continue;
+      }
+      const on = lit(l.from) && (!l.to || lit(l.to));
+      const col = l.kind === 'link' || TECH_BY_ID[l.from].ring === 'wild' ? '#dfe7f5' : '#f5c542';
+      svg += on
+        ? `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${col}" stroke-width="1.6" class="tt-glow"/>`
+        : `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#fff" stroke-opacity="0.16" stroke-width="0.8"${l.kind === 'link' ? ' stroke-dasharray="3 4"' : ''}/>`;
+    }
+    const board = h('div', { class: 'tt-board', style: { width: `${size}px`, height: `${size}px` } });
+    board.append(h('div', { class: 'tt-lines', html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${svg}</svg>` }));
+    board.append(h('div', { class: 'tt-center', style: { left: `${sky.cx}px`, top: `${sky.cy}px`, '--tc': tribe.color } as Record<string, string> },
+      unitPortrait(portraitKind(p.tribe), p.tribe, 50), h('span', { class: 'tt-origin' }, 'Empire Origin')));
 
     for (const t of mine) {
-      const { x, y } = pos(t.id);
-      const st = researchStatus(s, pid, t.id);
+      const at = pos.get(t.id)!;
+      const st = status.get(t.id)!;
       const cost = techCost(s, pid, t.id);
       const affordable = st === 'available' && p.stars >= cost;
-      const node = h('button', {
-        class: `tt-node ${st}${t.tribe ? ' unique' : ''}${affordable ? ' affordable' : ''}${focused === t.id ? ' focus' : ''}`,
-        style: { left: `${x}px`, top: `${y}px`, width: `${nodeSize}px`, height: `${nodeSize}px`, '--tc': tribe.color } as Record<string, string>,
+      const surging = st === 'owned' && t.cond && condActive(s, pid, t.cond);
+      const tone = GOLD.has(t.ring) ? 'gold' : 'silver';
+      board.append(h('button', {
+        class: `tt-star ${st} ${tone} ring-${t.ring}${affordable ? ' affordable' : ''}${surging ? ' surging' : ''}${focused === t.id ? ' focus' : ''}`,
+        style: { left: `${at.x}px`, top: `${at.y}px` },
+        'aria-label': `${t.name} (${st})`,
         onclick: () => openTech(t.id),
       },
+        h('span', { class: 'tt-glyph', html: `<svg width="26" height="26" viewBox="-13 -13 26 26">${glyph(t.ring, 10)}${st === 'sealed' ? '<path d="M-6 -6L6 6M6 -6L-6 6"/>' : ''}</svg>` }),
+        h('span', { class: 'tt-label' }, t.name),
         st === 'available' ? h('span', { class: 'tt-cost' }, starSpan(cost)) : null,
-        st !== 'locked' ? paint(28, 19, (ctx) => { ctx.translate(14, 10); ctx.scale(0.42, 0.42); drawIcon(ctx, TECH_ICON[t.id] ?? uniqueIcon(t.id), p.tribe, 0, 0); }, `tech:${t.id}:${p.tribe}`) : null,
-        h('span', { class: 'tt-name', style: { fontSize: `${Math.min(10.5, (nodeSize - (st === 'available' ? 15 : 9)) / (t.name.length * 0.5)).toFixed(1)}px` } }, t.name),
-      );
-      board.append(node);
+      ));
     }
 
+    const wrap = h('div', { class: `tt-wrap${whole ? ' whole' : ''}` });
+    if (whole) {
+      const fit = Math.min(1, (window.innerWidth - 12) / size, (window.innerHeight - 200) / size);
+      board.style.transform = `scale(${fit})`;
+      wrap.append(h('div', { class: 'tt-fit', style: { width: `${size * fit}px`, height: `${size * fit}px` } }, board));
+    } else wrap.append(board);
     layer.append(
       h('div', { class: 'tt-top' },
-        h('button', { class: 'round-btn light', onclick: close, 'aria-label': 'Close tech tree' }, iconEl('back')),
+        h('button', { class: 'round-btn light', onclick: close, 'aria-label': 'Close skill tree' }, iconEl('back')),
         hud(),
       ),
-      h('div', { class: 'tt-wrap' }, board),
-      h('div', { class: 'tt-foot' }, `Each new city makes research a little pricier. The dashed gold line is ${tribe.people} only.`),
+      wrap,
+      h('div', { class: 'tt-foot' },
+        h('button', { class: 'tt-zoom', onclick: () => { whole = !whole; render(); } }, whole ? 'Close-up' : 'Whole sky'),
+        h('span', {}, 'Gold and silver stars are learned. Triangles are forks: one side only. Hexagons link two finished branches. The outer ring surges with the map.'),
+      ),
     );
+    // open centred on the Empire Origin (or where the player was looking)
+    requestAnimationFrame(() => {
+      if (whole) return;
+      const f = focused ? pos.get(focused) : null;
+      wrap.scrollLeft = scroll?.x ?? (f ? f.x : size / 2) - wrap.clientWidth / 2;
+      wrap.scrollTop = scroll?.y ?? (f ? f.y : size / 2) - wrap.clientHeight / 2;
+    });
+  };
+
+  /** The first tech still to research on the way to `target` (itself once it is open), or null. */
+  const nextStep = (target: string): string | null => {
+    const st = researchStatus(s, pid, target);
+    if (st === 'available') return target;
+    if (st !== 'locked') return null;
+    for (const q of prereqs(TECH_BY_ID[target])) {
+      if (researchStatus(s, pid, q) === 'owned') continue;
+      const n = nextStep(q);
+      if (n) return n;
+    }
+    return null;
   };
 
   const openTech = (id: string) => {
@@ -119,22 +161,49 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     // Egyptians' farms grow cities by 3
     const unlocks = id === 'farming' && p.tribe === 'egypt' ? t.unlocks.replace('+2 pop', '+3 pop')
       : id === 'hunting' && p.tribe === 'zulu' ? t.unlocks.replace('+1 pop', '+2 pop') : t.unlocks;
-    const body: (Node | string)[] = t.tribe
-      ? [h('p', { class: 'muted' }, `${tribe.people} skill — ${t.flavor}`), ...UNIQUE_BY_ID[t.id].perks.length ? [h('p', {}, unlocks)] : []]
-      : [h('p', {}, unlocks)];
-    if (st === 'locked') body.push(h('p', { class: 'muted' }, `Research ${TECH_BY_ID[t.parent!].name} first.`));
-    if (st === 'owned') body.push(h('p', { class: 'muted' }, 'Already known.'));
-    /** The first tech still to research on the way to `target` (itself once its parent is known). */
-    const nextStep = (target: string): string | null => {
-      let t = target;
-      while (researchStatus(s, pid, t) === 'locked') t = TECH_BY_ID[t].parent!;
-      return researchStatus(s, pid, t) === 'available' ? t : null;
-    };
+    const body: (Node | string)[] = [h('p', { class: 'tt-kind' }, t.tribe ? `${ringLabel(t)} · ${tribe.people}` : ringLabel(t))];
+    if (t.flavor) body.push(h('p', { class: 'muted' }, t.flavor));
+    if (!t.tribe || UNIQUE_BY_ID[t.id].perks.length) body.push(h('p', {}, unlocks));
+    if (t.cond) {
+      const on = condActive(s, pid, t.cond);
+      body.push(h('p', { class: `tt-surge${on ? ' on' : ''}` }, `Surge — while ${COND_TEXT[t.cond].when}: ${t.surge} `, h('b', {}, on ? '(surging now)' : '(dormant)')));
+    }
+    if (t.requires) body.push(h('p', { class: 'muted' }, `Opens when both branches are complete: ${t.branches}.`));
+    const rivals = mine.filter((x) => x.fork && x.fork === t.fork && x.id !== id);
+    if (t.fork && st !== 'owned') body.push(h('p', { class: 'muted' }, st === 'sealed' ? `Sealed: you chose ${rivals.map((r) => r.name).join(', ')}. A Transmutation Shift can undo that.` : `A fork: learning this seals ${rivals.map((r) => r.name).join(', ')}.`));
+    const missing = prereqs(t).filter((q) => researchStatus(s, pid, q) !== 'owned');
+    if (st === 'locked' && missing.length) body.push(h('p', { class: 'muted' }, `Research ${missing.map((q) => TECH_BY_ID[q].name).join(' and ')} first.`));
     const goTo = (next: string) => {
       focused = next;
       render();
       openTech(next);
     };
+    if (st === 'owned') {
+      body.push(h('p', { class: 'muted' }, 'Already known.'));
+      const why = transmuteCheck(s, pid, id);
+      const branch = subBranch(s, pid, id);
+      const tc = transmuteCost(s, pid), back = transmuteRefund(s, pid, id);
+      if (!(t.ring === 'core' && t.tier === 1)) {
+        body.push(h('p', { class: 'tt-transmute' }, `Transmutation Shift: pay ${tc}★ to unlearn ${branch.map((b) => TECH_BY_ID[b].name).join(', ')} and get ${back}★ back to spend anew.`));
+      }
+      modal({
+        title: t.name, art: unit ? unitPortrait(unit.kind, p.tribe, 72) : undefined, body, dismissable: true,
+        buttons: t.ring === 'core' && t.tier === 1 ? [{ label: 'OK', primary: true }] : [
+          { label: 'OK' },
+          {
+            label: h('span', {}, 'Transmute ', starSpan(tc)),
+            primary: !why,
+            onClick: () => { if (!why && transmute(s, pid, id)) { onChange(); render(); } },
+          },
+        ],
+      });
+      if (why) {
+        const btn = document.querySelector<HTMLButtonElement>('.modal-layer:last-child .mbtn:last-child');
+        if (btn) { btn.disabled = true; btn.title = why; }
+      }
+      return;
+    }
+    const step = st === 'locked' ? nextStep(id) : null;
     modal({
       title: t.name,
       art: unit ? unitPortrait(unit.kind, p.tribe, 72) : undefined,
@@ -157,8 +226,8 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
             },
           },
         ]
-        : st === 'locked'
-          ? [{ label: 'Close' }, { label: `Go to ${TECH_BY_ID[t.parent!].name}`, primary: true, onClick: () => goTo(t.parent!) }]
+        : step
+          ? [{ label: 'Close' }, { label: `Go to ${TECH_BY_ID[step].name}`, primary: true, onClick: () => goTo(step) }]
           : [{ label: 'OK', primary: true }],
     });
     if (st === 'available' && p.stars < cost) {

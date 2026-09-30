@@ -232,29 +232,51 @@ button:disabled { opacity: 0.45; cursor: default; }
 
 /* ------------------------------------------------ tech tree */
 .techtree { position: absolute; inset: 0; background: #000; z-index: 10; display: flex; flex-direction: column; overflow: hidden; }
-.techtree::before { content: ''; position: absolute; inset: 0; background-image:
-  linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff), linear-gradient(#fff, #fff);
-  background-size: 3px 3px; background-repeat: no-repeat;
-  background-position: 12% 20%, 68% 9%, 87% 57%, 31% 83%, 52% 42%, 8% 66%; opacity: 0.8; pointer-events: none; }
 .tt-top { position: relative; display: flex; align-items: center; gap: 8px; padding: calc(12px + var(--safe-top)) 14px 0; }
 .tt-top .hud { position: static; transform: none; margin: 0 auto; }
-.tt-wrap { position: relative; flex: 1; display: grid; place-items: center; }
-.tt-board { position: relative; }
+/* the Constellation View: a sky wider than a phone, scrolled in both directions */
+.tt-wrap { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: #000; }
+.tt-wrap.whole { display: grid; place-items: center; overflow: hidden; }
+.tt-fit { position: relative; }
+.tt-fit > .tt-board { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.tt-board { position: relative; margin: 0 auto; }
 .tt-lines { position: absolute; inset: 0; }
-.tt-center { position: absolute; transform: translate(-50%, -50%); width: 64px; height: 64px; display: grid; place-items: center; }
-.tt-node { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #555; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; color: #aaa; }
-.tt-node :is(canvas, img) { margin-bottom: -2px; }
-.tt-node { box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-.tt-node.owned { background: radial-gradient(circle at 38% 28%, #7ff08a 0%, #25c43b 50%, #138a26 100%); border: 0; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.35), inset 0 -5px 10px rgba(0,50,10,0.35); }
-.tt-node.available { border: 3px solid #fff; color: #fff; }
-.tt-node.focus { z-index: 2; }
-.tt-node.focus::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 3px solid #ffd24a; pointer-events: none; animation: tt-focus 1.3s ease-in-out infinite; }
+.tt-lines svg { display: block; }
+.tt-ring { fill: #9fb4ff; fill-opacity: 0.4; font-size: 8px; letter-spacing: 0.3em; text-anchor: middle; paint-order: stroke; stroke: #000; stroke-width: 3px; }
+.tt-glow { filter: drop-shadow(0 0 3px rgba(255, 214, 110, 0.8)); }
+.tt-center { position: absolute; transform: translate(-50%, -50%); width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%;
+  box-shadow: 0 0 18px 2px color-mix(in srgb, var(--tc) 55%, transparent); }
+.tt-origin { position: absolute; top: calc(100% + 1px); white-space: nowrap; font-size: 0.46rem; letter-spacing: 0.12em; text-transform: uppercase; color: #cfd8ff; opacity: 0.75; margin-top: 2px; }
+.tt-star { position: absolute; transform: translate(-50%, -50%); width: 34px; height: 34px; padding: 0; border: 0; background: none; display: grid; place-items: center; color: #fff; }
+.tt-glyph { display: block; width: 26px; height: 26px; }
+.tt-glyph svg { overflow: visible; }
+.tt-glyph :is(circle, polygon, path) { fill: none; stroke: #fff; stroke-opacity: 0.3; stroke-width: 0.9; }
+.tt-label { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 72px; text-align: center; font-size: 0.54rem; line-height: 1.05; color: #fff; opacity: 0.38; pointer-events: none; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+.tt-cost { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); font-size: 0.58rem; line-height: 1; white-space: nowrap; }
+.tt-star.available .tt-glyph :is(circle, polygon) { stroke-opacity: 0.9; stroke-width: 1.3; }
+.tt-star.available .tt-label { opacity: 0.85; }
+.tt-star.affordable .tt-glyph :is(circle, polygon) { stroke: #8fd2ff; animation: tt-twinkle 1.8s ease-in-out infinite; }
+@keyframes tt-twinkle { 0%, 100% { filter: drop-shadow(0 0 1px #8fd2ff); } 50% { filter: drop-shadow(0 0 6px #8fd2ff); } }
+.tt-star.owned .tt-glyph :is(circle, polygon) { stroke-opacity: 1; stroke-width: 1.2; }
+.tt-star.owned.gold .tt-glyph :is(circle, polygon) { fill: #f5c542; stroke: #fff2c2; filter: drop-shadow(0 0 5px rgba(245, 197, 66, 0.95)); }
+.tt-star.owned.silver .tt-glyph :is(circle, polygon) { fill: #dfe7f5; stroke: #ffffff; filter: drop-shadow(0 0 5px rgba(200, 220, 255, 0.95)); }
+.tt-star.owned .tt-label { opacity: 0.95; color: #fff2c2; }
+.tt-star.owned.silver .tt-label { color: #e8efff; }
+.tt-star.surging .tt-glyph { animation: tt-surge 1.6s ease-in-out infinite; }
+@keyframes tt-surge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+.tt-star.sealed .tt-glyph :is(circle, polygon, path) { stroke: #ff6a5a; stroke-opacity: 0.45; stroke-dasharray: 2 2; }
+.tt-star.sealed .tt-label { text-decoration: line-through; opacity: 0.3; }
+.tt-star.focus { z-index: 2; }
+.tt-star.focus::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #ffd24a; pointer-events: none; animation: tt-focus 1.3s ease-in-out infinite; }
 @keyframes tt-focus { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.55; } }
-.tt-node.affordable { background: radial-gradient(circle at 38% 28%, #8fd2ff 0%, #2b9cff 45%, #0f6fd6 100%); animation: tt-glow 2s ease-in-out infinite; }
-@keyframes tt-glow { 0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 0 rgba(77,179,255,0.5); } 50% { box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 9px rgba(77,179,255,0); } }
-.tt-name { font-size: 0.64rem; font-style: italic; line-height: 1; text-align: center; white-space: nowrap; }
-.tt-cost { font-size: 0.64rem; line-height: 1; }
-.tt-foot { position: relative; text-align: center; font-style: italic; font-size: 1rem; padding: 8px 16px calc(22px + var(--safe-bottom)); }
+.tt-wrap.whole .tt-label, .tt-wrap.whole .tt-ring { display: none; }
+.tt-foot { position: relative; display: flex; align-items: center; gap: 10px; text-align: left; font-style: italic; font-size: 0.78rem; line-height: 1.25; padding: 8px 16px calc(16px + var(--safe-bottom)); color: #cfd8ff; }
+.tt-zoom { flex: none; font-style: normal; font-size: 0.75rem; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(207, 216, 255, 0.45); background: rgba(207, 216, 255, 0.08); color: #fff; }
+.tt-kind { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+.tt-surge { border-left: 3px solid #dfe7f5; padding-left: 8px; opacity: 0.8; }
+.tt-surge.on { border-color: #8fd2ff; opacity: 1; }
+.tt-transmute { border-left: 3px solid #b28cff; padding-left: 8px; }
+.skill-hud { display: block; font-size: 0.78rem; color: #e8efff; opacity: 0.9; margin-top: 2px; }
 
 /* ------------------------------------------------ motion preferences */
 @media (prefers-reduced-motion: reduce) {
@@ -293,7 +315,7 @@ ul.traits .why { opacity: 0.7; font-weight: 300; }
 ul.traits .effect { display: block; font-weight: 600; }
 
 /* a live readout from the empire's own mechanic, under the score bar */
-.mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
+.mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
 .mech-hud > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .mech-hud:empty { display: none; }
 /* culture blending: traditions adopted from conquered peoples */

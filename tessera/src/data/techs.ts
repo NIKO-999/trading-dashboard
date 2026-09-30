@@ -1,21 +1,38 @@
+import type { Cond } from '../game/alignment';
 import { describePerk } from '../game/perks';
 import type { TribeId } from '../game/types';
+import { SKILLS } from './skills';
 import { UNIQUE_TECHS } from './uniqueTechs';
+
+/**
+ * The skill tree, three converging rings around the Empire Origin:
+ *  - core    the 25 shared techs (the Core Domain), plus the two tier-3 forks (`fork`: one pick per group);
+ *  - culture each empire's own 3-tech line (Master Culture), branching off a base tech;
+ *  - aether  synergy nodes between two complete branches (`requires`), drawn in the middle ring;
+ *  - wild    the outer Alignment ring: Wildcards that surge under a map condition (`cond`).
+ */
+export type TechRing = 'core' | 'fork' | 'culture' | 'aether' | 'wild';
 
 export interface TechDef {
   id: string;
   name: string;
-  tier: 1 | 2 | 3;
+  tier: 1 | 2 | 3 | 4;
   parent: string | null;
   unlocks: string; // human description
   angle: number; // radial layout angle in degrees (0 = right, clockwise)
+  ring: TechRing;
   tribe?: TribeId; // set on an empire's own skill line: only that empire can research it
+  requires?: string[]; // Aether Links: all of these must be known
+  branches?: string;
+  fork?: string; // fork group: learning one node seals the others
+  cond?: Cond; // Wildcards: surge condition
+  surge?: string; // Wildcards: what the surge adds
   flavor?: string;
 }
 
 // Five roots, each with two tier-2 children that each lead to one tier-3 tech.
 const T = (id: string, name: string, tier: 1 | 2 | 3, parent: string | null, angle: number, unlocks: string): TechDef =>
-  ({ id, name, tier, parent, angle, unlocks });
+  ({ id, name, tier, parent, angle, unlocks, ring: 'core' });
 
 export const TECHS: TechDef[] = [
   T('gathering', 'Gathering', 1, null, 0, 'Harvest fruit (+1 pop).'),
@@ -62,13 +79,30 @@ for (const root of TECHS.filter((t) => t.tier === 1)) {
   });
 }
 
-// Each empire's own skill line: a straight chain of three techs on the sixth spoke.
+// Each empire's own skill line: a chain of three techs growing out of its base tech.
 const UNIQUE_DEFS: TechDef[] = UNIQUE_TECHS.map((u) => ({
-  id: u.id, name: u.name, tier: u.tier, parent: u.tier === 1 ? null : `${u.tribe}:${u.tier - 1}`, angle: UNIQUE_ANGLE, tribe: u.tribe, flavor: u.flavor,
+  id: u.id, name: u.name, tier: u.tier, parent: u.parent, angle: UNIQUE_ANGLE, ring: 'culture', tribe: u.tribe, flavor: u.flavor,
   unlocks: u.perks.map(describePerk).join(' '),
 }));
 
-export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries([...TECHS, ...UNIQUE_DEFS].map((t) => [t.id, t]));
+// Forks, Aether Links and Wildcards (data/skills.ts).
+export const SKILL_DEFS: TechDef[] = SKILLS.map((k) => ({
+  id: k.id, name: k.name, tier: k.tier, parent: k.parent, angle: 0, ring: k.ring, flavor: k.flavor,
+  requires: k.requires, branches: k.branches, fork: k.fork, cond: k.cond,
+  unlocks: k.perks.map(describePerk).join(' '),
+  surge: k.surge?.map(describePerk).join(' '),
+}));
 
-/** Every tech this empire can research: the shared tree plus its own line. */
-export const techsFor = (tribe: TribeId): TechDef[] => [...TECHS, ...UNIQUE_DEFS.filter((t) => t.tribe === tribe)];
+export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries([...TECHS, ...UNIQUE_DEFS, ...SKILL_DEFS].map((t) => [t.id, t]));
+
+/** Every tech this empire can research: the shared tree, the forks, links and wildcards, plus its own line. */
+export const techsFor = (tribe: TribeId): TechDef[] => [...TECHS, ...SKILL_DEFS, ...UNIQUE_DEFS.filter((t) => t.tribe === tribe)];
+
+/** The other nodes of a fork group (sealed once one of the group is known). */
+export const forkRivals = (id: string): string[] => {
+  const f = TECH_BY_ID[id]?.fork;
+  return f ? SKILL_DEFS.filter((t) => t.fork === f && t.id !== id).map((t) => t.id) : [];
+};
+
+/** The techs a node needs before it opens: its parent, or all of an Aether Link's `requires`. */
+export const prereqs = (t: TechDef): string[] => (t.requires ? t.requires : t.parent ? [t.parent] : []);

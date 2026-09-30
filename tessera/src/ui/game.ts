@@ -9,10 +9,12 @@ import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
-  moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
+  moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
+import { surgingNodes } from '../game/skills';
+import { perkRange } from '../game/perks';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
@@ -560,7 +562,8 @@ export class GameView {
       focus: (x, y) => this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450),
     };
     const hud = ui?.hud?.(view) ?? null;
-    this.mechHud.replaceChildren(...(hud ? [hud] : []));
+    const skill = this.skillReadout();
+    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []));
     const dock = ui?.dock?.(view) ?? null;
     if (!dock) { this.mechDock?.remove(); this.mechDock = null; return; }
     if (!this.mechDock) {
@@ -569,6 +572,17 @@ export class GameView {
     }
     this.mechDock.onclick = () => dock.open();
     this.mechDock.replaceChildren(h('span', { class: 'round' }, iconEl(dock.icon as Parameters<typeof iconEl>[0])), h('span', { class: 'dock-label' }, dock.label));
+  }
+
+  /** One line under the score bar for the skill tree's passive states: surging Wildcards, Pax Romana, a fork's cost. */
+  private skillReadout(): HTMLElement | null {
+    const s = this.s, me = this.me;
+    const bits: string[] = [];
+    const surging = surgingNodes(s, me).map((id) => TECH_BY_ID[id].name);
+    if (surging.length) bits.push(`✦ ${surging.join(', ')} surging`);
+    if (hasTech(s, me, 'rome:3')) bits.push(paxHolds(s, me) ? 'Pax Romana holds' : 'Pax Romana broken');
+    if (hasTech(s, me, 'fork:mercenary')) bits.push('Mercenaries: growth halved');
+    return bits.length ? h('div', { class: 'skill-hud' }, bits.join(' · ')) : null;
   }
 
   /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
@@ -653,7 +667,7 @@ export class GameView {
         h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null),
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
-        d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range))) : null,
+        d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range + perkRange(this.s, u)))) : null,
       );
       this.panel.append(close, h('div', { class: 'sheet-head' },
         h('div', { class: 'sheet-title' },
