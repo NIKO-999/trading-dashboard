@@ -134,6 +134,7 @@ test('Healer: heals every unit of its empire beside it by 2 at the start of the 
   const full = unit(s, 0, 'defender', 5, 4);
   for (const u of [a, b, far, foe]) u.hp = 4;
   h.hp = 3;
+  for (const t of s.tiles) t.road = true; // keep everyone in supply (out of supply, nothing heals: see game/army)
   s.current = 0;
   drain();
   startTurn(s);
