@@ -692,6 +692,7 @@ test('desert, swamp and tundra play differently', () => {
   const f = g(), fu = f.units.find((v) => v.owner === 0)!;
   const far = f.tiles.find((t) => isLand(t) && t.owner === null && !f.units.some((x) => x.x === t.x && x.y === t.y))!;
   far.terrain = 'tundra'; far.road = false; fu.x = far.x; fu.y = far.y; fu.hp = 8;
+  f.tiles.find((t) => Math.max(Math.abs(t.x - far.x), Math.abs(t.y - far.y)) === 1)!.road = true; // a road beside it keeps it in supply (see game/army)
   endTurn(f); drain(); f.current = 0; startTurn(f);
   assert.equal(fu.hp, 7, 'the cold bites');
 });

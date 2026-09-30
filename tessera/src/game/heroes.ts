@@ -18,6 +18,7 @@ import { revealAround, spawnUnit } from './mapgen';
 import { canFreeze } from './mech/inuit';
 import type { Mechanic } from './mech/types';
 import { MOUNTED_KINDS } from './perks';
+import { outOfSupply } from './army';
 import type { Action, MoveOption } from './rules';
 import { addPop, citiesOf, def, doAction, hasTech, maxHp, removeUnit, tileActions, tileOwnerPlayer, unitAt } from './rules';
 import type { GameState, HeroState, Tile, TribeId, Unit } from './types';
@@ -260,6 +261,7 @@ const enemiesNear = (s: GameState, pid: number, hero: Unit, r: number) =>
   s.units.filter((e) => e.owner !== pid && dist(e.x, e.y, hero.x, hero.y) <= r && !s.players[e.owner]?.neutral);
 
 function heal(u: Unit, n: number) {
+  if (outOfSupply(u)) return; // out of supply: no healing (see game/army)
   const before = u.hp;
   u.hp = Math.min(maxHp(u), u.hp + n);
   if (u.hp > before) emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });

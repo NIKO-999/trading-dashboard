@@ -99,8 +99,30 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 - damage dealt = `round( attackForce / (attackForce + defenceForce) × attack × 4.5 )`
 - If the defender survives and the attacker is within the defender's range, it **counter-attacks** with `round( defenceForce / total × defence × 4.5 )`.
 - **Terrain bonus:** ×1.5 in your own city (×4 with City Walls, for fortify units; ×1 while Sappers have undermined it, §15), ×2 on a mountain (Climbing), ×1.5 in forest with Archery, ×1.5 in swamp, ×1.5 afloat with Aquaculture, else ×1.
-- **Veterans:** 3 kills → +5 max HP, healed. **Recover** action heals 4 HP (2 outside your borders) and uses the unit's turn.
+- **Veterans:** 3 kills → +5 max HP, healed. **Recover** action heals 4 HP (2 outside your borders) and uses the unit's turn (not while out of supply, §4a).
+- **Formations** add to the attack and defence above (§4a); the attack preview names them.
 - **Capturing:** a unit standing on an enemy city or an unclaimed **village** can capture it (villages become level-1 cities). A captured city loses its capital status and pending rewards; the capturer joins its garrison. Eliminating an empire's last city removes it. Taking a city founded by another people also offers one of that people's traditions (§10).
+
+## 4a. Army: formations, upgrades and supply
+
+*(game/army.ts; drawn by render/army.ts on the map's ground layer, so the marks are part of the photographed resting map.)*
+
+**Formations.** Friendly units of one line standing side by side (on any of the eight tiles around) help each other. The bonus is added to the attack or defence stat before the combat formula, and the unit panel's attack preview names it ("Your Archer would deal 5, taking 0 (Volley +0.5).").
+- **Shield wall:** a shield unit — on foot, *fortify*, defence 3 or more: Defender, Hoplite, Temple Guardian, Legionary (and any new unit like them) — defends **+0.5 for each** friendly shield unit beside it, **up to +1**. The unit panel shows it next to the defence.
+- **Volley:** a ranged unit (range 2+, not a siege engine or a boat) attacks **+0.5** when another friendly ranged unit stands beside it.
+- **Charge:** a mounted unit attacks **+0.5** when another friendly mounted unit stands beside **its target**.
+- On the map, a thin cord in the empire's colour joins each pair in formation, with a glyph at its middle: a pale shield (shield wall), a gold arrowhead (volley) or an orange chevron (charge).
+
+**Unit upgrades.** A land unit standing on one of your own cities may **Upgrade** (unit menu) to the next unit of its line: **Warrior → Swordsman** (Smithing) and **Rider → Knight** (Chivalry). An empire's unique unit stands in for the unit it replaces at both ends (a Legionary or Impi upgrades like a Warrior, a Chariot like a Rider; a Viking Warrior becomes a Berserker, a Japanese one a Samurai, an Indian Rider a War Elephant). There is no stronger bow than the archer's line yet (the Catapult is a siege engine), so archers do not upgrade; the line table (`UPGRADE_LINE`) takes new units as they come.
+- **Cost:** the difference between what the two cost you to train (with your discounts), **+1★**.
+- The unit keeps its **veteran** rank and its **share of health**, and the upgrade **uses its turn** (it must not have moved or attacked yet). Boats keep their own path (Canoe → Galley → Trireme, §4).
+- Computer players upgrade a unit waiting in one of their cities when they would still have **10★** left over.
+
+**Supply.** At the start of its turn a land unit is **out of supply** when it stands **more than 3 tiles from your borders** and is not on or beside a **road** (or bridge), **your fort** (a Sappers' fort or a Roman castra) or an **ally's** land.
+- Out of supply it **loses 1 HP** each turn (never below 1) and **cannot heal** (no Recover, no healing perks or hero heals, no Victory Feast). Walking back into supply lifts it at once.
+- An amber **!** roundel at the unit's feet marks it on the map; the unit panel says so, and warns when one of your units stands beyond the supply lines now. A toast counts your units out of supply at the start of your turn.
+- **Exempt:** heroes, boats and ships, the Pirates on the water and on their platforms, and the **Mongols**, **Lakota** and **Aboriginal** peoples, who lived off the land (noted on their empire screens).
+- Computer players count a tile out of supply as a little further from their goals (so their armies keep to roads and borders), and a unit out of supply turns home to heal sooner (below 60% health rather than 40%).
 
 ## 5. Terrain, resources, improvements
 
@@ -210,6 +232,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Pirate (pirates)
 - **Signature bonus:** Sea Raiders — boats and ships move 1 extra tile and attack +1; ports cost 4★ and earn +1★ a turn.
+- **Needs no supply lines at sea** (§4a): their fleets carry their own stores, so Pirate units on the water or their platforms are never out of supply.
 - **Unique mechanic — Flotilla Republic & Black Market Havens:** No land at all: platforms stitch into sea-cities that tow across the waves, and boarded ships join the fleet. Stars come only from tolls and coastal raids, and are spent to recruit people into the platforms.
 - **Strengths:** Loot and Ransom (+1★ for every enemy you defeat.)
 - **Weaknesses:** No Farmland (Every farm grows the city by 1 less.); Sailors, not Soldiers (Foot soldiers defend 0.5 worse.)
@@ -231,6 +254,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Mongol (mongols)
 - **Signature bonus:** Steppe Riders — mounted units cost 1★ less.
+- **Needs no supply lines** (§4a): their riders live off the steppe and their herds, so Mongol units are never out of supply.
 - **Unique mechanic — Feigned Retreat & Horde Steppe:** Riders strike, pull back and lure the enemy into an ambush set by waiting archers.
 - **Strengths:** Horse Archers (Mounted units hit 0.5 harder.)
 - **Weaknesses:** Nomads, not Builders (Buildings cost 2★ more.); Herders, not Farmers (Every farm grows the city by 2 less.)
@@ -287,6 +311,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aboriginal (aboriginal)
 - **Signature bonus:** Firestick Farming — clearing a forest also grows the city by 1.
+- **Needs no supply lines** (§4a): they know the Country and live off it, so Aboriginal units are never out of supply.
 - **Unique mechanic — Dreamtime Paths:** Paint invisible Songlines that let your units travel free and unseen; pilgrimages between distant landmarks pay Stars and grow your cities.
 - **Strengths:** Knowledge of Country (See 1 tile further around every unit and city.)
 - **Weaknesses:** No Farming Tradition (Farming costs 2★ more to research. Every farm grows the city by 1 less. Research cost 1★ more.); No Beasts of Burden (Mounted units cost 2★ more. Smithing costs 2★ more to research.)
@@ -315,6 +340,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Lakota (lakota)
 - **Signature bonus:** Horse Nation — your mounted units move 1 further.
+- **Needs no supply lines** (§4a): the people follow the buffalo, so Lakota units are never out of supply.
 - **Unique mechanic — Great Plains Migration:** Camps pack up, roll up to 3 tiles a turn and re-settle, leaving enriched soil behind; assign herders to Follow Herds that wander the plains for double Stars.
 - **Strengths:** The Buffalo Nation (Every animal harvest grows the city by 1 more.)
 - **Weaknesses:** Nomads of the Plains (Buildings cost 1★ more.); No Metalworking (Smithing costs 2★ more to research. Farming costs 2★ more to research.)

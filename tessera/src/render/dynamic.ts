@@ -18,6 +18,7 @@ import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
 import { floaterPose } from './combatfx';
 import { drawHeroGround } from './heroes';
 import { drawRoleGround } from './roles';
+import { drawArmyGround } from './army';
 import { drawTradeRoutes } from './trade';
 import { isHero } from '../game/heroes';
 
@@ -102,6 +103,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   drawSelection(ctx, s, ov, now, explored);
   drawHeroGround(ctx, s, viewer, now); // hero auras and ability marks (see render/heroes)
   drawRoleGround(ctx, s, viewer); // rings under units stationed in a city (see render/roles)
+  drawArmyGround(ctx, s, viewer); // formation cords and out-of-supply marks (see render/army)
 
   const units = shownUnits(s, viewer, cam, vw, vh);
   const motion = new Map<number, Motion>();

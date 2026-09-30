@@ -407,3 +407,4 @@ ul.traits .effect { display: block; font-weight: 600; }
 .role-units { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .role-units .role-unit { display: flex; align-items: center; gap: 6px; max-width: 260px; font-size: 0.85rem; line-height: 1.25; }
 .role-line { margin-top: 2px; color: #f5d76e; }
+.supply-line { margin-top: 3px; font-weight: 700; color: #f0a850; }

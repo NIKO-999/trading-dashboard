@@ -1,4 +1,5 @@
 import { music } from '../audio/music';
+import { SUPPLY_NOTES } from '../game/army';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { CATEGORIES, categoryOf, portraitKind, TRIBE_IDS, TRIBES, type CategoryDef } from '../data/tribes';
 import { UNITS } from '../data/units';
@@ -188,6 +189,7 @@ function traitLists(id: TribeId): Node[] {
     h('h5', { class: 'pros' }, 'Strengths'),
     h('ul', { class: 'traits' },
       item('pro', 'Signature', '', t.bonus),
+      ...(SUPPLY_NOTES[id] ? [item('pro', 'No supply lines', '', SUPPLY_NOTES[id]!)] : []), // exempt from supply (see game/army)
       ...TRAITS[id].pros.map((p) => item('pro', p.name, p.why, p.perks.map(describePerk).join(' '))),
     ),
     h('h5', { class: 'cons' }, 'Weaknesses'),

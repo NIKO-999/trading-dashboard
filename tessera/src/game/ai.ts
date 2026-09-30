@@ -18,6 +18,7 @@ import { wonderAi } from './wonders';
 import { allyFoes, diploAi, hostile } from './diplomacy';
 import { isTraderKind, raidSpots, tradeAi } from './trade';
 import { bridgesBuilt, isRoleUnit, postAt, roleAi, roleTechWant } from './roles';
+import { armyAi, outOfSupply, suppliedAt, supplyExempt } from './army';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -55,6 +56,9 @@ export function aiStep(s: GameState): boolean {
     applyReward(s, c, pick.id);
     return true;
   }
+
+  // A unit waiting in a city is upgraded to the next of its line when the treasury is rich (see game/army).
+  if (armyAi(s, pid)) return true;
 
   // 2. Economy first (so newly trained units wait a turn anyway).
   if (!economyDone) {
@@ -354,10 +358,12 @@ function unitStep(s: GameState, u: Unit): boolean {
     if (worth.size) allowLanding = (x, y) => worth.has(massAt(x, y));
   }
 
+  // supply (see game/army): a tile out of supply is a little less inviting, so the army keeps to roads and its borders
+  const supply = !supplyExempt(s, u);
   const score = (x: number, y: number) => {
     let best = Infinity;
     for (const g of aims) best = Math.min(best, dist(x, y, g.x, g.y) - g.w);
-    return best;
+    return best + (supply && !suppliedAt(s, pid, x, y) ? SUPPLY_SHY : 0);
   };
   const here = score(u.x, u.y);
   const ranked = opts
@@ -431,11 +437,13 @@ function boardingSpots(s: GameState, u: Unit, home: number): Goal[] {
 }
 
 interface Goal { x: number; y: number; w: number; water?: boolean }
+/** How much a tile out of supply counts against moving there (in tiles of distance). */
+const SUPPLY_SHY = 0.6;
 
 function findGoals(s: GameState, u: Unit): Goal[] {
   const pid = u.owner;
   const goals: Goal[] = [];
-  const weak = u.hp < maxHp(u) * 0.4;
+  const weak = u.hp < maxHp(u) * (outOfSupply(u) ? 0.6 : 0.4); // out of supply it can't heal where it is: turn home sooner
   const myCities = citiesOf(s, pid);
   if (weak) return myCities.map((c) => ({ x: c.x, y: c.y, w: 2 }));
 

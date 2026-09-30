@@ -10,6 +10,7 @@ import { diploTurnStart } from './diplomacy';
 import { wildRound } from './wild';
 import { wonderTurnStart } from './wonders';
 import { tradeSweep } from './trade';
+import { outOfSupply, supplyTurnStart } from './army';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -38,10 +39,11 @@ export function startTurn(s: GameState) {
       emit({ type: 'damage', unitId: u.id, x: u.x, y: u.y, amount: 1 });
     }
   }
+  supplyTurnStart(s, p.id); // units far beyond the borders run short of supplies (see game/army)
   const heal = perkSum(s, p.id, 'heal'); // healing perks of the skill line
   if (heal > 0) {
     for (const u of s.units) {
-      if (u.owner !== p.id || u.hp >= maxHp(u) || tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) !== p.id) continue;
+      if (u.owner !== p.id || u.hp >= maxHp(u) || outOfSupply(u) || tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) !== p.id) continue;
       const before = u.hp;
       u.hp = Math.min(maxHp(u), u.hp + heal);
       emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });

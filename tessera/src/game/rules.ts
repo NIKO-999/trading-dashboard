@@ -1,5 +1,5 @@
 import { forkRivals, prereqs, TECH_BY_ID, techsFor } from '../data/techs';
-import { unitFor } from '../data/tribes';
+import { TRIBES, unitFor } from '../data/tribes';
 import type { CombatCtx } from './mech/types';
 import { hookActions, hookAfterAttack, hookAfterMove, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
 import { perkRange, perksOf, perkSum, perkUnit, unitMatches } from './perks';
@@ -16,6 +16,7 @@ import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
 import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
+import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, upgradeWhy } from './army';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -427,9 +428,15 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
-    if (u.hp < maxHp(u)) add('recover', 'Recover', `Heal ${mine ? 4 : 2} HP.`, 0, null, 'heal', u.moved || u.attacked ? 'Unit has already acted' : undefined);
+    if (u.hp < maxHp(u)) add('recover', 'Recover', `Heal ${mine ? 4 : 2} HP.`, 0, null, 'heal', u.moved || u.attacked ? 'Unit has already acted' : outOfSupply(u) ? 'Out of supply: no healing' : undefined);
     const up = NAVAL_UPGRADE[u.kind];
     if (up && def(u).naval) add(`upgrade:${up}`, `Upgrade to ${UNITS[up].name}`, UNITS[up].blurb, UNITS[up].cost, UNITS[up].tech, 'ship');
+    // a land unit in one of your cities trains up to the next unit of its line (see game/army)
+    const next = upgradeTarget(s, u);
+    if (next && t.cityId !== null && mine) {
+      const d = UNITS[next];
+      add(`upgrade:${next}`, `Upgrade to ${d.name}`, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}. Keeps its veteran rank and health; uses its turn.`, upgradeCost(s, pid, u.kind, next), d.tech, next, upgradeWhy(s, u));
+    }
   }
 
   if (t.cityId !== null && city && city.owner === pid && t.cityId === city.id) {
@@ -569,6 +576,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   }
   if (id.startsWith('upgrade:') && u) {
     const hpRatio = u.hp / maxHp(u);
+    if (!def(u).naval) s.log.push({ turn: s.turn, text: `${TRIBES[p.tribe].people} ${UNITS[u.kind].name} upgraded to ${UNITS[id.slice(8) as UnitKind].name} in ${city?.name ?? 'a city'}.` });
     u.kind = id.slice(8) as UnitKind;
     u.hp = Math.max(1, Math.round(maxHp(u) * hpRatio));
     u.moved = u.attacked = true;
@@ -839,6 +847,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
   }
   if (t.ruin) openRuin(s, u, t);
   revealAround(s, u.owner);
+  supplyAfterMove(s, u); // back in supply: the mark comes off (see game/army)
   hookAfterMove(s, u, from, t); // ambushes and other reactions to a finished move
   return true;
 }
@@ -920,8 +929,9 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk'));
-  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def'));
+  const f = formation(s, a, d); // volley, charge and shield wall (see game/army)
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk);
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def);
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
   const total = aForce + dForce || 1;
@@ -936,7 +946,7 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
   dmg = Math.max(0, Math.round(ctx.dmg));
   kills = dmg >= d.hp;
   ret = kills ? 0 : Math.max(0, Math.round(ctx.ret));
-  return { dmg, ret, kills, tag: dmg > 0 ? ctx.tag : undefined };
+  return { dmg, ret, kills, tag: dmg > 0 ? ctx.tag : undefined, formation: f.notes };
 }
 
 export function attack(s: GameState, a: Unit, d: Unit): boolean {
@@ -974,7 +984,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     if (a.veteranKills >= 3 && !a.veteran && (a.carrying ?? a.kind) !== 'hero') { // heroes level up instead (see game/heroes)
       a.veteran = true;
       a.hp = maxHp(a);
-    } else if (pa.tribe === 'vikings' && a.hp < maxHp(a)) {
+    } else if (pa.tribe === 'vikings' && a.hp < maxHp(a) && !outOfSupply(a)) {
       // Victory Feast
       const before = a.hp;
       a.hp = Math.min(maxHp(a), a.hp + 3);

@@ -47,6 +47,7 @@ import { ChipRow, shortChip, skillChip, unrestChip, type HudLine } from './hudch
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
+import { lacksSupply, outOfSupply, shieldWall, SUPPLY_RANGE } from '../game/army';
 import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, traderName, traderPreview } from '../game/trade';
 import { tradeList } from './trade';
 import { categoryOf } from '../data/tribes';
@@ -876,7 +877,8 @@ export class GameView {
       const hs = hero ? owner.hero! : null;
       const stats = h('span', { class: 'stat-line' },
         h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0)))),
-        h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null),
+        h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
+          shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} shield wall`) : null), // formations (see game/army)
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range + perkRange(this.s, u)))) : null,
@@ -889,7 +891,7 @@ export class GameView {
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : isRoleKind(u.kind) ? roleName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${isRoleKind(u.carrying) ? roleName(owner.tribe, u.carrying) : UNITS[u.carrying].name})` : ''}`),
-        h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null,
+        h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null, this.supplyLine(u),
           u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null, // the route yield preview (see game/trade)
           isRoleKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${u.owner === this.me ? rolePreview(this.s, u) : d.blurb}`) : null))); // what a role unit does (see game/roles)
       // empire actions on a unit's tile (launch, board...), camp bids, and this role unit's own actions (see game/roles)
@@ -917,6 +919,14 @@ export class GameView {
       h('b', {}, `${d.ability}: `), cd > 0 ? `ready in ${cd} turn${cd === 1 ? '' : 's'}. ` : 'ready! ', d.desc, h('br'));
   }
 
+  /** Supply (see game/army): out of supply since its turn began, or (yours) standing beyond the supply lines now. */
+  private supplyLine(u: Unit) {
+    const fix = `within ${SUPPLY_RANGE} tiles of ${u.owner === this.me ? 'your' : 'its'} borders, or beside a road, fort or ally`;
+    if (outOfSupply(u)) return h('div', { class: 'small supply-line' }, `⚠ Out of supply: −1 HP a turn and no healing until it is back ${fix}.`);
+    if (u.owner === this.me && lacksSupply(this.s, u)) return h('div', { class: 'small supply-line' }, `Beyond the supply lines: it will run short next turn unless it gets ${fix}.`);
+    return null;
+  }
+
   private previewLine(u: GameState['units'][number]) {
     const sel = this.sel;
     if (!sel || u.owner === this.me) return null;
@@ -924,7 +934,8 @@ export class GameView {
     const mine = this.s.units.filter((m) => m.owner === this.me && attackOptions(this.s, m).includes(u));
     if (!mine.length) return null;
     const best = mine.map((m) => ({ m, ...previewCombat(this.s, m, u) })).sort((a, b) => b.dmg - a.dmg)[0];
-    return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}, taking ${best.ret}.`;
+    const f = best.formation.length ? ` (${best.formation.join(', ')})` : ''; // formations (see game/army)
+    return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}, taking ${best.ret}${f}.`;
   }
 
   /** " · roads 5 (next bonus at 6) · linked to 2 cities" for the city panel. */
