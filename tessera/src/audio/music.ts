@@ -11,7 +11,7 @@ type Wind = 'flute' | 'ney' | 'whistle' | 'panpipe' | 'shaku' | 'dizi' | 'clayfl
 type Reed = 'zurna' | 'duduk' | 'aulos' | 'piri' | 'accordion' | 'shawm';
 type Bowed = 'erhu' | 'morin' | 'masenqo' | 'tagel' | 'fiddle' | 'rebab';
 type Struck = 'marimba' | 'balafon' | 'roneat' | 'bell' | 'gong' | 'bowl' | 'chime';
-type Pad = 'voice' | 'oo' | 'drone' | 'horn' | 'tuba' | 'dung' | 'didge' | 'tanpura' | 'brass';
+type Pad = 'voice' | 'oo' | 'drone' | 'horn' | 'tuba' | 'dung' | 'didge' | 'yidaki' | 'tanpura' | 'brass';
 type Voice = Pluck | Wind | Reed | Bowed | Struck | Pad;
 type Perc =
   | 'kick' | 'taiko' | 'huehue' | 'frame' | 'na' | 'ge' | 'doum' | 'tek' | 'shaker' | 'rattle' | 'clave' | 'wood'
@@ -190,11 +190,12 @@ const THEMES: Record<ThemeId, Theme> = {
   },
   // ------------------------------------------------------------------ Aboriginal: didgeridoo drone, clapsticks, descending chant-like line
   aboriginal: {
-    gain: 2.6,
-    name: 'Red Country', bpm: 92, steps: 16, perBeat: 4, root: 46, scale: [0, 200, 500, 700, 900], reverb: 0.5,
-    melody: { voice: 'voice', oct: 1, vol: 0.14, density: 0.75, rhythms: [[0, 4, 6, 8], [0, 6, 8, 12], [0, 3, 6, 10]], contour: 'descend', lo: -2, hi: 5, hold: 6 },
-    drone: { voice: 'didge', degrees: [0], oct: -1, vol: 0.14, every: 1 },
-    perc: [{ voice: 'clave', pat: 'x.x.x...x.x.x...', vol: 0.2 }, { voice: 'stomp', pat: 'X.......x.......', vol: 0.16 }],
+    gain: 2.2,
+    // a slow, mystic Dreamtime: the didgeridoo carries the piece, a far-off chant floats over it
+    name: 'Dreaming', bpm: 68, steps: 16, perBeat: 4, root: 38, scale: [0, 300, 500, 700, 1000], reverb: 0.8,
+    melody: { voice: 'oo', oct: 2, vol: 0.07, density: 0.45, rhythms: [[0, 8], [0, 6, 12], [4, 12], [0]], contour: 'descend', lo: -1, hi: 4, hold: 10 },
+    drone: { voice: 'yidaki', degrees: [0], oct: 0, vol: 0.2, every: 1 },
+    perc: [{ voice: 'clave', pat: 'x.......x...x...', vol: 0.14 }, { voice: 'rattle', pat: '......o.......o.', vol: 0.04 }],
   },
   // ------------------------------------------------------------------ China: pentatonic, guzheng, erhu, dizi, gong
   china: {
@@ -724,6 +725,7 @@ class Music {
       case 'dung': return this.buzzer(f, t, d, vol, { res: 520, q: 0.7, att: 1.1, low: true, swell: true, det: 5, rel: 1.1, wet: 0.6 });
       case 'brass': return this.buzzer(f, t, d, vol, { res: 1500, q: 0.9, att: 0.05, low: true, swell: true });
       case 'didge': return this.didge(f, t, d, vol);
+      case 'yidaki': return this.yidaki(f, t, d, vol);
     }
   }
 
@@ -790,6 +792,100 @@ class Music {
     o2.connect(sub).connect(bp);
     bp.connect(pulse).connect(g);
     this.out(g, 0.3);
+  }
+
+  /**
+   * Yidaki (didgeridoo), the mystic way: a deep lip-buzz whose mouth-shape resonances glide like
+   * slow vowels ("ooo-eee-aaa"), a rhythmic tongue pulse, the gulp of circular breathing, a growl
+   * sung through the pipe and, now and then, an overblown "toot" an octave and a fifth above.
+   */
+  private yidaki(f: number, t: number, dur: number, vol: number) {
+    const ac = this.ac!;
+    const { g, end } = this.gainEnv(t, 0.35, dur, vol, 0.6);
+    // the buzzing lips: two slightly detuned saws and a sub an octave down
+    const mix = ac.createGain();
+    mix.gain.value = 0.6;
+    for (const det of [-4, 5]) this.osc('sawtooth', f, t, end, det).connect(mix);
+    const sub = ac.createGain();
+    sub.gain.value = 0.45;
+    this.osc('triangle', f * 0.5, t, end).connect(sub).connect(mix);
+    // a growl: the player's voice a twelfth above, rough and quiet
+    const growl = ac.createGain();
+    growl.gain.value = 0.12;
+    const gv = this.osc('square', f * 3.01, t, end, 0);
+    const trem = ac.createOscillator();
+    trem.frequency.value = 23;
+    const tg = ac.createGain();
+    tg.gain.value = 0.08;
+    trem.connect(tg).connect(growl.gain);
+    trem.start(t);
+    trem.stop(end);
+    gv.connect(growl).connect(mix);
+    // breath noise through the pipe
+    const breath = ac.createGain();
+    breath.gain.value = 0.05;
+    const nf = ac.createBiquadFilter();
+    nf.type = 'lowpass';
+    nf.frequency.value = 900;
+    this.noise(t, end).connect(nf).connect(breath).connect(mix);
+    // two mouth resonances gliding like vowels, the heart of the sound
+    const f1 = ac.createBiquadFilter(), f2 = ac.createBiquadFilter();
+    f1.type = f2.type = 'bandpass';
+    f1.Q.value = 6;
+    f2.Q.value = 9;
+    const vowels: [number, number][] = [[300, 850], [420, 2100], [650, 1200], [330, 1500], [550, 2400]];
+    const step = 60 / 68; // one vowel a beat, bending into the next
+    let i = Math.floor(t * 7) % vowels.length;
+    f1.frequency.setValueAtTime(vowels[i][0], t);
+    f2.frequency.setValueAtTime(vowels[i][1], t);
+    for (let x = t + step; x < end; x += step) {
+      i = (i + 1 + (Math.floor(x * 13) % 2)) % vowels.length;
+      f1.frequency.linearRampToValueAtTime(vowels[i][0], x);
+      f2.frequency.linearRampToValueAtTime(vowels[i][1], x);
+    }
+    const body = ac.createGain();
+    body.gain.value = 1;
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 520;
+    const f2g = ac.createGain();
+    f2g.gain.value = 0.55;
+    mix.connect(f1).connect(body);
+    mix.connect(f2).connect(f2g).connect(body);
+    mix.connect(lp).connect(body); // the drone's warm floor
+    // the tongue pulse: a rolling rhythm in eighths, accents shifting bar to bar
+    const pulse = ac.createGain();
+    const eighth = step / 2;
+    const pattern = [1, 0.55, 0.8, 0.5, 1, 0.6, 0.75, 0.9];
+    pulse.gain.setValueAtTime(0.7, t);
+    let n = Math.floor(t * 3) % pattern.length;
+    for (let x = t; x < end; x += eighth, n++) {
+      const a = pattern[n % pattern.length];
+      pulse.gain.setValueAtTime(0.55 + a * 0.45, x);
+      pulse.gain.linearRampToValueAtTime(0.5, x + eighth * 0.8);
+    }
+    // circular breathing: every few seconds a quick gulp dips and bends the drone
+    for (let x = t + step * 3.5; x < end - 0.3; x += step * 4) {
+      pulse.gain.setValueAtTime(0.5, x);
+      pulse.gain.linearRampToValueAtTime(0.25, x + 0.08);
+      pulse.gain.linearRampToValueAtTime(0.9, x + 0.2);
+    }
+    body.connect(pulse).connect(g);
+    this.out(g, 0.55);
+    // an overblown toot, rising out of the drone once in a while
+    if (Math.floor(t * 5) % 3 === 0 && dur > step * 2) {
+      const tt = t + step * (1.5 + (Math.floor(t * 11) % 3));
+      const te = this.gainEnv(tt, 0.06, step * 0.9, vol * 0.35, 0.3);
+      const to = this.osc('sawtooth', f * 3, tt, te.end);
+      to.frequency.setValueAtTime(f * 2.7, tt);
+      to.frequency.exponentialRampToValueAtTime(f * 3, tt + 0.12);
+      const tb = ac.createBiquadFilter();
+      tb.type = 'bandpass';
+      tb.frequency.value = f * 3;
+      tb.Q.value = 4;
+      to.connect(tb).connect(te.g);
+      this.out(te.g, 0.7);
+    }
   }
 
   // ---- percussion
