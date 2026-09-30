@@ -279,7 +279,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         ? h('p', { class: `setup-note${problem ? ' bad' : ''}` }, problem ?? `${humans} players take turns on this device, ${active - humans} AI ${active - humans === 1 ? 'rival' : 'rivals'}. Tap an empire to switch it between Player, AI and Off.`)
         : null,
       detail,
-      choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
+      choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], () => choice.opponents, (v) => (choice.opponents = v)),
       seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge'], ['giant', 'Giant'], ['epic', 'Epic']], () => choice.mapSize, (v) => (choice.mapSize = v)),
       h('div', { class: 'seg-block' },
         h('div', { class: 'seg-label' }, 'Terrain'),
