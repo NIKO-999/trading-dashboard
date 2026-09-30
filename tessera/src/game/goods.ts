@@ -8,7 +8,7 @@
 //    city by 1 and pays every turn: LUX_FIRST★ for each different luxury you hold, LUX_EXTRA★ for each extra copy.
 import { TRIBES } from '../data/tribes';
 import { neighbors } from './grid';
-import { tileLevel } from './levels';
+import { SPECIALITY, tileLevel } from './levels';
 import type { Rng } from './rng';
 import { routesOf } from './trade';
 import type { GameState, Player, Resource, Terrain, Tile, UnitKind } from './types';
@@ -62,14 +62,21 @@ export function stockOf(p: Player): Record<Strategic, number> {
 
 const ownedBy = (s: GameState, pid: number, t: Tile) => t.owner !== null && s.cities.find((c) => c.id === t.owner)?.owner === pid;
 
-/** Iron and Horses a turn: a Mine digs 1 Iron per level, a Pasture breeds 1 Horse (2 once raised to Stables). */
+/**
+ * Iron and Horses a turn: a Mine digs 1 Iron per level, a Pasture breeds 1 Horse (2 once raised to Stables). A people
+ * whose speciality is the pasture (the horse and herd nations, see game/levels) breeds 1 more at each; the Pirates, who
+ * hold no land to mine, smuggle 1 Iron a turn through each of their Ports.
+ */
 export function stockYield(s: GameState, pid: number): Record<Strategic, number> {
   const y = { iron: 0, horses: 0 };
+  const tribe = s.players[pid].tribe;
+  const herders = SPECIALITY[tribe]?.kind === 'pasture';
   for (const t of s.tiles) {
-    if (t.improvement !== 'mine' && t.improvement !== 'pasture') continue;
+    if (t.improvement !== 'mine' && t.improvement !== 'pasture' && t.improvement !== 'port') continue;
     if (!ownedBy(s, pid, t)) continue;
     if (t.improvement === 'mine') y.iron += Math.max(1, tileLevel(t));
-    else y.horses += Math.max(1, tileLevel(t) - 1);
+    else if (t.improvement === 'pasture') y.horses += Math.max(1, tileLevel(t) - 1) + (herders ? 1 : 0);
+    else if (tribe === 'pirates') y.iron += 1;
   }
   return y;
 }

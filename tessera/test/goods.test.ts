@@ -4,7 +4,7 @@ import { TRIBE_IDS } from '../src/data/tribes';
 import { aiTurn } from '../src/game/ai';
 import { drain } from '../src/game/events';
 import { tileAt } from '../src/game/grid';
-import { needWhy, LUX_EXTRA, LUX_FIRST, isLuxury, luxuryIncome, STOCK_CAP, stockOf } from '../src/game/goods';
+import { needWhy, stockYield, LUX_EXTRA, LUX_FIRST, isLuxury, luxuryIncome, STOCK_CAP, stockOf } from '../src/game/goods';
 import { createGame, spawnUnit } from '../src/game/mapgen';
 import { doAction, income, techCost, tileActions } from '../src/game/rules';
 import { checkSparks, EUREKA_OFF, EUREKAS } from '../src/game/sparks';
@@ -152,5 +152,16 @@ test('AI games run cleanly with resources: stocks stay within the cap', () => {
     estates = s.tiles.filter((t) => t.improvement === 'estate').length;
     assert.ok(estates > 0, `seed ${seed}: the AI develops luxuries`);
     assert.ok(sparks > 0, `seed ${seed}: the AI earns Eurekas`);
+  }
+});
+
+test('horse nations breed more at each pasture; pirates smuggle iron through their ports', () => {
+  for (const [tribe, imp, key, want] of [['mongols', 'pasture', 'horses', 2], ['rome', 'pasture', 'horses', 1], ['pirates', 'port', 'iron', 1], ['rome', 'port', 'iron', 0]] as const) {
+    const s = game(tribe);
+    const c = cap(s);
+    const t = s.tiles.find((x) => x.owner === c.id && x.cityId === null)!;
+    for (const x of s.tiles) if (x.owner === c.id && (x.improvement === 'mine' || x.improvement === 'pasture' || x.improvement === 'port')) x.improvement = null;
+    t.improvement = imp;
+    assert.equal(stockYield(s, 0)[key], want, `${tribe} ${imp}`);
   }
 });
