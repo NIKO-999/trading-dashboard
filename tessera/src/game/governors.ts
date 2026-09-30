@@ -23,9 +23,13 @@ export const GOVERNORS: Record<GovKind, GovDef> = {
 export const APPOINT_COST = 5;
 export const RANK_TURNS = 8;
 
-export interface GovState { k: GovKind; since: number }
+/** `pid`: the empire that appointed them. A governor serves only that empire: when the city changes hands they are gone. */
+export interface GovState { k: GovKind; since: number; pid?: number }
 
-export const govOf = (c: City | undefined | null): GovState | undefined => (c?.data?.gov as GovState | undefined);
+export const govOf = (c: City | undefined | null): GovState | undefined => {
+  const g = c?.data?.gov as GovState | undefined;
+  return g && (g.pid === undefined || g.pid === c!.owner) ? g : undefined;
+};
 export const govRank = (s: GameState, g: GovState) => (s.turn - g.since >= RANK_TURNS ? 2 : 1);
 /** Governor slots: one, plus one for each era reached. */
 export const govSlots = (s: GameState, pid: number) => 1 + eraState(s, pid).n;
@@ -115,7 +119,7 @@ export function govDoAction(s: GameState, pid: number, t: Tile, id: string): boo
   if (!c || !GOV_KINDS.includes(k) || appointWhy(s, pid, c, k, true)) return false;
   const old = holding(s, pid, k);
   if (old) { const { gov: _g, ...rest } = old.c.data ?? {}; old.c.data = rest; }
-  c.data = { ...(c.data ?? {}), gov: { k, since: s.turn } satisfies GovState };
+  c.data = { ...(c.data ?? {}), gov: { k, since: s.turn, pid } satisfies GovState };
   emit({ type: 'toast', player: pid, text: `${GOVERNORS[k].name} appointed in ${c.name}. ${GOVERNORS[k].blurb}` });
   return true;
 }

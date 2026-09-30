@@ -103,7 +103,7 @@ function returnSoul(s: GameState, owner: number, u: Unit) {
     .find((t) => isLand(t) && !(t.x === u.x && t.y === u.y) && !unitAt(s, t.x, t.y) && (t.terrain !== 'mountain' || t.cityId !== null));
   if (!spot) return;
   const g = spawnUnit(s, 'guardian', owner, spot.x, spot.y, null);
-  g.data = { golden: true };
+  g.data = { golden: true, hpBonus: 2 * Math.floor(wonders / 2) }; // wonders make it tougher: its maximum rises too
   g.hp = UNITS.guardian.hp + 2 * Math.floor(wonders / 2);
 }
 

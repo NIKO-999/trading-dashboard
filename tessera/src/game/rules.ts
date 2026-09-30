@@ -36,7 +36,7 @@ import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 export const hasTech = (s: GameState, pid: number, tech: string | null) => tech === null || s.players[pid].techs.includes(tech);
 export const def = (u: Unit): UnitDef => UNITS[u.kind];
 /** Full health. A boat carrying a unit has that unit's health, as in Polytopia. */
-export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0) + heroHp(u);
+export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0) + heroHp(u) + Number(u.data?.hpBonus ?? 0); // hpBonus: e.g. a Golden Guardian raised by wonders
 export const cityById = (s: GameState, id: number | null) => (id === null ? undefined : s.cities.find((c) => c.id === id));
 export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) => u.x === x && u.y === y);
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));

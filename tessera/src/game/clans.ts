@@ -22,6 +22,7 @@
 //  - AI. Computer empires hunt raiders near their cities, march on camps near them once they have an army, and pay
 //    off a clan whose raiders are in their land while they are weak (`clanAi`, called from game/ai).
 import { TRIBES } from '../data/tribes';
+import { naturalAt } from '../data/naturals';
 import { UNITS } from '../data/units';
 import { eraIndex } from './eras';
 import { emit } from './events';
@@ -135,7 +136,7 @@ function tell(s: GameState, x: number, y: number, text: string, but = -1) {
 
 /** Open ground a raider can stand on (not a city, village, ruin, camp or lava). */
 const open = (s: GameState, t: Tile) => isLand(t) && t.terrain !== 'mountain' && t.terrain !== 'ice' && t.terrain !== 'bridge' && t.terrain !== 'platform'
-  && t.cityId === null && !t.village && !t.ruin && !isLava(t) && !campAt(s, t.x, t.y) && !clanCampAt(s, t.x, t.y);
+  && t.cityId === null && !t.village && !t.ruin && !isLava(t) && !campAt(s, t.x, t.y) && !clanCampAt(s, t.x, t.y) && !naturalAt(s, t.x, t.y); // nor a Natural Wonder
 
 /** Can a camp be pitched here? Unclaimed, out of every empire's sight, away from cities and other camps. */
 export function campSite(s: GameState, t: Tile): boolean {

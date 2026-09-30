@@ -124,7 +124,7 @@ export function createGame(opts: NewGameOptions): GameState {
     hintStep: 0,
     ...(opts.rebels ? { rebels: true } : {}),
     ...(opts.clans ? { clans: { camps: [], next: 0, seq: 1, cleared: 0 } } : {}),
-    ...(opts.diplomacy ? { diplo: newDiplo() } : {}),
+    ...(opts.diplomacy && opts.mode !== 'onecity' ? { diplo: newDiplo() } : {}), // the One City Challenge is a fight to the last: no treaties
   };
 
   const capitals = placeCapitals(rng, size, tribes.length);

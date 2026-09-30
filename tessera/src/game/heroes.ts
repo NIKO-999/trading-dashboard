@@ -235,7 +235,7 @@ function audit(s: GameState) {
     else p.hero.unit = null; // the empire is gone, and its hero with it
   }
   const strays = s.units.filter((u) => (u.carrying ?? u.kind) === 'hero' && !isHero(s, u));
-  for (const u of strays) s.units = s.units.filter((x) => x !== u);
+  for (const u of strays) { s.units = s.units.filter((x) => x !== u); const c = s.cities.find((k) => k.id === u.homeCity); if (c) c.units = Math.max(0, c.units - 1); } // frees its city's unit slot
 }
 
 // ---------------------------------------------------------------- the ability
