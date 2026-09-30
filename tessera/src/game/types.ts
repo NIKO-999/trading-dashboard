@@ -142,7 +142,8 @@ export interface Adopted { id: string; from: TribeId; turn: number; city: string
 export interface CultureOffer { from: TribeId; city: string; options: string[] }
 export interface CultureState { adopted: Adopted[]; offers: CultureOffer[] }
 
-export type GameMode = 'perfection' | 'domination';
+/** 'onecity': the One City Challenge: every empire keeps only its capital (no villages, no new cities; a conquered capital is razed). */
+export type GameMode = 'perfection' | 'domination' | 'onecity';
 export type Difficulty = 'easy' | 'normal' | 'hard';
 
 export interface LogEntry {

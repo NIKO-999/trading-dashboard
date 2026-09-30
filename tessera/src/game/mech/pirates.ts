@@ -183,6 +183,7 @@ function platformCheck(s: GameState, owner: number, t: Tile, needStars = true): 
 function foundCheck(s: GameState, owner: number, t: Tile, needStars = true): string | undefined | null {
   if (platOwner(t) !== owner || t.cityId !== null) return null;
   if (clusterCities(s, cluster(s, t, owner)).length) return null;
+  if (s.mode === 'onecity') return 'One City Challenge: no new cities';
   if (s.cities.some((c) => dist(c.x, c.y, t.x, t.y) < 3)) return 'Too close to another city';
   const at = unitAt(s, t.x, t.y);
   if (at && at.owner !== owner) return 'An enemy is in the way';

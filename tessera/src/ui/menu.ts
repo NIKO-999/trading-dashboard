@@ -287,7 +287,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         h('div', { class: 'seg-label' }, 'Terrain'),
         h('div', { class: 'seg wrap' }, ...TERRAIN_STYLES.map((t) => h('button', { class: choice.terrain === t.id ? 'on' : '', onclick: () => { choice.terrain = t.id; render(); } }, t.name))),
         h('p', { class: 'muted small terrain-note' }, TERRAIN_STYLES.find((t) => t.id === choice.terrain)!.blurb)),
-      seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
+      seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest'], ['onecity', 'One City']], () => choice.mode, (v) => { choice.mode = v; render(); }),
+      h('p', { class: 'muted small terrain-note' }, choice.mode === 'onecity'
+        ? 'One City Challenge: every empire keeps only its capital. There are no villages and no new cities. Grow tall, and raze a rival capital to knock them out (+1,000 score). Highest score after 30 turns, or the last empire standing, wins.'
+        : choice.mode === 'perfection' ? 'Highest score after 30 turns wins.' : 'Take every capital to win.'),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
       seg('Mountains', [['normal', 'Normal'], ['few', 'Few'], ['none', 'None']], () => choice.mountains ?? 'normal', (v) => { choice.mountains = v; render(); }),
       h('p', { class: 'muted small terrain-note' }, choice.mountains === 'none'
@@ -325,7 +328,7 @@ function showScores(handlers: MenuHandlers) {
         ? h('ol', { class: 'score-list' }, ...scores.map((s) =>
           h('li', { style: { '--tc': TRIBES[s.tribe].color } as Record<string, string> },
             h('span', { class: 'sc' }, s.score.toLocaleString()),
-            h('span', {}, `${TRIBES[s.tribe].people} · ${s.mode === 'perfection' ? '30 Turns' : 'Conquest'} · ${s.won ? 'Victory' : 'Defeat'}`),
+            h('span', {}, `${TRIBES[s.tribe].people} · ${s.mode === 'perfection' ? '30 Turns' : s.mode === 'onecity' ? 'One City' : 'Conquest'} · ${s.won ? 'Victory' : 'Defeat'}`),
             h('span', { class: 'muted' }, s.date),
           )))
         : h('p', { class: 'muted center' }, 'No games finished yet. Go make history!'),

@@ -205,6 +205,7 @@ export function outpostRoom(s: GameState, pid: number): number {
 }
 /** Why `pid` can't found an outpost on `t` (null when it can), ignoring the ship. */
 export function outpostWhy(s: GameState, pid: number, t: Tile): string | null {
+  if (s.mode === 'onecity') return 'One City Challenge: no new cities';
   if (s.players[pid].tribe === 'pirates') return 'The Brethren hold no land: raise platforms at sea instead'; // their Flotilla Republic (see mech/pirates)
   if (!isLand(t) || ['mountain', 'ice', 'platform', 'bridge'].includes(t.terrain) || isLava(t)) return 'Needs open land';
   if (t.cityId !== null || t.village || t.ruin || campAt(s, t.x, t.y)) return 'Something already stands here';

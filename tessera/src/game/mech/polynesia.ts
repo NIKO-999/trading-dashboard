@@ -180,6 +180,7 @@ const wakaBeside = (s: GameState, owner: number, t: Tile) => wakasOf(s, owner).f
 
 /** Why a new Great Waka cannot be built on shallow tile `t` (null: it can). */
 export function wakaCheck(s: GameState, owner: number, t: Tile): string | null {
+  if (s.mode === 'onecity') return 'One City Challenge: no new cities';
   if (t.terrain !== 'shallow') return 'Needs a sheltered harbour (shallow water)';
   if (tileOwnerPlayer(s, t) !== owner) return 'Only in your own waters';
   if (t.cityId !== null || unitAt(s, t.x, t.y)) return 'The water is occupied';

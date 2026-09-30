@@ -384,6 +384,9 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
   return TRAIN_BASE.map((k) => unitFor(tribe, k));
 }
 
+/** Actions that would add a city: barred in the One City Challenge. */
+const foundsCity = (id: string, t: Tile) => (id === 'capture' && t.village) || id === 'mech:waka' || id === 'mech:found' || id.startsWith('role:outpost:');
+
 /** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
@@ -396,6 +399,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
   if (wonderOn(s, t) && unitAt(s, t.x, t.y)?.owner !== pid) acts = acts.filter((a) => !a.id.startsWith('mech:'));
   const beast = unitAt(s, t.x, t.y);
+  if (s.mode === 'onecity') for (const a of acts) if (a.enabled && foundsCity(a.id, t)) { a.enabled = false; a.reason = 'One City Challenge: no new cities'; }
   for (const a of acts) {
     const why = hookBlock(s, pid, a.id, t) ?? (beast && isBeast(s, beast) && a.id.startsWith('mech:') ? 'A Great Beast cannot be tamed' : undefined) ?? (a.id === 'clear' && perkSum(s, pid, 'canopy') > 0 ? 'Sacred Canopy: the forest may not be cut' : undefined);
     if (why && a.enabled) { a.enabled = false; a.reason = why; }
@@ -651,6 +655,8 @@ function capture(s: GameState, u: Unit, t: Tile) {
     const c = foundCity(s, t.x, t.y, pid, false);
     joinCity(c);
     emit({ type: 'capture', player: pid, cityId: c.id, from: null });
+  } else if (t.cityId !== null && s.mode === 'onecity') {
+    razeCity(s, u, t); // the One City Challenge: a conquered capital is burned, never kept
   } else if (t.cityId !== null) {
     const c = cityById(s, t.cityId)!;
     const from = c.owner;
@@ -689,6 +695,25 @@ function capture(s: GameState, u: Unit, t: Tile) {
   return true;
 }
 
+/** Score for razing a rival's city in the One City Challenge. */
+export const RAZE_SCORE = 1000;
+
+/** One City Challenge: the conquered city is razed to a ruin-field and its empire (having no other) falls. */
+function razeCity(s: GameState, u: Unit, t: Tile) {
+  const c = cityById(s, t.cityId)!;
+  const from = c.owner;
+  s.cities = s.cities.filter((k) => k !== c);
+  for (const x of s.tiles) if (x.owner === c.id) x.owner = null;
+  t.cityId = null;
+  t.improvement = null;
+  t.terrain = 'field';
+  for (const x of s.units) if (x.homeCity === c.id) x.homeCity = null;
+  s.players[u.owner].bonusScore += RAZE_SCORE;
+  emit({ type: 'toast', player: u.owner, text: `${c.name} is razed! +${RAZE_SCORE} score.` });
+  emit({ type: 'toast', player: from, text: `${c.name}, your only city, has been razed.` });
+  checkElimination(s, from, u.owner);
+}
+
 export function checkElimination(s: GameState, pid: number, by: number) {
   const p = s.players[pid];
   if (!p.alive || citiesOf(s, pid).length > 0) return;
@@ -718,7 +743,7 @@ export function checkGameOver(s: GameState) {
     s.over = true;
     s.winner = bestScorer(s);
     s.diplo!.victors = alive.map((p) => p.id);
-  } else if (s.mode === 'perfection' && s.maxTurns > 0 && s.turn >= s.maxTurns) {
+  } else if ((s.mode === 'perfection' || s.mode === 'onecity') && s.maxTurns > 0 && s.turn >= s.maxTurns) {
     s.over = true;
     s.winner = bestScorer(s);
   }

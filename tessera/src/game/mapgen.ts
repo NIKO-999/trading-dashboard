@@ -105,7 +105,7 @@ export function createGame(opts: NewGameOptions): GameState {
     players,
     current: 0,
     turn: 0,
-    maxTurns: opts.mode === 'perfection' ? (opts.maxTurns ?? 30) : 0,
+    maxTurns: opts.mode === 'perfection' || opts.mode === 'onecity' ? (opts.maxTurns ?? 30) : 0,
     mode: opts.mode,
     difficulty: opts.difficulty ?? 'normal',
     nextId: 1,
@@ -372,7 +372,7 @@ function placeVillagesAndRuins(state: GameState, rng: Rng, capitals: { x: number
   const { size } = state;
   const taken: { x: number; y: number }[] = [...capitals];
   const candidates = rng.shuffle(state.tiles.filter((t) => t.terrain === 'field' || t.terrain === 'forest'));
-  const target = Math.round((size * size) / 20);
+  const target = state.mode === 'onecity' ? 0 : Math.round((size * size) / 20); // the One City Challenge has no villages
   let n = 0;
   for (const t of candidates) {
     if (n >= target) break;
