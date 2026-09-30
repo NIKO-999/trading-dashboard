@@ -15,6 +15,7 @@ import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoActio
 import { clanCampAt, enterCamp, raiderSlain } from './clans';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
+import { naturalCityIncome, naturalDefence, naturalFilter, naturalMove, naturalTechOff } from './naturals';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
 import { uniqueEdge } from './uniques';
 import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
@@ -97,6 +98,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   inc += cityRouteIncome(s, c); // trade routes pay both ends (see game/trade)
   inc += levelCityIncome(s, c); // raised tiles and Districts (see game/levels)
   inc += govCityIncome(s, c); // a Treasurer (see game/governors)
+  inc += naturalCityIncome(s, c); // the Skymirror Flats (see game/naturals)
   const pax = sum('pax');
   if (pax && net.linked.length && paxHolds(s, c.owner)) inc += pax; // Pax Romana
   {
@@ -137,7 +139,8 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const mult = (sparked(s, pid, tech) ? 1 - EUREKA_OFF : 1) * (knownByContact(s, pid, tech) ? 1 - CONTACT_OFF : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
   const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
   const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) // a Scholar (see game/governors)
-    - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
+    - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech)
+    - naturalTechOff(s, pid, base)); // the Glimmerdeep Grotto (see game/naturals)
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
@@ -423,6 +426,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   if (campAt(s, t.x, t.y) || clanCampAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain', 'luxury'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
   if (wonderOn(s, t) && unitAt(s, t.x, t.y)?.owner !== pid) acts = acts.filter((a) => !a.id.startsWith('mech:'));
+  acts = naturalFilter(s, pid, t, acts); // a Natural Wonder is never built on, harvested or settled (see game/naturals)
   const beast = unitAt(s, t.x, t.y);
   if (s.mode === 'onecity') for (const a of acts) if (a.enabled && foundsCity(a.id, t)) { a.enabled = false; a.reason = 'One City Challenge: no new cities'; }
   for (const a of acts) {
@@ -831,7 +835,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
 
   const start = tileAt(s, u.x, u.y)!;
   const highway = !naval && perkSum(s, pid, 'highway') > 0; // Paved Highways: roads ignore terrain
-  const range = Math.max(1, d.move + perkUnit(s, u, 'move') + hookStat(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0); // Horse Nation, Monsoon Traders
+  const range = Math.max(1, d.move + perkUnit(s, u, 'move') + hookStat(s, u, 'move') + seaBonus(s, u)) + (s.players[pid].tribe === 'lakota' && MOUNTED.includes(u.kind) ? 1 : 0) + (s.players[pid].tribe === 'swahili' && d.naval ? 1 : 0) + (naval ? 0 : naturalMove(s, u)); // Horse Nation, Monsoon Traders, Emberbreath Springs (see game/naturals)
   const queue: { t: Tile; left: number }[] = [{ t: start, left: range }];
   best[start.y * size + start.x] = range;
   while (queue.length) {
@@ -1001,7 +1005,8 @@ export const garrisonBonus = (s: GameState, c: City) => (undermined(s, c) ? 1 : 
 
 export const unitDef = (s: GameState, u: Unit) => def(u).def
   + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0)
-  + (s.players[u.owner].tribe === 'japan' && tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) === u.owner ? 1 : 0); // Home Ground
+  + (s.players[u.owner].tribe === 'japan' && tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) === u.owner ? 1 : 0) // Home Ground
+  + naturalDefence(s, u); // Mount Halcyra (see game/naturals)
 
 /** How far `u` can strike, with its empire's and skills' bonuses. */
 export const attackRange = (s: GameState, u: Unit) => def(u).range + hookStat(s, u, 'range') + perkRange(s, u);

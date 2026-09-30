@@ -32,6 +32,7 @@ import {
 } from './rules';
 import { isHero } from './heroes';
 import { roleSweep } from './roles';
+import { naturalGoals } from './naturals';
 import type { GameState, Tile, TribeId, Unit, UnitKind } from './types';
 import { isNeutral, nearBeast } from './wild';
 
@@ -359,7 +360,8 @@ function unitStep(s: GameState, pid: number, u: Unit): boolean {
   }
   if (u.kind === 'scout') {
     const { ruins, frontier } = scoutGoals(s, pid);
-    const close = ruins.filter((r) => dist(r.x, r.y, u.x, u.y) <= 8);
+    const wonders = naturalGoals(s, pid).filter((n) => isLand(tileAt(s, n.x, n.y)!)); // a Natural Wonder glimpsed past the known map (see game/naturals)
+    const close = [...ruins, ...wonders].filter((r) => dist(r.x, r.y, u.x, u.y) <= 8);
     return (close.length > 0 && stepToward(s, u, close)) || stepToward(s, u, frontier);
   }
   return false;

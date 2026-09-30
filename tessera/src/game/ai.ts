@@ -24,6 +24,8 @@ import { armyAi, outOfSupply, suppliedAt, supplyExempt } from './army';
 import { auxAi, auxTechWant, isSupport } from './auxiliaries';
 import { levelAi } from './levels';
 import { govAi as policyAi } from './government';
+import { naturalGoals, naturalWorth } from './naturals';
+import { naturalCity, naturalSites } from '../data/naturals';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -461,14 +463,17 @@ function findGoals(s: GameState, u: Unit): Goal[] {
 
   for (const t of s.tiles) {
     if (!isExplored(s, pid, t.x, t.y)) continue;
-    if (t.village && !unitAt(s, t.x, t.y)) goals.push({ x: t.x, y: t.y, w: 3 });
+    if (t.village && !unitAt(s, t.x, t.y)) goals.push({ x: t.x, y: t.y, w: 3 + naturalWorth(s, pid, t.x, t.y) }); // a village beside a Natural Wonder brings it in
     if (t.ruin) goals.push({ x: t.x, y: t.y, w: 2 });
     if (t.cityId !== null) {
       const c = s.cities.find((k) => k.id === t.cityId)!;
-      if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 }); // mist may hide it
+      const prize = naturalSites(s).some((n) => naturalCity(s, n) === c) ? 1 : 0; // it holds a Natural Wonder (see game/naturals)
+      if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: (s.turn > 5 ? 3 : 1) + prize }); // mist may hide it
     }
   }
   for (const r of raidSpots(s, pid, u)) goals.push({ x: r.x, y: r.y, w: 2 }); // an enemy trade trail to pillage (see game/trade)
+  // a Natural Wonder glimpsed past the edge of the map: go and find it (a reef only by sea; see game/naturals)
+  for (const n of naturalGoals(s, pid)) if (def(u).naval || isLand(tileAt(s, n.x, n.y)!)) goals.push({ x: n.x, y: n.y, w: 2 });
   const allyWar = allyFoes(s, pid); // honouring an alliance: go after whoever attacked an ally
   for (const e of s.units) {
     if (!hostile(s, pid, e.owner) || isNeutral(s, e.owner) || !isExplored(s, pid, e.x, e.y)) continue; // beasts are fought when they come near, not hunted

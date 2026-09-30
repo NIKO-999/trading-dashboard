@@ -467,3 +467,5 @@ ul.traits .effect { display: block; font-weight: 600; }
 .gov-now { flex: none; font-size: 0.8rem; font-weight: 700; color: #ffe39a; }
 .gov-pips { margin-left: 6px; display: inline-flex; gap: 3px; vertical-align: 1px; }
 .gov-pip { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; font-size: 0.68rem; color: var(--sc); background: color-mix(in srgb, var(--sc) 20%, #111); }
+.natural-head { margin: 4px 0 6px; font-size: 1.05rem; }
+.natural-list .stat-unknown { color: #ffe27a; }

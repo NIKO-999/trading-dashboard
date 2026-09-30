@@ -10,7 +10,7 @@ import { MAX_PAY, memOf } from '../../src/game/mech/aboriginal';
 import type { GameState, Tile } from '../../src/game/types';
 
 function setup() {
-  const s = createGame({ seed: 5, human: 'aboriginal', opponents: ['japan'], mode: 'perfection' });
+  const s = createGame({ seed: 5, human: 'aboriginal', opponents: ['japan'], mode: 'perfection', naturals: false }); // exact star counts: no Natural Wonder to discover (see test/naturals)
   // a stretch of 8 free tiles (no city or unit near), levelled into plain field for the test
   let spot: { x: number; y: number } | null = null;
   for (let y = 1; y < s.size - 1 && !spot; y++)

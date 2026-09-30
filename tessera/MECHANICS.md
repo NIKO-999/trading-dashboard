@@ -277,6 +277,25 @@ Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus
 - **12 terrain styles:** Balanced (each empire's homeland shapes its surroundings), Continents, Islands, Archipelago, Pangaea, Lakes, Highlands, Forests, Plains, Deserts, Wetlands, Frozen. Each fixes the land share, blob size and the mix of fields/forests/mountains/climates.
 - Capitals are placed far apart; villages and ruins are scattered; each empire's homeland biome (palette and terrain mix) comes from its climate.
 
+### Natural Wonders
+
+Eight rare landmarks laid down with the map (`game/naturals.ts`, art in `render/naturals.ts`): about **one per 150 tiles, at least 2** per map, each kind at most once. Never within 3 tiles of a capital, never on a village, ruin, resource or camp; they use their own random stream, so the rest of the map is unchanged (older saves simply have none).
+- **Discovery:** the first empire whose units or cities have one **in sight** gets **+5★ and +100 score** and a toast; later finders get **+50 score**. A map shared by an ally or a glimpse is not a sighting.
+- **Glimpse:** an unfound wonder within 2 tiles of your known map shows as a **pillar of light over the clouds**. Computer units and scouts head for glimpsed wonders; they also value villages next to one and enemy cities that hold one.
+- **Holding:** while it lies **inside your borders** its bonus is yours; it changes hands with the land (a toast tells you when you gain or lose one). Its tile can't be improved, harvested, roaded, settled or used for a World Wonder. Units may stand on a land wonder (its terrain still counts for movement); ships sail over the reef.
+- **Where to see them:** tap the tile (name, lore, bonus, holder, first finder); the **Wonders** tab of the Empires screen lists the ones you have found and the lights you have glimpsed.
+
+| Wonder | Terrain | Bonus while held |
+|---|---|---|
+| Thundermantle Falls | coastal mountain, field, forest | Your units on its city's land heal to full at the start of your turn |
+| Glimmerdeep Grotto | mountain, field, desert, tundra | Research 10% cheaper (at least 1★) |
+| Mount Halcyra | mountain | Your units on its city's land defend +1 |
+| The Hollowcrown Elder | forest, field, swamp | Its city +1 population every 5 turns |
+| The Opaline Reef | shallow water | Fish harvests grow +1 more; +1★ a turn per port you own |
+| The Skymirror Flats | desert, field, tundra | Its city +2★ a turn |
+| Emberbreath Springs | field, tundra, swamp, desert | Land units starting their move next to it move +1 |
+| The Lanternveil Glacier | tundra, mountain, field | +1 vision for all units and cities; +2★ whenever a city levels up |
+
 ## 7. Score (Perfection mode and tie-breaks)
 
 `explored tiles × 5 + territory tiles × 20 + city levels × 50 + cities × 100 + tech tiers × 100 + army cost × 5 + kills × 20 + bonus score` (temples, shrines and gardens add bonus score).

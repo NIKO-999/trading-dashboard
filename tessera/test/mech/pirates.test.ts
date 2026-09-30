@@ -12,7 +12,7 @@ import type { GameState, Tile } from '../../src/game/types';
 const has = (s: GameState, t: Tile, id: string, enabled = true) => tileActions(s, 0, t).some((a) => a.id === id && a.enabled === enabled);
 
 function game(opp: Parameters<typeof createGame>[0]['opponents'] = ['rome'], seed = 5) {
-  const s = createGame({ seed, human: 'pirates', opponents: opp, mode: 'perfection' });
+  const s = createGame({ seed, human: 'pirates', opponents: opp, mode: 'perfection', naturals: false }); // exact star counts: no Natural Wonder to discover (see test/naturals)
   s.players[0].explored.fill(true);
   s.players[0].stars = 40;
   return s;

@@ -12,7 +12,7 @@ import {
 import type { City, GameState, Tile } from '../../src/game/types';
 
 function setup(seed = 7) {
-  const s = createGame({ seed, human: 'lakota', opponents: ['japan'], mode: 'perfection' });
+  const s = createGame({ seed, human: 'lakota', opponents: ['japan'], mode: 'perfection', naturals: false }); // exact star counts: no Natural Wonder to discover (see test/naturals)
   const me = s.players.findIndex((p) => p.tribe === 'lakota');
   for (const p of s.players) p.explored.fill(true);
   const city = s.cities.find((c) => c.owner === me)!;

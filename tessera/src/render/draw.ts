@@ -27,6 +27,8 @@ import { drawDistrictBanners, drawDistrictGround, drawLevelIcon, drawLevelTile }
 import { wonderOn } from '../game/wonders';
 import { isLuxury, type Luxury } from '../game/goods';
 import { drawEstate, drawLuxury } from './goods';
+import { naturalAt } from '../data/naturals';
+import { drawNaturalGlimpse, drawNaturalIcon, drawNaturalTile } from './naturals';
 
 const FISH_ICON = FISH;
 const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
@@ -224,7 +226,7 @@ function drawStaticTop(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: 
   ctx.scale(cam.zoom, cam.zoom);
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
   for (const t of visibleTiles(s, cam, vw, vh)) {
-    if (!explored(t.x, t.y)) drawFog(ctx, s, t, explored);
+    if (!explored(t.x, t.y)) { drawFog(ctx, s, t, explored); drawNaturalGlimpse(ctx, s, t, viewer, FOG_LIFT); } // a light over a glimpsed Natural Wonder (see render/naturals)
     else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x), viewer);
   }
   drawDistrictBanners(ctx, s, explored); // Districts' banners (see render/levels)
@@ -528,9 +530,10 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   const P = TRIBES[t.biome].palette;
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
   const wonder = wonderOn(s, t); // a World Wonder takes the whole tile: it brings its own hill or trees (see render/wonders)
-  if (t.terrain === 'forest' && t.improvement !== 'lumber' && !wonder) drawForest(ctx, t, c.x, c.y, P);
-  if (t.terrain === 'mountain' && !wonder && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
-  if (isClimate(t.terrain)) drawClimate(ctx, t, c.x, c.y);
+  const natural = !!s.naturals && !!naturalAt(s, t.x, t.y); // so does a Natural Wonder: its own rock, tree, ice or salt (see render/naturals)
+  if (t.terrain === 'forest' && t.improvement !== 'lumber' && !wonder && !natural) drawForest(ctx, t, c.x, c.y, P);
+  if (t.terrain === 'mountain' && !wonder && !natural && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
+  if (isClimate(t.terrain) && !natural) drawClimate(ctx, t, c.x, c.y);
   // once a farm or mine is built it replaces the wild crop or ore it was built on
   if (isLuxury(t.resource)) { // luxuries, wild or worked (see render/goods)
     if (t.improvement === 'estate') { const o = tileOwnerPlayer(s, t); drawEstate(ctx, t.resource, c.x, c.y, o !== null && s.players[o] ? TRIBES[s.players[o].tribe].color : '#ddd'); }
@@ -549,6 +552,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   }
   drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
   drawClanCamp(ctx, s, t, c.x, c.y); // an outlaw camp (see game/clans)
+  if (natural) drawNaturalTile(ctx, s, t, c.x, c.y);
   if (wonder) drawWonderTile(ctx, s, t, c.x, c.y);
   drawRoleTile(ctx, s, t, c.x, c.y); // forts, grand works and undermined walls (see render/roles)
   drawLevelTile(ctx, s, t, c.x, c.y); // pastures, orchards, what each level adds, and level pips (see render/levels)
@@ -5311,6 +5315,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   const P = TRIBES[tribe].palette;
   if (icon in UNITS) return drawUnitSprite(ctx, icon as UnitKind, tribe, x, y + 12);
   if (icon.startsWith('wonder:')) return drawWonderIcon(ctx, icon.slice(7), x, y); // World Wonders (see render/wonders)
+  if (icon.startsWith('natural:')) return drawNaturalIcon(ctx, icon.slice(8), x, y); // Natural Wonders (see render/naturals)
   if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
   if (icon.startsWith('aux:') && drawAuxIcon(ctx, icon, tribe, x, y)) return; // a Healer's Convert (see render/auxiliaries)
   if (icon.startsWith('level:') && drawLevelIcon(ctx, icon, tribe, x, y)) return; // tile levels (see render/levels)

@@ -195,7 +195,16 @@ export interface GameState {
   trade?: TradeState;
   /** Raider Clans: outlaw camps whose raiders pillage the empires (see game/clans). Missing when off and in older saves. */
   clans?: ClanState;
+  /** Natural Wonders: rare landmarks placed with the map (see game/naturals). Missing in older saves (no wonders). */
+  naturals?: NaturalState;
 }
+
+/**
+ * A Natural Wonder on the map: which one, where, and the empires that have seen it, first discoverer first. `held` is
+ * the empire whose borders held it at the last check (for the "now yours" / "lost" notices).
+ */
+export interface NaturalSite { id: string; x: number; y: number; found: number[]; turn?: number; held?: number | null }
+export interface NaturalState { sites: NaturalSite[] }
 
 /**
  * A permanent trade route between two cities (`a`: the trader's home, `b`: where it settled). `pa`/`pb` are the owners

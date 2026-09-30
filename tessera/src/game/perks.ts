@@ -8,6 +8,7 @@ import { condActive } from './alignment';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { WONDER_BY_ID, wondersHeldBy } from '../data/wonders';
+import { naturalPerks } from '../data/naturals';
 import type { GameState, Unit, UnitKind } from './types';
 
 export type PerkWho = 'all' | 'ranged' | 'mounted' | 'naval' | 'melee' | 'siege' | 'unique' | 'recon';
@@ -66,6 +67,7 @@ export function perksOf(s: GameState, pid: number): Perk[] {
   for (const a of s.players[pid].culture?.adopted ?? []) out.push(...(a.perks ?? [])); // traditions taken from conquered peoples (see culture.ts)
   for (const id of wondersHeldBy(s, pid)) out.push(...WONDER_BY_ID[id].perks); // World Wonders it holds (see game/wonders)
   out.push(...govPerks(s.players[pid], s.turn)); // its government and the policy cards in force (see game/government)
+  out.push(...naturalPerks(s, pid)); // Natural Wonders in its borders (see game/naturals)
   return out;
 }
 

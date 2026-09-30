@@ -16,7 +16,7 @@ import { drawTradeRoutes } from '../src/render/trade';
 
 /** A blank field map (every city, unit, resource and border cleared) with `tribes` knowing Roads and Sailing and rich. */
 function sandbox(tribes: TribeId[], opts: Partial<Parameters<typeof createGame>[0]> = {}): GameState {
-  const s = createGame({ seed: 5, human: tribes[0], opponents: tribes.slice(1), mode: 'perfection', ...opts });
+  const s = createGame({ seed: 5, human: tribes[0], opponents: tribes.slice(1), mode: 'perfection', naturals: false, ...opts }); // exact star counts: no Natural Wonder to discover
   for (const t of s.tiles) Object.assign(t, { terrain: 'field', resource: null, improvement: null, road: false, village: false, ruin: false, cityId: null, owner: null, data: undefined });
   s.cities = [];
   s.units = [];

@@ -7,6 +7,7 @@ import { setupWild } from './wild';
 import { newDiplo } from './diplomacy';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { placeLuxuries } from './goods';
+import { discoverNaturals, placeNaturals } from './naturals';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
 
@@ -66,6 +67,8 @@ export interface NewGameOptions {
   diplomacy?: boolean;
   /** How many mountains: 'normal', 'few' (about a third) or 'none' at all. */
   mountains?: 'normal' | 'few' | 'none';
+  /** Natural Wonders (see game/naturals). On unless switched off (false leaves them out, as older games had none). */
+  naturals?: boolean;
 }
 
 // Map edge length by map size and number of empires.
@@ -140,6 +143,7 @@ export function createGame(opts: NewGameOptions): GameState {
   if (peaks === 0) flattenMountains(state); // homelands may have put a peak down since
   hookSetup(state);
   if (opts.wild) setupWild(state, makeRng(seed ^ 0x5eed)); // its own stream, so the rest of the map is the same either way
+  if (opts.naturals !== false) placeNaturals(state, makeRng(seed ^ 0x9a7e)); // Natural Wonders, likewise on their own stream
   for (const p of players) revealAround(state, p.id);
   return state;
 }
@@ -457,8 +461,9 @@ export function spawnUnit(state: GameState, kind: UnitKind, owner: number, x: nu
 export function revealAround(state: GameState, playerId: number) {
   const p = state.players[playerId];
   const extra = perkSum(state, playerId, 'vision'); // traits and skill-line perks
+  const sight = state.naturals ? new Set<number>() : null; // what its units and cities see right now (for Natural Wonders)
   const mark = (x: number, y: number, r: number) => {
-    for (const t of area(state, x, y, Math.max(1, r + extra))) p.explored[t.y * state.size + t.x] = true;
+    for (const t of area(state, x, y, Math.max(1, r + extra))) { p.explored[t.y * state.size + t.x] = true; sight?.add(t.y * state.size + t.x); }
   };
   for (const c of state.cities) if (c.owner === playerId) mark(c.x, c.y, c.borderRadius + 1);
   const fogsight = perkSum(state, playerId, 'fogsight') > 0; // Highland Snipers: ranged units on a peak see as far as they shoot
@@ -473,6 +478,7 @@ export function revealAround(state: GameState, playerId: number) {
   const seen = (x: number, y: number) => p.explored[y * state.size + x];
   for (const u of state.units) if (u.owner !== playerId && seen(u.x, u.y)) meet(state, playerId, u.owner);
   for (const c of state.cities) if (c.owner !== playerId && seen(c.x, c.y)) meet(state, playerId, c.owner);
+  if (sight) discoverNaturals(state, playerId, sight); // a Natural Wonder now in sight is found (see game/naturals)
 }
 
 /** Records that two empires have met (seen each other's units or cities, or fought). */

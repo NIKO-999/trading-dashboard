@@ -50,6 +50,8 @@ import { adopt, offersOf } from '../game/culture';
 import { knows, wonderDescribe } from '../game/wonders';
 import { WONDER_BY_ID } from '../data/wonders';
 import { celebrateWonder, wonderChip, wonderHud, wondersList } from './wonders';
+import { naturalDefence, naturalDescribe } from '../game/naturals';
+import { naturalsList } from './naturals';
 import { ChipRow, economyChip, shortChip, skillChip, unrestChip, type HudLine } from './hudchips';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
@@ -943,7 +945,7 @@ export class GameView {
       const hs = hero ? owner.hero! : null;
       const stats = h('span', { class: 'stat-line' },
         h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0)))),
-        h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
+        h('span', {}, 'Defence ', h('b', {}, String(d.def)), naturalDefence(this.s, u) ? h('span', { class: 'bonus' }, ` +${naturalDefence(this.s, u)}`) : null, defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
           shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} shield wall`) : null), // formations (see game/army)
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
@@ -1663,9 +1665,10 @@ export class GameView {
       list.replaceChildren(...show());
     } }, label);
     const go = (x: number, y: number) => { close(); this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450); this.select({ x, y, mode: 'tile' }); };
-    const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', () => [wondersList(s, this.me, go)]), tab(`Trade${routeIncome(s, this.me) ? ` +${routeIncome(s, this.me)}★` : ''}`, () => [tradeList(s, this.me, go)]));
+    const wonderTab = () => [naturalsList(s, this.me, go), wondersList(s, this.me, go)].filter((x): x is HTMLElement => !!x); // Natural Wonders first (see ui/naturals)
+    const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', wonderTab), tab(`Trade${routeIncome(s, this.me) ? ` +${routeIncome(s, this.me)}★` : ''}`, () => [tradeList(s, this.me, go)]));
     (tabs.children[wonders ? 1 : 0] as HTMLElement).classList.add('on');
-    list.replaceChildren(...(wonders ? [wondersList(s, this.me, go)] : rows));
+    list.replaceChildren(...(wonders ? wonderTab() : rows));
     const diplo = diploOn(s) ? h('button', { class: 'mini-btn diplo-open', onclick: () => { close(); this.openDiplomacy(); } }, 'Diplomacy: treaties, trade & tribute') : null;
     const close = modal({ title: 'Empires', body: diplo ? [diplo, tabs, list] : [tabs, list], dismissable: true, cls: 'stats' });
   }
@@ -1708,6 +1711,8 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
   if (wild) return wild;
   const wonder = wonderDescribe(s, t, viewer); // a World Wonder standing or rising (see game/wonders)
   if (wonder) return wonder;
+  const natural = naturalDescribe(s, t, viewer); // a Natural Wonder: its lore, its bonus and who holds it (see game/naturals)
+  if (natural) return natural;
   const d = describePlainTile(s, t, viewer);
   const ash = isAsh(t) ? ` ${ASH_NOTE}` : '';
   const trails = liveRoutes(s).filter((r) => r.path.includes(t.y * s.size + t.x) && t.cityId === null); // a trade trail runs here (see game/trade)

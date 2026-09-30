@@ -14,6 +14,7 @@ import { cultureUnrest } from './rebels';
 import { diploTurnStart } from './diplomacy';
 import { wildRound } from './wild';
 import { wonderTurnStart } from './wonders';
+import { naturalTurnStart } from './naturals';
 import { tradeSweep } from './trade';
 import { outOfSupply, supplyTurnStart } from './army';
 import type { GameState } from './types';
@@ -58,6 +59,7 @@ export function startTurn(s: GameState) {
   hookTurnStart(s, p.id);
   skillTurnStart(s, p.id);
   wonderTurnStart(s, p.id); // a wonder site on land it has lost is closed (see game/wonders)
+  naturalTurnStart(s, p.id); // Natural Wonders won or lost, the Falls heal, the Elder grows its city (see game/naturals)
   revealAround(s, p.id);
   checkSparks(s, p.id); // Eurekas (see game/sparks)
   govTurnStart(s, p.id); // Stewards grow their cities, governors are promoted (see game/governors)
