@@ -20,6 +20,8 @@ import { drawHeroGround } from './heroes';
 import { drawRoleGround } from './roles';
 import { drawArmyGround } from './army';
 import { drawAuxGround } from './auxiliaries';
+import { CLAN_COLOR, drawClanGround } from './clans';
+import { isRaider } from '../game/clans';
 import { drawTradeRoutes } from './trade';
 import { isHero } from '../game/heroes';
 
@@ -106,6 +108,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   drawRoleGround(ctx, s, viewer); // rings under units stationed in a city (see render/roles)
   drawArmyGround(ctx, s, viewer); // formation cords and out-of-supply marks (see render/army)
   drawAuxGround(ctx, s, viewer); // healers' rings and the wounded they tend (see render/auxiliaries)
+  drawClanGround(ctx, s, viewer); // rough rust rings under the Raider Clans' raiders (see render/clans)
 
   const units = shownUnits(s, viewer, cam, vw, vh);
   const motion = new Map<number, Motion>();
@@ -231,7 +234,7 @@ function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewe
   const before = ov.fx.moves.get(u.id)?.before;
   const fits = (k: UnitKind) => !!UNITS[k].naval === m.water;
   const kind = before && !fits(u.kind) && fits(before) ? before : u.kind;
-  drawFigure(ctx, kind, tribe, pxScale, spent ? 'spent' : 'base', exact, x, y, us, m.sx, m.sy, m.facing < 0);
+  drawFigure(ctx, kind, tribe, pxScale, spent ? 'spent' : isRaider(s, u) ? 'raider' : 'base', exact, x, y, us, m.sx, m.sy, m.facing < 0); // raiders in drab hides (see render/clans)
   if (flashing) drawFigure(ctx, kind, tribe, pxScale, 'white', exact, x, y, us, m.sx, m.sy, m.facing < 0, (1 - flashK) * 0.85);
 }
 
@@ -1196,7 +1199,7 @@ export function hpBadge(s: GameState, u: Unit, ov: Overlay, cam: Camera, m: Moti
   if (!badgeShown(s, u, ov, hp, detail)) return null;
   const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
   if (ov.hudBottom && sp.y < ov.hudBottom) return null; // up under the score bar it would only muddle the numbers
-  const color = isRogueUnit(s, u) ? REBEL_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
+  const color = isRogueUnit(s, u) ? REBEL_COLOR : isRaider(s, u) ? CLAN_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
   return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh, hero: isHero(s, u), lvl: s.players[u.owner].hero?.lvl ?? 1 };
 }
 

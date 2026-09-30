@@ -17,6 +17,7 @@ import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common'
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
 import { drawCamp, drawVolcano, drawWildGround } from './wild';
+import { drawClanCamp } from './clans';
 import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
 import { drawWonderIcon, drawWonderTile } from './wonders';
 import { drawBridgeGround, drawRoleIcon, drawRoleTile } from './roles';
@@ -547,6 +548,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
     if (city && cityVisibleTo(s, viewer, city) && !city.data?.waka) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it; a Great Waka is drawn by render/mech/polynesia
   }
   drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
+  drawClanCamp(ctx, s, t, c.x, c.y); // an outlaw camp (see game/clans)
   if (wonder) drawWonderTile(ctx, s, t, c.x, c.y);
   drawRoleTile(ctx, s, t, c.x, c.y); // forts, grand works and undermined walls (see render/roles)
   drawLevelTile(ctx, s, t, c.x, c.y); // pastures, orchards, what each level adds, and level pips (see render/levels)

@@ -12,6 +12,7 @@ import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapg
 import { alliedVictory, diploFought, hostile, mayStep } from './diplomacy';
 import { heroDiscount, heroHp, heroSpent } from './heroes';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
+import { clanCampAt, enterCamp, raiderSlain } from './clans';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
@@ -415,8 +416,8 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   govDiscount(s, pid, t, base); // a Marshal (see game/governors)
   specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
   let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t)];
-  // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
-  if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id) && !a.id.startsWith('level:'));
+  // a mercenary camp, an outlaw camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/clans, game/wonders)
+  if (campAt(s, t.x, t.y) || clanCampAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain', 'luxury'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
   if (wonderOn(s, t) && unitAt(s, t.x, t.y)?.owner !== pid) acts = acts.filter((a) => !a.id.startsWith('mech:'));
   const beast = unitAt(s, t.x, t.y);
@@ -926,6 +927,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
     u.attacked = true;
   }
   if (t.ruin) openRuin(s, u, t);
+  enterCamp(s, u, t); // an outlaw camp is burned by the unit that walks in (see game/clans)
   revealAround(s, u.owner);
   supplyAfterMove(s, u); // back in supply: the mark comes off (see game/army)
   hookAfterMove(s, u, from, t); // ambushes and other reactions to a finished move
@@ -1079,6 +1081,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
       a.x = d.x;
       a.y = d.y;
       if (t.ruin) openRuin(s, a, t);
+      enterCamp(s, a, t); // (see game/clans)
       revealAround(s, a.owner);
     }
   } else if (ret > 0) {
@@ -1106,6 +1109,7 @@ export function removeUnit(s: GameState, u: Unit, killer: Unit | null = null) {
   if (c) c.units = Math.max(0, c.units - 1);
   hookUnitDied(s, u, killer);
   beastSlain(s, u, killer); // a Great Beast pays its bounty (see game/wild)
+  raiderSlain(s, u, killer); // and a raider a small one (see game/clans)
 }
 
 export const livingPlayers = (s: GameState): Player[] => s.players.filter((p) => p.alive);

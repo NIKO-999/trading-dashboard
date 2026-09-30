@@ -60,6 +60,8 @@ export interface NewGameOptions {
   wild?: boolean;
   /** Rebellions: conquered cities left ungarrisoned may break away as Rogue States (see game/rebels). Off unless asked for; the new-game screen defaults it on. */
   rebels?: boolean;
+  /** Raider Clans: outlaw camps appear in the wilds and raid the empires (see game/clans). Off unless asked for; the new-game screen defaults it on. */
+  clans?: boolean;
   /** Diplomacy: peace, alliances, trade and tribute between empires that have met (see game/diplomacy). Off unless asked for; the new-game screen defaults it on. */
   diplomacy?: boolean;
   /** How many mountains: 'normal', 'few' (about a third) or 'none' at all. */
@@ -115,6 +117,7 @@ export function createGame(opts: NewGameOptions): GameState {
     log: [],
     hintStep: 0,
     ...(opts.rebels ? { rebels: true } : {}),
+    ...(opts.clans ? { clans: { camps: [], next: 0, seq: 1, cleared: 0 } } : {}),
     ...(opts.diplomacy ? { diplo: newDiplo() } : {}),
   };
 

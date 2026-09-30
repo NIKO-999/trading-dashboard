@@ -17,6 +17,8 @@ import {
   moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, attackRange, type Action } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
+import { clanDescribe, isRaider, raiderLine } from '../game/clans';
+import { CLAN_COLOR } from '../render/clans';
 import { surgingNodes } from '../game/skills';
 import { perkRange } from '../game/perks';
 import { UNIQUE_ABILITY } from '../game/uniques';
@@ -927,6 +929,7 @@ export class GameView {
       const status = u.owner === this.me
         ? u.moved && u.attacked ? 'Done for this turn.' : this.ov.attacks.length ? `Tap a red ring to attack${attackRange(this.s, u) > 1 ? ` (it shoots up to ${attackRange(this.s, u)} tiles)` : ''}${!u.moved && this.ov.moves.length ? ', or a blue ring to move' : ''}.` : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
         : isRogueUnit(this.s, u) ? `A rebel of the Rogue State of ${cityById(this.s, u.data!.rogue as number)?.name ?? 'a lost city'}. It holds its ground and strikes any unit next to it at the end of each round.`
+        : isRaider(this.s, u) ? raiderLine(this.s, u, this.me) // an outlaw of a Raider Clan (see game/clans)
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
           : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
@@ -944,6 +947,8 @@ export class GameView {
         h('div', { class: 'sheet-title' },
           isRogueUnit(this.s, u)
             ? h('span', { class: 'tribe-chip', style: { '--tc': REBEL_COLOR } as Record<string, string> }, 'Rebels')
+            : isRaider(this.s, u)
+            ? h('span', { class: 'tribe-chip', style: { '--tc': CLAN_COLOR } as Record<string, string> }, 'Raiders')
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
@@ -1681,6 +1686,8 @@ export class GameView {
 }
 
 function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
+  const clan = clanDescribe(s, t, viewer); // an outlaw camp and its temper (see game/clans)
+  if (clan) return clan;
   const wild = wildDescribe(s, t, viewer); // camps, volcanoes and lava (see game/wild)
   if (wild) return wild;
   const wonder = wonderDescribe(s, t, viewer); // a World Wonder standing or rising (see game/wonders)

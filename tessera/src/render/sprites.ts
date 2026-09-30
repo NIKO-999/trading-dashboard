@@ -10,7 +10,8 @@ const MAX_SPRITES = 72;
 /** Total bitmap pixels the cache may hold (iOS caps canvas memory; zoomed-in sprites are big). */
 const MAX_PIXELS = 16_000_000;
 
-export type SpriteVariant = 'base' | 'spent' | 'white';
+/** 'raider': a Raider Clan's outlaw, dulled to rough, earthy hides so it never reads as an empire's (see render/clans). */
+export type SpriteVariant = 'base' | 'spent' | 'white' | 'raider';
 /** A unit bitmap with `q` pixels per unit-space unit and the feet at pixel (ox, oy). */
 interface Sprite { canvas: HTMLCanvasElement; q: number; ox: number; oy: number }
 const cache = new Map<string, Sprite>();
@@ -38,6 +39,7 @@ export function unitSprite(kind: UnitKind, tribe: TribeId, pxScale: number, vari
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(q, 0, 0, q, ox, oy);
   if (variant === 'spent') setTint('#6f6f6f', 0.45);
+  if (variant === 'raider') setTint('#5c3b22', 0.5);
   drawUnitSprite(ctx, kind, tribe, 0, 0, { shadow: false });
   setTint(null);
   if (variant === 'white') {

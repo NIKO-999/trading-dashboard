@@ -15,6 +15,7 @@ import {
 import type { GameState, Tile, Unit } from './types';
 import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
+import { campTargets, clanAi, raidThreats } from './clans';
 import { wonderAi } from './wonders';
 import { allyFoes, diploAi, hostile } from './diplomacy';
 import { isTraderKind, raidSpots, tradeAi } from './trade';
@@ -46,6 +47,7 @@ export function aiStep(s: GameState): boolean {
   if (diploAi(s, pid)) return true; // a treaty offered, a war declared, tribute demanded (see game/diplomacy)
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
   if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
+  if (clanAi(s, pid)) return true; // pay off raiders it is too weak to fight (see game/clans)
   if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
@@ -176,7 +178,8 @@ function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
   const myUnits = s.units.filter((u) => u.owner === pid && !isRoleUnit(u) && !isSupport(u)); // role units, scouts and healers don't fight (see game/roles, game/auxiliaries)
-  const enemiesNear = s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
+  const enemiesNear = s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3))
+    || raidThreats(s, pid).length > 0; // raiders in its land (see game/clans)
   const abroad = targetsOnlyOverseas(s, pid);
 
   // Harvest: cheapest population gain first.
@@ -470,6 +473,8 @@ function findGoals(s: GameState, u: Unit): Goal[] {
     const nearMine = myCities.some((c) => dist(c.x, c.y, e.x, e.y) <= 3);
     goals.push({ x: e.x, y: e.y, w: nearMine ? 4 : allyWar.has(e.owner) ? 3 : 1 });
   }
+  for (const r of raidThreats(s, pid)) goals.push({ x: r.x, y: r.y, w: 4 }); // raiders in its land are hunted down (see game/clans)
+  for (const c of campTargets(s, pid)) goals.push({ x: c.x, y: c.y, w: 3 }); // and a camp near home is burned once there is an army
   // Exploration frontier: explored tiles bordering the unknown.
   if (goals.length < 3) {
     for (const t of s.tiles) {

@@ -27,6 +27,7 @@ import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { spawnUnit } from './mapgen';
 import { attack, attackOptions, citiesOf, doAction, maxHp, removeUnit, tileActions, tileOwnerPlayer, unitAt, type Action } from './rules';
 import { rogueRound } from './rebels';
+import { clanActions, clanDoAction, clanRound } from './clans';
 import type { Rng } from './rng';
 import type { GameState, Player, Tile, Unit, UnitKind, WildCamp } from './types';
 
@@ -193,6 +194,7 @@ function pickOffer(r: number): UnitKind {
 /** The wild's own turn, once a round after the last empire has played (called by endTurn). */
 export function wildRound(s: GameState) {
   rogueRound(s); // Rogue States hold their cities whether or not wild events are on (see game/rebels)
+  clanRound(s); // so do the Raider Clans (see game/clans)
   if (!s.wild) return;
   coolLava(s);
   for (const t of s.tiles) {
@@ -344,6 +346,7 @@ export const bidOf = (c: WildCamp, pid: number) => c.bids.find((b) => b.pid === 
 
 /** The camp's entries in `pid`'s tile menu: sealed bids at three levels, or raising and withdrawing your own. */
 export function wildActions(s: GameState, pid: number, t: Tile): Action[] {
+  if (s.clans) { const clan = clanActions(s, pid, t); if (clan.length) return clan; } // a Raider Clan's camp (see game/clans)
   const c = campAt(s, t.x, t.y);
   if (!c || !c.offer || !canBid(s, pid, c)) return [];
   const p = s.players[pid];
@@ -366,6 +369,7 @@ export function wildActions(s: GameState, pid: number, t: Tile): Action[] {
 
 /** Performs a camp action from the tile menu (the rules have already charged its cost). */
 export function wildDoAction(s: GameState, pid: number, t: Tile, id: string): boolean {
+  if (id.startsWith('wild:clan:')) return clanDoAction(s, pid, t, id); // a Raider Clan's camp (see game/clans)
   const c = campAt(s, t.x, t.y);
   if (!c) return false;
   if (id === 'wild:withdraw') {

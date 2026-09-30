@@ -191,6 +191,8 @@ export interface GameState {
   diplo?: DiploState;
   /** Trade routes opened by Traders and Trade Ships (see game/trade). Missing in older saves and until the first is opened. */
   trade?: TradeState;
+  /** Raider Clans: outlaw camps whose raiders pillage the empires (see game/clans). Missing when off and in older saves. */
+  clans?: ClanState;
 }
 
 /**
@@ -273,4 +275,24 @@ export interface WildState {
   camps: WildCamp[];
   /** Rounds at which a slain Great Beast rises again somewhere else. */
   respawn: { kind: UnitKind; turn: number }[];
+}
+
+/** An outlaw camp's temper, picked at random when it appears (see game/clans). */
+export type ClanKind = 'horse' | 'sea' | 'hill' | 'wolf';
+/** A Raider Clan's camp; its raiders are neutral units with `data.clan` = `id` (see game/clans). */
+export interface ClanCamp {
+  id: number;
+  x: number;
+  y: number;
+  kind: ClanKind;
+  name: string;
+  founded: number; // the round it appeared
+  spawn: number; // the round its next raider rides out
+  truce: { pid: number; until: number }[]; // empires that paid it off, and until which round it leaves them alone
+}
+export interface ClanState {
+  camps: ClanCamp[];
+  next: number; // the earliest round a new camp may appear
+  seq: number; // the next camp id
+  cleared: number; // camps destroyed so far
 }

@@ -6,6 +6,7 @@
 // performance.now()). Pure: no page or canvas access, so it can be tested directly.
 import { cityVisibleTo } from '../game/mech';
 import { isRogueCity, rogueLook } from '../game/rebels';
+import { isRaider } from '../game/clans';
 import type { GameState, TribeId, UnitKind } from '../game/types';
 import { Camera, TW, WATER_DROP, tileCenter } from './camera';
 import { isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
@@ -83,7 +84,7 @@ export function livingScene(s: GameState, viewer: number, cam: Camera, ov: Overl
       : { period: m.water ? WATER_BOB_MS : LAND_BOB_MS, at: (now) => (lift(unitMotion(s, u, ov.fx, now, ready)) - lift(m)) * zoom };
     const feet = cam.toScreen(m.x, m.y - m.lift + 5);
     scene.units.push({
-      id: u.id, kind: u.kind, tribe: rogueLook(s, u) ?? s.players[u.owner].tribe, variant: unitSpent(s, u, viewer) ? 'spent' : 'base',
+      id: u.id, kind: u.kind, tribe: rogueLook(s, u) ?? s.players[u.owner].tribe, variant: unitSpent(s, u, viewer) ? 'spent' : isRaider(s, u) ? 'raider' : 'base',
       x: snap(feet.x), y: snap(feet.y), flip: (ov.fx.facing.get(u.id) ?? 1) < 0, bob,
     });
     const b = hpBadge(s, u, ov, cam, m, detail, kh, us);
