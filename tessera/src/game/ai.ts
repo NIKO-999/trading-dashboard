@@ -1,5 +1,6 @@
 import { TECH_BY_ID } from '../data/techs';
 import { LINE_PARENT } from '../data/uniqueTechs';
+import { festivalAi } from './festival';
 import { govAi } from './governors';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
@@ -273,6 +274,8 @@ function economyStep(s: GameState, pid: number): boolean {
   }
   // Rich with nothing left to research: put the treasury into troops rather than hoard it.
   if (p.stars >= 25 && !options.length && trainBest(s, pid, false)) return true;
+  // Still rich: a festival turns the hoard into growth and fame (see game/festival).
+  if (festivalAi(s, pid, options.length ? 30 : 15)) return true;
   return false;
 }
 

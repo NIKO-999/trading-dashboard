@@ -191,6 +191,9 @@ A tech that an empire you have **met** already knows costs **20% less** (it stac
 ### Eras and Ages
 Empires move through four eras as they learn techs: **Ancient → Classical (6 techs) → Medieval (12) → Renaissance (20)**. Entering an era grows every city (+1, +1, +2), pays 5 / 10 / 15★ and 150 score, and is announced to every empire that has met you. Your **Era Score** during the era just ended (Eurekas, battles won up to 4, city levels gained, wonders ×3) sets the next 5 turns: **7+ → Golden Age** (+1★ in every city), **2 or less → Dark Age** (techs 25% cheaper while you rebuild). The 🏛 chip shows the era, the Age and the score.
 
+### City Festivals
+Any city may hold **one festival a turn** from its tile menu: **+1 population and +50 score**. It costs **12★, +6★ for each festival that city has held**, so it is a place for spare Stars, not a shortcut. The computer holds festivals when it has nothing better to buy.
+
 ### Governors
 Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus 1 for each era reached**, and each kind at most once. Appointing a kind already serving elsewhere moves them (their clock restarts). After **8 turns in office** a governor is promoted to rank 2.
 - **Steward:** the city grows +1 every 3 turns (every 2 at rank 2).
