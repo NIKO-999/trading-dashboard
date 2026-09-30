@@ -6,8 +6,8 @@ import { addPop, cityById, citiesOf, doAction, type Action } from './rules';
 import type { City, GameState, Tile } from './types';
 
 export const FEST_BASE = 12;
-export const FEST_STEP = 6;
-export const FEST_SCORE = 50;
+export const FEST_STEP = 8;
+export const FEST_SCORE = 30;
 
 const held = (c: City) => Number(c.data?.fests ?? 0);
 export const festCost = (c: City) => FEST_BASE + FEST_STEP * held(c);

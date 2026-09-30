@@ -1,6 +1,6 @@
 import { emit } from '../events';
 import { dist, isLand, neighbors, tileAt } from '../grid';
-import { addPop, attackOptions, cityById, citiesOf, def, maxHp, moveOptions, moveUnit, tileOwnerPlayer, unitAt } from '../rules';
+import { addPop, attackOptions, cityById, citiesOf, def, maxHp, moveOptions, moveUnit, tileOwnerPlayer, isExplored, unitAt } from '../rules';
 import type { Action } from '../rules';
 import type { City, GameState, Improvement, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
@@ -224,6 +224,8 @@ export const mech: Mechanic = {
       if (attackOptions(s, u).length) continue;
       const here = tileAt(s, u.x, u.y)!;
       if (here.village || (here.cityId !== null && cityById(s, here.cityId)!.owner !== owner)) continue;
+      // a village waiting to be claimed nearby comes first: the ordinary moves take the raider there
+      if (s.tiles.some((t) => t.village && dist(u.x, u.y, t.x, t.y) <= 5 && isExplored(s, owner, t.x, t.y))) continue;
       let best: { x: number; y: number; v: number } | null = null;
       for (const o of moveOptions(s, u)) {
         const t = tileAt(s, o.x, o.y)!;
