@@ -4,6 +4,7 @@ import { UNITS } from '../data/units';
 import { hookSetup } from './mech';
 import { perkRange, perkSum, unitMatches } from './perks';
 import { setupWild } from './wild';
+import { setupFreeCities } from './citystates';
 import { newDiplo } from './diplomacy';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { placeLuxuries } from './goods';
@@ -63,6 +64,8 @@ export interface NewGameOptions {
   rebels?: boolean;
   /** Raider Clans: outlaw camps appear in the wilds and raid the empires (see game/clans). Off unless asked for; the new-game screen defaults it on. */
   clans?: boolean;
+  /** Free Cities: neutral city-states that take envoys from the empires (see game/citystates). Off unless asked for; the new-game screen defaults it on. */
+  freeCities?: boolean;
   /** Diplomacy: peace, alliances, trade and tribute between empires that have met (see game/diplomacy). Off unless asked for; the new-game screen defaults it on. */
   diplomacy?: boolean;
   /** How many mountains: 'normal', 'few' (about a third) or 'none' at all. */
@@ -142,6 +145,7 @@ export function createGame(opts: NewGameOptions): GameState {
   placeLuxuries(state, makeRng(seed ^ 0x10c5)); // its own stream, so the rest of the map is unchanged
   if (peaks === 0) flattenMountains(state); // homelands may have put a peak down since
   hookSetup(state);
+  if (opts.freeCities) setupFreeCities(state, makeRng(seed ^ 0xf7ee)); // its own stream, so the rest of the map is the same either way
   if (opts.wild) setupWild(state, makeRng(seed ^ 0x5eed)); // its own stream, so the rest of the map is the same either way
   if (opts.naturals !== false) placeNaturals(state, makeRng(seed ^ 0x9a7e)); // Natural Wonders, likewise on their own stream
   for (const p of players) revealAround(state, p.id);

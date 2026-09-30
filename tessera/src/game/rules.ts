@@ -13,6 +13,7 @@ import { alliedVictory, diploFought, hostile, mayStep } from './diplomacy';
 import { heroDiscount, heroHp, heroSpent } from './heroes';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
 import { clanCampAt, enterCamp, raiderSlain } from './clans';
+import { freeActions, freeDoAction, freeFalls, freeIncome, freeStruck, freeTechOff, isFreeCity, FREE_RAZE_SCORE } from './citystates';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { naturalCityIncome, naturalDefence, naturalFilter, naturalMove, naturalTechOff } from './naturals';
@@ -115,7 +116,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   return inc + roleCityIncome(s, c, inc, tax); // a Master Builder's grand works and a Tax Collector's share (see game/roles)
 }
 
-export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c) + ageCityIncome(s, pid), 0) + luxuryIncome(s, pid); // luxuries pay the empire (see game/goods)
+export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c) + ageCityIncome(s, pid), 0) + luxuryIncome(s, pid) + freeIncome(s, pid); // luxuries pay the empire (see game/goods), and so do Trade cities (see game/citystates)
 
 export function score(s: GameState, pid: number) {
   const p = s.players[pid];
@@ -139,7 +140,7 @@ export function techCost(s: GameState, pid: number, tech: string) {
   // a Eureka (game/sparks), a met rival who already knows it, and a Dark Age (game/eras) each take a share off
   const mult = (sparked(s, pid, tech) ? 1 - EUREKA_OFF : 1) * (knownByContact(s, pid, tech) ? 1 - CONTACT_OFF : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
   const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) // a Scholar (see game/governors)
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) - freeTechOff(s, pid) // a Scholar (see game/governors) and Science cities (see game/citystates)
     - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech)
     - naturalTechOff(s, pid, base)); // the Glimmerdeep Grotto (see game/naturals)
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
@@ -422,7 +423,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
   govDiscount(s, pid, t, base); // a Marshal (see game/governors)
   specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
-  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t)];
+  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t), ...freeActions(s, pid, t)]; // envoys to a Free City (see game/citystates)
   // a mercenary camp, an outlaw camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/clans, game/wonders)
   if (campAt(s, t.x, t.y) || clanCampAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain', 'luxury'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -606,7 +607,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (!act || !act.enabled) return false;
   const p = s.players[pid];
   p.stars -= act.cost;
-  if (act.cost > 0 && !/^(mech|wild|hero):/.test(id)) heroSpent(s, pid);
+  if (act.cost > 0 && !/^(mech|wild|hero|free):/.test(id)) heroSpent(s, pid);
   const city = cityById(s, t.owner);
   const u = unitAt(s, t.x, t.y);
   const grow = (n: number, ...tags: string[]) => {
@@ -626,6 +627,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('level:')) return levelDoAction(s, pid, t, id);
   if (id.startsWith('gov:')) return govDoAction(s, pid, t, id);
   if (id === 'fest') return festivalDo(s, pid, t); // a City Festival (see game/festival)
+  if (id.startsWith('free:')) return freeDoAction(s, pid, id); // (see game/citystates)
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     spendNeeds(s, pid, kind); // Iron and Horses (see game/goods)
@@ -709,6 +711,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
   } else if (t.cityId !== null) {
     const c = cityById(s, t.cityId)!;
     const from = c.owner;
+    freeFalls(s, c, pid); // a Free City becomes an ordinary city, and its envoys' empires are angered (see game/citystates)
     const origin = cityOrigin(s, c); // the people who first held it (kept through later captures)
     c.data = { ...(c.data ?? {}), origin };
     c.owner = pid;
@@ -751,15 +754,17 @@ export const RAZE_SCORE = 1000;
 function razeCity(s: GameState, u: Unit, t: Tile) {
   const c = cityById(s, t.cityId)!;
   const from = c.owner;
+  const free = isFreeCity(s, c); // a Free City is razed too, for less (see game/citystates)
+  if (free) freeFalls(s, c, u.owner);
   s.cities = s.cities.filter((k) => k !== c);
   for (const x of s.tiles) if (x.owner === c.id) x.owner = null;
   t.cityId = null;
   t.improvement = null;
   t.terrain = 'field';
   for (const x of s.units) if (x.homeCity === c.id) x.homeCity = null;
-  s.players[u.owner].bonusScore += RAZE_SCORE;
-  emit({ type: 'toast', player: u.owner, text: `${c.name} is razed! +${RAZE_SCORE} score.` });
-  emit({ type: 'toast', player: from, text: `${c.name}, your only city, has been razed.` });
+  s.players[u.owner].bonusScore += free ? FREE_RAZE_SCORE : RAZE_SCORE;
+  emit({ type: 'toast', player: u.owner, text: `${c.name} is razed! +${free ? FREE_RAZE_SCORE : RAZE_SCORE} score.` });
+  if (!free) emit({ type: 'toast', player: from, text: `${c.name}, your only city, has been razed.` });
   checkElimination(s, from, u.owner);
 }
 
@@ -1047,6 +1052,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   if (!attackOptions(s, a).includes(d)) return false;
   meet(s, a.owner, d.owner);
   diploFought(s, a.owner, d.owner); // remembered, and the defender's allies are called to arms (see game/diplomacy)
+  freeStruck(s, a, d); // a Free City remembers who attacked it, and its suzerain's wars (see game/citystates)
   (s.players[a.owner].skill ??= {}).war = s.turn; // both sides are at war (War Host surges)
   (s.players[d.owner].skill ??= {}).war = s.turn;
   const { dmg, ret, kills, tag } = previewCombat(s, a, d);

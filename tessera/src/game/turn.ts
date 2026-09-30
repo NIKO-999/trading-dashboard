@@ -16,6 +16,7 @@ import { wildRound } from './wild';
 import { wonderTurnStart } from './wonders';
 import { naturalTurnStart } from './naturals';
 import { tradeSweep } from './trade';
+import { freeTurnStart } from './citystates';
 import { outOfSupply, supplyTurnStart } from './army';
 import type { GameState } from './types';
 
@@ -30,6 +31,7 @@ export function startTurn(s: GameState) {
     const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;
     goodsTurnStart(s, p.id); // mines dig Iron, pastures breed Horses (see game/goods)
+    freeTurnStart(s, p.id); // the favour of Free Cities: score, growth, Iron and gifts (see game/citystates)
   }
   diploTurnStart(s, p.id); // declared wars begin, trade and tribute pay, allies share maps (see game/diplomacy)
   for (const u of s.units) {

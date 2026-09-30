@@ -19,6 +19,7 @@ import { isDirectDraw } from './sprites';
 import { drawCamp, drawVolcano, drawWildGround } from './wild';
 import { drawClanCamp } from './clans';
 import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
+import { drawFreeBanner, drawFreeIcon, FREE_COLOR, FREE_ROOF, freeKindOf } from './citystates';
 import { drawWonderIcon, drawWonderTile } from './wonders';
 import { drawBridgeGround, drawRoleIcon, drawRoleTile } from './roles';
 import { drawAuxIcon } from './auxiliaries';
@@ -461,7 +462,7 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
 function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean, viewer = -1) {
   const owner = tileOwnerPlayer(s, t);
   if (owner === null) return;
-  const color = s.players[owner].neutral ? REBEL_COLOR : TRIBES[s.players[owner].tribe].color; // only Rogue States hold land for the neutral owner
+  const color = s.players[owner].neutral ? (freeKindOf(s, cityById(s, t.owner)!) ? FREE_COLOR : REBEL_COLOR) : TRIBES[s.players[owner].tribe].color; // Rogue States and Free Cities hold land for the neutral owner
   // the viewer's treaty partners (see game/diplomacy): allies' fences are capped in gold, peace partners' in white
   const rel = s.diplo && viewer >= 0 && owner !== viewer && !s.players[owner].neutral ? relation(s, viewer, owner) : 'war';
   const trim = rel === 'alliance' ? ALLY_TRIM : rel === 'peace' ? PEACE_TRIM : undefined;
@@ -2087,7 +2088,8 @@ function drawRuin(ctx: Ctx, t: Tile, x: number, y: number) {
 function drawCity(ctx: Ctx, s: GameState, city: City, x: number, y: number) {
   // a Rogue State keeps its people's buildings under rebel colours (see game/rebels); its banner is drawn every frame
   const rogue = rogueStyle(s, city);
-  const tribe = rogue ? { ...TRIBES[rogue], roof: REBEL_ROOF, color: REBEL_COLOR } : TRIBES[s.players[city.owner].tribe];
+  const free = freeKindOf(s, city); // a Free City: its own colours and a banner with its type (see game/citystates)
+  const tribe = rogue ? { ...TRIBES[rogue], roof: REBEL_ROOF, color: REBEL_COLOR } : free ? { ...TRIBES[s.players[city.owner].tribe], roof: FREE_ROOF, color: FREE_COLOR } : TRIBES[s.players[city.owner].tribe];
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1.3, 1.3);
@@ -2105,6 +2107,7 @@ function drawCity(ctx: Ctx, s: GameState, city: City, x: number, y: number) {
     drawTree(ctx, 'rome', 15, 9, 0.5, tribe.palette, 1);
     drawTree(ctx, 'rome', -15, 9, 0.5, tribe.palette, 1);
   }
+  if (free) drawFreeBanner(ctx, free, 13, 6);
   ctx.restore();
 }
 
@@ -5319,6 +5322,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
   if (icon.startsWith('aux:') && drawAuxIcon(ctx, icon, tribe, x, y)) return; // a Healer's Convert (see render/auxiliaries)
   if (icon.startsWith('level:') && drawLevelIcon(ctx, icon, tribe, x, y)) return; // tile levels (see render/levels)
+  if (icon.startsWith('free:') && drawFreeIcon(ctx, icon, x, y)) return; // Send Envoy (see render/citystates)
   if (icon.startsWith('lux:')) { // a luxury's works (see render/goods)
     const kind = icon.slice(4) as Luxury;
     if (kind === 'pearls') { ellipse(ctx, x, y + 6, 21, 10, P.shallow); return drawLuxury(ctx, kind, x, y - 2); }

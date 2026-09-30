@@ -30,6 +30,7 @@ import { tileLevel } from './levels';
 import { attack, attackOptions, citiesOf, cityById, def, doAction, maxHp, moveOptions, moveUnit, previewCombat, removeUnit, tileActions, tileOwnerPlayer, unitAt, type Action } from './rules';
 import type { ClanCamp, ClanKind, GameState, Improvement, Tile, Unit, UnitKind } from './types';
 import { campAt, empires, ensureNeutral, isLava, isNeutral, spawnNeutral, volcanoDue } from './wild';
+import { freeCampBurned } from './citystates';
 
 // ---------------------------------------------------------------- tuning
 
@@ -349,6 +350,7 @@ export function enterCamp(s: GameState, u: Unit, t: Tile): boolean {
   p.kills++;
   s.clans.camps = s.clans.camps.filter((x) => x !== c);
   s.clans.cleared++;
+  freeCampBurned(s, c.id, pid); // a Free City that asked for it sends thanks (see game/citystates)
   s.clans.next = Math.max(s.clans.next, s.turn + CAMP_EVERY);
   emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: pay });
   emit({ type: 'ruin', player: pid, title: 'Outlaw Camp Burned', text: `Your troops burn the camp of the ${c.name} and seize its loot: +${pay}★ and +${CAMP_SCORE} score. The rest of the clan scatters.` });

@@ -36,6 +36,7 @@ export interface NewGameChoice {
   hotseat: boolean; // pass & play on one device
   wild: boolean; // wild events: Great Beasts, volcanoes and mercenary camps (see game/wild)
   clans?: boolean; // raider clans: outlaw camps whose raiders pillage the empires (see game/clans); on unless set false
+  freeCities?: boolean; // free cities: neutral city-states that take envoys (see game/citystates); on unless set false
   rebels?: boolean; // rebellions: restless conquered cities may break away as Rogue States (see game/rebels); on unless set false
   mountains?: 'normal' | 'few' | 'none'; // how mountainous the map is
   diplomacy?: boolean; // peace, alliances, trade and tribute between empires (see game/diplomacy); on unless set false
@@ -240,7 +241,7 @@ function traitLists(id: TribeId): Node[] {
 
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
-    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true, clans: true, diplomacy: true,
+    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true, clans: true, freeCities: true, diplomacy: true,
     seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
@@ -331,6 +332,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
       h('p', { class: 'muted small terrain-note' }, choice.clans !== false
         ? 'From round 4 outlaw camps appear in the unclaimed wilds. Their raiders pillage farms, mines and roads. Burn a camp for Stars, pay it off, or hire its raiders.'
         : 'No outlaw camps: the wilds stay empty.'),
+      seg('Free Cities', [[1, 'On'], [0, 'Off']], () => (choice.freeCities !== false ? 1 : 0), (v) => { choice.freeCities = v === 1; render(); }),
+      h('p', { class: 'muted small terrain-note' }, choice.freeCities !== false
+        ? 'A few small independent cities stand between the empires. Send them envoys for Stars, cheaper techs, score, growth or soldiers; the empire with the most is their suzerain, and they fight at its side. Or conquer them.'
+        : 'No Free Cities: only the empires hold cities.'),
       seg('Rebellions', [[1, 'On'], [0, 'Off']], () => (choice.rebels !== false ? 1 : 0), (v) => { choice.rebels = v === 1; render(); }),
       h('p', { class: 'muted small terrain-note' }, choice.rebels !== false
         ? 'Conquered cities left ungarrisoned far from your capital grow restless, and may break away as Rogue States. You are warned a turn before.'

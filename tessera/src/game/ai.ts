@@ -17,6 +17,7 @@ import type { GameState, Tile, Unit } from './types';
 import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
 import { campTargets, clanAi, raidThreats } from './clans';
+import { freeAi, freeSpares, isFreeCity } from './citystates';
 import { wonderAi } from './wonders';
 import { allyFoes, diploAi, hostile } from './diplomacy';
 import { isTraderKind, raidSpots, tradeAi } from './trade';
@@ -84,6 +85,8 @@ export function aiStep(s: GameState): boolean {
     done.add(u.id);
   }
 
+  // Stars to spare: an envoy to a Free City, above all to win or keep a suzerainty (see game/citystates).
+  if (freeAi(s, pid)) return true;
   // Rich after the army and the economy: raise a tile a level (see game/levels).
   if (levelAi(s, pid)) return true;
   // A World Wonder when rich: begin one, or put the spare stars into the one rising (see game/wonders).
@@ -306,6 +309,7 @@ function unitStep(s: GameState, u: Unit): boolean {
 
   // Attack the juiciest target in range.
   const targets = attackOptions(s, u)
+    .filter((e) => !freeSpares(s, pid, e)) // a Free City's guards are left alone unless it is at odds with us (see game/citystates)
     .map((e) => ({ e, ...previewCombat(s, u, e) }))
     // besieging a city: keep hitting as long as the blow back won't kill us
     .filter((o) => o.kills || o.dmg >= o.ret || u.hp - o.ret > maxHp(u) * 0.5 || (u.hp > o.ret && tileAt(s, o.e.x, o.e.y)!.cityId !== null))
@@ -429,7 +433,7 @@ function targetsOnlyOverseas(s: GameState, pid: number): boolean {
   let home = false, away = false;
   for (const t of s.tiles) {
     if (!isExplored(s, pid, t.x, t.y)) continue;
-    const target = t.village || (t.cityId !== null && hostile(s, pid, s.cities.find((c) => c.id === t.cityId)!.owner));
+    const target = t.village || (t.cityId !== null && hostile(s, pid, s.cities.find((c) => c.id === t.cityId)!.owner) && !isFreeCity(s, s.cities.find((c) => c.id === t.cityId)));
     if (!target) continue;
     if (mine.has(mass[t.y * s.size + t.x])) home = true;
     else away = true;
@@ -471,7 +475,7 @@ function findGoals(s: GameState, u: Unit): Goal[] {
     if (t.cityId !== null) {
       const c = s.cities.find((k) => k.id === t.cityId)!;
       const prize = naturalSites(s).some((n) => naturalCity(s, n) === c) ? 1 : 0; // it holds a Natural Wonder (see game/naturals)
-      if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: (s.turn > 5 ? 3 : 1) + prize }); // mist may hide it
+      if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c) && !isFreeCity(s, c)) goals.push({ x: t.x, y: t.y, w: (s.turn > 5 ? 3 : 1) + prize }); // mist may hide it
     }
   }
   for (const r of raidSpots(s, pid, u)) goals.push({ x: r.x, y: r.y, w: 2 }); // an enemy trade trail to pillage (see game/trade)

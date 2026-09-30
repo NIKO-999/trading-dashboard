@@ -15,6 +15,8 @@ import { drawFigure, figureHit } from './sprites';
 import { drawWildOverlay, WILD_COLOR } from './wild';
 import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
 import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
+import { drawFreeBadge, FREE_COLOR, FREE_GOLD, freeKindOf } from './citystates';
+import { freeCityOf, isFreeUnit } from '../game/citystates';
 import { floaterPose } from './combatfx';
 import { drawHeroGround } from './heroes';
 import { drawRoleGround } from './roles';
@@ -566,7 +568,7 @@ function diamondPath(ctx: Ctx, x: number, y: number, k: number) {
 function drawCityBorder(ctx: Ctx, s: GameState, cityId: number, now: number, explored: (x: number, y: number) => boolean) {
   const city = s.cities.find((c) => c.id === cityId);
   if (!city) return;
-  const col = isRogueCity(s, city) ? REBEL_COLOR : TRIBES[s.players[city.owner].tribe].color;
+  const col = isRogueCity(s, city) ? REBEL_COLOR : freeKindOf(s, city) ? FREE_COLOR : TRIBES[s.players[city.owner].tribe].color;
   const pulse = (Math.sin(now / 300) + 1) / 2;
   const tiles = s.tiles.filter((t) => t.owner === cityId && explored(t.x, t.y));
   const edges: [number, number, number, number, number, number][] = [
@@ -1026,9 +1028,10 @@ export function declutterLabels(boxes: LabelBox[], gap: number): PlacedLabel[] {
 function cityLabelSize(ctx: Ctx, s: GameState, c: City, k: number, detail: LabelDetail, mine: boolean) {
   ctx.font = `600 ${13 * k}px ${FONT}`;
   const nw = ctx.measureText(c.name).width;
-  const iw = detail === 'full' ? ctx.measureText(String(cityIncome(s, c))).width : 0;
-  const badge = c.capital ? 18 * k : 0;
-  const w = 16 * k + badge + (badge ? 5 * k : 0) + nw + (detail === 'full' ? 20 * k + iw : 0) + (c.pendingRewards.length ? 18 * k : 0);
+  const free = freeCityOf(s, c); // a Free City: its type badge, no income, and its suzerain's colour (see game/citystates)
+  const iw = detail === 'full' && !free ? ctx.measureText(String(cityIncome(s, c))).width : 0;
+  const badge = c.capital || free ? 18 * k : 0;
+  const w = 16 * k + badge + (badge ? 5 * k : 0) + nw + (detail === 'full' && !free ? 20 * k + iw : 0) + (free?.suz != null ? 14 * k : 0) + (c.pendingRewards.length ? 18 * k : 0);
   return { w, h: 21 * k + (detail !== 'name' && mine ? POP_GAP * k + POP_H * k : 0) };
 }
 
@@ -1078,15 +1081,17 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
 export type LabelDetail = 'full' | 'mid' | 'name';
 
 function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail, mine: boolean): { x0: number; y0: number; x1: number; y1: number } {
-  const T = { color: isRogueCity(s, c) ? REBEL_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
+  const free = freeCityOf(s, c); // a Free City: verdigris and gold, its type badge and its suzerain's colour (see game/citystates)
+  const T = { color: isRogueCity(s, c) ? REBEL_COLOR : free ? FREE_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
   const nw = ctx.measureText(c.name).width;
-  const showIncome = detail === 'full';
-  const inc = String(cityIncome(s, c));
+  const showIncome = detail === 'full' && !free;
+  const inc = showIncome ? String(cityIncome(s, c)) : '';
   const iw = showIncome ? ctx.measureText(inc).width : 0;
-  const pad = 8 * k, h = 21 * k, badge = c.capital ? 18 * k : 0;
-  const w = pad + badge + (badge ? 5 * k : 0) + nw + (showIncome ? 8 * k + 12 * k + iw : 0) + pad;
+  const suzW = free && free.suz !== null ? 14 * k : 0;
+  const pad = 8 * k, h = 21 * k, badge = c.capital || free ? 18 * k : 0;
+  const w = pad + badge + (badge ? 5 * k : 0) + nw + (showIncome ? 8 * k + 12 * k + iw : 0) + suzW + pad;
   const x0 = snap(x - w / 2), y0 = y;
   // drop shadow, body with a soft top highlight, darker rim
   ctx.fillStyle = 'rgba(0,0,0,0.28)';
@@ -1098,8 +1103,8 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
   ctx.fillStyle = grad;
   roundRect(ctx, x0, y0, w, h, 6 * k);
   ctx.fill();
-  ctx.strokeStyle = shade(T.color, -0.35);
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = free ? FREE_GOLD : shade(T.color, -0.35);
+  ctx.lineWidth = free ? 1.6 : 1;
   ctx.stroke();
   ctx.strokeStyle = 'rgba(255,255,255,0.28)';
   ctx.beginPath();
@@ -1112,6 +1117,9 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     ellipse(ctx, cx + badge / 2, mid, badge / 2, badge / 2, shade(T.color, -0.4));
     const bx = cx + badge / 2, s1 = badge * 0.3;
     poly(ctx, [bx - s1, mid + s1 * 0.8, bx - s1, mid - s1 * 0.3, bx - s1 * 0.5, mid + s1 * 0.2, bx, mid - s1 * 0.9, bx + s1 * 0.5, mid + s1 * 0.2, bx + s1, mid - s1 * 0.3, bx + s1, mid + s1 * 0.8], '#ffcf33');
+    cx += badge + 5 * k;
+  } else if (free) {
+    drawFreeBadge(ctx, free.kind, cx + badge / 2, mid, badge / 2);
     cx += badge + 5 * k;
   }
   ctx.fillStyle = '#ffffff';
@@ -1128,6 +1136,11 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     drawStar(ctx, cx + 6 * k, mid, 6.5 * k);
     ctx.fillStyle = '#ffffff';
     ctx.fillText(inc, snap(cx + 13 * k), snap(mid + 1.2 * k));
+  }
+  if (free && free.suz !== null) { // the suzerain's colour, as a small shield after the name
+    const sx = cx + nw + 9 * k, sc = TRIBES[s.players[free.suz].tribe].color;
+    ellipse(ctx, sx, mid, 5.5 * k, 5.5 * k, FREE_GOLD);
+    ellipse(ctx, sx, mid, 4.2 * k, 4.2 * k, sc);
   }
   ctx.textBaseline = 'alphabetic';
   const bar = detail !== 'name' && mine; // only your own cities show how near they are to growing
@@ -1199,7 +1212,7 @@ export function hpBadge(s: GameState, u: Unit, ov: Overlay, cam: Camera, m: Moti
   if (!badgeShown(s, u, ov, hp, detail)) return null;
   const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
   if (ov.hudBottom && sp.y < ov.hudBottom) return null; // up under the score bar it would only muddle the numbers
-  const color = isRogueUnit(s, u) ? REBEL_COLOR : isRaider(s, u) ? CLAN_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
+  const color = isRogueUnit(s, u) ? REBEL_COLOR : isFreeUnit(s, u) ? FREE_COLOR : isRaider(s, u) ? CLAN_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
   return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh, hero: isHero(s, u), lvl: s.players[u.owner].hero?.lvl ?? 1 };
 }
 

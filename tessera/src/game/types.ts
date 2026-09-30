@@ -197,6 +197,8 @@ export interface GameState {
   clans?: ClanState;
   /** Natural Wonders: rare landmarks placed with the map (see game/naturals). Missing in older saves (no wonders). */
   naturals?: NaturalState;
+  /** Free Cities: neutral city-states that take envoys and favour their suzerain (see game/citystates). Missing when off and in older saves. */
+  free?: FreeState;
 }
 
 /**
@@ -306,4 +308,30 @@ export interface ClanState {
   next: number; // the earliest round a new camp may appear
   seq: number; // the next camp id
   cleared: number; // camps destroyed so far
+}
+
+/** What a Free City is known for, and so what its favour brings (see game/citystates). */
+export type FreeKind = 'trade' | 'military' | 'science' | 'culture' | 'maritime';
+/** A request a Free City makes of the empires, rewarded with envoys: burn a raider camp near it, or grow a city. */
+export interface FreeQuest { kind: 'camp' | 'level'; camp?: number; level?: number; until: number; done: number[] }
+/**
+ * A Free City: an ordinary city held by the neutral owner, with its type and the envoys each empire keeps there
+ * (`envoys`, keyed by player id). Its guards are neutral units with `data.free` = `id` (the city id).
+ */
+export interface FreeCity {
+  id: number;
+  kind: FreeKind;
+  envoys: Record<string, number>;
+  suz: number | null; // the suzerain as of the last count
+  since: number; // the round the suzerain took over (or the city was founded)
+  last: Record<string, number>; // the round each empire last sent an envoy (one a round)
+  foes: Record<string, number>; // the round each empire last attacked it
+  rearm: number | null; // the round a lost guard is replaced
+  quest: FreeQuest | null;
+}
+export interface FreeState {
+  cities: FreeCity[];
+  sent: Record<string, number>; // envoys each empire has paid for so far: each makes the next dearer
+  war: Record<string, number>; // "a:b" (a < b): the round two empires last fought (a Free City's guards fight its suzerain's foes)
+  nextQuest: number;
 }

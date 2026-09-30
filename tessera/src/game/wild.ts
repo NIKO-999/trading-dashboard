@@ -28,6 +28,7 @@ import { spawnUnit } from './mapgen';
 import { attack, attackOptions, citiesOf, doAction, maxHp, removeUnit, tileActions, tileOwnerPlayer, unitAt, type Action } from './rules';
 import { rogueRound } from './rebels';
 import { clanActions, clanDoAction, clanRound } from './clans';
+import { freeRound } from './citystates';
 import type { Rng } from './rng';
 import type { GameState, Player, Tile, Unit, UnitKind, WildCamp } from './types';
 
@@ -195,6 +196,7 @@ function pickOffer(r: number): UnitKind {
 export function wildRound(s: GameState) {
   rogueRound(s); // Rogue States hold their cities whether or not wild events are on (see game/rebels)
   clanRound(s); // so do the Raider Clans (see game/clans)
+  freeRound(s); // and the Free Cities' guards (see game/citystates)
   if (!s.wild) return;
   coolLava(s);
   for (const t of s.tiles) {

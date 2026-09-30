@@ -25,6 +25,7 @@ import { roadNetwork } from './network';
 import { attackOptions, attack, citiesOf, cityById, def, doAction, maxHp, moveOptions, moveUnit, previewCombat, tileActions, unitAt, unitCap } from './rules';
 import type { City, GameState, TribeId, Unit, UnitKind } from './types';
 import { empires, ensureNeutral, isLava, isNeutral, spawnNeutral } from './wild';
+import { isFreeCity } from './citystates';
 
 // ---------------------------------------------------------------- tuning
 
@@ -49,7 +50,7 @@ export function rogueGarrison(level: number): UnitKind[] {
 // ---------------------------------------------------------------- queries
 
 export const rebelsOn = (s: GameState) => !!s.rebels;
-export const isRogueCity = (s: GameState, c: City) => isNeutral(s, c.owner);
+export const isRogueCity = (s: GameState, c: City) => isNeutral(s, c.owner) && !isFreeCity(s, c); // a Free City is neutral too (see game/citystates)
 /** Is this a Rogue State's unit? (Great Beasts are neutral too, but hold no city.) */
 export const isRogueUnit = (s: GameState, u: Unit) => isNeutral(s, u.owner) && typeof u.data?.rogue === 'number';
 /** The people a rogue unit fights for (it is drawn in their colours). */

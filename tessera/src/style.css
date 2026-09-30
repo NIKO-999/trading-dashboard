@@ -469,3 +469,15 @@ ul.traits .effect { display: block; font-weight: 600; }
 .gov-pip { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; font-size: 0.68rem; color: var(--sc); background: color-mix(in srgb, var(--sc) 20%, #111); }
 .natural-head { margin: 4px 0 6px; font-size: 1.05rem; }
 .natural-list .stat-unknown { color: #ffe27a; }
+
+/* ------------------------------------------------ Free Cities (see ui/citystates) */
+.free-info { font-size: 0.9rem; line-height: 1.3; margin-top: 2px; }
+.free-info > div { margin-top: 3px; }
+.free-dot { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--tc); border: 1.5px solid #e2bf62; margin: 0 4px 0 2px; vertical-align: -1px; }
+.free-table { margin: 6px auto 0; border-collapse: collapse; font-size: 0.82rem; text-align: left; }
+.free-table td { padding: 2px 8px; border-top: 1px solid rgba(255,255,255,0.12); vertical-align: top; }
+.free-table td:first-child { white-space: nowrap; font-weight: 600; color: #e2bf62; }
+.free-table tr.on td { background: rgba(226,191,98,0.18); }
+.free-you { font-weight: 600; }
+.free-quest { color: #9fe0c8; }
+.free-foe { font-weight: 700; color: #f0a850; }

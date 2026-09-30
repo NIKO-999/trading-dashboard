@@ -34,6 +34,9 @@ import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
 import { WILD_COLOR } from '../render/wild';
 import { REBEL_COLOR } from '../render/rebels';
+import { FREE_COLOR } from '../render/citystates';
+import { FREE_KINDS, freeCityOf, freeUnitLine, isFreeUnit } from '../game/citystates';
+import { freeCityInfo, freeHudLine } from './citystates';
 import { isRogueCity, isRogueUnit, onBrink, rogueDescribe, subject, unrestFactors, unrestLine, unrestOf, UNREST_WARN } from '../game/rebels';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
@@ -780,6 +783,8 @@ export class GameView {
     if (era) lines.push(era);
     if (!gov.tone) lines.push(gov);
     const goods = this.goodsReadout(); // Iron, Horses and luxuries (see game/goods)
+    const free = freeHudLine(this.s, this.me); // envoys and suzerainties in the Free Cities (see ui/citystates)
+    if (free) lines.push(free);
     if (goods) lines.push(goods);
     const econ = this.economyReadout(); // raised tiles and Districts (see game/levels)
     if (econ) lines.push(econ);
@@ -938,6 +943,7 @@ export class GameView {
         ? u.moved && u.attacked ? 'Done for this turn.' : this.ov.attacks.length ? `Tap a red ring to attack${attackRange(this.s, u) > 1 ? ` (it shoots up to ${attackRange(this.s, u)} tiles)` : ''}${!u.moved && this.ov.moves.length ? ', or a blue ring to move' : ''}.` : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
         : isRogueUnit(this.s, u) ? `A rebel of the Rogue State of ${cityById(this.s, u.data!.rogue as number)?.name ?? 'a lost city'}. It holds its ground and strikes any unit next to it at the end of each round.`
         : isRaider(this.s, u) ? raiderLine(this.s, u, this.me) // an outlaw of a Raider Clan (see game/clans)
+        : isFreeUnit(this.s, u) ? `${freeUnitLine(this.s, u)} Tap again, or its name, for the city.` // a Free City's guard (see game/citystates)
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
           : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
@@ -957,6 +963,8 @@ export class GameView {
             ? h('span', { class: 'tribe-chip', style: { '--tc': REBEL_COLOR } as Record<string, string> }, 'Rebels')
             : isRaider(this.s, u)
             ? h('span', { class: 'tribe-chip', style: { '--tc': CLAN_COLOR } as Record<string, string> }, 'Raiders')
+            : isFreeUnit(this.s, u)
+            ? h('span', { class: 'tribe-chip', style: { '--tc': FREE_COLOR } as Record<string, string> }, 'Free City')
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
@@ -968,7 +976,7 @@ export class GameView {
           isAuxKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${auxPreview(this.s, u)}`) : null))); // a Spearman's brace, a Scout's reach, a Healer's cooldown (see game/auxiliaries)
       // empire actions on a unit's tile (launch, board...), camp bids, this role unit's own actions (see game/roles), and
       // a Healer's Convert: its own, or a healer's aimed at this enemy (see game/auxiliaries)
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:') || roleParts(a.id)?.unit === u.id
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:') || a.id.startsWith('free:') || roleParts(a.id)?.unit === u.id
         || (!!auxParts(a.id) && (auxParts(a.id)!.unit === u.id || auxParts(a.id)!.target === t.y * this.s.size + t.x))), p.tribe);
       return;
     }
@@ -1027,6 +1035,7 @@ export class GameView {
     const info = mine
       ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${routesOfCity(this.s, city).length ? ` · trade routes ${routesOfCity(this.s, city).length}/${routesPerCity(city)}` : ''}${city.walls ? ' · walls' : ''}${govOf(city) ? ` · ${GOVERNORS[govOf(city)!.k].name} (rank ${govRank(this.s, govOf(city)!)})` : ''}${this.roadLine(city)}`
       : isRogueCity(this.s, city) ? rogueDescribe(this.s, city)
+      : freeCityOf(this.s, city) ? '' // a Free City (see game/citystates): its own block below
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     // a conquered city's unrest, with what moves it (see game/rebels)
     const unrest = mine ? unrestLine(this.s, city) : null;
@@ -1034,10 +1043,11 @@ export class GameView {
     const unrestEl = unrest
       ? h('div', { class: `unrest-line${onBrink(city) ? ' brink' : unrestOf(city) >= UNREST_WARN ? ' hot' : ''}` }, unrest, h('span', { class: 'muted small' }, ` · ${unrestFactors(this.s, city).why.join(', ')}`))
       : null;
-    this.panel.append(close, head(city.name, info, roles, unrestEl,
+    const free = freeCityInfo(this.s, city, this.me); // a Free City's envoys, suzerain and bonuses (see ui/citystates)
+    this.panel.append(close, head(freeCityOf(this.s, city) ? `${city.name} · ${FREE_KINDS[freeCityOf(this.s, city)!.kind].name} City` : city.name, info || null, free, roles, unrestEl,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
     if (mine) this.renderActions(acts, owner.tribe);
-    else this.renderActions(acts.filter((a) => a.id.startsWith('mech:') || a.id.startsWith('role:')), this.s.players[this.me].tribe); // e.g. Mali's market flood, Sappers undermining it
+    else this.renderActions(acts.filter((a) => a.id.startsWith('mech:') || a.id.startsWith('role:') || a.id.startsWith('free:')), this.s.players[this.me].tribe); // and Send Envoy (see game/citystates) // e.g. Mali's market flood, Sappers undermining it
   }
 
   /** The city panel's role-unit line: "Tax Collector: +3★ a turn", "Recruiter: units 1★ off, +1 slot, rally ready"... */
@@ -1722,7 +1732,7 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
 
 function describePlainTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
-  const land = owner === null ? 'Unclaimed land.' : isNeutral(s, owner) ? `Rogue State territory (${cityById(s, t.owner)!.name}).` : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
+  const land = owner === null ? 'Unclaimed land.' : isNeutral(s, owner) ? `${freeCityOf(s, cityById(s, t.owner)) ? 'Free City' : 'Rogue State'} territory (${cityById(s, t.owner)!.name}).` : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
   // treaty borders (see game/diplomacy): a peace partner's land is closed, an ally's open
   const rel = owner !== null && owner !== viewer && diploOn(s) && !isNeutral(s, owner) ? relation(s, viewer, owner) : 'war';
   const where = rel === 'peace' ? `${land} Peace treaty: closed to your units.` : rel === 'alliance' ? `${land} Allied: open to your units.` : land;
