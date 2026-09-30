@@ -9,8 +9,7 @@ import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
-  moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
-} from '../game/rules';
+  moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,, attackRange } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
 import { surgingNodes } from '../game/skills';
@@ -870,7 +869,7 @@ export class GameView {
       const d = def(u);
       const owner = this.s.players[u.owner];
       const status = u.owner === this.me
-        ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
+        ? u.moved && u.attacked ? 'Done for this turn.' : this.ov.attacks.length ? `Tap a red ring to attack${attackRange(this.s, u) > 1 ? ` (it shoots up to ${attackRange(this.s, u)} tiles)` : ''}${!u.moved && this.ov.moves.length ? ', or a blue ring to move' : ''}.` : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
         : isRogueUnit(this.s, u) ? `A rebel of the Rogue State of ${cityById(this.s, u.data!.rogue as number)?.name ?? 'a lost city'}. It holds its ground and strikes any unit next to it at the end of each round.`
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
           : `${TRIBES[owner.tribe].people} unit.`;
