@@ -1,7 +1,7 @@
 // Wild events: third-party forces that belong to no empire. They are switched on per game (`NewGameOptions.wild`) and
 // keep their state in `GameState.wild` and in tile data, so saves work and older saves simply have none.
 //
-//  - The NEUTRAL owner. Great Beasts (and later other third parties, such as rebel cities) are owned by a hidden
+//  - The NEUTRAL owner. Great Beasts and Rogue States (rebel cities, see game/rebels) are owned by a hidden
 //    neutral Player appended after every empire. It is never `alive`, so it takes no turns, is never eliminated, has
 //    no mechanic, earns nothing, meets no one and cannot win; `empires(s)` lists everyone else. Use these helpers:
 //      isNeutral(s, pid)          is this player (or unit/city owner) the neutral one?
@@ -26,6 +26,7 @@ import { emit } from './events';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { spawnUnit } from './mapgen';
 import { attack, attackOptions, citiesOf, doAction, maxHp, removeUnit, tileActions, tileOwnerPlayer, unitAt, type Action } from './rules';
+import { rogueRound } from './rebels';
 import type { Rng } from './rng';
 import type { GameState, Player, Tile, Unit, UnitKind, WildCamp } from './types';
 
@@ -191,6 +192,7 @@ function pickOffer(r: number): UnitKind {
 
 /** The wild's own turn, once a round after the last empire has played (called by endTurn). */
 export function wildRound(s: GameState) {
+  rogueRound(s); // Rogue States hold their cities whether or not wild events are on (see game/rebels)
   if (!s.wild) return;
   coolLava(s);
   for (const t of s.tiles) {

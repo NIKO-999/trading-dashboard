@@ -145,6 +145,8 @@ export interface GameState {
   mech?: Record<string, unknown>;
   /** Wild events: beasts, volcanoes and mercenary camps (see game/wild). Missing when they are switched off and in older saves. */
   wild?: WildState;
+  /** Rebellions: restless conquered cities may break away as Rogue States (see game/rebels). Missing when off and in older saves. */
+  rebels?: boolean;
 }
 
 /** A neutral mercenary camp and its sealed-bid auction (see game/wild). */

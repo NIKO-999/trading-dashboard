@@ -5,6 +5,7 @@ import { perkSum } from './perks';
 import { skillTurnStart } from './skills';
 import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
+import { cultureUnrest } from './rebels';
 import { wildRound } from './wild';
 import type { GameState } from './types';
 
@@ -13,6 +14,7 @@ const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
 /** Called when `s.current` begins its turn. */
 export function startTurn(s: GameState) {
   const p = s.players[s.current];
+  if (s.turn > 0) cultureUnrest(s, p.id); // restless conquered cities may revolt before they pay (see game/rebels)
   if (s.turn > 0) {
     const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;

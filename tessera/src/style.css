@@ -318,6 +318,16 @@ ul.traits .effect { display: block; font-weight: 600; }
 .mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
 .mech-hud > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .mech-hud:empty { display: none; }
+/* rebellion: the most restless conquered city, under the empire readout (see game/rebels) */
+.mech-hud { flex-direction: column; align-items: center; gap: 4px; }
+.unrest-hud { pointer-events: auto; padding: 4px 12px 3px; border-radius: 999px; background: rgba(90,60,30,0.82); color: #fff; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+.unrest-hud.hot { background: rgba(200,100,30,0.9); }
+.unrest-hud.brink { background: #b3263e; animation: unrest-pulse 0.9s ease-in-out infinite alternate; }
+@keyframes unrest-pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .unrest-hud.brink { animation: none; } }
+.unrest-line { margin-top: 4px; font-weight: 700; color: #f0c890; }
+.unrest-line.hot { color: #ffa860; }
+.unrest-line.brink { color: #ff7080; }
 /* culture blending: traditions adopted from conquered peoples */
 .reward-row.culture { flex-wrap: wrap; gap: 10px; }
 .reward-row.culture .rbtn.big { width: 112px; }

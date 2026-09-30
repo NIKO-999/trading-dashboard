@@ -346,13 +346,7 @@ export function aiAdopt(s: GameState, pid: number): boolean {
   return true;
 }
 
-// ---------------------------------------------------------------- part 2 (not built yet)
+// ---------------------------------------------------------------- part 2
 
-/**
- * Rogue States (part 2, to come): a conquered city whose people's ways its owner never adopted may rebel and break
- * away under a neutral owner. It will plug in here, called from turn.startTurn for `pid` once the neutral-owner system
- * exists; `cityOrigin` and `adoptedOf` already give it what it needs. Intentionally a no-op for now.
- */
-export function cultureUnrest(_s: GameState, _pid: number): void {
-  // no rebellions yet
-}
+// Rogue States: a conquered city left ungarrisoned far from home grows restless and may break away under the neutral
+// owner; having adopted its people's ways calms it. `cultureUnrest` lives in game/rebels and runs from turn.startTurn.

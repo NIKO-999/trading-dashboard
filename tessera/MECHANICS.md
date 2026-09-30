@@ -331,5 +331,16 @@ An option on the new-game screen (**Wild events**, on by default). Third-party f
   - *Royal Tribute* (Persian): +2★ per city captured. *Devşirme Levy* (Ottoman): each capture grows your nearest other city by 1.
 - **Limits:** each origin people can be adopted from once, and an empire holds at most **3** traditions.
 - Adopted traditions are listed on the in-game **Empires** screen as "Adopted from the X".
-- *Still to come:* conquered cities whose ways were never adopted may rebel into Rogue States (plugs in at `culture.cultureUnrest`).
+- Having adopted a people's ways calms that people's cities (see §11).
+
+## 11. Rebellion and Rogue States
+
+An option on the new-game screen (**Rebellions**, on by default; independent of Wild events). Older saves and games created without it never rebel.
+- **Who can rebel:** a conquered city (its origin people is not yours) that is not your capital. Your last city and the Māori Great Waka never rebel.
+- **Unrest** (0–**6**) moves at the start of your turn: **+1** with no unit of yours on or next to it, **+1 more** if it is also **6+ tiles** from your capital (or you have none). A unit **on** the city **−2**, one **next to** it **−1**; a **road link to your capital**, a **temple** in its land and having **adopted its people's ways** are **−1 each**. A city that changes hands starts again at 0.
+- A toast at **3** ("Unrest is rising"). At **6** the city is **on the brink**: you get a warning toast, and if it is still at 6 at the start of your **next** turn it **revolts** (one unit on or next to it is enough to stop it).
+- **Revolt:** the city passes to the hidden neutral owner as a **Rogue State** (added to the game if needed), keeping its land. It raises defenders by level: **1–2** a Warrior, **3–4** a Defender and an Archer, **5+** a Defender and a Swordsman. You get a toast; everyone who has seen it is told; the log records it.
+- **Rogue States** earn nothing, take no turns, meet no one and cannot win. Once a round, after the last empire, each rebel heals **2 HP** and strikes one unit of any empire **next to it** when the blow is worth the reply, then returns to its post. A Rogue State with no defenders left musters a new Warrior after **5 rounds**. Any empire captures it the ordinary way (its origin people is kept, so it may offer a tradition).
+- **Where you see it:** the city panel ("Unrest 3/6 (+2/turn) — garrison it" with the reasons), a tappable line under the HUD for your most restless city, a flame badge beside the city's label, and toasts. Rogue States have crimson borders, crimson labels and a waving war banner with a broken ring; their units wear their people's figures under a crimson badge.
+- **Computer players** send the nearest free unit into (or next to) a city at unrest 3+, or train a guard there, and keep that guard in place while the city is restless.
 

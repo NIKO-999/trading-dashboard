@@ -16,6 +16,7 @@ import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common'
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
 import { drawCamp, drawVolcano, drawWildGround } from './wild';
+import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
 
 const FISH_ICON = FISH;
 const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
@@ -445,7 +446,7 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
 function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean) {
   const owner = tileOwnerPlayer(s, t);
   if (owner === null) return;
-  const color = TRIBES[s.players[owner].tribe].color;
+  const color = s.players[owner].neutral ? REBEL_COLOR : TRIBES[s.players[owner].tribe].color; // only Rogue States hold land for the neutral owner
   const { x, y: ty } = tileTop(t.x, t.y);
   const y = ty + (isWaterTile(t) ? WATER_DROP : 0);
   const c = { x, y: y + HH };
@@ -2052,7 +2053,9 @@ function drawRuin(ctx: Ctx, t: Tile, x: number, y: number) {
 // ---------------------------------------------------------------- cities
 
 function drawCity(ctx: Ctx, s: GameState, city: City, x: number, y: number) {
-  const tribe = TRIBES[s.players[city.owner].tribe];
+  // a Rogue State keeps its people's buildings under rebel colours (see game/rebels); its banner is drawn every frame
+  const rogue = rogueStyle(s, city);
+  const tribe = rogue ? { ...TRIBES[rogue], roof: REBEL_ROOF, color: REBEL_COLOR } : TRIBES[s.players[city.owner].tribe];
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1.3, 1.3);

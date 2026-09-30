@@ -12,6 +12,7 @@ import {
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, transmute, transmuteCost, unitCap, unitAt,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
+import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
@@ -36,6 +37,7 @@ export function aiStep(s: GameState): boolean {
   if (aiAdopt(s, pid)) return true; // a conquered people's tradition waiting to be chosen
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
   if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
+  if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
@@ -281,6 +283,12 @@ function unitStep(s: GameState, u: Unit): boolean {
   if (targets.length) return attack(s, u, targets[0].e);
 
   if (u.moved) return false;
+
+  // Hold a restless conquered city, or it may revolt (see game/rebels).
+  if (holdsPost(s, u)) {
+    const rec = u.hp < maxHp(u) && tileActions(s, pid, t).find((a) => a.id === 'recover' && a.enabled);
+    return rec ? doAction(s, pid, t, 'recover') : false;
+  }
 
   // Stay put on a settlement we can capture next turn.
   if (t.village || (t.cityId !== null && s.cities.find((c) => c.id === t.cityId)!.owner !== pid)) return false;

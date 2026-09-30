@@ -56,6 +56,8 @@ export interface NewGameOptions {
   terrain?: MapTerrain;
   /** Wild events: Great Beasts, volcanoes and mercenary camps (see game/wild). Off unless asked for; the new-game screen defaults it on. */
   wild?: boolean;
+  /** Rebellions: conquered cities left ungarrisoned may break away as Rogue States (see game/rebels). Off unless asked for; the new-game screen defaults it on. */
+  rebels?: boolean;
 }
 
 // Map edge length by map size and number of empires.
@@ -103,6 +105,7 @@ export function createGame(opts: NewGameOptions): GameState {
     winner: null,
     log: [],
     hintStep: 0,
+    ...(opts.rebels ? { rebels: true } : {}),
   };
 
   const capitals = placeCapitals(rng, size, tribes.length);

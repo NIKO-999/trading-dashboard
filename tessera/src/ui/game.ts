@@ -22,6 +22,8 @@ import { renderDpr, setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
 import { WILD_COLOR } from '../render/wild';
+import { REBEL_COLOR } from '../render/rebels';
+import { isRogueCity, isRogueUnit, onBrink, rogueDescribe, subject, unrestFactors, unrestLine, unrestOf, UNREST_WARN } from '../game/rebels';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { music } from '../audio/music';
@@ -563,7 +565,8 @@ export class GameView {
     };
     const hud = ui?.hud?.(view) ?? null;
     const skill = this.skillReadout();
-    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []));
+    const unrest = this.unrestHud();
+    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []), ...(unrest ? [unrest] : []));
     const dock = ui?.dock?.(view) ?? null;
     if (!dock) { this.mechDock?.remove(); this.mechDock = null; return; }
     if (!this.mechDock) {
@@ -583,6 +586,18 @@ export class GameView {
     if (hasTech(s, me, 'rome:3')) bits.push(paxHolds(s, me) ? 'Pax Romana holds' : 'Pax Romana broken');
     if (hasTech(s, me, 'fork:mercenary')) bits.push('Mercenaries: growth halved');
     return bits.length ? h('div', { class: 'skill-hud' }, bits.join(' · ')) : null;
+  }
+
+  /** The most restless of my conquered cities, e.g. "Unrest in Kyoto 3/6 — garrison it" (tap to look at it). */
+  private unrestHud(): HTMLElement | null {
+    const worst = citiesOf(this.s, this.me).filter((c) => subject(this.s, c) && unrestLine(this.s, c) && (unrestOf(c) > 0))
+      .sort((a, b) => Number(onBrink(b)) - Number(onBrink(a)) || unrestOf(b) - unrestOf(a))[0];
+    if (!worst) return null;
+    const line = unrestLine(this.s, worst)!.replace(/^Unrest /, `Unrest in ${worst.name} `);
+    return h('button', {
+      class: `unrest-hud${onBrink(worst) ? ' brink' : unrestOf(worst) >= UNREST_WARN ? ' hot' : ''}`,
+      onclick: () => { this.cam.glideTo(worst.x, worst.y, this.vw, this.vh * 0.9, 450); this.select({ x: worst.x, y: worst.y, mode: 'tile' }); },
+    }, line);
   }
 
   /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
@@ -659,6 +674,7 @@ export class GameView {
       const owner = this.s.players[u.owner];
       const status = u.owner === this.me
         ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
+        : isRogueUnit(this.s, u) ? `A rebel of the Rogue State of ${cityById(this.s, u.data!.rogue as number)?.name ?? 'a lost city'}. It holds its ground and strikes any unit next to it at the end of each round.`
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
           : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
@@ -671,7 +687,9 @@ export class GameView {
       );
       this.panel.append(close, h('div', { class: 'sheet-head' },
         h('div', { class: 'sheet-title' },
-          isNeutral(this.s, u.owner)
+          isRogueUnit(this.s, u)
+            ? h('span', { class: 'tribe-chip', style: { '--tc': REBEL_COLOR } as Record<string, string> }, 'Rebels')
+            : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
@@ -712,8 +730,14 @@ export class GameView {
     const mine = city.owner === this.me;
     const info = mine
       ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
+      : isRogueCity(this.s, city) ? rogueDescribe(this.s, city)
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
-    this.panel.append(close, head(city.name, info,
+    // a conquered city's unrest, with what moves it (see game/rebels)
+    const unrest = mine ? unrestLine(this.s, city) : null;
+    const unrestEl = unrest
+      ? h('div', { class: `unrest-line${onBrink(city) ? ' brink' : unrestOf(city) >= UNREST_WARN ? ' hot' : ''}` }, unrest, h('span', { class: 'muted small' }, ` · ${unrestFactors(this.s, city).why.join(', ')}`))
+      : null;
+    this.panel.append(close, head(city.name, info, unrestEl,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
     if (mine) this.renderActions(acts, owner.tribe);
     else this.renderActions(acts.filter((a) => a.id.startsWith('mech:')), this.s.players[this.me].tribe); // e.g. Mali's market flood
@@ -1288,7 +1312,7 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
 
 function describePlainTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
-  const where = owner === null ? 'Unclaimed land.' : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
+  const where = owner === null ? 'Unclaimed land.' : isNeutral(s, owner) ? `Rogue State territory (${cityById(s, t.owner)!.name}).` : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
   const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform' };
   const res: Record<string, [string, string]> = {
     fruit: ['Wild Fruit', 'Harvest with Gathering.'],

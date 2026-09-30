@@ -12,6 +12,8 @@ import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDU
 import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawFigure, figureHit } from './sprites';
 import { drawWildOverlay, WILD_COLOR } from './wild';
+import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
+import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
 
 interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -112,7 +114,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.restore();
 
   // City labels go under the units, so a unit standing in front of a city is never hidden.
-  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen);
+  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen, now);
 
   ctx.save();
   ctx.translate(cam.x, cam.y);
@@ -154,6 +156,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   }
   for (const m of Object.values(MECH_RENDER)) m?.overlay?.(ctx, s, viewer, cam, ov, now);
   drawWildOverlay(ctx, s, viewer, cam, ov, now); // smoke, lava glow, the Kraken's arms (see game/wild)
+  drawRebelOverlay(ctx, s, viewer, now); // the Rogue States' war banners (see game/rebels)
   ctx.restore();
 
   drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);
@@ -166,7 +169,7 @@ export const unitScale = (zoom: number) => UNIT_SCALE * (zoom < 1 ? Math.min(1.2
 
 function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number, exact: boolean, us: number) {
   const now = ov.now;
-  const tribe = s.players[u.owner].tribe;
+  const tribe = rogueLook(s, u) ?? s.players[u.owner].tribe; // rebels wear their own people's colours (see game/rebels)
   const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
   const fl = ov.fx.flashes.get(u.id);
   const flashK = fl === undefined ? -1 : (now - fl) / FLASH_MS;
@@ -463,7 +466,7 @@ function diamondPath(ctx: Ctx, x: number, y: number, k: number) {
 function drawCityBorder(ctx: Ctx, s: GameState, cityId: number, now: number, explored: (x: number, y: number) => boolean) {
   const city = s.cities.find((c) => c.id === cityId);
   if (!city) return;
-  const col = TRIBES[s.players[city.owner].tribe].color;
+  const col = isRogueCity(s, city) ? REBEL_COLOR : TRIBES[s.players[city.owner].tribe].color;
   const pulse = (Math.sin(now / 300) + 1) / 2;
   const tiles = s.tiles.filter((t) => t.owner === cityId && explored(t.x, t.y));
   const edges: [number, number, number, number, number, number][] = [
@@ -791,7 +794,7 @@ export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: numb
     if (viewer >= 0 && !s.players[viewer].explored[u.y * s.size + u.x]) continue;
     const g = ground(s, u.x, u.y);
     const feet = g.y + 5;
-    if (!figureHit(u.kind, s.players[u.owner].tribe, (w.x - g.x) / us, (w.y - feet) / us, slack, (facing?.get(u.id) ?? 1) < 0)) continue;
+    if (!figureHit(u.kind, rogueLook(s, u) ?? s.players[u.owner].tribe, (w.x - g.x) / us, (w.y - feet) / us, slack, (facing?.get(u.id) ?? 1) < 0)) continue;
     if (feet > bestFeet) {
       bestFeet = feet;
       best = u;
@@ -800,7 +803,7 @@ export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: numb
   return best;
 }
 
-function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean) {
+function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean, now: number) {
   const snap = (v: number) => Math.round(v * dpr) / dpr;
   const { k, detail } = overlayScale(cam.zoom);
   labelRects = [];
@@ -809,6 +812,7 @@ function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr
     if (!explored(c.x, c.y) || !onScreen(p) || !cityVisibleTo(s, viewer, c)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
     const r = drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
+    if (c.owner === viewer) drawUnrestBadge(ctx, s, c, r, k, now); // a restless conquered city (see game/rebels)
     labelRects.push({ id: c.id, ...r });
   }
 }
@@ -854,7 +858,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
 type LabelDetail = 'full' | 'mid' | 'name';
 
 function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail): { x0: number; y0: number; x1: number; y1: number } {
-  const T = TRIBES[s.players[c.owner].tribe];
+  const T = { color: isRogueCity(s, c) ? REBEL_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
   const nw = ctx.measureText(c.name).width;
@@ -953,7 +957,7 @@ function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, sna
 }
 
 function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, k: number, shownHp: number) {
-  const color = s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
+  const color = isRogueUnit(s, u) ? REBEL_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
   const w = 16 * k, h = 18 * k;
   const shield = (ox: number, oy: number) => {
     ctx.beginPath();
