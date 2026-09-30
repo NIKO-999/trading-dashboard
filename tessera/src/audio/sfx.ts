@@ -1,7 +1,8 @@
 // Tiny synthesized sound effects (Web Audio, no audio files), so they work offline too.
 export type SoundName =
   | 'tap' | 'move' | 'harvest' | 'build' | 'train' | 'attack' | 'hit' | 'death' | 'levelup'
-  | 'research' | 'endturn' | 'turn' | 'capture' | 'error' | 'stars' | 'ruin' | 'splash' | 'step';
+  | 'research' | 'endturn' | 'turn' | 'capture' | 'error' | 'stars' | 'ruin' | 'splash' | 'step'
+  | 'kill' | 'bigkill' | 'crit' | 'captive';
 
 type Wave = OscillatorType;
 
@@ -101,9 +102,31 @@ class Sound {
       case 'attack':
         this.noise(0.16, 0.28 * v, at, 3000, 'bandpass', 700);
         break;
-      case 'hit':
-        this.noise(0.09, 0.32 * v, at, 1600, 'lowpass');
-        this.tone(120, 0.14, 'sine', 0.35 * v, at, 60);
+      case 'hit': { // a sharp crack over a low thud, pitched a little differently each time
+        const p = 0.9 + Math.random() * 0.2;
+        this.noise(0.05, 0.3 * v, at, 3200 * p, 'bandpass');
+        this.noise(0.1, 0.3 * v, at, 1400 * p, 'lowpass');
+        this.tone(130 * p, 0.16, 'sine', 0.4 * v, at, 55);
+        break;
+      }
+      case 'crit': // a bright ring on top of a heavier blow
+        this.noise(0.07, 0.36 * v, at, 3600, 'bandpass');
+        this.tone(110, 0.2, 'sine', 0.45 * v, at, 45);
+        this.tone(1320, 0.28, 'triangle', 0.12 * v, at + 0.02, 1760);
+        break;
+      case 'kill': // the blow lands, then the fall
+        this.tone(95, 0.22, 'sine', 0.4 * v, at, 40);
+        this.noise(0.18, 0.18 * v, at + 0.03, 900, 'lowpass', 200);
+        this.tone(420, 0.4, 'triangle', 0.14 * v, at + 0.05, 90);
+        break;
+      case 'bigkill': // a Colossus or a Kraken comes down
+        this.tone(70, 0.5, 'sine', 0.5 * v, at, 28);
+        this.noise(0.45, 0.3 * v, at, 700, 'lowpass', 90);
+        this.tone(300, 0.6, 'triangle', 0.14 * v, at + 0.08, 60);
+        break;
+      case 'captive': // a rope snaps taut
+        this.noise(0.12, 0.2 * v, at, 2400, 'bandpass', 900);
+        this.tone(260, 0.18, 'triangle', 0.12 * v, at + 0.08, 180);
         break;
       case 'death': this.tone(420, 0.45, 'triangle', 0.18 * v, at, 90); break;
       case 'levelup': arp([523, 659, 784, 1047], 0.09, 'triangle', 0.2, 0.3); break;

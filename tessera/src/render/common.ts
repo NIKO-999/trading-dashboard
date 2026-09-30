@@ -12,6 +12,7 @@ export const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(p
 export const LUNGE_MS = 260;
 export const FLASH_MS = 320;
 export const GHOST_MS = 650;
+export const CAPTIVE_MS = 1150; // an Aztec captive led away on a rope
 export const FLOAT_MS = 1100;
 export const HOP_MS = 170; // one tile of a walk
 export const SAIL_MS = 150; // one tile of a boat trip
@@ -49,16 +50,23 @@ export interface Fx {
   lunges: Map<number, { tx: number; ty: number; t0: number }>;
   flashes: Map<number, number>;
   facing: Map<number, number>; // -1 faces left, 1 faces right
-  ghosts: { kind: UnitKind; tribe: TribeId; x: number; y: number; t0: number; facing: number }[];
+  // lead: a captive led away toward this tile on a rope (Aztec), over `dur` ms instead of GHOST_MS
+  ghosts: { kind: UnitKind; tribe: TribeId; x: number; y: number; t0: number; facing: number; lead?: { x: number; y: number }; dur?: number }[];
   projectiles: { fx: number; fy: number; tx: number; ty: number; t0: number; dur: number; kind: 'arrow' | 'bolt' | 'stone' | 'nut' | 'ball' | 'shot' }[];
-  particles: { x: number; y: number; vx: number; vy: number; g: number; t0: number; life: number; color: string; size: number; shape: 'star' | 'square' | 'puff' | 'drop' | 'ring' }[];
-  floaters: { x: number; y: number; text: string; color: string; t0: number }[];
+  particles: Particle[];
+  // hit: a damage number (pops out with a bounce); big: a critical or bonus blow, with `label` above it; dx: sideways nudge
+  floaters: { x: number; y: number; text: string; color: string; t0: number; hit?: boolean; big?: boolean; label?: string; dx?: number }[];
+  shake: { t0: number; dur: number; mag: number } | null; // a kill's screen shake (never with reduced motion)
   hpHold: Map<number, { hp: number; until: number }>; // health shown until a blow visibly lands
 }
 
 export const newFx = (): Fx => ({
-  moves: new Map(), lunges: new Map(), flashes: new Map(), facing: new Map(), ghosts: [], projectiles: [], particles: [], floaters: [], hpHold: new Map(),
+  moves: new Map(), lunges: new Map(), flashes: new Map(), facing: new Map(), ghosts: [], projectiles: [], particles: [], floaters: [], hpHold: new Map(), shake: null,
 });
+
+/** Particle shapes; petals, leaves, shards, coins, ankhs and feathers tumble as they fly (the death effects). */
+export type ParticleShape = 'star' | 'square' | 'puff' | 'drop' | 'ring' | 'petal' | 'leaf' | 'shard' | 'coin' | 'ankh' | 'feather';
+export interface Particle { x: number; y: number; vx: number; vy: number; g: number; t0: number; life: number; color: string; size: number; shape: ParticleShape; sway?: number }
 
 export interface Overlay {
   selected: { x: number; y: number } | null;

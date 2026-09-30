@@ -131,7 +131,7 @@ const HOOKS: Partial<Record<TribeId, Omit<SubTrait, 'from' | 'perks'>>> = {
       name: 'Horns of the Buffalo', blurb: '',
       combat(s, owner, a, d, ctx) {
         if (a.owner !== owner || d.owner === owner || !isMelee(a) || dist(a.x, a.y, d.x, d.y) !== 1) return;
-        if (hornsAround(s, owner, d.x, d.y).length >= HORNS_SIZE) ctx.dmg *= HORNS_MULT;
+        if (hornsAround(s, owner, d.x, d.y).length >= HORNS_SIZE) { ctx.dmg *= HORNS_MULT; ctx.tag = 'Horns!'; }
       },
     },
   },
@@ -141,7 +141,7 @@ const HOOKS: Partial<Record<TribeId, Omit<SubTrait, 'from' | 'perks'>>> = {
     hook: {
       name: 'Kiai Strike', blurb: '',
       combat(s, owner, a, d, ctx) {
-        if (a.owner === owner && d.owner !== owner && isKiaiLite(s, a, d)) ctx.ret = 0;
+        if (a.owner === owner && d.owner !== owner && isKiaiLite(s, a, d)) { ctx.ret = 0; ctx.tag = 'Kiai!'; }
       },
       afterAttack(s, owner, a, d) {
         if (a.owner === owner && isKiaiLite(s, a, d)) emit({ type: 'toast', player: owner, text: 'Kiai! No counter-blow.' });

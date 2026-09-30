@@ -177,7 +177,7 @@ export const mech: Mechanic = {
     s.units = s.units.filter((x) => x !== d);
     const home = cityById(s, d.homeCity);
     if (home) home.units = Math.max(0, home.units - 1);
-    emit({ type: 'death', unitId: d.id, x: d.x, y: d.y, owner: d.owner, kind: d.kind });
+    emit({ type: 'death', unitId: d.id, x: d.x, y: d.y, owner: d.owner, kind: d.kind, captor: { x: a.x, y: a.y } }); // led away on a rope
     setCarried(a, carried(a) + 1);
     const m = st(s, owner);
     m.captured++;

@@ -97,6 +97,7 @@ export const mech: Mechanic = {
     const dmg = Math.round((aForce / (aForce + force || 1)) * atk * 4.5);
     const dmg0 = Math.round((aForce / (aForce + force0 || 1)) * atk * 4.5);
     ctx.dmg += dmg0 - dmg;
+    if (dmg0 > dmg) ctx.tag = 'Bombard!';
     if (ctx.ret > 0) {
       const ret = Math.round((force / (aForce + force || 1)) * dd * 4.5);
       const ret0 = Math.round((force0 / (aForce + force0 || 1)) * dd0 * 4.5);

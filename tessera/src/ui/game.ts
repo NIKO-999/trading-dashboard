@@ -18,9 +18,11 @@ import { perkRange } from '../game/perks';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
-import { REDUCED_MOTION, renderDpr, setSharpness } from '../render/common';
+import { CAPTIVE_MS, REDUCED_MOTION, renderDpr, setSharpness } from '../render/common';
 import { livingScene } from '../render/living';
 import { LivingLayer, picturePlace } from './living';
+import { damageFloater, deathParticles, deathTheme, isBigUnit, killShake, mergeShake, shakeOffset } from '../render/combatfx';
+import { tileCenter } from '../render/camera';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
 import { WILD_COLOR } from '../render/wild';
@@ -347,7 +349,12 @@ export class GameView {
     // in photo mode the resting map is a still picture, so the idle breathing redraws stop
     if (needed || (!photo && now - this.lastFrame > (isDirectDraw() ? 50 : 33))) {
       const t0 = performance.now();
+      const shake = shakeOffset(this.ov.fx.shake, now); // a kill jolts the view for a moment (the camera itself stays put)
+      this.cam.x += shake.x;
+      this.cam.y += shake.y;
       this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, interacting);
+      this.cam.x -= shake.x;
+      this.cam.y -= shake.y;
       this.frameAvg = this.frameAvg ? this.frameAvg * 0.9 + (performance.now() - t0) * 0.1 : performance.now() - t0;
       if (now - this.tagAt > 1000) { this.tagAt = now; this.showTag(); }
       this.drawnVersion = this.version;
@@ -377,7 +384,9 @@ export class GameView {
     for (const [id, l] of fx.lunges) if (now > l.t0 + LUNGE_MS) fx.lunges.delete(id); else active = true;
     for (const [id, t] of fx.flashes) if (now > t + FLASH_MS) fx.flashes.delete(id); else active = true;
     for (const [id, h] of fx.hpHold) if (now > h.until) fx.hpHold.delete(id);
-    fx.ghosts = fx.ghosts.filter((g) => now < g.t0 + GHOST_MS);
+    fx.ghosts = fx.ghosts.filter((g) => now < g.t0 + (g.dur ?? GHOST_MS));
+    if (fx.shake && now > fx.shake.t0 + fx.shake.dur) fx.shake = null;
+    else if (fx.shake) active = true;
     fx.projectiles = fx.projectiles.filter((p) => now < p.t0 + p.dur);
     fx.particles = fx.particles.filter((p) => now < p.t0 + p.life * 1000);
     fx.floaters = fx.floaters.filter((f) => now < f.t0 + FLOAT_MS);
@@ -1017,21 +1026,36 @@ export class GameView {
         case 'damage': {
           if (!seen(e.x, e.y)) break;
           const at = impact ?? now;
-          fx.floaters.push({ x: e.x, y: e.y, text: `-${e.amount}`, color: '#ff5a5a', t0: at });
+          // numbers landing on the same tile together fan out sideways so they never overlap
+          const stacked = fx.floaters.filter((f) => f.hit && f.x === e.x && f.y === e.y && Math.abs(f.t0 - at) < FLOAT_MS * 0.5).length;
+          fx.floaters.push(damageFloater(e.amount, !!e.counter, e.crit, e.x, e.y, at, [0, 13, -13][stacked % 3]));
           fx.flashes.set(e.unitId, at);
           const hurt = this.s.units.find((u) => u.id === e.unitId);
           if (hurt) fx.hpHold.set(e.unitId, { hp: hurt.hp + e.amount, until: at });
-          this.burst(e.x, e.y, at, 6, ['#ffffff', '#ffd9a0'], 'square', 70);
-          sfx.play('hit', at - now, 0.9);
+          this.burst(e.x, e.y, at, e.crit ? 11 : 6, e.crit ? ['#ffffff', '#ffe14a', '#ff9a3a'] : ['#ffffff', '#ffd9a0'], 'square', e.crit ? 110 : 70);
+          sfx.play(e.crit ? 'crit' : 'hit', at - now, e.counter ? 0.7 : 0.9);
           end = Math.max(end, at + FLASH_MS);
           break;
         }
         case 'death': {
           if (!seen(e.x, e.y)) break;
           const at = (impact ?? now) + 120;
-          fx.ghosts.push({ kind: e.kind, tribe: this.s.players[e.owner].tribe, x: e.x, y: e.y, t0: at, facing: fx.facing.get(e.unitId) ?? 1 });
-          this.burst(e.x, e.y, at, 9, ['#d9d4c8', '#bdb6a6'], 'puff', 40);
-          sfx.play('death', at - now, 0.8);
+          const tribe = this.s.players[e.owner].tribe;
+          const big = isBigUnit(e.kind);
+          // each empire falls its own way (cherry petals, ice shards, a burst of coins...); see render/combatfx
+          const theme = deathTheme(tribe, e.kind, isNeutral(this.s, e.owner), !!e.captor);
+          const c = tileCenter(e.x, e.y);
+          fx.particles.push(...deathParticles(theme, c.x, c.y, at, big, Math.random));
+          if (e.captor) {
+            // taken alive by the Aztecs: led away to the captor on a rope rather than struck down
+            fx.ghosts.push({ kind: e.kind, tribe, x: e.x, y: e.y, t0: at, facing: fx.facing.get(e.unitId) ?? 1, lead: e.captor, dur: CAPTIVE_MS });
+            sfx.play('captive', at - now, 0.8);
+            end = Math.max(end, at + CAPTIVE_MS * 0.6);
+            break;
+          }
+          fx.ghosts.push({ kind: e.kind, tribe, x: e.x, y: e.y, t0: at, facing: fx.facing.get(e.unitId) ?? 1 });
+          fx.shake = mergeShake(fx.shake, killShake(e.kind, at, REDUCED_MOTION), now);
+          sfx.play(big ? 'bigkill' : 'kill', at - now, 0.85);
           end = Math.max(end, at + GHOST_MS * 0.6);
           break;
         }

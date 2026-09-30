@@ -23,6 +23,7 @@ export interface CombatCtx {
   ret: number; // damage the attacker takes back
   ranged: boolean;
   kills: boolean; // recomputed from dmg after the hooks run
+  tag?: string; // a critical or bonus blow names itself here ("Kiai!"): the damage number is shown big with this label
 }
 
 export interface AttackInfo {

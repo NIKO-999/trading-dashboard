@@ -83,6 +83,7 @@ export const mech: Mechanic = {
     if (dist(a.x, a.y, d.x, d.y) !== 1 || hornsAround(s, owner, d.x, d.y).length < TRAP_SIZE) return;
     ctx.dmg *= 3; // the horns close: triple damage
     ctx.ret = 0; // ...and the trapped unit cannot hit back
+    ctx.tag = 'Trap!';
   },
 
   ai(s, owner) {

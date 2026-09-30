@@ -1,5 +1,6 @@
 import { forkRivals, prereqs, TECH_BY_ID, techsFor } from '../data/techs';
 import { unitFor } from '../data/tribes';
+import type { CombatCtx } from './mech/types';
 import { hookActions, hookAfterAttack, hookAfterMove, hookAttackTargets, hookBlock, hookCityCaptured, hookCombat, hookDoAction, hookExtraMoves, hookMoveStep, hookSpare, hookStat, hookUnitDied, unitVisibleTo } from './mech';
 import { perkRange, perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
@@ -872,12 +873,13 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
   let kills = dmg >= d.hp;
   const canRetaliate = !kills && dist(a.x, a.y, d.x, d.y) <= def(d).range + hookStat(s, d, 'range') + perkRange(s, d) && def(d).atk > 0;
   let ret = canRetaliate ? Math.round((dForce / total) * dd * 4.5) : 0;
-  const ctx = { dmg, ret, ranged, kills }; // empire mechanics may change the numbers (crits, traps, ambushes...)
+  const ctx: CombatCtx = { dmg, ret, ranged, kills }; // empire mechanics may change the numbers (crits, traps, ambushes...)
+  if (isBeast(s, a)) ctx.tag = `${UNITS[a.kind].name}!`; // a Great Beast's blow is always a big one
   hookCombat(s, a, d, ctx);
   dmg = Math.max(0, Math.round(ctx.dmg));
   kills = dmg >= d.hp;
   ret = kills ? 0 : Math.max(0, Math.round(ctx.ret));
-  return { dmg, ret, kills };
+  return { dmg, ret, kills, tag: dmg > 0 ? ctx.tag : undefined };
 }
 
 export function attack(s: GameState, a: Unit, d: Unit): boolean {
@@ -885,12 +887,12 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   meet(s, a.owner, d.owner);
   (s.players[a.owner].skill ??= {}).war = s.turn; // both sides are at war (War Host surges)
   (s.players[d.owner].skill ??= {}).war = s.turn;
-  const { dmg, ret, kills } = previewCombat(s, a, d);
+  const { dmg, ret, kills, tag } = previewCombat(s, a, d);
   const worth = UNITS[d.carrying ?? d.kind].cost;
   const ranged = dist(a.x, a.y, d.x, d.y) > 1;
   emit({ type: 'attack', unitId: a.id, kind: a.kind, player: a.owner, from: { x: a.x, y: a.y }, to: { x: d.x, y: d.y }, ranged });
   d.hp -= dmg;
-  emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg });
+  emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg, crit: tag });
   const pa = s.players[a.owner];
   const spared = kills && !isBeast(s, d) && hookSpare(s, a, d); // a mechanic may take the defender alive instead (never a Great Beast)
   const refund = kills ? perkSum(s, a.owner, 'refund') : 0; // Sacrificial Rites: killed or taken alive, the foe pays back
@@ -932,7 +934,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   } else if (ret > 0) {
     emit({ type: 'attack', unitId: d.id, kind: d.kind, player: d.owner, from: { x: d.x, y: d.y }, to: { x: a.x, y: a.y }, ranged });
     a.hp -= ret;
-    emit({ type: 'damage', unitId: a.id, x: a.x, y: a.y, amount: ret });
+    emit({ type: 'damage', unitId: a.id, x: a.x, y: a.y, amount: ret, counter: true });
     if (a.hp <= 0) {
       removeUnit(s, a, d);
       emit({ type: 'death', unitId: a.id, x: a.x, y: a.y, owner: a.owner, kind: a.kind });

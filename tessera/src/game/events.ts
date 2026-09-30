@@ -5,8 +5,10 @@ import type { UnitKind } from './types';
 export type GameEvent =
   | { type: 'toast'; player: number; text: string }
   | { type: 'attack'; unitId: number; kind: UnitKind; player: number; from: { x: number; y: number }; to: { x: number; y: number }; ranged: boolean }
-  | { type: 'damage'; unitId: number; x: number; y: number; amount: number }
-  | { type: 'death'; unitId: number; x: number; y: number; owner: number; kind: UnitKind }
+  // counter: a counter-blow (shown in its own colour); crit: the label of a critical or bonus blow (shown big)
+  | { type: 'damage'; unitId: number; x: number; y: number; amount: number; counter?: boolean; crit?: string }
+  // captor: taken alive (Aztec captives) by the unit standing there, rather than slain
+  | { type: 'death'; unitId: number; x: number; y: number; owner: number; kind: UnitKind; captor?: { x: number; y: number } }
   | { type: 'harvest'; player: number; x: number; y: number; pop: number }
   | { type: 'move'; unitId: number; owner: number; path: { x: number; y: number }[]; embark: boolean; disembark: boolean; before?: UnitKind }
   | { type: 'levelup'; player: number; cityId: number; level: number }

@@ -14,6 +14,7 @@ import { drawFigure, figureHit } from './sprites';
 import { drawWildOverlay, WILD_COLOR } from './wild';
 import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
 import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
+import { floaterPose } from './combatfx';
 
 export interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -118,8 +119,9 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   if (!ov.living) for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact, us);
 
   for (const g of fx.ghosts) {
-    const k = (now - g.t0) / GHOST_MS;
+    const k = (now - g.t0) / (g.dur ?? GHOST_MS);
     if (k < 0 || k > 1) continue;
+    if (g.lead) { drawCaptive(ctx, g, k, pxScale, exact, us); continue; }
     const c = tileCenter(g.x, g.y);
     const y = c.y + 5 + k * 8;
     drawFigure(ctx, g.kind, g.tribe, pxScale, 'base', exact, c.x, y, us, 1 + k * 0.1, 1 - k * 0.35, g.facing < 0, 1 - k);
@@ -155,6 +157,31 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.restore();
 
   drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);
+}
+
+/**
+ * A captive of the Aztecs, led away rather than slain: it stumbles in small hops toward its captor on a
+ * taut rope, bowed and greying, and fades out as it reaches the captor's side.
+ */
+function drawCaptive(ctx: Ctx, g: Fx['ghosts'][number], k: number, pxScale: number, exact: boolean, us: number) {
+  const a = tileCenter(g.x, g.y), b = tileCenter(g.lead!.x, g.lead!.y);
+  const walk = Math.min(1, k / 0.85) * 0.62; // it stops at the captor's side, not on top of it
+  const hop = REDUCED_MOTION ? 0 : Math.abs(Math.sin(k * Math.PI * 5)) * 3;
+  const x = a.x + (b.x - a.x) * walk, y = a.y + (b.y - a.y) * walk + 5 - hop;
+  const fade = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+  const facing = b.x - a.x >= 0 ? 1 : -1;
+  // the rope, from the captor's hand to the captive's waist
+  ctx.globalAlpha = fade;
+  ctx.strokeStyle = '#6b4423';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(b.x - facing * 6, b.y - 8);
+  ctx.quadraticCurveTo((x + b.x) / 2, Math.max(y, b.y) - 2 + (1 - walk) * 4, x, y - 8);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  drawFigure(ctx, g.kind, g.tribe, pxScale, 'base', exact, x, y, us, 1, 0.9, facing < 0, fade);
+  const pale = Math.min(0.3, k * 0.6) * fade;
+  if (pale > 0) drawFigure(ctx, g.kind, g.tribe, pxScale, 'white', exact, x, y, us, 1, 0.9, facing < 0, pale);
 }
 
 // ---------------------------------------------------------------- units
@@ -684,9 +711,57 @@ function drawParticle(ctx: Ctx, p: Fx['particles'][number], now: number) {
   const t = (now - p.t0) / 1000;
   if (t < 0 || t > p.life) return;
   const a = 1 - t / p.life;
-  const x = p.x + p.vx * t, y = p.y + p.vy * t + 0.5 * p.g * t * t;
+  // light things (petals, leaves, feathers) flutter from side to side and slow down in the air
+  const drag = p.sway ? 1 / (1 + t * 2.5) : 1;
+  const x = p.x + p.vx * t * drag + (p.sway ? Math.sin(t * 7 + p.vx) * p.sway * Math.min(1, t * 3) : 0);
+  const y = p.y + p.vy * t * drag + 0.5 * p.g * t * t;
   ctx.globalAlpha = Math.min(1, a * 1.4);
+  const spin = t * 8 + p.vx;
   switch (p.shape) {
+    case 'petal':
+    case 'leaf':
+    case 'feather':
+    case 'shard':
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(p.shape === 'shard' ? spin * 1.4 : Math.sin(spin * 0.6) * 1.2 + p.vx * 0.05);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      if (p.shape === 'shard') { ctx.moveTo(-p.size * 0.5, p.size * 0.4); ctx.lineTo(p.size * 0.6, p.size * 0.2); ctx.lineTo(-p.size * 0.1, -p.size * 0.6); }
+      else if (p.shape === 'petal') { ctx.scale(1, 0.55 + 0.45 * Math.abs(Math.cos(spin))); ctx.ellipse(0, 0, p.size * 0.55, p.size * 0.9, 0, 0, Math.PI * 2); }
+      else if (p.shape === 'leaf') { ctx.moveTo(0, -p.size); ctx.quadraticCurveTo(p.size * 0.7, 0, 0, p.size); ctx.quadraticCurveTo(-p.size * 0.7, 0, 0, -p.size); }
+      else ctx.ellipse(0, 0, p.size * 0.28, p.size, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (p.shape === 'feather' || p.shape === 'leaf') {
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.lineTo(0, p.size * 1.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    case 'coin': {
+      const w = Math.max(0.3, Math.abs(Math.cos(spin * 1.3))) * p.size; // spinning edge-on and back
+      ellipse(ctx, x, y, w, p.size, shade(p.color, -0.25));
+      ellipse(ctx, x, y, w * 0.72, p.size * 0.72, p.color);
+      break;
+    }
+    case 'ankh': {
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = p.size * 0.28;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.ellipse(x, y - p.size * 0.55, p.size * 0.3, p.size * 0.4, 0, 0, Math.PI * 2);
+      ctx.moveTo(x, y - p.size * 0.15);
+      ctx.lineTo(x, y + p.size);
+      ctx.moveTo(x - p.size * 0.55, y + p.size * 0.05);
+      ctx.lineTo(x + p.size * 0.55, y + p.size * 0.05);
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+      break;
+    }
     case 'star': drawStar(ctx, x, y, p.size); break;
     case 'square':
       ctx.fillStyle = p.color;
@@ -909,19 +984,27 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
     if (q < 0 || q > 1) continue;
     const c = tileCenter(f.x, f.y);
     const sp = cam.toScreen(c.x, c.y);
-    const pop = q < 0.15 ? 0.6 + (q / 0.15) * 0.5 : 1.1 - Math.min(0.1, q - 0.15);
-    const size = Math.round(17 * pop * k);
-    const y = sp.y - (54 + q * 26) * k;
-    ctx.globalAlpha = 1 - q * q;
-    ctx.font = `700 ${size}px ${FONT}`;
+    const pose = floaterPose(q, !!f.hit, !!f.big);
+    const size = Math.max(1, Math.round((f.hit ? 21 : 17) * pose.scale * k));
+    const x = snap(sp.x + (f.dx ?? 0) * k), y = snap(sp.y - pose.rise * k);
+    ctx.globalAlpha = pose.alpha;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-    ctx.strokeText(f.text, snap(sp.x), snap(y));
+    if (f.label) { // the name of a critical blow, in small capitals above the number
+      ctx.font = `800 ${Math.round(11 * Math.min(1.2, pose.scale / 1.3) * k)}px ${FONT}`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(60,0,0,0.85)';
+      ctx.strokeText(f.label, x, y - size * 0.95);
+      ctx.fillStyle = '#fff4c2';
+      ctx.fillText(f.label, x, y - size * 0.95);
+    }
+    ctx.font = `${f.hit ? 900 : 700} ${size}px ${FONT}`;
+    ctx.lineWidth = f.hit ? Math.max(3, size * 0.22) : 4;
+    ctx.strokeStyle = f.big ? 'rgba(120,0,0,0.9)' : 'rgba(0,0,0,0.7)';
+    ctx.strokeText(f.text, x, y);
     ctx.fillStyle = f.color;
-    ctx.fillText(f.text, snap(sp.x), snap(y));
+    ctx.fillText(f.text, x, y);
     ctx.globalAlpha = 1;
   }
 }

@@ -34,8 +34,11 @@ export const mech: Mechanic = {
   },
 
   combat(s, owner, a, d, ctx) {
-    if (a.owner !== owner || !isKiai(s, a, d)) return;
+    if (a.owner !== owner) return;
+    if (a.hp === 1) ctx.tag = 'Last Stand!';
+    if (!isKiai(s, a, d)) return;
     ctx.ret = 0;
+    ctx.tag = 'Kiai!';
   },
 
   afterAttack(s, owner, a, d) {
