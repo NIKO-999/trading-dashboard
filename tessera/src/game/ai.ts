@@ -14,6 +14,7 @@ import {
 import type { GameState, Tile, Unit } from './types';
 import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
+import { wonderAi } from './wonders';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -61,6 +62,8 @@ export function aiStep(s: GameState): boolean {
     done.add(u.id);
   }
 
+  // A World Wonder when rich: begin one, or put the spare stars into the one rising (see game/wonders).
+  if (wonderAi(s, pid)) return true;
   // Leftover stars: one more economic pass after units moved.
   if (p.stars > 0 && economyStep(s, pid)) return true;
   return false;

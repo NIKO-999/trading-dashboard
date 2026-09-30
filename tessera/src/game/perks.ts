@@ -6,6 +6,7 @@ import { SKILL_BY_ID } from '../data/skills';
 import { condActive } from './alignment';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
+import { WONDER_BY_ID, wondersHeldBy } from '../data/wonders';
 import type { GameState, Unit, UnitKind } from './types';
 
 export type PerkWho = 'all' | 'ranged' | 'mounted' | 'naval' | 'melee' | 'siege' | 'unique';
@@ -56,6 +57,7 @@ export function perksOf(s: GameState, pid: number): Perk[] {
     if (k.surge && k.cond && condActive(s, pid, k.cond)) out.push(...k.surge);
   }
   for (const a of s.players[pid].culture?.adopted ?? []) out.push(...(a.perks ?? [])); // traditions taken from conquered peoples (see culture.ts)
+  for (const id of wondersHeldBy(s, pid)) out.push(...WONDER_BY_ID[id].perks); // World Wonders it holds (see game/wonders)
   return out;
 }
 

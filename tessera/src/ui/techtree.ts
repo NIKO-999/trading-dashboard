@@ -2,6 +2,7 @@ import { prereqs, TECH_BY_ID, techsFor, type TechDef } from '../data/techs';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { portraitKind, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
+import { WONDERS } from '../data/wonders';
 import { COND_TEXT, condActive } from '../game/alignment';
 import { research, researchStatus, subBranch, techCost, transmute, transmuteCheck, transmuteCost, transmuteRefund, type ResearchStatus } from '../game/rules';
 import type { GameState } from '../game/types';
@@ -169,6 +170,8 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
       body.push(h('p', { class: `tt-surge${on ? ' on' : ''}` }, `Surge — while ${COND_TEXT[t.cond].when}: ${t.surge} `, h('b', {}, on ? '(surging now)' : '(dormant)')));
     }
     if (t.requires) body.push(h('p', { class: 'muted' }, `Opens when both branches are complete: ${t.branches}.`));
+    const wonders = WONDERS.filter((w) => w.tech === id); // World Wonders this tech lets you begin (see game/wonders)
+    if (wonders.length) body.push(h('p', { class: 'muted' }, `World Wonder${wonders.length > 1 ? 's' : ''}: ${wonders.map((w) => w.name).join(', ')}.`));
     const rivals = mine.filter((x) => x.fork && x.fork === t.fork && x.id !== id);
     if (t.fork && st !== 'owned') body.push(h('p', { class: 'muted' }, st === 'sealed' ? `Sealed: you chose ${rivals.map((r) => r.name).join(', ')}. A Transmutation Shift can undo that.` : `A fork: learning this seals ${rivals.map((r) => r.name).join(', ')}.`));
     const missing = prereqs(t).filter((q) => researchStatus(s, pid, q) !== 'owned');

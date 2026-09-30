@@ -147,7 +147,24 @@ export interface GameState {
   wild?: WildState;
   /** Rebellions: restless conquered cities may break away as Rogue States (see game/rebels). Missing when off and in older saves. */
   rebels?: boolean;
+  /** World Wonders: great works being raised and those finished (see game/wonders). Missing in older saves and until the first is begun. */
+  wonders?: WonderState;
 }
+
+/** A wonder being raised by one empire on a tile of its land; `paid` Stars so far (see game/wonders). */
+export interface WonderSite {
+  id: string;
+  pid: number;
+  x: number;
+  y: number;
+  paid: number;
+  started: number; // the turn it was begun
+  lastTurn: number; // the turn Stars were last put in, and how many that turn (investment is capped per turn)
+  lastPaid: number;
+}
+/** A finished wonder: who built it, where, and when. Whoever holds its land holds it (see data/wonders). */
+export interface BuiltWonder { id: string; pid: number; x: number; y: number; turn: number }
+export interface WonderState { sites: WonderSite[]; built: BuiltWonder[] }
 
 /** A neutral mercenary camp and its sealed-bid auction (see game/wild). */
 export interface WildCamp {

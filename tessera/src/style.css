@@ -342,3 +342,21 @@ ul.traits .effect { display: block; font-weight: 600; }
 .display-picker button { font: inherit; font-size: 1.1rem; min-width: 48px; height: 44px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); color: #fff; }
 .display-picker button.on { background: #2a9bff; border-color: #fff; }
 .display-picker .dp-done { padding: 0 16px; background: #fff; color: #000; }
+
+/* ------------------------------------------------ World Wonders (see ui/wonders) */
+.modal.stats .modal-body { max-height: 66vh; overflow-y: auto; overscroll-behavior: contain; }
+.stats-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.stats-tab { flex: 1; padding: 8px 10px 5px; border-radius: 12px; background: #1b1b22; color: #fff; font-weight: 700; font-size: 1rem; }
+.stats-tab.on { background: var(--blue); }
+.wonder-list > p { margin: 0 0 8px; line-height: 1.25; }
+.wonder-row { align-items: flex-start; }
+.wonder-row .pic, .wonder-row canvas { flex: none; }
+.wonder-text { flex: 1; min-width: 0; line-height: 1.25; }
+.wonder-text .small { margin-top: 2px; }
+.wonder-status { margin-top: 4px; font-size: 0.85rem; font-weight: 600; }
+.wonder-status.done { color: #ffd98a; }
+.wonder-bar { height: 5px; border-radius: 3px; background: #2a2a34; margin-top: 3px; overflow: hidden; }
+.wonder-bar span { display: block; height: 100%; border-radius: 3px; }
+.wonder-hud { pointer-events: auto; padding: 4px 12px 3px; border-radius: 999px; background: rgba(60,50,20,0.82); color: #ffe7a0; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
+.wonder-hud.hot { background: rgba(160,120,20,0.92); color: #fff; }
+.modal.wonder-card h2 { color: #ffd24a; }

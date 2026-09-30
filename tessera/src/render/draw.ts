@@ -17,6 +17,8 @@ import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
 import { drawCamp, drawVolcano, drawWildGround } from './wild';
 import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
+import { drawWonderIcon, drawWonderTile } from './wonders';
+import { wonderOn } from '../game/wonders';
 
 const FISH_ICON = FISH;
 const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
@@ -508,8 +510,9 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   const c = tileCenter(t.x, t.y);
   const P = TRIBES[t.biome].palette;
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
-  if (t.terrain === 'forest' && t.improvement !== 'lumber') drawForest(ctx, t, c.x, c.y, P);
-  if (t.terrain === 'mountain' && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
+  const wonder = wonderOn(s, t); // a World Wonder takes the whole tile: it brings its own hill or trees (see render/wonders)
+  if (t.terrain === 'forest' && t.improvement !== 'lumber' && !wonder) drawForest(ctx, t, c.x, c.y, P);
+  if (t.terrain === 'mountain' && !wonder && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
   if (isClimate(t.terrain)) drawClimate(ctx, t, c.x, c.y);
   // once a farm or mine is built it replaces the wild crop or ore it was built on
   if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') {
@@ -525,6 +528,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
     if (city && cityVisibleTo(s, viewer, city) && !city.data?.waka) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it; a Great Waka is drawn by render/mech/polynesia
   }
   drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
+  if (wonder) drawWonderTile(ctx, s, t, c.x, c.y);
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }
 
@@ -5282,6 +5286,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   });
   const P = TRIBES[tribe].palette;
   if (icon in UNITS) return drawUnitSprite(ctx, icon as UnitKind, tribe, x, y + 12);
+  if (icon.startsWith('wonder:')) return drawWonderIcon(ctx, icon.slice(7), x, y); // World Wonders (see render/wonders)
   switch (icon) {
     case 'fruit':
     case 'crop':

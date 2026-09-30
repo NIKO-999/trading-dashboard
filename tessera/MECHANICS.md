@@ -344,3 +344,32 @@ An option on the new-game screen (**Rebellions**, on by default; independent of 
 - **Where you see it:** the city panel ("Unrest 3/6 (+2/turn) — garrison it" with the reasons), a tappable line under the HUD for your most restless city, a flame badge beside the city's label, and toasts. Rogue States have crimson borders, crimson labels and a waving war banner with a broken ring; their units wear their people's figures under a crimson badge.
 - **Computer players** send the nearest free unit into (or next to) a city at unrest 3+, or train a guard there, and keep that guard in place while the city is restless.
 
+## 12. World Wonders
+
+Sixteen one-of-a-kind great works from world history (`data/wonders.ts`). Only the first empire to finish each one gets it.
+- **Begin:** once you know its tech, tap an **empty tile of your own land** (no city, village, ruin, resource or improvement) with the right terrain and choose **Begin <Wonder>**. You raise **one wonder at a time**.
+- **Invest:** a wonder is paid for over several turns: **up to 10★ a turn** from the site's tile menu (the first 10★ are paid on beginning) until its cost (30–40★) is reached. Your own people's wonder costs **25% less**; every wonder you already hold makes the next **25% dearer**.
+- **Race and refunds:** everyone's sites and progress are listed on the **Wonders** tab of the Empires screen. When a rival finishes first, your site closes and **half** of what you put in comes back; the same when you **Abandon** a site or lose its land.
+- **Holding:** a finished wonder stands on its tile as a large landmark, flies its holder's banner and gives **+600 score** plus its bonus. It changes hands with the land it stands on (capture the city, take the wonder). Nothing else can be built on its tile.
+- **Completion** shows a celebration card to everyone who has met the builder (others hear a rumour); rivals are told when someone begins one.
+- **Computer players** begin one when they have 2+ cities and 16★ (their own wonder first, then what suits their land), invest their spare stars each turn and give up a site a rival is about to finish.
+
+| Wonder | Tech | Site | Home | Cost | Bonus |
+|---|---|---|---|---|---|
+| Great Pyramids | Masonry | desert, field | Egyptian | 36 | Buildings 2★ cheaper; +2★ from your capital |
+| Great Wall | Engineering | field, forest, desert, tundra, mountain | Chinese | 40 | Units on your own land defend 0.5 better |
+| Colosseum | Tactics | field | Roman | 32 | Foot soldiers hit 0.5 harder; +1★ per kill |
+| Machu Picchu | Meditation | mountain | Inca | 40 | +1★ from every city |
+| Hanging Gardens | Farming | field, desert | Persian | 34 | Farms grow +1 more; every city +2 pop on completion |
+| Great Library | Philosophy | field, desert | Greek | 40 | Research 2★ cheaper; a free tech on completion |
+| Stonehenge | Spiritualism | field, tundra | Celtic | 30 | +1 vision; +1★ from your capital |
+| Angkor Wat | Forestry | forest, field, swamp | Khmer | 34 | +2★ per city level-up; temples grow +1 more |
+| Hagia Sophia | Masonry | field | Ottoman | 34 | Temples and shrines 3★ cheaper; +1★ per temple |
+| Great Mosque of Djenné | Carpentry | desert, field, swamp | Malian | 34 | +1★ per market; markets grow +1 |
+| Moai Row | Fishing | coastal field, forest | Māori | 32 | +2★ per port; fish harvests grow +1 more |
+| Potala Palace | Meditation | mountain | Tibetan | 36 | Units in the mountains defend 0.5 better; units on your land heal 2 HP a turn |
+| Chichen Itza | Roads | forest, field | Maya | 34 | +1★ per 4 road tiles in a city's land; +1★ from your capital |
+| Terracotta Army | Smithing | field, desert | Chinese | 36 | Foot soldiers 1★ cheaper and defend 0.5 better |
+| Lighthouse of Alexandria | Sailing | coastal field, desert (or a Pirate platform) | Egyptian | 32 | Boats and ships move 1 further; +1 vision |
+| Great Zimbabwe | Mining | field, forest | Swahili | 34 | +1★ per mine; mines grow +1 more |
+

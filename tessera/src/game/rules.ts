@@ -10,6 +10,8 @@ import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LIN
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
+import { wonderActions, wonderDoAction, wonderOn } from './wonders';
+import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -102,7 +104,8 @@ export function score(s: GameState, pid: number) {
   // a tech scores its tier; the nodes beyond the shared tree and the empire's line (forks, links, wildcards) score 1 each
   const techs = p.techs.reduce((a, t) => a + (TECH_BY_ID[t] ? (TECH_BY_ID[t].ring === 'core' || TECH_BY_ID[t].ring === 'culture' ? TECH_BY_ID[t].tier : 1) : 1), 0);
   const army = s.units.filter((u) => u.owner === pid).reduce((a, u) => a + def(u).cost, 0);
-  return explored * 5 + territory * 20 + levels * 50 + cities.length * 100 + techs * 100 + army * 5 + p.kills * 20 + p.bonusScore;
+  const wonders = wondersHeldBy(s, pid).length * WONDER_SCORE; // World Wonders (see game/wonders)
+  return explored * 5 + territory * 20 + levels * 50 + cities.length * 100 + techs * 100 + army * 5 + p.kills * 20 + p.bonusScore + wonders;
 }
 
 // ---------------------------------------------------------------- research
@@ -370,9 +373,11 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
 
 /** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
-  let acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t)];
-  // a mercenary camp stands on its tile: nothing can be built there but a road (see game/wild)
-  if (campAt(s, t.x, t.y)) acts = acts.filter((a) => !['temple', 'market', 'farm', 'mine', 'lumber', 'harvest'].includes(a.id));
+  let acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t)];
+  // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
+  if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
+  // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
+  if (wonderOn(s, t) && unitAt(s, t.x, t.y)?.owner !== pid) acts = acts.filter((a) => !a.id.startsWith('mech:'));
   const beast = unitAt(s, t.x, t.y);
   for (const a of acts) {
     const why = hookBlock(s, pid, a.id, t) ?? (beast && isBeast(s, beast) && a.id.startsWith('mech:') ? 'A Great Beast cannot be tamed' : undefined) ?? (a.id === 'clear' && perkSum(s, pid, 'canopy') > 0 ? 'Sacred Canopy: the forest may not be cut' : undefined);
@@ -522,6 +527,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
 
   if (id.startsWith('mech:')) return hookDoAction(s, pid, t, id);
   if (id.startsWith('wild:')) return wildDoAction(s, pid, t, id);
+  if (id.startsWith('wonder:')) return wonderDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     if (city?.data?.waka) return trainAfloat(s, city, kind);

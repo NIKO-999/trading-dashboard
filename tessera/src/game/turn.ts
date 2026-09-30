@@ -7,6 +7,7 @@ import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlay
 import { tileAt } from './grid';
 import { cultureUnrest } from './rebels';
 import { wildRound } from './wild';
+import { wonderTurnStart } from './wonders';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -44,6 +45,7 @@ export function startTurn(s: GameState) {
   }
   hookTurnStart(s, p.id);
   skillTurnStart(s, p.id);
+  wonderTurnStart(s, p.id); // a wonder site on land it has lost is closed (see game/wonders)
   revealAround(s, p.id);
 }
 

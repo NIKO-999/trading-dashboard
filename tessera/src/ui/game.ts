@@ -40,6 +40,9 @@ import { modal, toast } from './modal';
 import { showTechTree } from './techtree';
 import { adoptedLines, showCultureOffer } from './culture';
 import { adopt, offersOf } from '../game/culture';
+import { knows, wonderDescribe } from '../game/wonders';
+import { WONDER_BY_ID } from '../data/wonders';
+import { celebrateWonder, wonderHud, wondersList } from './wonders';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:');
@@ -740,7 +743,8 @@ export class GameView {
     const hud = ui?.hud?.(view) ?? null;
     const skill = this.skillReadout();
     const unrest = this.unrestHud();
-    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []), ...(unrest ? [unrest] : []));
+    const wonder = wonderHud(this.s, this.me, () => this.openStats(true)); // a wonder being raised or held (see ui/wonders)
+    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []), ...(unrest ? [unrest] : []), ...(wonder ? [wonder] : []));
     const dock = ui?.dock?.(view) ?? null;
     if (!dock) { this.mechDock?.remove(); this.mechDock = null; return; }
     if (!this.mechDock) {
@@ -868,7 +872,7 @@ export class GameView {
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:')), p.tribe); // empire actions on a unit's tile (launch, board...) and camp bids
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:')), p.tribe); // empire actions on a unit's tile (launch, board...), camp bids and a wonder site
       return;
     }
 
@@ -1111,6 +1115,19 @@ export class GameView {
         case 'eliminated': {
           const who = TRIBES[this.s.players[e.player].tribe];
           if (e.player !== this.me) toast(`The ${who.name} has been destroyed.`, who.color);
+          break;
+        }
+        case 'wonder': { // a World Wonder is finished: a card for everyone who knows the builder (see ui/wonders)
+          const color = TRIBES[this.s.players[e.player].tribe].color;
+          if (seen(e.x, e.y)) this.burst(e.x, e.y, now, 26, [color, '#ffcf33', '#ffffff'], 'star', 170);
+          if (knows(this.s, this.me, e.player)) {
+            const { player, id } = e;
+            sfx.play('levelup');
+            const show = () => { if (!this.destroyed) celebrateWonder(this.s, this.me, player, id); };
+            const wait = end - performance.now();
+            if (wait > 30) window.setTimeout(show, wait);
+            else show();
+          } else toast(`Far away, an unknown empire has completed the ${WONDER_BY_ID[e.id].name}.`, color);
           break;
         }
         case 'levelup':
@@ -1459,7 +1476,8 @@ export class GameView {
     });
   }
 
-  private openStats() {
+  /** The Empires screen, with a Wonders tab (see ui/wonders); `wonders` opens that tab. */
+  private openStats(wonders = false) {
     const s = this.s;
     const rows = empires(s).map((p) => {
       const known = p.id === this.me || (s.players[this.me].met ?? []).includes(p.id) || s.cities.some((c) => c.owner === p.id && isExplored(s, this.me, c.x, c.y));
@@ -1475,7 +1493,16 @@ export class GameView {
         ),
       );
     });
-    const close = modal({ title: 'Empires', body: rows, dismissable: true, cls: 'stats' });
+    const list = h('div', {});
+    const tab = (label: string, show: () => Node[]) => h('button', { class: 'stats-tab', onclick: (ev: Event) => {
+      tabs.querySelectorAll('.stats-tab').forEach((b) => b.classList.toggle('on', b === ev.currentTarget));
+      list.replaceChildren(...show());
+    } }, label);
+    const go = (x: number, y: number) => { close(); this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450); this.select({ x, y, mode: 'tile' }); };
+    const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', () => [wondersList(s, this.me, go)]));
+    (tabs.children[wonders ? 1 : 0] as HTMLElement).classList.add('on');
+    list.replaceChildren(...(wonders ? [wondersList(s, this.me, go)] : rows));
+    const close = modal({ title: 'Empires', body: [tabs, list], dismissable: true, cls: 'stats' });
   }
 
   /** Opens the tech tree; with `focus`, that tech is highlighted and its research card opened. */
@@ -1493,6 +1520,8 @@ export class GameView {
 function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const wild = wildDescribe(s, t, viewer); // camps, volcanoes and lava (see game/wild)
   if (wild) return wild;
+  const wonder = wonderDescribe(s, t, viewer); // a World Wonder standing or rising (see game/wonders)
+  if (wonder) return wonder;
   if (isAsh(t)) {
     const d = describePlainTile(s, t, viewer);
     return { title: d.title, desc: `${d.desc} ${ASH_NOTE}` };
