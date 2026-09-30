@@ -39,7 +39,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 
 /* ------------------------------------------------ shared screen chrome */
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: #000; }
-.scroll { flex: 1; overflow-y: auto; padding: 8px 16px calc(24px + var(--safe-bottom)); touch-action: pan-y; }
+.scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 16px calc(24px + var(--safe-bottom)); touch-action: pan-y; }
 .backbar { display: flex; align-items: center; gap: 14px; padding: calc(14px + var(--safe-top)) 16px 8px; }
 .backbar h2 { margin: 0; font-size: 1.7rem; font-weight: 700; font-style: italic; }
 .round-btn { width: 52px; height: 52px; border-radius: 50%; background: #fff; color: #000; display: grid; place-items: center; flex: none; }
@@ -97,7 +97,9 @@ button:disabled { opacity: 0.45; cursor: default; }
 .tribe-detail b { font-weight: 600; }
 .seg-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 10px; margin: 14px 0; }
 .seg-label { font-weight: 600; font-style: italic; font-size: 1.1rem; }
-.seg { display: flex; margin-left: auto; max-width: 100%; background: #1a1a1a; border-radius: 14px; padding: 3px; }
+.seg { display: flex; margin-left: auto; max-width: 100%; min-width: 0; background: #1a1a1a; border-radius: 14px; padding: 3px; }
+.seg.wrap { flex-wrap: wrap; gap: 2px; justify-content: center; }
+.seg.wrap button { padding: 8px 11px 5px; font-size: 0.95rem; }
 .seg button { padding: 9px clamp(8px, 2.6vw, 14px) 6px; border-radius: 11px; font-weight: 600; color: var(--muted); }
 .seg button.on { background: var(--blue); color: #fff; }
 .toggle { padding: 9px 18px 6px; border-radius: 12px; background: #2a2a2a; font-weight: 700; }
