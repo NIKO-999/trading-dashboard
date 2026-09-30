@@ -1,4 +1,5 @@
 import { h } from '../dom';
+import { signedStars } from '../hudchips';
 import { DIRS, lighthouses, tradeReport, turnsToShift, windDir } from '../../game/mech/swahili';
 import type { MechUi } from './types';
 
@@ -10,5 +11,8 @@ export const ui: MechUi = {
     const lh = lighthouses(v.s, v.me).length;
     return h('div', { class: 'swahili', title: 'Sail with the wind for double trade; Lighthouses call the wind.' },
       `Wind ${d.arrow} ${d.name} (${turnsToShift(v.s)}t) · Lighthouses ${lh} · Trade +${r.total}★`);
+  },
+  chip(v) {
+    return { icon: DIRS[windDir(v.s)].arrow, text: `${signedStars(tradeReport(v.s, v.me).total)} ${turnsToShift(v.s)}t` };
   },
 };

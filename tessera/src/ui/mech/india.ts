@@ -8,4 +8,8 @@ export const ui: MechUi = {
     const state = k >= 5 ? 'Radiant' : k >= 3 ? 'Blessed' : k <= -3 ? 'Burdened' : 'Balanced';
     return h('div', { class: 'karma' }, `☸ Karma ${k > 0 ? '+' : ''}${k} · ${state}`);
   },
+  chip(v) {
+    const k = karmaOf(v.s, v.me);
+    return { icon: '☸', text: `${k > 0 ? '+' : ''}${k}`, tone: k >= 3 ? 'gold' : k <= -3 ? 'warn' : undefined };
+  },
 };

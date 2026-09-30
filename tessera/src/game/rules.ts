@@ -908,10 +908,13 @@ export const unitDef = (s: GameState, u: Unit) => def(u).def
   + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0)
   + (s.players[u.owner].tribe === 'japan' && tileOwnerPlayer(s, tileAt(s, u.x, u.y)!) === u.owner ? 1 : 0); // Home Ground
 
+/** How far `u` can strike, with its empire's and skills' bonuses. */
+export const attackRange = (s: GameState, u: Unit) => def(u).range + hookStat(s, u, 'range') + perkRange(s, u);
+
 export function attackOptions(s: GameState, u: Unit): Unit[] {
   const d = def(u);
   if (u.attacked || d.atk <= 0) return [];
-  const range = d.range + hookStat(s, u, 'range') + perkRange(s, u);
+  const range = attackRange(s, u);
   const targets = s.units.filter((e) => e.owner !== u.owner && dist(e.x, e.y, u.x, u.y) <= range && isExplored(s, u.owner, e.x, e.y) && unitVisibleTo(s, u.owner, e));
   return hookAttackTargets(s, u, targets).filter((e) => hostile(s, u.owner, e.owner)); // never a treaty partner (see game/diplomacy)
 }

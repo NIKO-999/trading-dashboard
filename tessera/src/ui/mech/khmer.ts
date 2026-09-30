@@ -1,4 +1,5 @@
 import { h } from '../dom';
+import { signedStars } from '../hudchips';
 import { citiesOf } from '../../game/rules';
 import { hydraulics } from '../../game/mech/khmer';
 import type { MechUi } from './types';
@@ -9,5 +10,10 @@ export const ui: MechUi = {
     for (const c of citiesOf(v.s, v.me)) { const r = hydraulics(v.s, c); stars += r.total; barays += r.barays; }
     const floods = v.s.tiles.filter((t) => (t.data?.flood as { by?: number } | undefined)?.by === v.me).length;
     return h('div', { class: 'khmer' }, `Barays ${barays} · Hydraulics +${stars}★${floods ? ` · ${floods} tiles in flood` : ''}`);
+  },
+  chip(v) {
+    let stars = 0;
+    for (const c of citiesOf(v.s, v.me)) stars += hydraulics(v.s, c).total;
+    return { icon: '💧', text: signedStars(stars) };
   },
 };

@@ -42,7 +42,8 @@ import { adoptedLines, showCultureOffer } from './culture';
 import { adopt, offersOf } from '../game/culture';
 import { knows, wonderDescribe } from '../game/wonders';
 import { WONDER_BY_ID } from '../data/wonders';
-import { celebrateWonder, wonderHud, wondersList } from './wonders';
+import { celebrateWonder, wonderChip, wonderHud, wondersList } from './wonders';
+import { ChipRow, shortChip, skillChip, unrestChip, type HudLine } from './hudchips';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
@@ -177,18 +178,17 @@ export class GameView {
     const root = $ui();
     root.innerHTML = '';
     this.hud = h('div', { class: 'hud' });
-    // tiny and faint: any screenshot then says which build it is and how sharply the map is drawn
+    // tiny and faint: with "Build info" on, any screenshot says which build it is and how sharply the map is drawn
     this.buildTag = h('div', { class: 'build-tag' });
     this.hint = h('div', { class: 'hint hidden' });
     this.banner = h('div', { class: 'turn-banner hidden' });
     this.panel = h('div', { class: 'sheet hidden' });
     this.bottom = h('div', { class: 'bottom-bar' });
     // the vignette is a CSS layer (composited for free) rather than a full-screen gradient painted every frame
-    root.append(h('div', { class: 'game-ui' }, h('div', { class: 'vignette' }), this.buildTag, this.hud, this.hint, this.banner, this.panel, this.bottom));
+    root.append(h('div', { class: `game-ui${this.settings.buildInfo ? ' show-build' : ''}` }, h('div', { class: 'vignette' }), this.buildTag, this.hud, this.hint, this.banner, this.panel, this.bottom));
     const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
       h('button', { class: `dock-btn ${cls}`, onclick }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
-    this.mechHud = h('div', { class: 'mech-hud' });
-    this.hud.after(this.mechHud);
+    this.hud.after(this.chips.row);
     this.bottom.append(
       btn('menu', 'Menu', 'dark', () => this.openMenu()),
       btn('globe', 'Empires', 'dark', () => this.openStats()),
@@ -304,8 +304,9 @@ export class GameView {
     lc.zoom = this.cam.zoom;
     // with motion allowed, the moving parts go in the living layer instead of the picture
     const living = !REDUCED_MOTION;
-    this.photoRenderer.render(pctx, this.s, this.me, lc, { ...this.ov, still: true, living }, W, H, this.dpr, this.version, false);
-    const scene = living ? livingScene(this.s, this.me, lc, this.ov, W, H, this.dpr) : null;
+    const pov = { ...this.ov, hudBottom: (this.ov.hudBottom ?? 0) + my }; // the picture reaches `my` above the screen
+    this.photoRenderer.render(pctx, this.s, this.me, lc, { ...pov, still: true, living }, W, H, this.dpr, this.version, false);
+    const scene = living ? livingScene(this.s, this.me, lc, pov, W, H, this.dpr) : null;
     const at = { x: this.cam.x, y: this.cam.y, zoom: this.cam.zoom, mx, my, w: W, h: H, version: this.version };
     const current = () => !this.destroyed && this.settings.display === 'image' && this.version === at.version;
     try {
@@ -729,13 +730,15 @@ export class GameView {
     this.countTo(e.stars, e.starsBox, p.stars, String);
     this.bottom.classList.toggle('waiting', !this.myTurn());
     this.refreshMech();
+    // where the score bar and its chips end, for the map to keep its labels and badges clear of them
+    this.ov.hudBottom = Math.max(this.hud.getBoundingClientRect().bottom, this.chips.row.getBoundingClientRect().bottom);
     this.ov.glow = this.harvestable();
     this.updateHint();
     this.version++;
     if (this.sel) this.select(this.sel);
   }
 
-  private mechHud!: HTMLElement;
+  private chips = new ChipRow();
   private mechDock: HTMLElement | null = null;
 
   /** The empire mechanic's own readout and dock button (see ui/mech). */
@@ -747,11 +750,18 @@ export class GameView {
       act: (fn) => { fn(); this.refresh(); },
       focus: (x, y) => this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450),
     };
-    const hud = ui?.hud?.(view) ?? null;
-    const skill = this.skillReadout();
+    // one row of chips (see ui/hudchips): a restless city first, then the mechanic, the skill tree and a wonder
+    const lines: HudLine[] = [];
     const unrest = this.unrestHud();
-    const wonder = wonderHud(this.s, this.me, () => this.openStats(true)); // a wonder being raised or held (see ui/wonders)
-    this.mechHud.replaceChildren(...(hud ? [hud] : []), ...(skill ? [skill] : []), ...(unrest ? [unrest] : []), ...(wonder ? [wonder] : []));
+    if (unrest) lines.push(unrest);
+    const hud = ui?.hud?.(view) ?? null;
+    if (hud) lines.push({ key: 'mech', ...(ui?.chip?.(view) ?? { icon: '◆', text: shortChip(hud.textContent ?? '') }), full: hud });
+    const skill = this.skillReadout();
+    if (skill) lines.push(skill);
+    const openWonders = () => this.openStats(true);
+    const wonder = wonderChip(this.s, this.me); // a wonder being raised or held (see ui/wonders)
+    if (wonder) lines.push({ key: 'wonder', ...wonder, full: wonderHud(this.s, this.me, openWonders), onTap: openWonders });
+    this.chips.set(lines);
     const dock = ui?.dock?.(view) ?? null;
     if (!dock) { this.mechDock?.remove(); this.mechDock = null; return; }
     if (!this.mechDock) {
@@ -762,27 +772,26 @@ export class GameView {
     this.mechDock.replaceChildren(h('span', { class: 'round' }, iconEl(dock.icon as Parameters<typeof iconEl>[0])), h('span', { class: 'dock-label' }, dock.label));
   }
 
-  /** One line under the score bar for the skill tree's passive states: surging Wildcards, Pax Romana, a fork's cost. */
-  private skillReadout(): HTMLElement | null {
+  /** The skill tree's passive states (surging Wildcards, Pax Romana, a fork's cost): a chip, and its full line. */
+  private skillReadout(): HudLine | null {
     const s = this.s, me = this.me;
     const bits: string[] = [];
     const surging = surgingNodes(s, me).map((id) => TECH_BY_ID[id].name);
-    if (surging.length) bits.push(`✦ ${surging.join(', ')} surging`);
+    if (surging.length) bits.push(`${surging.join(', ')} surging`);
     if (hasTech(s, me, 'rome:3')) bits.push(paxHolds(s, me) ? 'Pax Romana holds' : 'Pax Romana broken');
     if (hasTech(s, me, 'fork:mercenary')) bits.push('Mercenaries: growth halved');
-    return bits.length ? h('div', { class: 'skill-hud' }, bits.join(' · ')) : null;
+    const chip = skillChip(s, me);
+    return bits.length && chip ? { key: 'skill', ...chip, full: h('div', { class: 'skill-hud' }, bits.join(' · ')) } : null;
   }
 
   /** The most restless of my conquered cities, e.g. "Unrest in Kyoto 3/6 — garrison it" (tap to look at it). */
-  private unrestHud(): HTMLElement | null {
+  private unrestHud(): HudLine | null {
     const worst = citiesOf(this.s, this.me).filter((c) => subject(this.s, c) && unrestLine(this.s, c) && (unrestOf(c) > 0))
       .sort((a, b) => Number(onBrink(b)) - Number(onBrink(a)) || unrestOf(b) - unrestOf(a))[0];
     if (!worst) return null;
     const line = unrestLine(this.s, worst)!.replace(/^Unrest /, `Unrest in ${worst.name} `);
-    return h('button', {
-      class: `unrest-hud${onBrink(worst) ? ' brink' : unrestOf(worst) >= UNREST_WARN ? ' hot' : ''}`,
-      onclick: () => { this.cam.glideTo(worst.x, worst.y, this.vw, this.vh * 0.9, 450); this.select({ x: worst.x, y: worst.y, mode: 'tile' }); },
-    }, line);
+    const look = () => { this.cam.glideTo(worst.x, worst.y, this.vw, this.vh * 0.9, 450); this.select({ x: worst.x, y: worst.y, mode: 'tile' }); };
+    return { key: 'unrest', ...unrestChip(worst), full: h('div', { class: `unrest-hud${onBrink(worst) ? ' brink' : unrestOf(worst) >= UNREST_WARN ? ' hot' : ''}` }, line), onTap: look };
   }
 
   /** A still copy of the HUD with the current numbers (the live one counts up, so copying it mid-count shows stale values). */
@@ -1494,6 +1503,7 @@ export class GameView {
     const directLabel = h('span', {}, directText());
     const artText = () => `Art style: ${this.settings.flat ? 'Crisp' : 'Soft'}`;
     const artLabel = h('span', {}, artText());
+    const buildLabel = h('span', {}, onOff('Build info', !!this.settings.buildInfo));
     modal({
       title: 'Menu',
       body: [
@@ -1528,6 +1538,12 @@ export class GameView {
           setDirectDraw(!this.settings.cached);
           this.version++;
           directLabel.textContent = directText();
+        } },
+        { label: buildLabel, keepOpen: true, onClick: () => {
+          this.settings.buildInfo = !this.settings.buildInfo;
+          saveSettings(this.settings);
+          this.buildTag.parentElement?.classList.toggle('show-build', this.settings.buildInfo);
+          buildLabel.textContent = onOff('Build info', this.settings.buildInfo);
         } },
         { label: 'Sharpness picker', onClick: () => this.showDisplayPicker() },
         { label: 'Sharpness test', onClick: () => showSharpnessTest() },

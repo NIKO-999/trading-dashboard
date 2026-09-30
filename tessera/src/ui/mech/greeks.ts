@@ -36,6 +36,9 @@ export const ui: MechUi = {
     const edict = cur ? `${EDICTS[cur].name} (${edictLeft(v.s, v.me)})` : 'none - use the Edict button';
     return h('div', { class: 'karma' }, `Seat ${seat?.name ?? '-'} · Edict ${edict} · Amphictyony ${al ? `${al} cities +${alignmentIncome(v.s, v.me)}★` : 'unbalanced'}`);
   },
+  chip(v) {
+    return activeEdict(v.s, v.me) ? { icon: '📜', text: `${edictLeft(v.s, v.me)}t left` } : { icon: '📜', text: 'no edict', tone: 'warn' };
+  },
   dock(v) {
     return { label: activeEdict(v.s, v.me) ? 'Edict' : 'Edict!', icon: 'crown', open: () => openEdicts(v) };
   },

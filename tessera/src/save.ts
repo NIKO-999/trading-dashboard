@@ -62,6 +62,8 @@ export interface Settings {
   sharp: 1 | 4 | 5; // minimum pixels per CSS pixel for drawing (1 = follow the screen; see renderDpr)
   /** How the map canvas is handed to the screen: 'standard' (CSS-sized) or 'exact' (one CSS pixel per canvas pixel, scaled down by the compositor). */
   display?: 'standard' | 'exact' | 'image';
+  /** Show the build tag (version, drawing density, frame time) at the foot of the map. Off by default; the Menu shows the version. */
+  buildInfo?: boolean;
   /** The on-screen sharpness picker has been shown once. */
   displayPicked?: boolean;
 }

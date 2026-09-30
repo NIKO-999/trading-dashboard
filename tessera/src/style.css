@@ -116,10 +116,13 @@ button:disabled { opacity: 0.45; cursor: default; }
 /* ------------------------------------------------ in-game HUD */
 #ui > .game-ui { position: absolute; inset: 0; pointer-events: none; }
 .game-ui > * { pointer-events: auto; }
-.game-ui > .build-tag { position: absolute; top: calc(6px + var(--safe-top)); left: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; color: rgba(255,255,255,0.42); pointer-events: none; font-variant-numeric: tabular-nums; }
+/* the build tag hides unless "Build info" is on in the Menu, and then sits at the foot, clear of the score bar */
+.game-ui > .build-tag { display: none; position: absolute; bottom: calc(2px + var(--safe-bottom)); left: 0; right: 0; text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; color: rgba(255,255,255,0.42); pointer-events: none; font-variant-numeric: tabular-nums; z-index: 1; }
+.game-ui.show-build > .build-tag { display: block; }
 .flat .game-ui > .vignette { display: none; }
 .game-ui > .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 80% 80% at 50% 45%, transparent 45%, rgba(0,0,0,0.3) 100%); }
-.game-ui::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(110px + var(--safe-top)); background: linear-gradient(rgba(4,6,16,0.55), rgba(4,6,16,0.18) 60%, transparent); pointer-events: none; }
+/* a dark scrim behind the score bar and the chips keeps them legible over bright snow and sand */
+.game-ui::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: calc(150px + var(--safe-top)); background: linear-gradient(rgba(4,6,16,0.76), rgba(4,6,16,0.56) calc(64px + var(--safe-top)), rgba(4,6,16,0.2) 76%, transparent); pointer-events: none; }
 .hud { position: absolute; top: calc(12px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: clamp(20px, 8vw, 48px); pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.55); }
 .hud-cell { text-align: center; }
 .hud-label { font-style: italic; font-weight: 600; font-size: 1.05rem; white-space: nowrap; letter-spacing: 0.01em; }
@@ -314,17 +317,37 @@ ul.traits li.con { border-left-color: #ff6a55; }
 ul.traits .why { opacity: 0.7; font-weight: 300; }
 ul.traits .effect { display: block; font-weight: 600; }
 
-/* a live readout from the empire's own mechanic, under the score bar */
-.mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
-.mech-hud > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
-.mech-hud:empty { display: none; }
+/* the live readouts under the score bar (empire mechanic, skill tree, unrest, wonder) as one row of chips (see ui/hudchips) */
+.game-ui > .chip-row { position: absolute; top: calc(86px + var(--safe-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; max-width: calc(100vw - 20px); pointer-events: none; }
+.hud-chip { pointer-events: auto; flex: 0 1 auto; min-width: 0; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px 0 8px; border-radius: 999px; background: rgba(12,14,26,0.72); border: 1px solid rgba(255,255,255,0.14); color: #f2f4ff; font-size: 0.8rem; font-weight: 700; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; }
+.hud-chip:active { transform: scale(0.96); }
+.hud-chip .chip-ico { flex: none; font-size: 0.85rem; }
+.hud-chip .chip-txt { overflow: hidden; text-overflow: ellipsis; padding-top: 2px; }
+.hud-chip.more { padding: 0 9px; color: #c9d0ea; }
+.hud-chip.gold { color: #ffe39a; }
+.hud-chip.hot { color: #fff; background: rgba(150,110,20,0.88); border-color: rgba(255,220,120,0.5); }
+.hud-chip.surge { color: #bfe6ff; }
+.hud-chip.warn { color: #fff; background: rgba(170,86,24,0.9); }
+.hud-chip.brink { color: #fff; background: #b3263e; animation: unrest-pulse 0.9s ease-in-out infinite alternate; }
+.chip-pop { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); width: min(92vw, 420px); display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 16px; background: rgba(12,14,26,0.94); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 10px 28px rgba(0,0,0,0.45); pointer-events: auto; animation: drop-in 0.2s ease-out; }
+.chip-line { display: flex; align-items: flex-start; gap: 8px; padding: 7px 8px 5px; border-radius: 10px; font-size: 0.85rem; line-height: 1.3; text-align: left; color: #eef1ff; }
+.chip-line .chip-ico { flex: none; width: 1.2em; text-align: center; }
+.chip-line.tap { cursor: pointer; background: rgba(255,255,255,0.06); }
+.chip-line.tap > .chip-full { pointer-events: none; }
+.chip-line:active { background: rgba(255,255,255,0.12); }
+.chip-full { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* inside the popover the old pills read as plain lines */
+.chip-pop .chip-line :is(.unrest-hud, .wonder-hud) { all: unset; flex: 1; min-width: 0; font-weight: 700; }
+.chip-pop .chip-line .wonder-hud { color: #ffe39a; }
+.chip-pop .chip-line .unrest-hud { color: #ffb070; }
+.chip-pop .chip-line .unrest-hud.brink { color: #ff7080; }
+.chip-pop .chip-line .skill-hud { margin: 0; font-size: inherit; opacity: 1; }
 /* rebellion: the most restless conquered city, under the empire readout (see game/rebels) */
-.mech-hud { flex-direction: column; align-items: center; gap: 4px; }
 .unrest-hud { pointer-events: auto; padding: 4px 12px 3px; border-radius: 999px; background: rgba(90,60,30,0.82); color: #fff; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
 .unrest-hud.hot { background: rgba(200,100,30,0.9); }
 .unrest-hud.brink { background: #b3263e; animation: unrest-pulse 0.9s ease-in-out infinite alternate; }
 @keyframes unrest-pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
-@media (prefers-reduced-motion: reduce) { .unrest-hud.brink { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .unrest-hud.brink, .hud-chip.brink { animation: none; } }
 .unrest-line { margin-top: 4px; font-weight: 700; color: #f0c890; }
 .unrest-line.hot { color: #ffa860; }
 .unrest-line.brink { color: #ff7080; }

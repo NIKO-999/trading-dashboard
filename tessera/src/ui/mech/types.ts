@@ -1,5 +1,6 @@
 // Interface side of an empire's mechanic (see game/mech). Runs only in the browser.
 import type { GameState } from '../../game/types';
+import type { HudChip } from '../hudchips';
 
 /** What a mechanic's interface may ask of the running game view. */
 export interface MechView {
@@ -16,6 +17,8 @@ export interface MechView {
 export interface MechUi {
   /** A small live readout under the score bar (a calendar, a counter...). Called on every refresh; return null for nothing. */
   hud?(v: MechView): HTMLElement | null;
+  /** The same readout as one small chip (an icon and a short value, e.g. "🏯 +21★"); the full line opens on a tap. */
+  chip?(v: MechView): HudChip | null;
   /** An extra button in the bottom dock that opens the mechanic's own screen. */
   dock?(v: MechView): { label: string; icon: string; open(): void } | null;
 }

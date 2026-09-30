@@ -1,4 +1,5 @@
 import { h } from '../dom';
+import { signedStars } from '../hudchips';
 import { citiesOf } from '../../game/rules';
 import { herdersOf, herdIncome, herdsIn, isHerd, isPacked, soilOf } from '../../game/mech/lakota';
 import type { MechUi } from './types';
@@ -16,5 +17,11 @@ export const ui: MechUi = {
     const packed = cities.filter(isPacked);
     const camp = packed.length ? `${packed.length} packed: tap a plains tile to move, then Settle` : 'camps settled';
     return h('div', { class: 'lakota' }, `Herds ${herds} (${near} in reach) · herders ${herders} +${stars}★ · ${camp}${soil ? ` · soil ${soil}` : ''}`);
+  },
+  chip(v) {
+    const cities = citiesOf(v.s, v.me);
+    if (!cities.length) return null;
+    const packed = cities.filter(isPacked).length;
+    return packed ? { icon: '⛺', text: `${packed} packed`, tone: 'warn' } : { icon: '🦬', text: signedStars(cities.reduce((n, c) => n + herdIncome(v.s, c), 0)) };
   },
 };

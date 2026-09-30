@@ -10,4 +10,7 @@ export const ui: MechUi = {
     return h('div', { class: 'karma' },
       `⚓ Platforms ${platformsOf(v.s, v.me).length} · Sea-cities ${citiesOf(v.s, v.me).length} · Tolls ${st.tolls}★${last} · Raids ${st.raided}★ · Prizes ${st.prizes} · Recruited ${st.recruited}`);
   },
+  chip(v) {
+    return { icon: '⚓', text: `${statsOf(v.s, v.me).tolls}★ tolls` };
+  },
 };

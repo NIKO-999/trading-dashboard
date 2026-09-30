@@ -26,4 +26,10 @@ export const ui: MechUi = {
     const color = now ? ERAS.find((e) => e.id === now)!.color : undefined;
     return h('div', { class: 'maya', style: color ? { color } : {} }, line);
   },
+  chip(v) {
+    const s = v.s;
+    if (s.players[v.me]?.tribe === 'maya' && turnsToKatun(s) === 0 && s.turn > 0) return { icon: '🕛', text: 'Katun peak', tone: 'gold' };
+    const now = activeEra(s);
+    return now ? { icon: '🕛', text: eraName(now), tone: 'hot' } : { icon: '🕛', text: `era in ${turnsToEra(s)}t` };
+  },
 };

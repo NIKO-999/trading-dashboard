@@ -8,6 +8,7 @@ import { builtWonder, INVEST_CAP, investRoom, isHomeWonder, knows, siteOf, sites
 import { drawWonderIcon } from '../render/wonders';
 import { h, paint } from './dom';
 import { modal } from './modal';
+import type { HudChip } from './hudchips';
 
 const art = (id: string, size: number) => paint(size, size, (ctx) => drawWonderIcon(ctx, id, size / 2, size / 2 - 2, size), `wonder:${id}:${size}`);
 const peopleOf = (s: GameState, me: number, pid: number) => (pid === me ? 'You' : knows(s, me, pid) ? `${TRIBES[s.players[pid].tribe].people}s` : 'An unknown empire');
@@ -71,7 +72,18 @@ export function wonderHud(s: GameState, me: number, open: () => void): HTMLEleme
     bits.push(`${WONDER_BY_ID[site.id].name} ${site.paid}/${wonderCost(s, me, site.id)}★${room > 0 ? ` · invest up to ${room}★` : ' · invested this turn'}`);
   }
   if (held.length) bits.push(held.length === 1 ? WONDER_BY_ID[held[0]].name : `${held.length} wonders held`);
-  return h('button', { class: `wonder-hud${hot ? ' hot' : ''}`, onclick: open }, `🏛 ${bits.join(' · ')}`);
+  return h('button', { class: `wonder-hud${hot ? ' hot' : ''}`, onclick: open }, bits.join(' · '));
+}
+
+/** The same readout as a chip: the wonder going up ("40/43★", bright when Stars can go in now) or the wonders held. */
+export function wonderChip(s: GameState, me: number): HudChip | null {
+  const site = siteOf(s, me);
+  if (site) {
+    const room = investRoom(s, site);
+    return { icon: '🏛', text: `${site.paid}/${wonderCost(s, me, site.id)}★`, tone: room > 0 && s.players[me].stars >= room ? 'hot' : undefined };
+  }
+  const held = wondersHeldBy(s, me).length;
+  return held ? { icon: '🏛', text: `${held} held`, tone: 'gold' } : null;
 }
 
 /** The celebration card for a finished wonder, shown to everyone who knows its builder. */

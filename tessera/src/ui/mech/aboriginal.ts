@@ -8,4 +8,8 @@ export const ui: MechUi = {
     const lm = landmarkTotals(v.s, v.me);
     return h('div', { class: 'aboriginal' }, `Songlines ${songlineCount(v.s)} · Landmarks ${lm.reached}/${lm.known} · Pilgrimages ${m.trips} (+${m.tripStars}★)`);
   },
+  chip(v) {
+    const lm = landmarkTotals(v.s, v.me);
+    return { icon: '〰', text: `${lm.reached}/${lm.known} sites` };
+  },
 };

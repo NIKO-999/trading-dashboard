@@ -4,8 +4,9 @@ import { cityVisibleTo, unitVisibleTo } from '../game/mech';
 import { MECH_RENDER } from './mech';
 import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
-import { tileAt } from '../game/grid';
-import { cityIncome, maxHp, popNeeded } from '../game/rules';
+import { dist, tileAt } from '../game/grid';
+import { hostile } from '../game/diplomacy';
+import { attackRange, cityIncome, maxHp, popNeeded } from '../game/rules';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
@@ -117,7 +118,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.restore();
 
   // City labels go under the units, so a unit standing in front of a city is never hidden.
-  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen, now, !ov.still);
+  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen, now, !ov.still, ov.hudBottom ?? 0);
 
   ctx.save();
   ctx.translate(cam.x, cam.y);
@@ -958,19 +959,70 @@ export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: numb
   return best;
 }
 
-function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean, now: number, record: boolean) {
+function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean, now: number, record: boolean, hudBottom: number) {
   const snap = (v: number) => Math.round(v * dpr) / dpr;
   const { k, detail } = overlayScale(cam.zoom);
   const rects: typeof labelRects = [];
   if (record) labelRects = rects;
+  const boxes: LabelBox[] = [];
   for (const c of s.cities) {
     const p = tileCenter(c.x, c.y);
     if (!explored(c.x, c.y) || !onScreen(p) || !cityVisibleTo(s, viewer, c)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
-    const r = drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
+    const mine = c.owner === viewer;
+    const { w, h } = cityLabelSize(ctx, s, c, k, detail, mine);
+    boxes.push({ id: c.id, x: snap(sp.x), y: snap(sp.y), w, h, pri: labelPriority(c, mine) });
+  }
+  // lesser labels first, so the ones that matter are drawn (and tapped) on top
+  for (const b of declutterLabels(boxes, 3 * k).reverse()) {
+    const c = s.cities.find((x) => x.id === b.id)!;
+    ctx.globalAlpha = b.alpha * underHud(b.y + b.dy, hudBottom);
+    const r = drawCityLabel(ctx, s, c, b.x, snap(b.y + b.dy), k, snap, detail, c.owner === viewer);
+    ctx.globalAlpha = 1;
     if (c.owner === viewer) drawUnrestBadge(ctx, s, c, r, k, now); // a restless conquered city (see game/rebels)
     rects.push({ id: c.id, ...r });
   }
+}
+
+/** How strongly a label whose top is at screen y shows: faint while it sits up under the score bar, full below it. */
+export const underHud = (y: number, hudBottom: number) => (hudBottom <= 0 ? 1 : Math.max(0.2, Math.min(1, (y - hudBottom + 24) / 24)));
+
+/** A city label waiting to be placed: centred on x, its top at y, `w` x `h` CSS px, and how much it matters. */
+export interface LabelBox { id: number; x: number; y: number; w: number; h: number; pri: number }
+/** Where a label ends up: nudged down or up by `dy`, and faded to `alpha` when it still sits on a more important one. */
+export interface PlacedLabel extends LabelBox { dy: number; alpha: number }
+/** How faint a label is drawn when it can't get clear of a more important one. */
+export const LABEL_FADE = 0.28;
+
+/** Your own cities first, then capitals, then the biggest. */
+export const labelPriority = (c: City, mine: boolean) => (mine ? 1000 : 0) + (c.capital ? 100 : 0) + c.level * 10 + Math.min(9, c.pop);
+
+/**
+ * City labels that would overlap on screen: the more important one (see labelPriority) stays put, the lesser one is
+ * nudged a little down or up when that clears it, or else faded. Returns the labels most important first.
+ */
+export function declutterLabels(boxes: LabelBox[], gap: number): PlacedLabel[] {
+  const placed: PlacedLabel[] = [];
+  const hits = (b: LabelBox, dy: number) => placed.some((p) => p.alpha === 1
+    && b.x - b.w / 2 < p.x + p.w / 2 + gap && p.x - p.w / 2 < b.x + b.w / 2 + gap
+    && b.y + dy < p.y + p.dy + p.h + gap && p.y + p.dy < b.y + dy + b.h + gap);
+  for (const b of [...boxes].sort((a, c) => c.pri - a.pri || a.id - c.id)) {
+    // a short nudge keeps the label by its city; a longer one would leave it pointing at the wrong place
+    const reach = b.h * 0.9;
+    const dy = [0, reach / 2, -reach / 2, reach, -reach].find((d) => !hits(b, d));
+    placed.push({ ...b, dy: dy ?? 0, alpha: dy === undefined ? LABEL_FADE : 1 });
+  }
+  return placed;
+}
+
+/** The size of a city's label: its pill, and under it the population bar of one of your own cities. */
+function cityLabelSize(ctx: Ctx, s: GameState, c: City, k: number, detail: LabelDetail, mine: boolean) {
+  ctx.font = `600 ${13 * k}px ${FONT}`;
+  const nw = ctx.measureText(c.name).width;
+  const iw = detail === 'full' ? ctx.measureText(String(cityIncome(s, c))).width : 0;
+  const badge = c.capital ? 18 * k : 0;
+  const w = 16 * k + badge + (badge ? 5 * k : 0) + nw + (detail === 'full' ? 20 * k + iw : 0) + (c.pendingRewards.length ? 18 * k : 0);
+  return { w, h: 21 * k + (detail !== 'name' && mine ? POP_GAP * k + POP_H * k : 0) };
 }
 
 function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: Overlay, dpr: number,
@@ -1018,7 +1070,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
 
 export type LabelDetail = 'full' | 'mid' | 'name';
 
-function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail): { x0: number; y0: number; x1: number; y1: number } {
+function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail, mine: boolean): { x0: number; y0: number; x1: number; y1: number } {
   const T = { color: isRogueCity(s, c) ? REBEL_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
@@ -1071,7 +1123,8 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     ctx.fillText(inc, snap(cx + 13 * k), snap(mid + 1.2 * k));
   }
   ctx.textBaseline = 'alphabetic';
-  if (detail !== 'name') drawPopulation(ctx, c, x, y0 + h + 4 * k, k, snap, T.color);
+  const bar = detail !== 'name' && mine; // only your own cities show how near they are to growing
+  if (bar) drawPopulation(ctx, c, x, y0 + h + POP_GAP * k, k, snap, T.color);
   if (c.pendingRewards.length && s.players[c.owner].human) {
     const px = x0 + w + 9 * k, py = mid;
     ellipse(ctx, px, py + 1.5, 8 * k, 8 * k, 'rgba(0,0,0,0.3)');
@@ -1084,46 +1137,61 @@ function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k:
     ctx.textBaseline = 'alphabetic';
   }
   // the area a tap on this label should count for (pill, reward badge and population bar)
-  const bottom = detail !== 'name' ? y0 + h + 4 * k + 9 * k + 1.5 : y0 + h + 2.5 * k;
+  const bottom = bar ? y0 + h + POP_GAP * k + POP_H * k + 1 : y0 + h + 2.5 * k;
   return { x0, y0, x1: x0 + w + (c.pendingRewards.length ? 18 * k : 0), y1: bottom };
 }
 
-/** The bar under a city's name: one pip per population needed for the next level. */
+/** The population bar under a label: its height and its gap below the pill (times the label scale). */
+const POP_H = 5, POP_GAP = 3;
+
+/** The slim bar under one of your cities' names: one pip per population needed for the next level. */
 function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, snap: (v: number) => number, color: string) {
   const segs = popNeeded(c.level);
-  const bw = Math.max(40 * k, Math.min(segs * 11 * k, 96 * k)), bh = 9 * k; // wide levels squeeze their pips rather than the label
+  const bw = Math.max(36 * k, Math.min(segs * 9 * k, 80 * k)), bh = POP_H * k; // wide levels squeeze their pips rather than the label
   const bx = snap(x - bw / 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  roundRect(ctx, bx, by + 1.5, bw, bh, bh / 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  roundRect(ctx, bx, by + 1, bw, bh, bh / 2);
   ctx.fill();
-  ctx.fillStyle = '#f7f7f7';
+  ctx.fillStyle = 'rgba(247,247,247,0.92)';
   roundRect(ctx, bx, by, bw, bh, bh / 2);
   ctx.fill();
-  const sw = bw / segs;
+  const sw = bw / segs, inset = Math.max(0.8, bh * 0.18);
   for (let i = 0; i < segs; i++) {
     const sx = bx + sw * i;
     if (i < c.pop) {
-      const pg = ctx.createLinearGradient(0, by, 0, by + bh);
-      pg.addColorStop(0, shade(color, 0.25));
-      pg.addColorStop(1, shade(color, -0.1));
-      ctx.fillStyle = pg;
-      roundRect(ctx, sx + 1.5, by + 1.5, sw - 3, bh - 3, (bh - 3) / 2);
+      ctx.fillStyle = shade(color, 0.12);
+      roundRect(ctx, sx + inset, by + inset, sw - inset * 2, bh - inset * 2, (bh - inset * 2) / 2);
       ctx.fill();
     }
     if (i > 0) {
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.fillRect(snap(sx) - 0.5, by + 2, 1, bh - 4);
+      ctx.fillStyle = 'rgba(0,0,0,0.16)';
+      ctx.fillRect(snap(sx) - 0.5, by + inset, 1, bh - inset * 2);
     }
   }
 }
 
-/** A unit's health badge, if it shows at this zoom: its look and where it goes (screen space). */
+/**
+ * Does `u` wear its health badge (showing `hp`)? Only when there is something to read: it is hurt, selected, a veteran
+ * or a hero, or an enemy the selected unit could strike. A healthy rank-and-file unit shows none, so a busy map stays
+ * clear. Far out (`detail` 'name') only the hurt and the selected keep theirs.
+ */
+export function badgeShown(s: GameState, u: Unit, ov: Overlay, hp: number, detail: LabelDetail = 'full'): boolean {
+  const selected = ov.selected?.x === u.x && ov.selected?.y === u.y;
+  if (hp < maxHp(u) || selected) return true;
+  if (detail === 'name') return false;
+  if (u.veteran || isHero(s, u)) return true;
+  if (ov.attacks.some((a) => a.x === u.x && a.y === u.y)) return true;
+  const sel = ov.selected && s.units.find((v) => v.x === ov.selected!.x && v.y === ov.selected!.y);
+  return !!sel && sel.owner !== u.owner && hostile(s, sel.owner, u.owner) && dist(sel.x, sel.y, u.x, u.y) <= attackRange(s, sel);
+}
+
+/** A unit's health badge, if it shows (see badgeShown): its look and where it goes (screen space). */
 export function hpBadge(s: GameState, u: Unit, ov: Overlay, cam: Camera, m: Motion, detail: LabelDetail, kh: number, us: number) {
   const hold = ov.fx.hpHold.get(u.id);
   const hp = Math.ceil(hold && ov.now < hold.until ? hold.hp : u.hp);
-  const selected = ov.selected?.x === u.x && ov.selected?.y === u.y;
-  if (detail === 'name' && hp >= maxHp(u) && !selected) return null;
+  if (!badgeShown(s, u, ov, hp, detail)) return null;
   const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
+  if (ov.hudBottom && sp.y < ov.hudBottom) return null; // up under the score bar it would only muddle the numbers
   const color = isRogueUnit(s, u) ? REBEL_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
   return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh, hero: isHero(s, u), lvl: s.players[u.owner].hero?.lvl ?? 1 };
 }

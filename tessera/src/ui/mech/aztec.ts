@@ -10,4 +10,8 @@ export const ui: MechUi = {
     const sun = m.sun > 0 ? ` · Sun Age ${m.sun} turn${m.sun === 1 ? '' : 's'}` : '';
     return h('div', { class: 'aztec' }, `Captives ${m.captives}/${sunCost(v.s, v.me)} at altars${roped ? ` (+${roped} on the march)` : ''} · Altars ${altars} · Bounty +${m.bounty}★${sun}`);
   },
+  chip(v) {
+    const m = st(v.s, v.me);
+    return m.sun > 0 ? { icon: '☀', text: `Sun ${m.sun}t`, tone: 'gold' } : { icon: '☀', text: `${m.captives}/${sunCost(v.s, v.me)}` };
+  },
 };

@@ -9,4 +9,9 @@ export const ui: MechUi = {
     const back = fallenCount(v.s, v.me);
     return h('div', { class: 'karma' }, `⚜ Immortals returning ${back} · Satrapies ${sat.length}${bare ? ` (${bare} ungarrisoned)` : ''}`);
   },
+  chip(v) {
+    const sat = satrapies(v.s, v.me);
+    const bare = sat.filter((c) => !garrisoned(v.s, c)).length;
+    return bare ? { icon: '⚜', text: `${bare} bare`, tone: 'warn' } : { icon: '⚜', text: `${sat.length} satr.` };
+  },
 };

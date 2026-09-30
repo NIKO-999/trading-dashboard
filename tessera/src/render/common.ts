@@ -79,6 +79,8 @@ export interface Overlay {
   now: number;
   /** Drawing a still picture of the map (the photo display): units rest without idle motion, and the live screen's tap areas are left alone. */
   still?: boolean;
+  /** Screen y (CSS px) where the score bar and its chips end: city labels above it fade and health badges hide, so they don't muddle the HUD. */
+  hudBottom?: number;
   /** The living layer (see render/living) shows the moving parts as sharp page elements: units with their badges and buttons, water life and banners are left out. */
   living?: boolean;
 }
