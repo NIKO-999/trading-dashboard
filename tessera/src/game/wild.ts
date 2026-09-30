@@ -217,7 +217,7 @@ export function erupt(s: GameState, v: Tile) {
     // units on the slopes and around are burnt, the crater included
     const u = unitAt(s, t.x, t.y);
     if (u && !isBeast(s, u)) burn(s, u);
-    if (t === v || !isLand(t) || t.terrain === 'mountain' || t.terrain === 'ice' || t.terrain === 'platform') continue;
+    if (t === v || !isLand(t) || t.terrain === 'mountain' || t.terrain === 'ice' || t.terrain === 'platform' || t.terrain === 'bridge') continue; // not ice, decks or bridges over the water
     if (t.cityId !== null || t.village || t.ruin || campAt(s, t.x, t.y)) continue;
     const owner = tileOwnerPlayer(s, t);
     if (t.improvement && MELTS.includes(t.improvement) && owner !== null) lost.set(owner, [...(lost.get(owner) ?? []), t.improvement === 'lumber' ? 'lumber hut' : t.improvement]);

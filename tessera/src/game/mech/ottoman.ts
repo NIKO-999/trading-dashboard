@@ -19,7 +19,7 @@ import { perkUnit } from '../perks';
 import { emit } from '../events';
 import { spawnUnit } from '../mapgen';
 import { dist, tileAt } from '../grid';
-import { addPop, cityById, def, defenseBonus, doAction, maxHp, seaBonus, tileActions, unitAt, unitCap, unitDef } from '../rules';
+import { addPop, cityById, def, defenseBonus, doAction, garrisonBonus, maxHp, seaBonus, tileActions, unitAt, unitCap, unitDef } from '../rules';
 import type { Action } from '../rules';
 import { hookStat } from './index';
 import type { City, GameState, TribeId, UnitKind } from '../types';
@@ -85,7 +85,7 @@ export const mech: Mechanic = {
     const t = tileAt(s, d.x, d.y);
     if (!t) return;
     const c = cityById(s, t.cityId);
-    const cityBonus = c && c.owner === d.owner && def(d).skills.includes('fortify') ? (c.walls ? 4 : 1.5) : 1;
+    const cityBonus = c && c.owner === d.owner && def(d).skills.includes('fortify') ? garrisonBonus(s, c) : 1;
     const fort = t.improvement === 'fort' || t.improvement === 'wall';
     if (cityBonus === 1 && !fort) return;
     const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk'));

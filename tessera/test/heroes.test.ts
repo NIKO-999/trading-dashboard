@@ -268,7 +268,8 @@ test('a hero taken alive slips away and returns; older saves load without hero s
 
 test('30-turn all-AI game: heroes join, level up and use their abilities', () => {
   const five: TribeId[] = ['greeks', 'zulu', 'mongols', 'celts', 'mali'];
-  const s = createGame({ seed: 11, human: null, opponents: five, mode: 'perfection' });
+  // (seed 12: with role units in play, seed 11 became a game the Zulu won outright by turn 10, before most capitals grew)
+  const s = createGame({ seed: 12, human: null, opponents: five, mode: 'perfection' });
   startTurn(s);
   let guard = 0;
   while (!s.over && guard++ < 1000) {

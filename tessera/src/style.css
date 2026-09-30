@@ -372,3 +372,13 @@ ul.traits .effect { display: block; font-weight: 600; }
 .diplo-acts .mini-btn.war { background: #c4413b; color: #fff; }
 .mini-btn.off { opacity: 0.45; }
 .diplo-news { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+
+/* Empire types (see data/tribes CATEGORIES and game/roles) */
+.type-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 14px 4px 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+.type-head .type-icon { font-size: 1.3rem; }
+.type-head .type-name { font-weight: 700; font-style: italic; font-size: 1.1rem; }
+.type-head .type-blurb { font-weight: 300; font-size: 0.85rem; opacity: 0.8; }
+.type-badge { display: inline-block; margin-left: 8px; padding: 1px 8px 2px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 0.75rem; font-weight: 600; vertical-align: 1px; white-space: nowrap; }
+.role-units { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.role-units .role-unit { display: flex; align-items: center; gap: 6px; max-width: 260px; font-size: 0.85rem; line-height: 1.25; }
+.role-line { margin-top: 2px; color: #f5d76e; }

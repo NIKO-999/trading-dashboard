@@ -19,6 +19,8 @@ import { isDirectDraw } from './sprites';
 import { drawCamp, drawVolcano, drawWildGround } from './wild';
 import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
 import { drawWonderIcon, drawWonderTile } from './wonders';
+import { drawBridgeGround, drawRoleIcon, drawRoleTile } from './roles';
+import { isUpgraded } from '../game/roles';
 import { wonderOn } from '../game/wonders';
 
 const FISH_ICON = FISH;
@@ -228,6 +230,7 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
   const P = TRIBES[t.biome].palette;
   const { x, y } = tileTop(t.x, t.y);
   for (const m of Object.values(MECH_RENDER)) if (m?.ground?.(ctx, s, t, x, y)) return; // an empire's own ground (ice, platforms)
+  if (t.terrain === 'bridge') return drawBridgeGround(ctx, s, t, x, y); // a Sappers' bridge over the shallows (see render/roles)
   const water = isWaterTile(t);
   const top = y + (water ? WATER_DROP : 0);
   if (water) {
@@ -536,6 +539,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   }
   drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
   if (wonder) drawWonderTile(ctx, s, t, c.x, c.y);
+  drawRoleTile(ctx, s, t, c.x, c.y); // forts, grand works and undermined walls (see render/roles)
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }
 
@@ -2001,7 +2005,8 @@ function drawImprovement(ctx: Ctx, s: GameState, t: Tile, x: number, y: number) 
   const tribe = owner !== null && s.players[owner] ? TRIBES[s.players[owner].tribe] : TRIBES[t.biome];
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(1.25, 1.25);
+  const k = isUpgraded(t) ? 1.5 : 1.25; // a Master Builder's grand work is drawn larger (see game/roles)
+  ctx.scale(k, k);
   switch (t.improvement) {
     case 'mine':
       poly(ctx, [-7, 8, -7, 0, 0, -5, 7, 0, 7, 8], '#3a3a40');
@@ -5294,6 +5299,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   const P = TRIBES[tribe].palette;
   if (icon in UNITS) return drawUnitSprite(ctx, icon as UnitKind, tribe, x, y + 12);
   if (icon.startsWith('wonder:')) return drawWonderIcon(ctx, icon.slice(7), x, y); // World Wonders (see render/wonders)
+  if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
   switch (icon) {
     case 'fruit':
     case 'crop':

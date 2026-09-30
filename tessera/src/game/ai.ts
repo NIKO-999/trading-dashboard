@@ -17,6 +17,7 @@ import { isNeutral, nearBeast, wildAi } from './wild';
 import { wonderAi } from './wonders';
 import { allyFoes, diploAi, hostile } from './diplomacy';
 import { isTraderKind, raidSpots, tradeAi } from './trade';
+import { bridgesBuilt, isRoleUnit, postAt, roleAi, roleTechWant } from './roles';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -43,6 +44,7 @@ export function aiStep(s: GameState): boolean {
   if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
   if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
+  if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
@@ -61,7 +63,7 @@ export function aiStep(s: GameState): boolean {
   }
 
   // 3. Units.
-  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id) && !isTraderKind(x.kind))) { // merchants go their own way (see game/trade)
+  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id) && !isTraderKind(x.kind) && !isRoleUnit(x))) { // merchants and role units go their own way (see game/trade, game/roles)
     if (unitStep(s, u)) return true;
     done.add(u.id);
   }
@@ -162,7 +164,7 @@ function roadStep(s: GameState, pid: number): boolean {
 function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
-  const myUnits = s.units.filter((u) => u.owner === pid);
+  const myUnits = s.units.filter((u) => u.owner === pid && !isRoleUnit(u)); // role units don't fight (see game/roles)
   const enemiesNear = s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
   const abroad = targetsOnlyOverseas(s, pid);
 
@@ -215,7 +217,7 @@ function economyStep(s: GameState, pid: number): boolean {
       const node = skillWant(s, pid, id, owned, enemiesNear);
       if (node !== null) return node;
       const line = LINE_PARENT[p.tribe] === id ? 6 : 0; // the empire's own line grows out of this one
-      return Math.max(line, baseWant(id));
+      return Math.max(line, roleTechWant(s, pid, id), baseWant(id)); // and a tech that unlocks a role unit is worth having
     };
     const baseWant = (id: string) => {
       switch (id) {
@@ -259,7 +261,7 @@ function economyStep(s: GameState, pid: number): boolean {
 function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
   const p = s.players[pid];
   for (const c of citiesOf(s, pid).sort((a, b) => b.level - a.level)) {
-    if (c.units >= unitCap(c) || unitAt(s, c.x, c.y)) continue;
+    if (c.units >= unitCap(c) || (unitAt(s, c.x, c.y) && !postAt(s, c))) continue; // a stationed unit lets recruits step out beside it
     const t = tileAt(s, c.x, c.y)!;
     const kinds = trainableKinds(s, pid)
       .filter((k) => trainCost(s, pid, k) <= p.stars && (UNITS[k].tech === null || p.techs.includes(UNITS[k].tech!)))
@@ -371,10 +373,10 @@ function unitStep(s: GameState, u: Unit): boolean {
 }
 
 /** Connected land regions (an id per tile, -1 for water), computed once per game. */
-const massCache = new WeakMap<GameState, Int32Array>();
+const massCache = new WeakMap<GameState, { ids: Int32Array; bridges: number }>();
 function landmasses(s: GameState): Int32Array {
   const hit = massCache.get(s);
-  if (hit) return hit;
+  if (hit && hit.bridges === bridgesBuilt) return hit.ids; // a Sappers' bridge joins land (see game/roles)
   const ids = new Int32Array(s.size * s.size).fill(-1);
   let next = 0;
   for (const t of s.tiles) {
@@ -393,7 +395,7 @@ function landmasses(s: GameState): Int32Array {
     }
     next++;
   }
-  massCache.set(s, ids);
+  massCache.set(s, { ids, bridges: bridgesBuilt });
   return ids;
 }
 

@@ -15,6 +15,7 @@ import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoActio
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
+import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -66,7 +67,8 @@ const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pira
 export const PAX_LAPSE = 5;
 export const paxHolds = (s: GameState, pid: number) => s.turn - (s.players[pid].skill?.lost ?? -99) > PAX_LAPSE;
 
-export function cityIncome(s: GameState, c: City) {
+/** A city's Stars a turn (`tax`: false leaves out a stationed Tax Collector's share; see game/roles). */
+export function cityIncome(s: GameState, c: City, tax = true) {
   let inc = c.level + (c.capital ? 1 : 0) + (c.workshop ? 1 : 0) + c.parks;
   const tribe = s.players[c.owner].tribe;
   const perks = perksOf(s, c.owner);
@@ -94,7 +96,7 @@ export function cityIncome(s: GameState, c: City) {
       else inc += Math.trunc(pk.n * s.tiles.filter((t) => t.owner === c.id && t.improvement === pk.per).length);
     }
   }
-  return inc;
+  return inc + roleCityIncome(s, c, inc, tax); // a Master Builder's grand works and a Tax Collector's share (see game/roles)
 }
 
 export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c), 0);
@@ -333,7 +335,8 @@ function freeSpotNear(s: GameState, x: number, y: number, water: boolean) {
   return undefined;
 }
 
-export const unitCap = (c: City) => c.level + 1;
+/** Units a city supports: one more than its level, and one more with a Recruiter stationed there (see game/roles). */
+export const unitCap = (c: City) => c.level + 1 + (c.data?.recruiter ? RECRUIT_CAP : 0);
 
 /** Where a city afloat (`city.data.waka`) puts a newly trained unit: a free land tile beside it, else a free water tile. */
 export function wakaSpawn(s: GameState, c: City): Tile | undefined {
@@ -379,7 +382,8 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
   heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
-  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t)];
+  roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
+  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
   if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -391,6 +395,9 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   }
   return acts;
 }
+
+/** The ordinary tile menu, before empire mechanics, wonders, trade and role units add to it (a Master Builder reads it). */
+export const plainTileActions = (s: GameState, pid: number, t: Tile): Action[] => baseTileActions(s, pid, t);
 
 function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
   const p = s.players[pid];
@@ -416,7 +423,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     // a city afloat (the Maori Great Waka) can only be taken from the water, by a ship or boat standing on it
     const afloat = t.cityId !== null && !!cityById(s, t.cityId)?.data?.waka;
     // a treaty partner's city can't be taken (see game/diplomacy)
-    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && !isTrader(u) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
+    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && !isTrader(u) && !isRoleUnit(u) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
@@ -429,16 +436,24 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     const full = city.units >= unitCap(city);
     const afloat = !!city.data?.waka; // a Great Waka trains onto a free tile beside it, so a unit on the city tile does not block it
     const room = afloat ? wakaSpawn(s, city) : undefined;
+    // a Recruiter or Tax Collector stationed on the city does not block it either: new units step out beside it (see game/roles)
+    const posted = !!u && !afloat && postedCity(s, u) === city;
+    const land = u && !afloat ? (posted ? (!postSpawn(s, city) ? 'No free tile beside the city' : undefined) : 'City tile is occupied') : afloat && !room ? 'No free tile beside the Great Waka' : undefined;
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
       add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
-        u && !afloat ? 'City tile is occupied' : full ? `City supports ${unitCap(city)} units` : afloat && !room ? 'No free tile beside the Great Waka' : undefined);
+        land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
     }
     for (const k of TRADER_KINDS) { // merchants (see game/trade); a Trade Ship is launched onto the water beside the city
       const d = UNITS[k];
       const ship = k === 'tradeship';
       add(`train:${k}`, traderName(p.tribe, k), `${d.name}. ${d.blurb} 🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
-        full ? `City supports ${unitCap(city)} units` : ship ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : u && !afloat ? 'City tile is occupied' : afloat && !room ? 'No free tile beside the Great Waka' : undefined);
+        full ? `City supports ${unitCap(city)} units` : ship ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : land);
+    }
+    for (const k of roleKindsOf(p.tribe)) { // the empire type's two role units (see game/roles); ships are launched like a Trade Ship
+      const d = UNITS[k];
+      add(`train:${k}`, roleName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
+        full ? `City supports ${unitCap(city)} units` : d.naval ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : land);
     }
     return acts;
   }
@@ -543,10 +558,12 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('wild:')) return wildDoAction(s, pid, t, id);
   if (id.startsWith('wonder:')) return wonderDoAction(s, pid, t, id);
   if (id.startsWith('trade:')) return tradeDoAction(s, pid, t, id);
+  if (id.startsWith('role:')) return roleDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
-    if (kind === 'tradeship') { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
+    if (kind === 'tradeship' || isRoleShip(kind)) { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
     if (city?.data?.waka) return trainAfloat(s, city, kind);
+    if (u && postedCity(s, u) === city) { const w = postSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; } // steps out beside a stationed unit
     spawnUnit(s, kind, pid, t.x, t.y, t.cityId);
     return true;
   }
@@ -740,11 +757,11 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       let stop = false;
       if (naval) {
         if (isLand(to)) {
-          if (u.kind === 'tradeship') continue; // a Trade Ship carries no one ashore (see game/trade)
+          if (u.kind === 'tradeship' || isRoleShip(u.kind)) continue; // a Trade Ship (see game/trade) and the role ships (see game/roles) carry no one ashore
           if (to.terrain === 'mountain' && !canClimb(s, pid)) continue;
           opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;
-        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship' && u.kind !== 'tradeship' && !u.data?.voyager) continue; // voyagers: born on a Great Waka
+        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship' && u.kind !== 'tradeship' && !isRoleShip(u.kind) && !u.data?.voyager) continue; // voyagers: born on a Great Waka
       } else {
         if (isWater(to)) {
           // amphibious units wade through shallows, but still board a boat at a port
@@ -874,7 +891,7 @@ export function defenseBonus(s: GameState, u: Unit) {
 
 function baseDefense(s: GameState, u: Unit, t: Tile) {
   const c = cityById(s, t.cityId);
-  if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return c.walls ? 4 : 1.5;
+  if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return garrisonBonus(s, c);
   const tribe = s.players[u.owner].tribe;
   if (t.terrain === 'forest' && tribe === 'celts') return 2; // Sacred Groves
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
@@ -883,6 +900,9 @@ function baseDefense(s: GameState, u: Unit, t: Tile) {
   if (t.terrain === 'swamp') return 1.5; // cover in the reeds
   return 1;
 }
+
+/** A fortify unit's defence multiplier in its own city: ×4 behind walls, else ×1.5; nothing while Sappers have undermined it. */
+export const garrisonBonus = (s: GameState, c: City) => (undermined(s, c) ? 1 : c.walls ? 4 : 1.5);
 
 export const unitDef = (s: GameState, u: Unit) => def(u).def
   + (MOUNTED.includes(u.kind) && hasTech(s, u.owner, 'horsemanship') ? 1 : 0)

@@ -14,6 +14,8 @@ export interface UnitDef {
   naval: boolean;
   skills: Skill[];
   tech: string | null; // tech required to train (null = always)
+  /** Sees this far around it (units see 1 tile, 2 from a mountain, unless they have more). */
+  vision?: number;
   trainable: boolean; // can be trained in cities
   blurb: string;
 }
@@ -72,6 +74,15 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   // Every empire's merchants (see game/trade): they never fight or capture; their look and name come from the empire
   trader: U({ kind: 'trader', name: 'Trader', cost: 5, hp: 8, atk: 0, def: 1, move: 2, range: 1, skills: [], tech: 'roads', blurb: 'A merchant caravan. Walk it to another city and open a trade route that pays Stars every turn.' }),
   tradeship: U({ kind: 'tradeship', name: 'Trade Ship', cost: 6, hp: 10, atk: 0, def: 1, move: 3, range: 1, naval: true, skills: [], tech: 'sailing', blurb: 'A merchant ship, launched beside a coastal city. Sail it next to another port city to open a sea route.' }),
+
+  // The role units of the three empire types (see game/roles): trained only by empires of that type, never capturing;
+  // their name and look come from the empire
+  recruiter: U({ kind: 'recruiter', name: 'Recruiter', cost: 3, hp: 10, atk: 0, def: 2, move: 1, range: 1, skills: ['dash', 'fortify'], tech: 'tactics', blurb: 'A warlord who raises troops. Station it in a city: units there cost 1★ less, the city supports one more, and it can rally militia when enemies come near.' }),
+  sapper: U({ kind: 'sapper', name: 'Sappers', cost: 5, hp: 10, atk: 1, def: 2, move: 1, range: 1, skills: ['dash'], tech: 'roads', blurb: 'Military engineers. Lay roads as they march, build forts and bridges, and undermine enemy walls.' }),
+  builder: U({ kind: 'builder', name: 'Master Builder', cost: 5, hp: 10, atk: 0, def: 1, move: 1, range: 1, skills: ['dash'], tech: 'farming', blurb: 'Builds farms, mines, ports and markets beside it at half price, and upgrades them into grander works.' }),
+  collector: U({ kind: 'collector', name: 'Tax Collector', cost: 5, hp: 6, atk: 0, def: 0.5, move: 1, range: 1, skills: ['dash'], tech: 'trade', blurb: 'Station it in a city: the city pays half as much again in Stars. Fragile, and a prize for enemies.' }),
+  fishfleet: U({ kind: 'fishfleet', name: 'Fishing Fleet', cost: 5, hp: 10, atk: 0, def: 1, move: 3, range: 1, naval: true, vision: 2, skills: ['dash'], tech: 'fishing', blurb: 'Launched beside a coastal city. Brings in fish and whales anywhere at sea for Stars and people, and 1★ a turn.' }),
+  voyager: U({ kind: 'voyager', name: 'Voyager', cost: 8, hp: 10, atk: 0, def: 1, move: 4, range: 1, naval: true, vision: 3, skills: ['dash'], tech: 'sailing', blurb: 'A long-range explorer ship that crosses the ocean. Found an outpost city on an unclaimed coast.' }),
 
   // Neutral Great Beasts (see game/wild): never trained, owned by the hidden neutral player
   kraken: U({ kind: 'kraken', name: 'Kraken', cost: 0, hp: 30, atk: 4, def: 2, move: 1, range: 1, naval: true, skills: [], tech: null, trainable: false, blurb: 'A leviathan of the deep ocean. Drags down any ship that sails too close.' }),

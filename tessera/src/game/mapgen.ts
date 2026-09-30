@@ -450,7 +450,7 @@ export function revealAround(state: GameState, playerId: number) {
   for (const u of state.units) {
     if (u.owner !== playerId) continue;
     const t = tileAt(state, u.x, u.y)!;
-    let r = t.terrain === 'mountain' || u.kind === 'explorer' ? 2 : 1;
+    let r = Math.max(t.terrain === 'mountain' || u.kind === 'explorer' ? 2 : 1, UNITS[u.kind].vision ?? 0); // some ships see further (see game/roles)
     if (fogsight && t.terrain === 'mountain' && unitMatches(p.tribe, u.kind, 'ranged')) r = Math.max(r, UNITS[u.kind].range + perkRange(state, u) - extra);
     mark(u.x, u.y, r);
   }

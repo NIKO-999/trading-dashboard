@@ -1,11 +1,12 @@
 import { music } from '../audio/music';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
-import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
+import { CATEGORIES, categoryOf, portraitKind, TRIBE_IDS, TRIBES, type CategoryDef } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { TRAITS } from '../data/traits';
 import { MECH } from '../game/mech';
 import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
 import { describePerk } from '../game/perks';
+import { roleName } from '../game/roles';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
@@ -153,12 +154,30 @@ export function unitPortrait(kind: keyof typeof UNITS, tribe: TribeId, size = 64
 const SEAT_LABEL: Record<Seat, string> = { human: 'Player', ai: 'AI', off: 'Off' };
 const NEXT_SEAT: Record<Seat, Seat> = { human: 'ai', ai: 'off', off: 'human' };
 
+/** A section heading for one empire type: its icon, name and playstyle. */
+function typeHead(c: CategoryDef) {
+  return h('div', { class: 'type-head' }, h('span', { class: 'type-icon' }, c.icon), h('span', { class: 'type-name' }, c.name), h('span', { class: 'type-blurb' }, c.blurb));
+}
+/** The empires of each type, in menu order. */
+const byType = () => CATEGORIES.map((c) => ({ c, ids: TRIBE_IDS.filter((id) => TRIBES[id].category === c.id) }));
+
+/** An empire's type and the two role units it trains, each in the empire's own style (see game/roles). */
+function roleUnits(id: TribeId): Node[] {
+  const c = categoryOf(id);
+  return [
+    h('h5', { class: 'pros' }, `${c.icon} ${c.name} empire: role units`),
+    h('div', { class: 'role-units' }, ...c.units.map((k) => h('div', { class: 'role-unit' }, unitPortrait(k, id, 48),
+      h('span', {}, h('b', {}, roleName(id, k)), ` (${UNITS[k].name}): ${UNITS[k].blurb}`)))),
+  ];
+}
+
 /** An empire's strengths and weaknesses, each with the history behind it. */
 function traitLists(id: TribeId): Node[] {
   const t = TRIBES[id];
   const item = (cls: string, name: string, why: string, effect: string) => h('li', { class: cls }, h('b', {}, name), ' ', h('span', { class: 'why' }, why), h('span', { class: 'effect' }, effect));
   const m = MECH[id];
   return [
+    ...roleUnits(id),
     ...(m ? [h('h5', { class: 'pros' }, 'Unique mechanic'), h('ul', { class: 'traits' }, item('pro', m.name, '', m.blurb))] : []),
     h('h5', { class: 'pros' }, 'Hero'),
     h('div', { class: 'hero-row', style: { display: 'flex', alignItems: 'center', gap: '8px' } },
@@ -200,26 +219,31 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
       : humans < 2 ? 'Pass & Play needs at least two players. Tap an empire to change who plays it.'
         : active < 2 ? 'Add at least one more empire.' : null;
 
-    const cards = h('div', { class: 'tribe-grid' });
-    for (const id of TRIBE_IDS) {
-      const t = TRIBES[id];
-      const seat = choice.seats[id];
-      cards.append(
-        h('button', {
-          class: `tribe-card${choice.hotseat ? ` seat-${seat}` : choice.tribe === id ? ' active' : ''}`,
-          style: { '--tc': t.color } as Record<string, string>,
-          onclick: () => {
-            if (choice.hotseat) choice.seats[id] = NEXT_SEAT[seat];
-            choice.tribe = id;
-            music.play(id); // tapping an empire plays its theme
-            render();
+    // the empires in three headed sections, one for each type (see data/tribes CATEGORIES)
+    const cards = h('div', { class: 'tribe-types' });
+    for (const { c, ids } of byType()) {
+      const grid = h('div', { class: 'tribe-grid' });
+      cards.append(typeHead(c), grid);
+      for (const id of ids) {
+        const t = TRIBES[id];
+        const seat = choice.seats[id];
+        grid.append(
+          h('button', {
+            class: `tribe-card${choice.hotseat ? ` seat-${seat}` : choice.tribe === id ? ' active' : ''}`,
+            style: { '--tc': t.color } as Record<string, string>,
+            onclick: () => {
+              if (choice.hotseat) choice.seats[id] = NEXT_SEAT[seat];
+              choice.tribe = id;
+              music.play(id); // tapping an empire plays its theme
+              render();
+            },
           },
-        },
-          h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
-          h('span', { class: 'tc-name' }, t.people),
-          choice.hotseat ? h('span', { class: `seat ${seat}` }, SEAT_LABEL[seat]) : null,
-        ),
-      );
+            h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
+            h('span', { class: 'tc-name' }, t.people),
+            choice.hotseat ? h('span', { class: `seat ${seat}` }, SEAT_LABEL[seat]) : null,
+          ),
+        );
+      }
     }
     const t = TRIBES[choice.tribe];
     const detail = h('div', { class: 'tribe-detail' },
@@ -293,7 +317,7 @@ function showEmpires(handlers: MenuHandlers) {
     'empires',
     backBar('The Twenty-Six Empires', () => showTitle(handlers)),
     h('div', { class: 'scroll' },
-      ...TRIBE_IDS.map((id) => {
+      ...byType().flatMap(({ c, ids }) => [typeHead(c), ...ids.map((id) => {
         const t = TRIBES[id];
         return h('div', { class: 'empire-row', style: { '--tc': t.color } as Record<string, string> },
           unitPortrait(t.unique, id, 72),
@@ -306,7 +330,7 @@ function showEmpires(handlers: MenuHandlers) {
             h('p', {}, h('b', {}, `${UNITS[t.unique].name}`), ` (replaces ${UNITS[t.replaces].name}): ${UNITS[t.unique].blurb}`),
           ),
         );
-      }),
+      })]),
     ),
   );
 }

@@ -48,6 +48,8 @@ import { showDiplomacy, showOffer } from './diplomacy';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
 import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, traderName, traderPreview } from '../game/trade';
 import { tradeList } from './trade';
+import { categoryOf } from '../data/tribes';
+import { cityTax, fleetIncome, isRoleKind, isSapperFort, minedLeft, postAt, rallyLeft, RECRUIT_CAP, RECRUIT_DISCOUNT, roleName, roleParts, rolePreview, upgradeName, upgradesOf, UPGRADE_STARS } from '../game/roles';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:') || id.startsWith('hero:') || id.startsWith('trade:');
@@ -721,7 +723,7 @@ export class GameView {
       );
     }
     const e = this.hudEls;
-    e.starsLabel.textContent = `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me)})`; // trade and tribute count too (see game/diplomacy)
+    e.starsLabel.textContent = `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me) + fleetIncome(this.s, this.me)})`; // trade and tribute count too (see game/diplomacy), and fishing fleets (see game/roles)
     e.turn.textContent = turnText;
     this.countTo(e.score, e.scoreBox, sc, (v) => v.toLocaleString());
     this.countTo(e.stars, e.starsBox, p.stars, String);
@@ -789,7 +791,7 @@ export class GameView {
     const turnText = this.s.maxTurns > 0 ? `${Math.min(this.s.turn, this.s.maxTurns)}/${this.s.maxTurns}` : String(this.s.turn);
     return h('div', { class: 'hud' },
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Score'), h('div', { class: 'hud-val' }, score(this.s, this.me).toLocaleString())),
-      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
+      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me) + fleetIncome(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
     );
   }
@@ -877,19 +879,24 @@ export class GameView {
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
-          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
+          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : isRoleKind(u.kind) ? roleName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${isRoleKind(u.carrying) ? roleName(owner.tribe, u.carrying) : UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null,
-          u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null))); // the route yield preview (see game/trade)
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:')), p.tribe); // empire actions on a unit's tile (launch, board...) and camp bids
+          u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null, // the route yield preview (see game/trade)
+          isRoleKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${u.owner === this.me ? rolePreview(this.s, u) : d.blurb}`) : null))); // what a role unit does (see game/roles)
+      // empire actions on a unit's tile (launch, board...), camp bids, and this role unit's own actions (see game/roles)
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:') || roleParts(a.id)?.unit === u.id), p.tribe);
       return;
     }
 
+    // a tile's menu: what can be done here, and the role units' actions aimed at this tile (see game/roles)
+    const here = t.y * this.s.size + t.x;
+    const tileActs = allActs.filter((a) => !UNIT_ACTIONS(a.id) && (!a.id.startsWith('role:') || roleParts(a.id)?.target === here));
     const city = t.cityId !== null ? cityById(this.s, t.cityId) : undefined;
-    if (city) return this.cityPanel(city, close, head, allActs.filter((a) => !UNIT_ACTIONS(a.id)));
+    if (city) return this.cityPanel(city, close, head, tileActs);
 
     const { title, desc } = describeTile(this.s, t, this.me);
     this.panel.append(close, head(title, desc));
-    this.renderActions(allActs.filter((a) => !UNIT_ACTIONS(a.id)), p.tribe);
+    this.renderActions(tileActs, p.tribe);
   }
 
   /** A hero's title, level, XP and ability with its cooldown (see game/heroes). */
@@ -929,13 +936,33 @@ export class GameView {
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     // a conquered city's unrest, with what moves it (see game/rebels)
     const unrest = mine ? unrestLine(this.s, city) : null;
+    const roles = this.roleCityLine(city); // a stationed Recruiter or Tax Collector, grand works, undermined walls (see game/roles)
     const unrestEl = unrest
       ? h('div', { class: `unrest-line${onBrink(city) ? ' brink' : unrestOf(city) >= UNREST_WARN ? ' hot' : ''}` }, unrest, h('span', { class: 'muted small' }, ` · ${unrestFactors(this.s, city).why.join(', ')}`))
       : null;
-    this.panel.append(close, head(city.name, info, unrestEl,
+    this.panel.append(close, head(city.name, info, roles, unrestEl,
       mine && city.pendingRewards.length ? h('button', { class: 'mini-btn', onclick: () => this.checkRewards() }, 'Choose level-up reward') : null));
     if (mine) this.renderActions(acts, owner.tribe);
-    else this.renderActions(acts.filter((a) => a.id.startsWith('mech:')), this.s.players[this.me].tribe); // e.g. Mali's market flood
+    else this.renderActions(acts.filter((a) => a.id.startsWith('mech:') || a.id.startsWith('role:')), this.s.players[this.me].tribe); // e.g. Mali's market flood, Sappers undermining it
+  }
+
+  /** The city panel's role-unit line: "Tax Collector: +3★ a turn", "Recruiter: units 1★ off, +1 slot, rally ready"... */
+  private roleCityLine(city: City) {
+    const s = this.s;
+    const parts: string[] = [];
+    const mine = city.owner === this.me;
+    const post = postAt(s, city);
+    const T = s.players[city.owner].tribe;
+    if (post?.kind === 'recruiter') {
+      const left = rallyLeft(s, city);
+      parts.push(`${roleName(T, 'recruiter')} stationed: units ${RECRUIT_DISCOUNT}★ cheaper, +${RECRUIT_CAP} unit slot, Rally Militia ${left ? `in ${left} turn${left === 1 ? '' : 's'}` : 'ready (when foes are within 3)'}`);
+    }
+    if (post?.kind === 'collector' && mine) parts.push(`${roleName(T, 'collector')} stationed: +${cityTax(s, city)}★ a turn in taxes (included)`);
+    const ups = upgradesOf(s, city);
+    if (ups && mine) parts.push(`${ups} grand work${ups === 1 ? '' : 's'}: +${ups * UPGRADE_STARS}★ a turn`);
+    if (minedLeft(s, city)) parts.push(`Undermined: walls and garrison bonus down for ${minedLeft(s, city)} turn${minedLeft(s, city) === 1 ? '' : 's'}`);
+    if (city.data?.outpost) parts.push('An outpost founded by a Voyager');
+    return parts.length ? h('div', { class: 'small role-line' }, parts.join(' · ')) : null;
   }
 
   private renderActions(acts: Action[], tribe: GameState['players'][number]['tribe']) {
@@ -1521,6 +1548,7 @@ export class GameView {
         known ? unitPortrait(portraitKind(p.tribe), p.tribe, 44) : h('div', { class: 'stat-unknown' }, '?'),
         h('div', {},
           h('b', {}, known ? `${T.people}${p.id === this.me ? ' (you)' : ''}` : 'Unknown empire'),
+          known ? h('span', { class: 'type-badge', title: categoryOf(p.tribe).blurb }, `${categoryOf(p.tribe).icon} ${categoryOf(p.tribe).name}`) : null,
           h('div', { class: 'muted small' }, !p.alive ? 'Destroyed' : known ? `${score(s, p.id).toLocaleString()} pts · ${citiesOf(s, p.id).length} cities · ${p.techs.length} techs` : 'Not yet met'),
           diploOn(s) && p.alive && p.id !== this.me && (s.players[this.me].met ?? []).includes(p.id)
             ? h('div', { class: 'small' }, `${{ war: 'At war', peace: 'At peace', alliance: 'Allied' }[relation(s, this.me, p.id)]} · they feel ${opinionWord(opinion(s, p.id, this.me))}`) : null,
@@ -1582,7 +1610,7 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
   // treaty borders (see game/diplomacy): a peace partner's land is closed, an ally's open
   const rel = owner !== null && owner !== viewer && diploOn(s) && !isNeutral(s, owner) ? relation(s, viewer, owner) : 'war';
   const where = rel === 'peace' ? `${land} Peace treaty: closed to your units.` : rel === 'alliance' ? `${land} Allied: open to your units.` : land;
-  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform' };
+  const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform', bridge: 'Bridge' };
   const res: Record<string, [string, string]> = {
     fruit: ['Wild Fruit', 'Harvest with Gathering.'],
     crop: ['Crops', 'Farm with Farming.'],
@@ -1591,7 +1619,11 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
     ore: ['Ore', 'Mine with Mining.'],
     whale: ['Whales', 'Hunt with Whaling.'],
   };
-  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track' };
+  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra' };
+  // the role units' works (see game/roles): a Sappers' fort, a Master Builder's grand work, a bridge
+  if (isSapperFort(t)) return { title: 'Fort', desc: `Raised by ${TRIBES[s.players[t.data!.sfort as number].tribe].people} sappers: their units here defend +1. ${where}` };
+  if (upgradeName(t)) return { title: upgradeName(t)!, desc: `A grand ${imp[t.improvement!]?.toLowerCase() ?? 'work'} raised by a Master Builder: +${UPGRADE_STARS}★ a turn to its city. ${terrain[t.terrain]}. ${where}` };
+  if (t.terrain === 'bridge') return { title: 'Bridge', desc: `A wooden bridge over the shallows: land units walk over it (a road); ships can no longer pass. ${where}` };
   if (t.village) return { title: 'Village', desc: 'Move a unit here, then claim it next turn to found a city.' };
   if (t.ruin) return { title: 'Ancient Ruins', desc: 'Step on them to discover what was left behind.' };
   if (t.improvement && (t.improvement !== 'songline' || s.players[viewer]?.tribe === 'aboriginal')) { // Songlines are secret

@@ -1,7 +1,9 @@
 import type { Perk } from './perks';
 
 export type BaseTerrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
-export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'platform';
+export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'platform'
+  // a shallow bridged by Sappers (see game/roles): walkable land with a road over the water
+  | 'bridge';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
 export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market'
   // built by empire mechanics (see game/mech)
@@ -21,6 +23,8 @@ export type UnitKind =
   | 'hero'
   // every empire's merchants: a land caravan and a sea trader, drawn in each empire's own style (see game/trade)
   | 'trader' | 'tradeship'
+  // the role units of the three empire types, drawn in each empire's own style (see game/roles)
+  | 'recruiter' | 'sapper' | 'builder' | 'collector' | 'fishfleet' | 'voyager'
   // neutral Great Beasts (see game/wild)
   | 'kraken';
 

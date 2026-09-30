@@ -5,6 +5,8 @@ import { UNITS } from '../data/units';
 import type { TribeId, UnitKind } from '../game/types';
 import { drawKraken } from './wild';
 import { drawTradeShip, drawTrader } from './trade';
+import { drawRoleUnit } from './roles';
+import { isRoleKind } from '../game/roles';
 import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, roof, shade, softShadow, type Ctx } from './prims';
 
 interface Look { skin: string; hair: string }
@@ -50,6 +52,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   if (kind === 'kraken') return drawKraken(ctx, x, y); // a Great Beast (see render/wild)
   if (kind === 'tradeship') return drawTradeShip(ctx, tribe, x, y); // each empire's merchants (see render/trade)
   if (kind === 'trader') return drawTrader(ctx, tribe, x, y);
+  if (isRoleKind(kind)) return drawRoleUnit(ctx, kind, tribe, x, y); // each empire's role units (see render/roles)
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);

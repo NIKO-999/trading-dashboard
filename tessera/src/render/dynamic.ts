@@ -16,6 +16,7 @@ import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
 import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
 import { floaterPose } from './combatfx';
 import { drawHeroGround } from './heroes';
+import { drawRoleGround } from './roles';
 import { drawTradeRoutes } from './trade';
 import { isHero } from '../game/heroes';
 
@@ -99,6 +100,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   drawTradeRoutes(ctx, s, viewer); // dotted caravan trails and sea lanes between trading cities (see render/trade)
   drawSelection(ctx, s, ov, now, explored);
   drawHeroGround(ctx, s, viewer, now); // hero auras and ability marks (see render/heroes)
+  drawRoleGround(ctx, s, viewer); // rings under units stationed in a city (see render/roles)
 
   const units = shownUnits(s, viewer, cam, vw, vh);
   const motion = new Map<number, Motion>();

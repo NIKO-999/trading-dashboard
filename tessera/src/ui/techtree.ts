@@ -9,6 +9,7 @@ import type { GameState } from '../game/types';
 import { ringLabel, skyLayout, skyLinks, type Sky } from './constellation';
 import { h, iconEl, starSpan } from './dom';
 import { modal } from './modal';
+import { isRoleKind, roleKindsOf, roleName } from '../game/roles';
 import { unitPortrait } from './menu';
 
 // The Constellation View: the skill tree as stars on a pitch-black sky (layout in ui/constellation.ts). Learned stars
@@ -158,13 +159,16 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const t = TECH_BY_ID[id];
     const st = researchStatus(s, pid, id);
     const cost = techCost(s, pid, id);
-    const unit = Object.values(UNITS).find((u) => u.tech === id && u.trainable && (u.kind === tribe.unique || u.kind !== tribe.replaces));
+    // the unit this tech unlocks for this empire (another type's role units are not for it; see game/roles)
+    const unit = Object.values(UNITS).find((u) => u.tech === id && u.trainable && (u.kind === tribe.unique || u.kind !== tribe.replaces) && (!isRoleKind(u.kind) || roleKindsOf(p.tribe).includes(u.kind)));
+    const role = roleKindsOf(p.tribe).find((k) => UNITS[k].tech === id);
     // Egyptians' farms grow cities by 3
     const unlocks = id === 'farming' && p.tribe === 'egypt' ? t.unlocks.replace('+2 pop', '+3 pop')
       : id === 'hunting' && p.tribe === 'zulu' ? t.unlocks.replace('+1 pop', '+2 pop') : t.unlocks;
     const body: (Node | string)[] = [h('p', { class: 'tt-kind' }, t.tribe ? `${ringLabel(t)} · ${tribe.people}` : ringLabel(t))];
     if (t.flavor) body.push(h('p', { class: 'muted' }, t.flavor));
     if (!t.tribe || UNIQUE_BY_ID[t.id].perks.length) body.push(h('p', {}, unlocks));
+    if (role) body.push(h('p', {}, h('b', {}, `${roleName(p.tribe, role)}: `), UNITS[role].blurb)); // this empire type's role unit
     if (t.cond) {
       const on = condActive(s, pid, t.cond);
       body.push(h('p', { class: `tt-surge${on ? ' on' : ''}` }, `Surge — while ${COND_TEXT[t.cond].when}: ${t.surge} `, h('b', {}, on ? '(surging now)' : '(dormant)')));

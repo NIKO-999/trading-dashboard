@@ -13,8 +13,12 @@ export interface BiomePalette {
   ocean: string;
 }
 
+/** The three empire types: each trains its own two role units (see game/roles). */
+export type Category = 'military' | 'economy' | 'naval';
+
 export interface TribeDef {
   id: TribeId;
+  category: Category;
   name: string; // empire name
   people: string; // adjective / demonym
   color: string; // territory / banner colour
@@ -35,6 +39,7 @@ export interface TribeDef {
 export const TRIBES: Record<TribeId, TribeDef> = {
   egypt: {
     id: 'egypt',
+    category: 'economy',
     climate: { desert: 0.5 },
     name: 'Kingdom of the Nile',
     people: 'Egyptian',
@@ -53,6 +58,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   aztec: {
     id: 'aztec',
+    category: 'military',
     climate: { desert: 0.1 },
     name: 'Jaguar Empire',
     people: 'Aztec',
@@ -71,6 +77,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   polynesia: {
     id: 'polynesia',
+    category: 'naval',
     climate: { swamp: 0.08 },
     name: 'Iwi of Aotearoa',
     people: 'Māori',
@@ -89,6 +96,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   rome: {
     id: 'rome',
+    category: 'military',
     climate: { swamp: 0.05 },
     name: 'Eternal Republic',
     people: 'Roman',
@@ -107,6 +115,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   pirates: {
     id: 'pirates',
+    category: 'naval',
     climate: { swamp: 0.15 },
     name: 'Brethren of the Coast',
     people: 'Pirate',
@@ -125,6 +134,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   vikings: {
     id: 'vikings',
+    category: 'naval',
     climate: { swamp: 0.05, tundra: 0.25 },
     name: 'Northern Jarldom',
     people: 'Viking',
@@ -143,6 +153,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   japan: {
     id: 'japan',
+    category: 'military',
     name: 'Rising Sun Shogunate',
     people: 'Japanese',
     color: '#8b4fc4',
@@ -160,6 +171,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   mongols: {
     id: 'mongols',
+    category: 'military',
     climate: { desert: 0.2, tundra: 0.08 },
     name: 'Horde of the Endless Sky',
     people: 'Mongol',
@@ -178,6 +190,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   greeks: {
     id: 'greeks',
+    category: 'naval',
     climate: { desert: 0.05 },
     name: 'League of the Aegean',
     people: 'Greek',
@@ -196,6 +209,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   zulu: {
     id: 'zulu',
+    category: 'military',
     climate: { desert: 0.08 },
     name: 'Kingdom of the Heavens',
     people: 'Zulu',
@@ -214,6 +228,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   persia: {
     id: 'persia',
+    category: 'military',
     climate: { desert: 0.3 },
     name: 'Empire of the Lion and Sun',
     people: 'Persian',
@@ -232,6 +247,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   celts: {
     id: 'celts',
+    category: 'economy',
     climate: { swamp: 0.15 },
     name: 'Clans of the Oak',
     people: 'Celtic',
@@ -250,6 +266,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   inuit: {
     id: 'inuit',
+    category: 'naval',
     climate: { tundra: 0.6 },
     name: 'Folk of the Ice',
     people: 'Inuit',
@@ -268,6 +285,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   inca: {
     id: 'inca',
+    category: 'economy',
     climate: { desert: 0.1 },
     name: 'Realm of the Four Quarters',
     people: 'Inca',
@@ -286,6 +304,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   ethiopia: {
     id: 'ethiopia',
+    category: 'economy',
     climate: { desert: 0.15 },
     name: 'Kingdom of Aksum',
     people: 'Aksumite',
@@ -304,6 +323,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   aboriginal: {
     id: 'aboriginal',
+    category: 'economy',
     climate: { desert: 0.5 },
     name: 'Nations of the Red Country',
     people: 'Aboriginal',
@@ -322,6 +342,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   china: {
     id: 'china',
+    category: 'economy',
     climate: { swamp: 0.1 },
     name: 'Dynasty of the Middle Kingdom',
     people: 'Chinese',
@@ -340,6 +361,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   india: {
     id: 'india',
+    category: 'economy',
     climate: { swamp: 0.12 },
     name: 'Realm of the Ganges',
     people: 'Indian',
@@ -358,6 +380,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   mali: {
     id: 'mali',
+    category: 'economy',
     climate: { desert: 0.35 },
     name: 'Empire of Mali',
     people: 'Malian',
@@ -376,6 +399,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   lakota: {
     id: 'lakota',
+    category: 'military',
     climate: { tundra: 0.08 },
     name: 'Nations of the Plains',
     people: 'Lakota',
@@ -394,6 +418,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   ottoman: {
     id: 'ottoman',
+    category: 'military',
     climate: { desert: 0.15 },
     name: 'Sublime Empire',
     people: 'Ottoman',
@@ -412,6 +437,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   maya: {
     id: 'maya',
+    category: 'economy',
     climate: { swamp: 0.22 },
     name: 'City-States of the Jaguar Throne',
     people: 'Maya',
@@ -430,6 +456,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   korea: {
     id: 'korea',
+    category: 'naval',
     climate: { tundra: 0.05 },
     name: 'Kingdom of the Morning Calm',
     people: 'Korean',
@@ -448,6 +475,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   khmer: {
     id: 'khmer',
+    category: 'economy',
     climate: { swamp: 0.22 },
     name: 'Empire of Angkor',
     people: 'Khmer',
@@ -466,6 +494,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   swahili: {
     id: 'swahili',
+    category: 'naval',
     climate: { desert: 0.08, swamp: 0.1 },
     name: 'Sultanates of the Swahili Coast',
     people: 'Swahili',
@@ -484,6 +513,7 @@ export const TRIBES: Record<TribeId, TribeDef> = {
   },
   tibet: {
     id: 'tibet',
+    category: 'economy',
     climate: { tundra: 0.35 },
     name: 'Snow Land of the Plateau',
     people: 'Tibetan',
@@ -501,6 +531,15 @@ export const TRIBES: Record<TribeId, TribeDef> = {
     cityNames: ['Lhasa', 'Shigatse', 'Gyantse', 'Samye', 'Sakya', 'Ganden', 'Drepung', 'Tsurphu', 'Tsetang', 'Nyingchi', 'Chamdo', 'Nagchu'],
   },
 };
+
+export interface CategoryDef { id: Category; icon: string; name: string; blurb: string; units: [UnitKind, UnitKind] }
+/** The empire types in menu order, with the playstyle and the two role units only that type can train. */
+export const CATEGORIES: CategoryDef[] = [
+  { id: 'military', icon: '⚔️', name: 'Military', blurb: 'Conquerors: raise troops cheaply, dig forts and bridges, and bring down enemy walls.', units: ['recruiter', 'sapper'] },
+  { id: 'economy', icon: '💰', name: 'Economy', blurb: 'Builders and traders: grand works at half price and cities that pay half as much again.', units: ['builder', 'collector'] },
+  { id: 'naval', icon: '⚓', name: 'Naval', blurb: 'Seafarers: fishing fleets that feed the cities and voyagers that settle distant coasts.', units: ['fishfleet', 'voyager'] },
+];
+export const categoryOf = (tribe: TribeId): CategoryDef => CATEGORIES.find((c) => c.id === TRIBES[tribe].category)!;
 
 export const TRIBE_IDS: TribeId[] = ['egypt', 'aztec', 'polynesia', 'rome', 'pirates', 'vikings', 'japan', 'mongols', 'greeks', 'zulu', 'persia', 'celts', 'inuit', 'inca', 'ethiopia', 'aboriginal', 'china', 'india', 'mali', 'lakota', 'ottoman', 'maya', 'korea', 'khmer', 'swahili', 'tibet'];
 

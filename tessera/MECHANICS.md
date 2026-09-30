@@ -5,6 +5,7 @@
 ## 1. The basics
 
 - A turn-based tile strategy game on an isometric square grid. You play one of **26 empires** against 1–25 computer or hot-seat opponents.
+- **Three empire types** (§15): ⚔️ **Military**, 💰 **Economy** and ⚓ **Naval**. Each type trains two role units of its own; the New Game picker and the Twenty-Six Empires screen list the empires by type.
 - **Two modes:** *Perfection* — the game ends after a turn limit (default **30 turns**) and the highest **score** wins. *Domination* — no turn limit; last empire standing (or last human alive → best score) wins; with Diplomacy on, survivors who are all allied win together (§12).
 - **Difficulty** (easy / normal / hard): computer players get **+0 / +1 / +2 free Stars each turn**.
 - **Start:** every empire begins with **5 Stars**, one capital (level 1) and one warrior. Everything else is hidden by fog.
@@ -31,7 +32,7 @@
   - Level 4: Harvest Festival (+3 pop) **or** Border Growth (territory 3×3 → 5×5).
   - Levels 5 & 8: Grand Garden (+1★/turn, +250 score) **or** a **Colossus** (40-HP champion).
   - Other levels: Grand Garden **or** Treasury (+5★, +8★ from level 6).
-- A city **supports `level + 1` units**; you cannot train more than that. Units belong to the city that trained them; if it is lost they become unsupported.
+- A city **supports `level + 1` units** (one more with a Recruiter stationed there, §15); you cannot train more than that. Units belong to the city that trained them; if it is lost they become unsupported.
 
 ## 3. Techs and the skill tree (the Constellation)
 
@@ -84,7 +85,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 
 ## 4. Units and combat
 
-**Trainable in a city (cost ★):** Warrior 2 · Rider 3 (Riding) · Archer 3 (Archery) · Defender 3 (Tactics) · Swordsman 5 (Smithing) · Catapult 8 (Engineering) · Knight 8 (Chivalry). Each empire replaces some of these with its own unique unit (§7). **Boats** are made by moving a land unit into a port (a boat carries it; upgrades: Canoe → Galley 5★ with Sailing → Trireme 15★ with Navigation). **Colossus** (40 HP) comes from level-up rewards; **Pathfinders** from ruins/rewards.
+**Trainable in a city (cost ★):** Warrior 2 · Rider 3 (Riding) · Archer 3 (Archery) · Defender 3 (Tactics) · Swordsman 5 (Smithing) · Catapult 8 (Engineering) · Knight 8 (Chivalry). Each empire replaces some of these with its own unique unit (§7). **Boats** are made by moving a land unit into a port (a boat carries it; upgrades: Canoe → Galley 5★ with Sailing → Trireme 15★ with Navigation). **Colossus** (40 HP) comes from level-up rewards; **Pathfinders** from ruins/rewards. Each empire type also trains two **role units** (§15).
 
 **Stats** (base): Warrior 10 HP, attack 2, defence 2, move 1 · Rider 10/2/1, move 2 · Archer 10/2/1, range 2 · Defender 15/1/3 · Swordsman 15/3/3 · Catapult 10/4/0, range 3 · Knight 10/3.5/1, move 3 · Galley 10/2/2 move 3 range 2 · Trireme 15/4/3.
 
@@ -97,13 +98,13 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 - defence force = defence × (defender HP / max HP) × **terrain bonus**
 - damage dealt = `round( attackForce / (attackForce + defenceForce) × attack × 4.5 )`
 - If the defender survives and the attacker is within the defender's range, it **counter-attacks** with `round( defenceForce / total × defence × 4.5 )`.
-- **Terrain bonus:** ×1.5 in your own city (×4 with City Walls, for fortify units), ×2 on a mountain (Climbing), ×1.5 in forest with Archery, ×1.5 in swamp, ×1.5 afloat with Aquaculture, else ×1.
+- **Terrain bonus:** ×1.5 in your own city (×4 with City Walls, for fortify units; ×1 while Sappers have undermined it, §15), ×2 on a mountain (Climbing), ×1.5 in forest with Archery, ×1.5 in swamp, ×1.5 afloat with Aquaculture, else ×1.
 - **Veterans:** 3 kills → +5 max HP, healed. **Recover** action heals 4 HP (2 outside your borders) and uses the unit's turn.
 - **Capturing:** a unit standing on an enemy city or an unclaimed **village** can capture it (villages become level-1 cities). A captured city loses its capital status and pending rewards; the capturer joins its garrison. Eliminating an empire's last city removes it. Taking a city founded by another people also offers one of that people's traditions (§10).
 
 ## 5. Terrain, resources, improvements
 
-**Terrain:** field, forest, mountain, shallow water, deep ocean — plus **climate terrain**: **desert** (no farms; irrigate for +1 pop with Farming), **swamp** (units stop; cover 1.5×; drain with Forestry), **tundra** (units outside your borders lose 1 HP/turn). Special terrain from empire mechanics: **ice** (Inuit, walkable land made from water) and **platform** (Pirate floating decks).
+**Terrain:** field, forest, mountain, shallow water, deep ocean — plus **climate terrain**: **desert** (no farms; irrigate for +1 pop with Farming), **swamp** (units stop; cover 1.5×; drain with Forestry), **tundra** (units outside your borders lose 1 HP/turn). Special terrain from empire mechanics: **ice** (Inuit, walkable land made from water) and **platform** (Pirate floating decks); and the **bridge** Sappers lay over a shallow (§15).
 
 **Resources** on tiles (spawn rates): fruit 22% / crop 17% of fields, animals 27% of forests, ore on mountains (30%) and a little on fields/forests, fish on shallows (30%), whales on ocean (9%). Every capital and village start is guaranteed enough resources to level up.
 
@@ -176,6 +177,8 @@ Every empire has one named champion (see `game/heroes`).
 | Tibetan | **Songtsen Gampo**, Emperor of the Plateau | **Mountain Mist** (every 4 turns): Your units within 2 vanish into the mist (unseen by enemies) and get +1 defence until your next turn. |
 
 ## 10. The 26 empires
+
+Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean.
 
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.
@@ -440,4 +443,47 @@ Every empire has merchants (see `game/trade`): one Trader kind and one Trade Shi
 - **Empire bonuses.** Mali: +1★ at a Malian end of a land route (salt tolls). Swahili: +1★ at a Swahili end of a sea route, Trade Ships 2★ cheaper (the monsoon). Persia: +1★ at a Persian end of a land route running at least half on roads (the Royal Road). Rome: Traders 1★ cheaper. Pirates: raids loot double.
 - **Where you see it:** routes are drawn on the map as dotted caravan trails (dashed white sea lanes) in the colour of the empire that opened them, with a bale of goods at each end; the tile panel names the route on a trail tile. The **Trade** tab of the Empires screen lists your routes and their income, and the routes of others you have seen.
 - **Computer players** train a merchant when they have stars to spare and a route to open, walk it to the best-paying city they can reach, and send soldiers to pillage enemy trails nearby.
+
+## 15. Empire types and role units
+
+Every empire belongs to one of three types (`category` in `data/tribes`). Each type trains **two role units** that no other type can have (see `game/roles`). A role unit is one unit kind, named and drawn in each empire's own style (an Ottoman *Sipahi Bey* under a red horse-tail standard, Roman *Fabri* with a pick-axe and turves, an Inca *Quipucamayoc* with his knotted cords, a Māori *Wayfinder Waka* under a crab-claw sail...). They hardly fight (attack 0, Sappers 1), have *dash* (they may act after moving), never capture cities or villages, and take a unit slot in the city that trained them. Their actions appear in the tile menu of the unit's own tile (tap the unit) and of the tile they act on (tap that tile).
+
+| Type | Playstyle | Role units |
+|---|---|---|
+| ⚔️ Military | Conquerors: raise troops cheaply, dig forts and bridges, bring down walls | Recruiter · Sappers |
+| 💰 Economy | Builders and traders: grand works at half price, cities that pay half again | Master Builder · Tax Collector |
+| ⚓ Naval | Seafarers: fleets that feed the cities, voyagers that settle distant coasts | Fishing Fleet · Voyager |
+
+**Stats:** Recruiter 3★ (Tactics): 10 HP, attack 0, defence 2, move 1, *fortify* · Sappers 5★ (Roads): 10/1/2, move 1 · Master Builder 5★ (Farming): 10/0/1 · Tax Collector 5★ (Trade): 6/0/0.5 · Fishing Fleet 5★ (Fishing): ship, 10/0/1, move 3, sees 2 · Voyager 8★ (Sailing): ship, 10/0/1, move 4, sees 3. The two ships are launched onto a free water tile beside a coastal city (like the Trade Ship), cross the open ocean and never go ashore.
+
+### ⚔️ Recruiter (a warlord)
+- **Station Here** (in one of your cities, uses its turn): while it stays on the city tile, units trained there cost **1★ less** (never below 1), and the city supports **one more unit**. A unit stationed on a city does not stop it training: new units step out onto a free tile beside the city.
+- **Rally Militia** (stationed; only when an enemy unit is within **3** tiles of the city): a free warrior of your people (Legionary, Impi...) musters beside the city, ready to fight at once; it takes no unit slot. Then **4 turns** of cooldown. It does not use the recruiter's turn.
+- Only one unit can stand on a city tile, so one recruiter counts per city. Killing a recruiter pays the killer **3★**.
+- **Where you see it:** a ring in your colour with a banner badge under a stationed recruiter; the city panel says "Recruiter stationed: units 1★ cheaper, +1 unit slot, Rally Militia in N turns"; the train buttons say "(Recruiter: 1★ off)".
+
+### ⚔️ Sappers (engineers)
+- **Roads:** they lay a road, free, on the tile they march from and the tile they reach (their own or unclaimed land, not mountains).
+- **Build Fort** (2★, uses its turn): a permanent earthwork on the tile they stand on (own or unclaimed land): **+1 defence** to their empire's units standing on it. It is the `fort` improvement marked as the sappers' own; a Roman castra is a separate kind of fort and still comes down when its legionary leaves.
+- **Build Bridge** (2★, uses its turn): a shallow beside them (no port or resource, own or unclaimed) becomes a **bridge**: land with a road on it, so land units walk across; ships can no longer pass. Drawn as a wooden plank bridge on piles.
+- **Undermine** (beside an enemy city, uses its turn): for **3 turns** the city's walls and garrison bonus count for nothing (its fortify units defend ×1). The owner is told; the city shows a caved-in breach and the panel says how long.
+
+### 💰 Master Builder
+- **Half-price building:** on its own tile or any tile of yours beside it, it builds a Farm, Mine, Port or Market for **half the price, rounded up** (the tile menu shows "Build Farm (½)"), with the same effect as the ordinary build. Uses its turn.
+- **Upgrade** (8★, uses its turn): Farm → **Estate**, Mine → **Deep Mine**, Port → **Harbour**, Market → **Bazaar**. An upgraded tile pays **+1★ a turn** to its city and grows it **+1** once; it is drawn larger, with a manor, a headframe, a crane and harbour light, or a domed hall. It counts only while the improvement stands.
+
+### 💰 Tax Collector
+- **Station Here** (in one of your cities, uses its turn): while it stays on the city tile the city pays **+50% Stars** (rounded up, on everything the city earns). One unit stands on a city tile, so one collector counts per city and you can never have more stationed collectors than cities.
+- Fragile (6 HP, defence 0.5); killing one pays the killer **4★**.
+- **Where you see it:** the HUD's Stars (+N) and the city panel's income include it, and the panel says "Tax Collector stationed: +N★ a turn in taxes"; a ring with a gold coin badge lies under it.
+
+### ⚓ Fishing Fleet
+- **Bring in the Catch** (on a fish or whale tile anywhere at sea, even outside your borders; uses its turn): fish **+2★**, whale **+5★**, and **+1 population** to your nearest city. The resource is used up (Inuit waters that are resting cannot be fished).
+- Every fleet earns **+1★ a turn** (in the HUD's Stars (+N)) and sees **2** tiles around it.
+
+### ⚓ Voyager
+- Moves **4**, crosses the ocean, sees **3** tiles around it.
+- **Found Outpost** (on an empty, unclaimed land tile beside it — no city, village, ruin, camp or unit, not a mountain — at least **3** tiles from every city): the tile becomes a new **level-1 city** of yours, and the ship is used up (its slot is freed). You may hold **one outpost for every 2 cities** you own. The Pirates hold no land (their cities are platforms, §10), so their Voyager only explores.
+
+**Computer players** research the tech of their role units, station recruiters in their largest (or threatened) cities and rally militia when a city is threatened, send sappers toward enemy cities (building roads on the way, forts when enemies are near, bridges to land worth reaching, and undermining a city their soldiers are besieging), keep a builder building and upgrading, station tax collectors in their richest cities, send fleets to the nearest fish and whales, and send voyagers to explore and settle empty coasts.
 
