@@ -289,7 +289,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         h('p', { class: 'muted small terrain-note' }, TERRAIN_STYLES.find((t) => t.id === choice.terrain)!.blurb)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest'], ['onecity', 'One City']], () => choice.mode, (v) => { choice.mode = v; render(); }),
       h('p', { class: 'muted small terrain-note' }, choice.mode === 'onecity'
-        ? 'One City Challenge: every empire keeps only its capital. There are no villages and no new cities. Grow tall, and raze a rival capital to knock them out (+1,000 score). Highest score after 30 turns, or the last empire standing, wins.'
+        ? 'One City Challenge: every empire keeps only its capital. There are no villages and no new cities. You control a single city the whole game. Grow tall, then raze each rival capital to knock them out (+1,000 score). No turn limit: conquer every empire to win.'
         : choice.mode === 'perfection' ? 'Highest score after 30 turns wins.' : 'Take every capital to win.'),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
       seg('Mountains', [['normal', 'Normal'], ['few', 'Few'], ['none', 'None']], () => choice.mountains ?? 'normal', (v) => { choice.mountains = v; render(); }),

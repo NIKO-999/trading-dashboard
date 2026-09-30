@@ -743,7 +743,7 @@ export function checkGameOver(s: GameState) {
     s.over = true;
     s.winner = bestScorer(s);
     s.diplo!.victors = alive.map((p) => p.id);
-  } else if ((s.mode === 'perfection' || s.mode === 'onecity') && s.maxTurns > 0 && s.turn >= s.maxTurns) {
+  } else if (s.mode === 'perfection' && s.maxTurns > 0 && s.turn >= s.maxTurns) {
     s.over = true;
     s.winner = bestScorer(s);
   }

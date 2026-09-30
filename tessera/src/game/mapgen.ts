@@ -105,7 +105,7 @@ export function createGame(opts: NewGameOptions): GameState {
     players,
     current: 0,
     turn: 0,
-    maxTurns: opts.mode === 'perfection' || opts.mode === 'onecity' ? (opts.maxTurns ?? 30) : 0,
+    maxTurns: opts.mode === 'perfection' ? (opts.maxTurns ?? 30) : 0,
     mode: opts.mode,
     difficulty: opts.difficulty ?? 'normal',
     nextId: 1,

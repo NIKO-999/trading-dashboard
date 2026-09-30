@@ -12,11 +12,11 @@ import type { TribeId } from '../src/game/types';
 const oneCity = (me: TribeId = 'rome', foes: TribeId[] = ['vikings'], seed = 7) =>
   createGame({ seed, human: me, opponents: foes, mode: 'onecity' });
 
-test('One City: no villages on the map, and a 30-turn limit', () => {
+test('One City: no villages on the map, and no turn limit', () => {
   const s = oneCity('rome', ['vikings', 'greeks', 'zulu']);
   assert.equal(s.tiles.filter((t) => t.village).length, 0);
   assert.equal(s.cities.length, 4);
-  assert.equal(s.maxTurns, 30);
+  assert.equal(s.maxTurns, 0);
 });
 
 test('One City: a Voyager, a Great Waka or a sea-city cannot found a new city', () => {
@@ -45,20 +45,22 @@ test('One City: capturing a rival capital razes it and knocks the empire out', (
   assert.ok(!s.tiles.some((x) => x.owner === foe.id), 'its lands are unclaimed');
   assert.equal(s.players[0].bonusScore - before, RAZE_SCORE);
   assert.ok(!s.players[1].alive, 'the razed empire is out');
+  assert.ok(!s.over, 'the game goes on while another rival lives');
 });
 
-test('One City: AI games keep every empire at one city at most and end by turn 30', () => {
+test('One City: AI games keep every empire at one city at most and play past turn 30 until one empire is left', () => {
   for (let seed = 1; seed <= 6; seed++) {
     const four = TRIBE_IDS.slice(seed * 3, seed * 3 + 4) as TribeId[];
     const s = createGame({ seed, human: null, opponents: four, mode: 'onecity' });
     startTurn(s);
     let guard = 0;
-    while (!s.over && guard++ < 1000) {
+    while (!s.over && guard++ < 250) {
       aiTurn(s);
       for (const p of s.players) assert.ok(s.cities.filter((c) => c.owner === p.id).length <= 1, `seed ${seed}: ${p.tribe} has more than one city`);
       endTurn(s);
       drain();
     }
-    assert.ok(s.over && s.turn <= 30, `seed ${seed}: game over by turn 30 (turn ${s.turn})`);
+    if (s.over) assert.equal(s.players.filter((p) => p.alive && !p.neutral).length, 1, `seed ${seed}: over only with one empire left`);
+    else assert.ok(s.turn > 30, `seed ${seed}: still going past turn 30`);
   }
 });
