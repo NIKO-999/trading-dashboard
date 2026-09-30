@@ -17,6 +17,8 @@ export type UnitKind =
   | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai' | 'woomera'
   | 'crossbowman' | 'elephant' | 'sofa' | 'buffalorider' | 'janissary'
   | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
+  // each empire's named champion (see game/heroes)
+  | 'hero'
   // neutral Great Beasts (see game/wild)
   | 'kraken';
 
@@ -98,6 +100,19 @@ export interface Player {
   neutral?: boolean;
   /** Skill-tree bookkeeping (missing in older saves): when it last fought or lost a city, which Wildcards surged, respecs. */
   skill?: SkillState;
+  /** This empire's hero (see game/heroes; missing in older saves and before the hero first joins). */
+  hero?: HeroState;
+}
+
+export interface HeroState {
+  unit: number | null; // id of the hero on the field, or null while not there
+  lvl: number;
+  xp: number;
+  ready: number; // the turn the ability can next be used
+  back: number | null; // the turn a fallen hero returns
+  joined: boolean; // has joined at least once
+  discount?: boolean; // Imperial Largesse waiting to be spent
+  uses?: number; // abilities used so far
 }
 
 export interface SkillState {

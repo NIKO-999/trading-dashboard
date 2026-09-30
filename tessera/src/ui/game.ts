@@ -45,9 +45,10 @@ import { WONDER_BY_ID } from '../data/wonders';
 import { celebrateWonder, wonderHud, wondersList } from './wonders';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
+import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:');
+const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:') || id.startsWith('hero:');
 
 interface Selection { x: number; y: number; mode: 'unit' | 'tile' }
 
@@ -858,8 +859,10 @@ export class GameView {
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
           : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
+      const hero = isHero(this.s, u) ? heroDef(this.s, u.owner) : null;
+      const hs = hero ? owner.hero! : null;
       const stats = h('span', { class: 'stat-line' },
-        h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u)))),
+        h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0)))),
         h('span', {}, 'Defence ', h('b', {}, String(d.def)), defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null),
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
@@ -872,9 +875,9 @@ export class GameView {
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
-          `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
-        h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:')), p.tribe); // empire actions on a unit's tile (launch, board...), camp bids and a wonder site
+          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
+        h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null)));
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:')), p.tribe); // empire actions on a unit's tile (launch, board...) and camp bids
       return;
     }
 
@@ -884,6 +887,15 @@ export class GameView {
     const { title, desc } = describeTile(this.s, t, this.me);
     this.panel.append(close, head(title, desc));
     this.renderActions(allActs.filter((a) => !UNIT_ACTIONS(a.id)), p.tribe);
+  }
+
+  /** A hero's title, level, XP and ability with its cooldown (see game/heroes). */
+  private heroLine(pid: number, d: ReturnType<typeof heroDef>, hs: NonNullable<GameState['players'][number]['hero']>) {
+    const cd = cooldownLeft(this.s, pid);
+    const xp = hs.lvl >= HERO_MAX_LEVEL ? 'max level' : `XP ${hs.xp}/${HERO_XP[hs.lvl + 1]}`;
+    return h('span', { class: 'hero-line' },
+      h('i', {}, d.title), ` · Level ${hs.lvl} (${xp})`, h('br'),
+      h('b', {}, `${d.ability}: `), cd > 0 ? `ready in ${cd} turn${cd === 1 ? '' : 's'}. ` : 'ready! ', d.desc, h('br'));
   }
 
   private previewLine(u: GameState['units'][number]) {

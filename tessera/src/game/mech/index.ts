@@ -5,6 +5,7 @@ import type { City, GameState, Tile, TribeId, Unit } from '../types';
 import { adoptedHooks } from '../culture';
 import type { AttackInfo, CombatCtx, MechRegistry, MoveCtx, Mechanic } from './types';
 import { perkSum } from '../perks';
+import { HERO_MECH } from '../heroes';
 import { mech as egypt } from './egypt';
 import { mech as aztec } from './aztec';
 import { mech as polynesia } from './polynesia';
@@ -39,16 +40,20 @@ const NONE: Mechanic = { name: '', blurb: '' };
 /** The mechanic of an empire (the neutral owner of the wild has none; see game/wild). */
 export const mechOf = (s: GameState, pid: number): Mechanic => (s.players[pid].neutral ? NONE : MECH[s.players[pid].tribe]);
 
-/** A player's own mechanic, then the light hooks of traditions it adopted from conquered peoples (see game/culture). */
+/**
+ * A player's own mechanic, then its hero (see game/heroes), then the light hooks of traditions it adopted from conquered
+ * peoples (see game/culture).
+ */
 const own = (s: GameState, pid: number): Mechanic[] => {
   const extra = adoptedHooks(s, pid);
-  return extra.length ? [MECH[s.players[pid].tribe], ...extra] : [MECH[s.players[pid].tribe]];
+  return extra.length ? [MECH[s.players[pid].tribe], HERO_MECH, ...extra] : [MECH[s.players[pid].tribe], HERO_MECH];
 };
 
 const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
   for (const p of s.players) {
     if (!p.alive) continue;
     fn(MECH[p.tribe], p.id);
+    fn(HERO_MECH, p.id);
     if (p.culture?.adopted?.length) for (const m of adoptedHooks(s, p.id)) fn(m, p.id);
   }
 };
@@ -58,7 +63,10 @@ export function hookTurnStart(s: GameState, pid: number) { for (const m of own(s
 export function hookTurnEnd(s: GameState, pid: number) { for (const m of own(s, pid)) m.turnEnd?.(s, pid); }
 
 export function hookMoveStep(s: GameState, u: Unit, from: Tile, to: Tile, ctx: MoveCtx) { each(s, (m, o) => m.moveStep?.(s, o, u, from, to, ctx)); }
-export function hookExtraMoves(s: GameState, u: Unit): MoveOption[] { return mechOf(s, u.owner).extraMoves?.(s, u.owner, u) ?? []; }
+export function hookExtraMoves(s: GameState, u: Unit): MoveOption[] {
+  if (s.players[u.owner].neutral) return [];
+  return [...(mechOf(s, u.owner).extraMoves?.(s, u.owner, u) ?? []), ...(HERO_MECH.extraMoves?.(s, u.owner, u) ?? [])];
+}
 export function hookStat(s: GameState, u: Unit, stat: 'atk' | 'def' | 'move' | 'range'): number {
   let n = 0;
   each(s, (m, o) => { n += m.stat?.(s, o, u, stat) ?? 0; });

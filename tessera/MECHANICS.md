@@ -135,6 +135,46 @@ An option on the new-game screen (**Wild events**, on by default). Third-party f
 - **Volcanoes:** 1–4 active mountains (about one per 170 tiles, at least 3 tiles from any capital). Each erupts every **6 rounds** (first eruptions staggered over rounds 4–9) and rumbles with heavy smoke the round before. Lava floods the 8 tiles around it (not cities, villages, ruins or camps): farms, mines, lumber huts, temples and markets are destroyed, roads melt, forests burn and marsh/sand/tundra become fields, fruit, game and crops burn (ore stays), and every unit on or around the crater takes **5 damage**. Lava can't be entered; after a round it cools into **volcanic ash**, where half the tiles sprout wild crops. The first harvest or building on ash grows the city **+1 more** and pays **+1★**.
 - **Mercenary camps:** 1–4 camps on unclaimed open ground, each offering one veteran (+5 HP) for hire: Archer (from 5★), Swordsman (7★), Knight (10★), Catapult (10★) or, rarely, a Colossus (16★). Any empire that has seen the camp may place a **sealed bid** from the camp's tile menu during its turn (minimum, +3★ or +6★; you can raise it or withdraw it); the stars are held in escrow. At the end of the round the highest bid (earliest on a tie) hires the unit beside the camp, and every other bid is refunded. Mercenaries have no home city (they don't count against a city's unit limit). The camp restocks 3 rounds later. Computer players bid on camps within 5 tiles of their cities when they can spare the stars.
 
+## 9a. Heroes
+
+Every empire has one named champion (see `game/heroes`).
+
+- **Joining:** the hero arrives at the capital (or, with no capital, the largest city) at the start of your turn once that city is **level 3**, ready to act. There is only ever one hero per empire. It has no home city, so it takes no unit slot.
+- **Stats:** 20 HP, attack 3, defence 2.5, move 2, dash and fortify. It never becomes a veteran; instead it gains **XP**: +1 for each fight (attacking, or surviving an attack) and +2 for each kill (also kills by its ability). Levels need 4 / 10 / 18 / 28 total XP for levels 2–5; each level gives **+3 HP** (healed at once) and **+0.5 attack**, up to level 5.
+- **Aura:** your units standing next to the hero get **+0.5 defence**. The map traces the aura in dashed gold around the hero.
+- **Falling:** a slain hero (or one taken captive or aboard a captured ship) returns to the capital **4 turns** later with its level and XP. Toasts announce its arrival, each level-up and its fall (and tell the killer).
+- **Ability:** one active ability, the **hero action** on the hero's tile (tap the hero). Using it costs no stars and does not use up the hero's move or attack; then it waits out its cooldown. "Until your next turn" effects fade when your next turn starts; the map marks blessed units with a gold ring, cursed foes with a red dashed ring and trapped foes with a rope.
+- **Computer players** use the ability when it would do some good (foes in reach, wounded troops, water to freeze...) and rest a badly hurt hero.
+
+| Empire | Hero | Ability |
+|---|---|---|
+| Egyptian | **Ramesses II**, Pharaoh of the Two Lands | **Charge at Kadesh** (every 4 turns): Every mounted unit gets +1 attack and +1 move until your next turn. |
+| Aztec | **Cuauhtémoc**, The Descending Eagle | **Eagle’s Descent** (every 4 turns): Swoop on the foe: every enemy next to the hero takes 4 damage. |
+| Māori | **Te Rauparaha**, Chief of Ngāti Toa | **Ka Mate** (every 4 turns): The haka: enemies within 2 lose 1 defence and your units within 2 gain +1 attack until your next turn. |
+| Roman | **Julius Caesar**, Dictator of Rome | **Veni, Vidi, Vici** (every 4 turns): The hero may move and attack again this turn, with +1 attack. |
+| Pirate | **Anne Bonny**, Terror of the Caribbean | **Broadside** (every 4 turns): Every enemy within 2 takes 3 damage. Anne walks the waves as if on land. |
+| Viking | **Ragnar Lothbrok**, Sea-King of the Sagas | **Berserkergang** (every 4 turns): The hero and your units beside him get +1.5 attack until your next turn. |
+| Japanese | **Tomoe Gozen**, Onna-musha of Kiso | **Iaijutsu** (every 4 turns): A lightning draw: +1 attack, and the hero’s strikes take no counter-blow until your next turn. |
+| Mongol | **Genghis Khan**, Great Khan of the Steppe | **Ride of the Horde** (every 3 turns): Every mounted unit and the Khan himself get +1 move until your next turn. |
+| Greek | **Leonidas**, King of Sparta | **Hold the Pass** (every 3 turns): The hero and your units beside him get +3 defence until your next turn. |
+| Zulu | **Shaka**, Founder of the Zulu Kingdom | **Horns of the Buffalo** (every 4 turns): Enemies next to Shaka are trapped: they cannot move on their next turn and cannot strike back at Zulu attacks. Shaka gets +1 attack. |
+| Persian | **Cyrus the Great**, King of the Four Corners | **Satrap Tribute** (every 5 turns): Every satrapy pays: +2★ for each of your cities (up to 16★). |
+| Celtic | **Boudica**, Queen of the Iceni | **Rally the Tribes** (every 4 turns): Your units within 2 heal 4 HP and get +1 attack until your next turn. |
+| Inuit | **Kiviuq**, The Eternal Wanderer (legend) | **Walk the Sea-Ice** (every 3 turns): Open water next to the hero freezes into ice bridges, and the hero heals 4 HP. |
+| Inca | **Pachacuti**, The Earth-Shaker | **Rope Bridges** (every 4 turns): All your units get +1 move until your next turn. |
+| Aksumite | **Ezana**, King of Aksum | **Stele Blaze** (every 3 turns): Every enemy within 2 takes 2 damage. |
+| Aboriginal | **Pemulwuy**, Bidjigal Resistance Leader | **Songline Run** (every 3 turns): Your units within 2 heal 2 HP and get +1 move until your next turn. |
+| Chinese | **Qin Shi Huang**, The First Emperor | **Terracotta Guard** (every 6 turns): A free soldier joins the army beside the hero. |
+| Indian | **Ashoka**, The Dharma King | **Rock Edicts** (every 5 turns): All your units heal 3 HP and the capital grows +1 population. |
+| Malian | **Mansa Musa**, Lord of the Gold Road | **Gift of Gold** (every 7 turns): A pilgrimage of gold: +15★ and +1 population in the capital. |
+| Lakota | **Sitting Bull**, Leader of the Hunkpapa | **Stand Together** (every 4 turns): Your units within 2 get +1 attack and +1 defence until your next turn. |
+| Ottoman | **Suleiman**, the Magnificent | **Imperial Largesse** (every 4 turns): The next thing you build or train costs half (rounded up). |
+| Maya | **Pakal**, Lord of Palenque | **Reading the Stars** (every 4 turns): Reveal the land within 5 tiles of the hero and gain 4★. |
+| Korean | **Yi Sun-sin**, Admiral of the Turtle Ships | **Turtle Ship** (every 5 turns): For 3 turns the Admiral sails the water like land with +3 defence (the ship stays until he lands). |
+| Khmer | **Jayavarman VII**, Builder King of Angkor | **Houses of Healing** (every 4 turns): Every one of your units inside your borders heals 5 HP. |
+| Swahili | **al-Hasan ibn Sulaiman**, Sultan of Kilwa | **Monsoon Fortune** (every 5 turns): Trade comes in on the wind: +2★ for each of your ports and ships (4★ to 14★). |
+| Tibetan | **Songtsen Gampo**, Emperor of the Plateau | **Mountain Mist** (every 4 turns): Your units within 2 vanish into the mist (unseen by enemies) and get +1 defence until your next turn. |
+
 ## 10. The 26 empires
 
 ### Egyptian (egypt)

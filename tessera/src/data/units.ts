@@ -66,6 +66,9 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   woomera: U({ kind: 'woomera', name: 'Woomera Hunter', cost: 3, hp: 10, atk: 2.5, def: 1, move: 1, range: 2, skills: ['dash', 'forestwalk'], tech: 'archery', blurb: 'Aboriginal hunter with a spear-thrower. Throws far and moves freely through forest.' }),
   shotelai: U({ kind: 'shotelai', name: 'Shotelai', cost: 5, hp: 15, atk: 3.5, def: 2.5, move: 1, range: 1, skills: ['dash'], tech: 'smithing', blurb: 'Ethiopian sickle-sword fighter that cuts around shields.' }),
 
+  // Each empire's named champion (see game/heroes): never trained; its name and look come from the empire
+  hero: U({ kind: 'hero', name: 'Hero', cost: 10, hp: 20, atk: 3, def: 2.5, move: 2, range: 1, skills: ['dash', 'fortify'], tech: null, trainable: false, blurb: 'A named champion of the empire. Levels up in battle and has a special ability.' }),
+
   // Neutral Great Beasts (see game/wild): never trained, owned by the hidden neutral player
   kraken: U({ kind: 'kraken', name: 'Kraken', cost: 0, hp: 30, atk: 4, def: 2, move: 1, range: 1, naval: true, skills: [], tech: null, trainable: false, blurb: 'A leviathan of the deep ocean. Drags down any ship that sails too close.' }),
 };

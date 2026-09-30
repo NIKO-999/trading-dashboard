@@ -11,6 +11,7 @@ import { TRIBE_IDS } from '../src/data/tribes.ts';
 import { TECH_BY_ID } from '../src/data/techs.ts';
 import { TRAITS } from '../src/data/traits.ts';
 import { describePerk } from '../src/game/perks.ts';
+import { heroSails } from '../src/game/heroes.ts';
 import type { GameState } from '../src/game/types.ts';
 
 function checkInvariants(s: GameState) {
@@ -22,7 +23,7 @@ function checkInvariants(s: GameState) {
     const t = tileAt(s, u.x, u.y)!;
     assert.ok(t, 'unit off the map');
     if (def(u).naval) assert.ok(isWater(t) || s.players[u.owner].tribe === 'vikings' /* longships may beach */ || (s.players[u.owner].tribe === 'pirates' && t.terrain === 'platform') /* pirate ships sail over platforms */, `${u.kind} on land at ${k}`);
-    else if (!def(u).skills.includes('amphibious')) assert.ok(isLand(t) || t.improvement === 'port', `${u.kind} in water at ${k}`);
+    else if (!def(u).skills.includes('amphibious') && !heroSails(s, u) /* Anne Bonny and the turtle ship walk the waves */) assert.ok(isLand(t) || t.improvement === 'port', `${u.kind} in water at ${k}`);
     assert.ok(u.hp > 0, 'dead unit left on the board');
   }
   for (const p of s.players) assert.ok(p.stars >= 0, `${p.tribe} has negative stars`);

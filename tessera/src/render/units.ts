@@ -58,7 +58,8 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
     case 'khampa':
     case 'knight': return drawRider(ctx, kind, tribe, x, y);
     case 'chariot': return drawChariot(ctx, tribe, x, y);
-    default: return drawFootUnit(ctx, kind, tribe, x, y, kind === 'giant' ? 1.4 : 1);
+    case 'hero': return drawHero(ctx, tribe, x, y);
+    default: return void drawFootUnit(ctx, kind, tribe, x, y, kind === 'giant' ? 1.4 : 1);
   }
 }
 
@@ -1405,7 +1406,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
   if (kind === 'giant') drawStar(ctx, x, top - (tribe === 'egypt' ? 14 : tribe === 'persia' || tribe === 'ottoman' || tribe === 'lakota' ? 16 : tribe === 'maya' ? 22 : tribe === 'khmer' ? 27 : tribe === 'china' ? 7 : tribe === 'korea' ? 14 : tribe === 'india' ? 28 : tribe === 'mali' ? 17 : tribe === 'swahili' ? 17 : tribe === 'greeks' || tribe === 'zulu' || tribe === 'ethiopia' || tribe === 'aboriginal' ? 12 : 8) * k, 2.4 * k);
 }
 
-function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number) {
+function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number): Body {
   // Things carried on the back go first.
   if (kind === 'harpooner') {
     // a sealskin float on a cord and spare harpoon shafts slung behind the shoulder
@@ -1470,6 +1471,129 @@ function drawFootUnit(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: nu
   if (shieldFirst) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
   else if (tribe === 'ottoman' && (kind === 'warrior' || kind === 'swordsman')) drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
   else if (tribe === 'korea' && kind === 'warrior') drawShield(ctx, tribe, kind, b.off.x, b.off.y, k);
+  return b;
+}
+
+// ---------------------------------------------------------------- heroes (see game/heroes)
+
+/** What sits on a hero's head: a crown, a laurel wreath, a crest of plumes, a jewelled band or a tricorn hat. */
+type Regalia = 'crown' | 'laurel' | 'plumes' | 'band' | 'tricorn';
+const HERO_LOOK: Record<TribeId, { base: UnitKind; regalia: Regalia; trim: string; plume?: string[] }> = {
+  egypt: { base: 'swordsman', regalia: 'band', trim: '#2f5fb8' },
+  aztec: { base: 'jaguar', regalia: 'plumes', trim: '#1faa6b', plume: ['#1faa6b', '#2fd08a', '#e8c21a'] },
+  polynesia: { base: 'swordsman', regalia: 'plumes', trim: '#f4efe0', plume: ['#1a1a1e', '#f4efe0', '#1a1a1e'] },
+  rome: { base: 'legionary', regalia: 'laurel', trim: '#b3302a' },
+  pirates: { base: 'buccaneer', regalia: 'tricorn', trim: '#b3302a' },
+  vikings: { base: 'berserker', regalia: 'band', trim: '#c9d6e0' },
+  japan: { base: 'samurai', regalia: 'crown', trim: '#c8372d' },
+  mongols: { base: 'swordsman', regalia: 'band', trim: '#e0c070' },
+  greeks: { base: 'hoplite', regalia: 'laurel', trim: '#b3302a' },
+  zulu: { base: 'impi', regalia: 'plumes', trim: '#f4efe0', plume: ['#1a1a1e', '#f4efe0', '#c8372d'] },
+  persia: { base: 'immortal', regalia: 'crown', trim: '#3fa9c9' },
+  celts: { base: 'swordsman', regalia: 'band', trim: '#3f7a3a' },
+  inuit: { base: 'swordsman', regalia: 'band', trim: '#7fd0f5' },
+  inca: { base: 'swordsman', regalia: 'plumes', trim: '#c8372d', plume: ['#c8372d', '#e8c21a', '#1f8a82'] },
+  ethiopia: { base: 'shotelai', regalia: 'crown', trim: '#2f9a4a' },
+  aboriginal: { base: 'swordsman', regalia: 'band', trim: '#b8502e' },
+  china: { base: 'swordsman', regalia: 'crown', trim: '#c8372d' },
+  india: { base: 'swordsman', regalia: 'crown', trim: '#2fb5a8' },
+  mali: { base: 'sofa', regalia: 'crown', trim: '#e8c21a' },
+  lakota: { base: 'swordsman', regalia: 'plumes', trim: '#c8372d', plume: ['#f4efe0', '#f4efe0', '#1a1a1e'] },
+  ottoman: { base: 'swordsman', regalia: 'plumes', trim: '#1f4f8a', plume: ['#f4efe0', '#f4efe0', '#f4efe0'] },
+  maya: { base: 'holcan', regalia: 'plumes', trim: '#2fb58a', plume: ['#2fb58a', '#1f8a6a', '#e8c21a'] },
+  korea: { base: 'swordsman', regalia: 'band', trim: '#c8372d' },
+  khmer: { base: 'guardian', regalia: 'crown', trim: '#c8372d' },
+  swahili: { base: 'askari', regalia: 'crown', trim: '#2a7ab8' },
+  tibet: { base: 'khampa', regalia: 'band', trim: '#e8c21a' },
+};
+
+/**
+ * An empire's hero: its finest warrior drawn a size larger, in a royal cape with a gold hem, a glow at the feet, a crown
+ * (or wreath, plumes, jewelled band or hat) and a gold hero badge pinned at the shoulder.
+ */
+function drawHero(ctx: Ctx, tribe: TribeId, x: number, y: number) {
+  const look = HERO_LOOK[tribe];
+  const T = TRIBES[tribe];
+  const k = 1.14;
+  // a warm glow on the ground and a faint halo of light around the figure
+  const g = ctx.createRadialGradient(x, y, 1, x, y, 16);
+  g.addColorStop(0, 'rgba(255,214,90,0.55)');
+  g.addColorStop(1, 'rgba(255,214,90,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(x, y, 16, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const hg = ctx.createRadialGradient(x, y - 16 * k, 2, x, y - 16 * k, 22 * k);
+  hg.addColorStop(0, 'rgba(255,236,160,0.28)');
+  hg.addColorStop(1, 'rgba(255,236,160,0)');
+  ctx.fillStyle = hg;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 16 * k, 17 * k, 22 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // the royal cape, sweeping out behind and to the left, lined and hemmed in gold
+  const sh = y - 13.5 * k, hem = y + 1.5 * k;
+  poly(ctx, [x - 3 * k, sh, x + 3 * k, sh - 0.5 * k, x + 1 * k, hem + 1 * k, x - 7 * k, hem + 1.5 * k, x - 12.5 * k, hem - 1 * k], shade(T.color, -0.28));
+  poly(ctx, [x - 3 * k, sh, x - 8 * k, sh + 4 * k, x - 12.5 * k, hem - 1 * k, x - 9 * k, hem - 5 * k], shade(T.color, 0.05));
+  poly(ctx, [x - 8 * k, sh + 4 * k, x - 12.5 * k, hem - 1 * k, x - 11 * k, hem - 1.2 * k, x - 7.2 * k, sh + 4.6 * k], look.trim);
+  line(ctx, x - 12.5 * k, hem - 1 * k, x - 7 * k, hem + 1.5 * k, GOLD, 1.2 * k);
+  line(ctx, x - 7 * k, hem + 1.5 * k, x + 1 * k, hem + 1 * k, GOLD, 1.2 * k);
+  const b = drawFootUnit(ctx, look.base, tribe, x, y, k);
+  heroRegalia(ctx, look.regalia, x, b.top, k, look.plume ?? [GOLD]);
+  // the gold hero badge: a medallion with a star, pinned where the cape meets the shoulder
+  const bx = x - 3.2 * k, by = sh + 1.2 * k;
+  ellipse(ctx, bx, by + 0.4 * k, 2.6 * k, 2.6 * k, '#7a4a00');
+  ellipse(ctx, bx, by, 2.5 * k, 2.5 * k, GOLD);
+  drawStar(ctx, bx, by, 2 * k, '#fff2b0');
+}
+
+function heroRegalia(ctx: Ctx, kind: Regalia, x: number, top: number, k: number, plume: string[]) {
+  const y = top + 1.2 * k;
+  switch (kind) {
+    case 'crown': { // a gold crown with five points and jewels
+      const w = 6 * k;
+      poly(ctx, [x - w, y, x + w, y, x + w, y - 2.2 * k, x - w, y - 2.2 * k], shade(GOLD, -0.15));
+      for (let i = 0; i < 5; i++) {
+        const px = x - w + (i * 2 * w) / 4;
+        poly(ctx, [px - 1.3 * k, y - 2 * k, px + 1.3 * k, y - 2 * k, px, y - (i % 2 ? 4.2 : 5.6) * k], GOLD);
+        ellipse(ctx, px, y - (i % 2 ? 4.2 : 5.6) * k, 0.7 * k, 0.7 * k, '#fff2b0');
+      }
+      ellipse(ctx, x, y - 1.1 * k, 1 * k, 0.8 * k, '#c8372d');
+      ellipse(ctx, x - 3.4 * k, y - 1.1 * k, 0.7 * k, 0.6 * k, '#2f9bd0');
+      ellipse(ctx, x + 3.4 * k, y - 1.1 * k, 0.7 * k, 0.6 * k, '#2fb58a');
+      break;
+    }
+    case 'laurel': // a golden wreath of leaves around the brow
+      for (const side of [-1, 1]) for (let i = 0; i < 5; i++) {
+        const lx = x + side * (1 + i * 1.3) * k, ly = y + 0.2 * k + i * 0.35 * k;
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.rotate(side * (0.6 + i * 0.12));
+        ellipse(ctx, 0, 0, 1.5 * k, 0.7 * k, i % 2 ? GOLD : shade(GOLD, -0.2));
+        ctx.restore();
+      }
+      break;
+    case 'plumes': { // a fan of tall feathers rising from a gold band
+      poly(ctx, [x - 5 * k, y + 0.5 * k, x + 5 * k, y + 0.5 * k, x + 5 * k, y - 1.3 * k, x - 5 * k, y - 1.3 * k], GOLD);
+      for (let i = -3; i <= 3; i++) {
+        const c = plume[Math.abs(i) % plume.length];
+        const tx = x + i * 2.6 * k, ty = y - (11 - Math.abs(i) * 1.3) * k;
+        poly(ctx, [x + i * 1.3 * k - 1 * k, y - 1 * k, x + i * 1.3 * k + 1 * k, y - 1 * k, tx + 1.3 * k, ty + 1.5 * k, tx, ty, tx - 1.3 * k, ty + 1.5 * k], c);
+        line(ctx, x + i * 1.3 * k, y - 1 * k, tx, ty + 0.6 * k, shade(c, -0.35), 0.5 * k);
+      }
+      break;
+    }
+    case 'band': // a gold circlet with one great jewel at the brow
+      poly(ctx, [x - 5.6 * k, y + 1 * k, x + 5.6 * k, y + 1 * k, x + 5.6 * k, y - 0.8 * k, x - 5.6 * k, y - 0.8 * k], GOLD);
+      poly(ctx, [x, y - 3.4 * k, x + 1.6 * k, y - 0.4 * k, x, y + 1.4 * k, x - 1.6 * k, y - 0.4 * k], '#c8372d');
+      ellipse(ctx, x - 0.4 * k, y - 1 * k, 0.5 * k, 0.5 * k, '#ffd0c8');
+      break;
+    case 'tricorn': // a captain's black hat with a gold edge and a feather
+      poly(ctx, [x - 7.5 * k, y, x + 7.5 * k, y, x + 4 * k, y - 4.5 * k, x - 4 * k, y - 4.5 * k], DARK);
+      poly(ctx, [x - 7.5 * k, y, x, y + 1.6 * k, x + 7.5 * k, y, x, y - 0.6 * k], shade(DARK, 0.15));
+      line(ctx, x - 7.5 * k, y, x + 7.5 * k, y, GOLD, 0.8 * k);
+      line(ctx, x + 3 * k, y - 3.5 * k, x + 7 * k, y - 8 * k, '#f4efe0', 1.4 * k);
+      break;
+  }
 }
 
 

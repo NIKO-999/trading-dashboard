@@ -4,6 +4,7 @@ import { portraitKind, TRIBE_IDS, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { TRAITS } from '../data/traits';
 import { MECH } from '../game/mech';
+import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
 import { describePerk } from '../game/perks';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
@@ -159,6 +160,11 @@ function traitLists(id: TribeId): Node[] {
   const m = MECH[id];
   return [
     ...(m ? [h('h5', { class: 'pros' }, 'Unique mechanic'), h('ul', { class: 'traits' }, item('pro', m.name, '', m.blurb))] : []),
+    h('h5', { class: 'pros' }, 'Hero'),
+    h('div', { class: 'hero-row', style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+      unitPortrait('hero', id, 56),
+      h('ul', { class: 'traits' }, item('pro', `${HEROES[id].name}, ${HEROES[id].title}`, `Joins when the capital reaches level ${HERO_JOIN_LEVEL}.`,
+        `${HEROES[id].ability}: ${HEROES[id].desc} Every ${HEROES[id].cd} turns.`))),
     h('h5', { class: 'pros' }, 'Strengths'),
     h('ul', { class: 'traits' },
       item('pro', 'Signature', '', t.bonus),

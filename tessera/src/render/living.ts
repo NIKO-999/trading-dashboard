@@ -23,7 +23,7 @@ export interface Wave { period: number; at: (now: number) => number }
 
 /** A unit standing still on the map. (x, y) is where its feet go (CSS px, on a whole device pixel). */
 export interface LivingUnit { id: number; kind: UnitKind; tribe: TribeId; variant: SpriteVariant; x: number; y: number; flip: boolean; bob: Wave | null }
-export interface LivingBadge { id: number; x: number; y: number; color: string; hp: number; low: boolean; veteran: boolean; k: number; bob: Wave | null }
+export interface LivingBadge { id: number; x: number; y: number; color: string; hp: number; low: boolean; veteran: boolean; hero?: boolean; lvl?: number; k: number; bob: Wave | null }
 export interface LivingBubble { kind: BubbleKind; off: boolean; x: number; y: number; r: number; k: number; bob: Wave }
 /** A glint on the water: `alpha` its brightness. */
 export interface LivingGlint { x: number; y: number; alpha: Wave }
@@ -87,7 +87,7 @@ export function livingScene(s: GameState, viewer: number, cam: Camera, ov: Overl
       x: snap(feet.x), y: snap(feet.y), flip: (ov.fx.facing.get(u.id) ?? 1) < 0, bob,
     });
     const b = hpBadge(s, u, ov, cam, m, detail, kh, us);
-    if (b) scene.badges.push({ id: u.id, x: snap(b.x), y: snap(b.y), color: b.color, hp: b.hp, low: b.low, veteran: b.veteran, k: kh, bob });
+    if (b) scene.badges.push({ id: u.id, x: snap(b.x), y: snap(b.y), color: b.color, hp: b.hp, low: b.low, veteran: b.veteran, hero: b.hero, lvl: b.lvl, k: kh, bob });
   }
   for (const b of bubbleSpots(ov, cam, units, rest, k, us)) {
     // the buttons bob on their own, and with a unit breathing on land (the same rhythm) as well

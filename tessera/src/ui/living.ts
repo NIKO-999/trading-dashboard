@@ -198,8 +198,8 @@ export class LivingLayer {
     }
     for (const b of scene.badges) {
       const k = b.k;
-      const st = stamp(`badge|${b.color}|${b.hp}|${b.low}|${b.veteran}|${k.toFixed(3)}`, dpr, 1, [-8 * k - 2, -18 * k - 2, 8 * k + 3, 9 * k + 4],
-        (ctx) => drawHpBadge(ctx, b.color, b.hp, b.low, b.veteran, 0, 0, k));
+      const st = stamp(`badge|${b.color}|${b.hp}|${b.low}|${b.veteran}|${b.hero ? b.lvl : 0}|${k.toFixed(3)}`, dpr, 1, [-8 * k - 2, -24 * k - 2, 8 * k + 3, 9 * k + 4],
+        (ctx) => drawHpBadge(ctx, b.color, b.hp, b.low, b.veteran, 0, 0, k, b.hero, b.lvl));
       const el = box(b.x, b.y);
       el.dataset.badge = String(b.id);
       el.append(pic(st, imgs));

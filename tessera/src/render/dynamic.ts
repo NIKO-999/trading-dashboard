@@ -15,6 +15,8 @@ import { drawWildOverlay, WILD_COLOR } from './wild';
 import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
 import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
 import { floaterPose } from './combatfx';
+import { drawHeroGround } from './heroes';
+import { isHero } from '../game/heroes';
 
 export interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -94,6 +96,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.scale(cam.zoom, cam.zoom);
 
   drawSelection(ctx, s, ov, now, explored);
+  drawHeroGround(ctx, s, viewer, now); // hero auras and ability marks (see render/heroes)
 
   const units = shownUnits(s, viewer, cam, vw, vh);
   const motion = new Map<number, Motion>();
@@ -975,7 +978,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
   if (!ov.living) {
     for (const u of units) {
       const b = hpBadge(s, u, ov, cam, motion.get(u.id)!, detail, kh, us);
-      if (b) drawHpBadge(ctx, b.color, b.hp, b.low, b.veteran, snap(b.x), snap(b.y), kh);
+      if (b) drawHpBadge(ctx, b.color, b.hp, b.low, b.veteran, snap(b.x), snap(b.y), kh, b.hero, b.lvl);
     }
   }
   drawActionBubbles(ctx, ov, cam, units, motion, k, us, snap);
@@ -1118,11 +1121,11 @@ export function hpBadge(s: GameState, u: Unit, ov: Overlay, cam: Camera, m: Moti
   if (detail === 'name' && hp >= maxHp(u) && !selected) return null;
   const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
   const color = isRogueUnit(s, u) ? REBEL_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
-  return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh };
+  return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh, hero: isHero(s, u), lvl: s.players[u.owner].hero?.lvl ?? 1 };
 }
 
 /** A shield-shaped health badge centred on (x, y): `low` shows the number in red, `veteran` adds a star. */
-export function drawHpBadge(ctx: Ctx, color: string, hp: number, low: boolean, veteran: boolean, x: number, y: number, k: number) {
+export function drawHpBadge(ctx: Ctx, color: string, hp: number, low: boolean, veteran: boolean, x: number, y: number, k: number, hero = false, lvl = 1) {
   const w = 16 * k, h = 18 * k;
   const shield = (ox: number, oy: number) => {
     ctx.beginPath();
@@ -1142,8 +1145,8 @@ export function drawHpBadge(ctx: Ctx, color: string, hp: number, low: boolean, v
   g.addColorStop(1, '#e3e6ee');
   ctx.fillStyle = g;
   ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.2 * k;
+  ctx.strokeStyle = hero ? '#e0a820' : color; // a hero's shield is edged in gold
+  ctx.lineWidth = (hero ? 2.8 : 2.2) * k;
   ctx.lineJoin = 'round';
   ctx.stroke();
   ctx.fillStyle = low ? '#d62828' : '#1d1d24';
@@ -1153,4 +1156,13 @@ export function drawHpBadge(ctx: Ctx, color: string, hp: number, low: boolean, v
   ctx.fillText(String(hp), x, y + 0.5 * k);
   ctx.textBaseline = 'alphabetic';
   if (veteran) drawStar(ctx, x, y - h / 2 - 4 * k, 4.5 * k);
+  if (hero) { // the hero's level on a gold star above the shield
+    drawStar(ctx, x, y - h / 2 - 5 * k, 7 * k);
+    ctx.fillStyle = '#5a3200';
+    ctx.font = `800 ${Math.round(7.5 * k)}px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(lvl), x, y - h / 2 - 4.4 * k);
+    ctx.textBaseline = 'alphabetic';
+  }
 }

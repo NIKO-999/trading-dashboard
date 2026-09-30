@@ -10,6 +10,7 @@ import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LIN
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
 import { alliedVictory, diploFought, hostile, mayStep } from './diplomacy';
+import { heroDiscount, heroHp, heroSpent } from './heroes';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
@@ -20,7 +21,7 @@ import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 export const hasTech = (s: GameState, pid: number, tech: string | null) => tech === null || s.players[pid].techs.includes(tech);
 export const def = (u: Unit): UnitDef => UNITS[u.kind];
 /** Full health. A boat carrying a unit has that unit's health, as in Polytopia. */
-export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0);
+export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0) + heroHp(u);
 export const cityById = (s: GameState, id: number | null) => (id === null ? undefined : s.cities.find((c) => c.id === id));
 export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) => u.x === x && u.y === y);
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
@@ -374,7 +375,9 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
 
 /** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
-  let acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t)];
+  const base = baseTileActions(s, pid, t);
+  heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
+  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
   if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -517,6 +520,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (!act || !act.enabled) return false;
   const p = s.players[pid];
   p.stars -= act.cost;
+  if (act.cost > 0 && !/^(mech|wild|hero):/.test(id)) heroSpent(s, pid);
   const city = cityById(s, t.owner);
   const u = unitAt(s, t.x, t.y);
   const grow = (n: number, ...tags: string[]) => {
@@ -527,7 +531,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     return true;
   };
 
-  if (id.startsWith('mech:')) return hookDoAction(s, pid, t, id);
+  if (id.startsWith('mech:') || id.startsWith('hero:')) return hookDoAction(s, pid, t, id); // heroes run through the mechanic hooks
   if (id.startsWith('wild:')) return wildDoAction(s, pid, t, id);
   if (id.startsWith('wonder:')) return wonderDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
@@ -927,7 +931,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
       emit({ type: 'stars', player: a.owner, x: d.x, y: d.y, amount: 2 });
     }
     a.veteranKills++;
-    if (a.veteranKills >= 3 && !a.veteran) {
+    if (a.veteranKills >= 3 && !a.veteran && (a.carrying ?? a.kind) !== 'hero') { // heroes level up instead (see game/heroes)
       a.veteran = true;
       a.hp = maxHp(a);
     } else if (pa.tribe === 'vikings' && a.hp < maxHp(a)) {
