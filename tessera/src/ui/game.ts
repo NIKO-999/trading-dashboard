@@ -28,7 +28,7 @@ import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_M
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { music } from '../audio/music';
 import { sfx, type SoundName } from '../audio/sfx';
-import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
+import { addScore, clearSave, isIOS, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
 import { showSharpnessTest } from './diag';
@@ -97,6 +97,41 @@ export class GameView {
     if (import.meta.env.DEV) Object.assign(window, { __game: this });
     if (!isHumanTurn(s) && !s.over) void this.runRivals();
     else if (!s.over) this.startHumanTurn(true);
+    // iPhones have shown the map soft for reasons a page can't see, so offer the live picker once
+    if (isIOS() && !this.settings.displayPicked) setTimeout(() => this.showDisplayPicker(), 1200);
+  }
+
+  /**
+   * A bar over the live map with four ways of putting the map on the screen. The player taps each,
+   * keeps the sharpest and the choice is saved; no numbers to read.
+   */
+  private showDisplayPicker() {
+    document.querySelector('.display-picker')?.remove();
+    const MODES: { label: string; display: 'standard' | 'exact'; sharp: 1 | 4 }[] = [
+      { label: '1', display: 'standard', sharp: 1 },
+      { label: '2', display: 'exact', sharp: 1 },
+      { label: '3', display: 'exact', sharp: 4 },
+      { label: '4', display: 'standard', sharp: 4 },
+    ];
+    const current = () => MODES.findIndex((m) => m.display === (this.settings.display ?? 'standard') && m.sharp === (this.settings.sharp === 1 ? 1 : 4));
+    const buttons = MODES.map((m, i) => h('button', { class: 'dp-opt', onclick: () => {
+      this.settings.display = m.display;
+      this.settings.sharp = m.sharp;
+      saveSettings(this.settings);
+      setSharpness(m.sharp);
+      this.resize();
+      mark();
+    } }, m.label));
+    const mark = () => buttons.forEach((b, i) => b.classList.toggle('on', i === current()));
+    const bar = h('div', { class: 'display-picker' },
+      h('div', { class: 'dp-text' }, 'Which map looks sharpest? Tap each number, look at the map, keep the best.'),
+      h('div', { class: 'dp-row' }, ...buttons, h('button', { class: 'dp-done', onclick: () => {
+        this.settings.displayPicked = true;
+        saveSettings(this.settings);
+        bar.remove();
+      } }, 'Done')));
+    mark();
+    $ui().append(bar);
   }
 
   private myTurn() {
@@ -157,8 +192,18 @@ export class GameView {
     this.vh = window.innerHeight;
     this.canvas.width = Math.round(this.vw * dpr);
     this.canvas.height = Math.round(this.vh * dpr);
-    this.canvas.style.width = `${this.vw}px`;
-    this.canvas.style.height = `${this.vh}px`;
+    if (this.settings.display === 'exact') {
+      // One CSS pixel per canvas pixel, then shrunk to the screen by the compositor: the canvas is
+      // laid out at its true bitmap size, so nothing in the page pipeline can resample it softer.
+      this.canvas.style.width = `${this.canvas.width}px`;
+      this.canvas.style.height = `${this.canvas.height}px`;
+      this.canvas.style.transformOrigin = '0 0';
+      this.canvas.style.transform = `scale(${this.vw / this.canvas.width}, ${this.vh / this.canvas.height})`;
+    } else {
+      this.canvas.style.width = `${this.vw}px`;
+      this.canvas.style.height = `${this.vh}px`;
+      this.canvas.style.transform = '';
+    }
     this.ctx.setTransform(this.canvas.width / this.vw, 0, 0, this.canvas.height / this.vh, 0, 0);
     // zooming out stops once the whole map fits, so small maps can't shrink to an island in the dark
     const fit = Math.min(this.vw / (this.s.size * 64), this.vh / (this.s.size * 32 + 40));
@@ -173,7 +218,7 @@ export class GameView {
   /** The tiny corner tag: version, drawing density, drawing mode and how long a frame takes to draw. */
   private showTag() {
     const ms = this.frameAvg > 0 ? ` · ${isDirectDraw() ? 'direct' : 'cached'} ${this.frameAvg.toFixed(0)}ms` : '';
-    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${ms}`;
+    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${this.settings.display === 'exact' ? ' exact' : ''}${ms}`;
   }
 
   private loop = (now: number = performance.now()) => {
@@ -1261,6 +1306,7 @@ export class GameView {
           this.version++;
           directLabel.textContent = directText();
         } },
+        { label: 'Sharpness picker', onClick: () => this.showDisplayPicker() },
         { label: 'Sharpness test', onClick: () => showSharpnessTest() },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },

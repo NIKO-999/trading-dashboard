@@ -60,6 +60,12 @@ export interface Settings {
   cached: boolean; // draw the map through cached layers instead of straight onto the screen (see setDirectDraw)
   flat: boolean; // crisp art: flat colours and hard-edged shadows (see setCrispArt)
   sharp: 1 | 4 | 5; // minimum pixels per CSS pixel for drawing (1 = follow the screen; see renderDpr)
+  /** How the map canvas is handed to the screen: 'standard' (CSS-sized) or 'exact' (one CSS pixel per canvas pixel, scaled down by the compositor). */
+  display?: 'standard' | 'exact';
+  /** The on-screen sharpness picker has been shown once. */
+  displayPicked?: boolean;
 }
-export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, music: true, cached: false, flat: true, sharp: 1, ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
+/** iPhone / iPad Safari and web views: where the map has looked soft. */
+export const isIOS = () => typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1));
+export const loadSettings = (): Settings => ({ hints: true, fastAi: false, sound: true, music: true, cached: false, flat: true, sharp: 1, display: isIOS() ? 'exact' : 'standard', ...read<Partial<Settings>>(SETTINGS_KEY, {}) });
 export const saveSettings = (s: Settings) => write(SETTINGS_KEY, s);
