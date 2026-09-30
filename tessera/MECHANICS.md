@@ -92,7 +92,15 @@
 
 Every empire has (a) **passive traits** — one signature bonus, extra strengths and weaknesses grounded in its history, (b) a **3-tech unique skill line**, (c) a **unique unit**, and (d) a **game-defining unique mechanic** (with its own actions, readout and AI behaviour). The mechanics are hook-based: they can change movement, combat, income, visibility, tile actions and the AI. Anything listed as "action" appears in the tile menu (tap your own tile, city, unit or a target tile); passive parts show in a one-line readout under the score bar.
 
-## 9. The 26 empires
+## 9. Wild events
+
+An option on the new-game screen (**Wild events**, on by default). Third-party forces that belong to no empire; they act once a round, after the last empire's turn.
+
+- **Kraken** (30 HP, attack 4, defence 2): lives on deep ocean on maps with enough open sea (one per ~55 ocean tiles, at most 3, never within 4 tiles of a capital). Each round it heals 2 HP, swims toward the nearest ship within 4 tiles (or wanders), and attacks one ship or boat next to it — any empire's. Whoever kills it earns **15★**; another rises in open water 12 rounds later. It can't be captured or boarded.
+- **Volcanoes:** 1–4 active mountains (about one per 170 tiles, at least 3 tiles from any capital). Each erupts every **6 rounds** (first eruptions staggered over rounds 4–9) and rumbles with heavy smoke the round before. Lava floods the 8 tiles around it (not cities, villages, ruins or camps): farms, mines, lumber huts, temples and markets are destroyed, roads melt, forests burn and marsh/sand/tundra become fields, fruit, game and crops burn (ore stays), and every unit on or around the crater takes **5 damage**. Lava can't be entered; after a round it cools into **volcanic ash**, where half the tiles sprout wild crops. The first harvest or building on ash grows the city **+1 more** and pays **+1★**.
+- **Mercenary camps:** 1–4 camps on unclaimed open ground, each offering one veteran (+5 HP) for hire: Archer (from 5★), Swordsman (7★), Knight (10★), Catapult (10★) or, rarely, a Colossus (16★). Any empire that has seen the camp may place a **sealed bid** from the camp's tile menu during its turn (minimum, +3★ or +6★; you can raise it or withdraw it); the stars are held in escrow. At the end of the round the highest bid (earliest on a tie) hires the unit beside the camp, and every other bid is refunded. Mercenaries have no home city (they don't count against a city's unit limit). The camp restocks 3 rounds later. Computer players bid on camps within 5 tiles of their cities when they can spare the stars.
+
+## 10. The 26 empires
 
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.

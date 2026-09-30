@@ -27,6 +27,7 @@ export interface NewGameChoice {
   mapSize: MapSize;
   terrain: MapTerrain;
   hotseat: boolean; // pass & play on one device
+  wild: boolean; // wild events: Great Beasts, volcanoes and mercenary camps (see game/wild)
   seats: Record<TribeId, Seat>; // pass & play: who plays each empire
 }
 
@@ -168,7 +169,7 @@ function traitLists(id: TribeId): Node[] {
 
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
-    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat,
+    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true,
     seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
@@ -239,6 +240,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         h('p', { class: 'muted small terrain-note' }, TERRAIN_STYLES.find((t) => t.id === choice.terrain)!.blurb)),
       seg('Mode', [['perfection', '30 Turns'], ['domination', 'Conquest']], () => choice.mode, (v) => (choice.mode = v)),
       seg('Rivals', [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']], () => choice.difficulty, (v) => (choice.difficulty = v)),
+      seg('Wild events', [[1, 'On'], [0, 'Off']], () => (choice.wild ? 1 : 0), (v) => { choice.wild = v === 1; render(); }),
+      h('p', { class: 'muted small terrain-note' }, choice.wild
+        ? 'A Kraken prowls the deep ocean, volcanoes bury the land in fertile ash, and mercenary camps sell veterans to the highest bidder.'
+        : 'No beasts, volcanoes or mercenaries: only the empires.'),
       start,
     ];
     scroll.append(...parts.filter((n): n is Node => n !== null));

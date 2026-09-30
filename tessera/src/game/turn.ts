@@ -4,6 +4,7 @@ import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
 import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
+import { wildRound } from './wild';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -52,7 +53,10 @@ export function endTurn(s: GameState) {
   let next = s.current;
   do {
     next = (next + 1) % s.players.length;
-    if (next === 0) s.turn++;
+    if (next === 0) {
+      wildRound(s); // neutral beasts, volcanoes and camps act once a round, after the last empire (see game/wild)
+      s.turn++;
+    }
   } while (!s.players[next].alive);
   s.current = next;
   checkGameOver(s);

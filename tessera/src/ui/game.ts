@@ -12,12 +12,14 @@ import {
   moveOptions, moveUnit, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,
 } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
+import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
 import { renderDpr, setSharpness } from '../render/common';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
+import { WILD_COLOR } from '../render/wild';
 import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_MS, WorldRenderer, type Fx, type Overlay } from '../render/draw';
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { music } from '../audio/music';
@@ -643,7 +645,8 @@ export class GameView {
       const owner = this.s.players[u.owner];
       const status = u.owner === this.me
         ? u.moved && u.attacked ? 'Done for this turn.' : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
-        : `${TRIBES[owner.tribe].people} unit.`;
+        : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
+          : `${TRIBES[owner.tribe].people} unit.`;
       const preview = this.previewLine(u);
       const stats = h('span', { class: 'stat-line' },
         h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u)))),
@@ -654,10 +657,12 @@ export class GameView {
       );
       this.panel.append(close, h('div', { class: 'sheet-head' },
         h('div', { class: 'sheet-title' },
-          h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
+          isNeutral(this.s, u.owner)
+            ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
+            : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, stats, h('br'), status, preview ? ` ${preview}` : null)));
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:')), p.tribe); // empire actions on a unit's tile (launch, board...)
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:')), p.tribe); // empire actions on a unit's tile (launch, board...) and camp bids
       return;
     }
 
@@ -1146,7 +1151,7 @@ export class GameView {
     if (this.gameOverShown) return;
     this.gameOverShown = true;
     const s = this.s;
-    const ranking = s.players.map((p) => ({ p, sc: score(s, p.id) })).sort((a, b) => b.sc - a.sc);
+    const ranking = empires(s).map((p) => ({ p, sc: score(s, p.id) })).sort((a, b) => b.sc - a.sc);
     const me = this.hotseat ? ranking.find((r) => r.p.human)!.p : s.players[this.me];
     const won = s.winner === me.id;
     addScore({ score: score(s, me.id), tribe: me.tribe, won, mode: s.mode, turns: s.turn, date: new Date().toLocaleDateString() });
@@ -1228,7 +1233,7 @@ export class GameView {
 
   private openStats() {
     const s = this.s;
-    const rows = s.players.map((p) => {
+    const rows = empires(s).map((p) => {
       const known = p.id === this.me || (s.players[this.me].met ?? []).includes(p.id) || s.cities.some((c) => c.owner === p.id && isExplored(s, this.me, c.x, c.y));
       const T = TRIBES[p.tribe];
       return h('div', { class: 'stat-row', style: { '--tc': T.color } as Record<string, string> },
@@ -1258,6 +1263,16 @@ export class GameView {
 }
 
 function describeTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
+  const wild = wildDescribe(s, t, viewer); // camps, volcanoes and lava (see game/wild)
+  if (wild) return wild;
+  if (isAsh(t)) {
+    const d = describePlainTile(s, t, viewer);
+    return { title: d.title, desc: `${d.desc} ${ASH_NOTE}` };
+  }
+  return describePlainTile(s, t, viewer);
+}
+
+function describePlainTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
   const where = owner === null ? 'Unclaimed land.' : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
   const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform' };

@@ -15,6 +15,7 @@ import { CLIMATE_INFO, isClimate } from '../data/terrain';
 import { HH, HW, isWaterTile, REDUCED_MOTION, uv, type Overlay } from './common';
 import { drawDynamic, drawFish, drawWaterLife, FISH } from './dynamic';
 import { isDirectDraw } from './sprites';
+import { drawCamp, drawVolcano, drawWildGround } from './wild';
 
 const FISH_ICON = FISH;
 const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
@@ -246,6 +247,7 @@ function drawGround(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: nu
     sidesGrad(ctx, x, y, LAND_DEPTH, side, shade(side, -0.25));
     diamond(ctx, x, y, cl ? mix(cl.top, P.field, 0.12) : P.field);
     facets(ctx, x, y, t.seed);
+    drawWildGround(ctx, t, x, y); // lava and volcanic ash (see game/wild)
     if (t.improvement === 'farm') drawFarm(ctx, x, y + HH);
     if (t.road || t.cityId !== null) drawRoads(ctx, s, t);
   }
@@ -506,7 +508,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   const P = TRIBES[t.biome].palette;
   if (glow) drawGlow(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0));
   if (t.terrain === 'forest' && t.improvement !== 'lumber') drawForest(ctx, t, c.x, c.y, P);
-  if (t.terrain === 'mountain') drawMountains(ctx, t, c.x, c.y, P);
+  if (t.terrain === 'mountain' && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
   if (isClimate(t.terrain)) drawClimate(ctx, t, c.x, c.y);
   // once a farm or mine is built it replaces the wild crop or ore it was built on
   if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') {
@@ -521,6 +523,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
     const city = cityById(s, t.cityId);
     if (city && cityVisibleTo(s, viewer, city) && !city.data?.waka) drawCity(ctx, s, city, c.x, c.y); // Sky Mist can veil it; a Great Waka is drawn by render/mech/polynesia
   }
+  drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }
 

@@ -3,6 +3,7 @@ import { CLIMATES, type ClimateTerrain } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { hookSetup } from './mech';
 import { perkSum } from './perks';
+import { setupWild } from './wild';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
@@ -53,6 +54,8 @@ export interface NewGameOptions {
   maxTurns?: number;
   mapSize?: MapSize;
   terrain?: MapTerrain;
+  /** Wild events: Great Beasts, volcanoes and mercenary camps (see game/wild). Off unless asked for; the new-game screen defaults it on. */
+  wild?: boolean;
 }
 
 // Map edge length by map size and number of empires.
@@ -116,6 +119,7 @@ export function createGame(opts: NewGameOptions): GameState {
   placeVillagesAndRuins(state, rng, capitals);
   ensureGrowthResources(state, rng);
   hookSetup(state);
+  if (opts.wild) setupWild(state, makeRng(seed ^ 0x5eed)); // its own stream, so the rest of the map is the same either way
   for (const p of players) revealAround(state, p.id);
   return state;
 }
@@ -445,7 +449,7 @@ export function revealAround(state: GameState, playerId: number) {
 
 /** Records that two empires have met (seen each other's units or cities, or fought). */
 export function meet(state: GameState, a: number, b: number) {
-  if (a === b) return;
+  if (a === b || state.players[a]?.neutral || state.players[b]?.neutral) return; // no one "meets" the wild (see game/wild)
   const pa = state.players[a], pb = state.players[b];
   if (!(pa.met ??= []).includes(b)) pa.met.push(b);
   if (!(pb.met ??= []).includes(a)) pb.met.push(a);

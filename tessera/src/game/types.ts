@@ -16,7 +16,9 @@ export type UnitKind =
   | 'berserker' | 'samurai' | 'horsearcher' | 'hoplite' | 'impi'
   | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai' | 'woomera'
   | 'crossbowman' | 'elephant' | 'sofa' | 'buffalorider' | 'janissary'
-  | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa';
+  | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
+  // neutral Great Beasts (see game/wild)
+  | 'kraken';
 
 export interface Tile {
   x: number;
@@ -89,6 +91,11 @@ export interface Player {
   mech?: Record<string, unknown>;
   /** Traditions adopted from conquered peoples, and choices still waiting to be made (see game/culture; missing in older saves). */
   culture?: CultureState;
+  /**
+   * The hidden neutral owner of Great Beasts and other third-party forces (see game/wild). It sits after every empire,
+   * is never alive, takes no turns, meets no one, scores nothing and is left out of every list of empires.
+   */
+  neutral?: boolean;
 }
 
 /** One sub-trait taken from a conquered people (`id` is a key of the culture registry; its perks are copied in, so
@@ -126,4 +133,21 @@ export interface GameState {
   hintStep: number;
   /** World-level state kept by empire mechanics (see game/mech). */
   mech?: Record<string, unknown>;
+  /** Wild events: beasts, volcanoes and mercenary camps (see game/wild). Missing when they are switched off and in older saves. */
+  wild?: WildState;
+}
+
+/** A neutral mercenary camp and its sealed-bid auction (see game/wild). */
+export interface WildCamp {
+  x: number;
+  y: number;
+  offer: UnitKind | null; // the veteran for hire, or null while the camp restocks
+  restock: number; // the round a new offer arrives, while `offer` is null
+  bids: { pid: number; stars: number }[]; // sealed bids, in the order they were first placed; the stars are held in escrow
+}
+
+export interface WildState {
+  camps: WildCamp[];
+  /** Rounds at which a slain Great Beast rises again somewhere else. */
+  respawn: { kind: UnitKind; turn: number }[];
 }

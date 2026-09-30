@@ -8,6 +8,7 @@ import { cityOrigin, offerCulture } from './culture';
 import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
+import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -272,9 +273,12 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
 
 /** The tile menu for `pid`: the ordinary actions plus the empire's own, minus anything an empire mechanic blocks. */
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
-  const acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t)];
+  let acts = [...baseTileActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t)];
+  // a mercenary camp stands on its tile: nothing can be built there but a road (see game/wild)
+  if (campAt(s, t.x, t.y)) acts = acts.filter((a) => !['temple', 'market', 'farm', 'mine', 'lumber', 'harvest'].includes(a.id));
+  const beast = unitAt(s, t.x, t.y);
   for (const a of acts) {
-    const why = hookBlock(s, pid, a.id, t);
+    const why = hookBlock(s, pid, a.id, t) ?? (beast && isBeast(s, beast) && a.id.startsWith('mech:') ? 'A Great Beast cannot be tamed' : undefined);
     if (why && a.enabled) { a.enabled = false; a.reason = why; }
   }
   return acts;
@@ -413,12 +417,14 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   const u = unitAt(s, t.x, t.y);
   const grow = (n: number, ...tags: string[]) => {
     if (tags.length) n = Math.max(0, n + perkSum(s, pid, 'grow', (pk) => tags.includes(pk.on))); // traits and skill-line perks
+    n += ashBonus(s, pid, t); // volcanic ash (see game/wild)
     emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: n });
     addPop(s, city!, n);
     return true;
   };
 
   if (id.startsWith('mech:')) return hookDoAction(s, pid, t, id);
+  if (id.startsWith('wild:')) return wildDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     if (city?.data?.waka) return trainAfloat(s, city, kind);
@@ -594,6 +600,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       const i = to.y * size + to.x;
       if (!isExplored(s, pid, to.x, to.y)) continue;
       if (unitAt(s, to.x, to.y)) continue;
+      if (isLava(to)) continue; // molten rock (see game/wild)
       let opt: MoveOption = { x: to.x, y: to.y };
       let cost = 1;
       let stop = false;
@@ -781,7 +788,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
   d.hp -= dmg;
   emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg });
   const pa = s.players[a.owner];
-  const spared = kills && hookSpare(s, a, d); // a mechanic may take the defender alive instead
+  const spared = kills && !isBeast(s, d) && hookSpare(s, a, d); // a mechanic may take the defender alive instead (never a Great Beast)
   if (spared) d.hp = 1;
   else if (kills) {
     removeUnit(s, d, a);
@@ -836,6 +843,7 @@ export function removeUnit(s: GameState, u: Unit, killer: Unit | null = null) {
   const c = cityById(s, u.homeCity);
   if (c) c.units = Math.max(0, c.units - 1);
   hookUnitDied(s, u, killer);
+  beastSlain(s, u, killer); // a Great Beast pays its bounty (see game/wild)
 }
 
 export const livingPlayers = (s: GameState): Player[] => s.players.filter((p) => p.alive);

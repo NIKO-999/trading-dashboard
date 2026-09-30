@@ -34,8 +34,9 @@ import { mech as tibet } from './tibet';
 export const MECH: MechRegistry = { egypt, aztec, polynesia, rome, pirates, vikings, japan, mongols, greeks, zulu, persia, celts, inuit, inca, ethiopia, aboriginal, china, india, mali, lakota, ottoman, maya, korea, khmer, swahili, tibet };
 export type { Mechanic, MoveCtx, CombatCtx, AttackInfo } from './types';
 
-/** The mechanic of an empire. */
-export const mechOf = (s: GameState, pid: number): Mechanic => MECH[s.players[pid].tribe];
+const NONE: Mechanic = { name: '', blurb: '' };
+/** The mechanic of an empire (the neutral owner of the wild has none; see game/wild). */
+export const mechOf = (s: GameState, pid: number): Mechanic => (s.players[pid].neutral ? NONE : MECH[s.players[pid].tribe]);
 
 /** A player's own mechanic, then the light hooks of traditions it adopted from conquered peoples (see game/culture). */
 const own = (s: GameState, pid: number): Mechanic[] => {

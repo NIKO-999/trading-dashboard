@@ -11,6 +11,7 @@ import { Camera, WATER_DROP, tileCenter } from './camera';
 import { FLASH_MS, FLOAT_MS, FONT, GHOST_MS, HH, HW, isWaterTile, LUNGE_MS, REDUCED_MOTION, UNIT_SCALE, uv, type Fx, type Overlay } from './common';
 import { drawStar, ellipse, mix, poly, rand, roundRect, shade, softShadow, type Ctx, type Pt } from './prims';
 import { drawFigure, figureHit } from './sprites';
+import { drawWildOverlay, WILD_COLOR } from './wild';
 
 interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
@@ -152,6 +153,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
     }
   }
   for (const m of Object.values(MECH_RENDER)) m?.overlay?.(ctx, s, viewer, cam, ov, now);
+  drawWildOverlay(ctx, s, viewer, cam, ov, now); // smoke, lava glow, the Kraken's arms (see game/wild)
   ctx.restore();
 
   drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);
@@ -951,7 +953,7 @@ function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, sna
 }
 
 function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, k: number, shownHp: number) {
-  const tribe = TRIBES[s.players[u.owner].tribe];
+  const color = s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
   const w = 16 * k, h = 18 * k;
   const shield = (ox: number, oy: number) => {
     ctx.beginPath();
@@ -971,7 +973,7 @@ function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, k: n
   g.addColorStop(1, '#e3e6ee');
   ctx.fillStyle = g;
   ctx.fill();
-  ctx.strokeStyle = tribe.color;
+  ctx.strokeStyle = color;
   ctx.lineWidth = 2.2 * k;
   ctx.lineJoin = 'round';
   ctx.stroke();

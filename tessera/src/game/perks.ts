@@ -29,6 +29,7 @@ const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha'];
 export function perksOf(s: GameState, pid: number): Perk[] {
   const tribe = s.players[pid].tribe;
   const out: Perk[] = [];
+  if (s.players[pid].neutral) return out; // the neutral owner only borrows an empire's look (see game/wild)
   for (const t of [...TRAITS[tribe].pros, ...TRAITS[tribe].cons]) out.push(...t.perks); // the empire's historical strengths and weaknesses
   for (const id of s.players[pid].techs) {
     const t = UNIQUE_BY_ID[id];

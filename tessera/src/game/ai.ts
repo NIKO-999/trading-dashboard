@@ -8,6 +8,7 @@ import {
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, unitCap, unitAt,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
+import { isNeutral, nearBeast, wildAi } from './wild';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -30,6 +31,7 @@ export function aiStep(s: GameState): boolean {
   const p = s.players[pid];
   if (aiAdopt(s, pid)) return true; // a conquered people's tradition waiting to be chosen
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
+  if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
@@ -110,7 +112,7 @@ function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
   const myUnits = s.units.filter((u) => u.owner === pid);
-  const enemiesNear = s.units.some((u) => u.owner !== pid && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
+  const enemiesNear = s.units.some((u) => u.owner !== pid && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
   const abroad = targetsOnlyOverseas(s, pid);
 
   // Harvest: cheapest population gain first.
@@ -286,6 +288,7 @@ function unitStep(s: GameState, u: Unit): boolean {
   const here = score(u.x, u.y);
   const ranked = opts
     .filter((o) => !(o.embark && !allowEmbark) && !(o.disembark && !allowLanding(o.x, o.y)))
+    .filter((o) => !((naval || o.embark) && !o.disembark && nearBeast(s, o.x, o.y))) // boats keep clear of the Kraken
     .map((o) => ({ o, v: score(o.x, o.y) + (o.embark ? 0.5 : 0) }))
     .sort((a, b) => a.v - b.v);
   if (!ranked.length || ranked[0].v >= here) {
@@ -372,7 +375,7 @@ function findGoals(s: GameState, u: Unit): Goal[] {
     }
   }
   for (const e of s.units) {
-    if (e.owner === pid || !isExplored(s, pid, e.x, e.y)) continue;
+    if (e.owner === pid || isNeutral(s, e.owner) || !isExplored(s, pid, e.x, e.y)) continue; // beasts are fought when they come near, not hunted
     const nearMine = myCities.some((c) => dist(c.x, c.y, e.x, e.y) <= 3);
     goals.push({ x: e.x, y: e.y, w: nearMine ? 4 : 1 });
   }
