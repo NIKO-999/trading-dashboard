@@ -69,6 +69,10 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   // Each empire's named champion (see game/heroes): never trained; its name and look come from the empire
   hero: U({ kind: 'hero', name: 'Hero', cost: 10, hp: 20, atk: 3, def: 2.5, move: 2, range: 1, skills: ['dash', 'fortify'], tech: null, trainable: false, blurb: 'A named champion of the empire. Levels up in battle and has a special ability.' }),
 
+  // Every empire's merchants (see game/trade): they never fight or capture; their look and name come from the empire
+  trader: U({ kind: 'trader', name: 'Trader', cost: 5, hp: 8, atk: 0, def: 1, move: 2, range: 1, skills: [], tech: 'roads', blurb: 'A merchant caravan. Walk it to another city and open a trade route that pays Stars every turn.' }),
+  tradeship: U({ kind: 'tradeship', name: 'Trade Ship', cost: 6, hp: 10, atk: 0, def: 1, move: 3, range: 1, naval: true, skills: [], tech: 'sailing', blurb: 'A merchant ship, launched beside a coastal city. Sail it next to another port city to open a sea route.' }),
+
   // Neutral Great Beasts (see game/wild): never trained, owned by the hidden neutral player
   kraken: U({ kind: 'kraken', name: 'Kraken', cost: 0, hp: 30, atk: 4, def: 2, move: 1, range: 1, naval: true, skills: [], tech: null, trainable: false, blurb: 'A leviathan of the deep ocean. Drags down any ship that sails too close.' }),
 };

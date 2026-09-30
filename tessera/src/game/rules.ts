@@ -14,6 +14,7 @@ import { heroDiscount, heroHp, heroSpent } from './heroes';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
+import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -43,7 +44,7 @@ export const inflationOf = (s: GameState, pid: number): { until: number; pauseUn
   return i && s.turn <= i.until ? i : null;
 };
 export const trainCost = (s: GameState, pid: number, k: UnitKind) => {
-  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k);
+  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
   if (s.players[pid].techs.length) { // the Trade/Markets fork: Caravan Monopoly surcharges, Mercenary Contracts discount
     cost += perkSum(s, pid, 'unitcost');
     const pct = perkSum(s, pid, 'unitpct');
@@ -81,6 +82,7 @@ export function cityIncome(s: GameState, c: City) {
   if (s.players[c.owner].tribe === 'pirates') inc += s.tiles.filter((t) => t.owner === c.id && t.improvement === 'port').length;
   const net = roadNetwork(s, c);
   inc += networkIncome(net);
+  inc += cityRouteIncome(s, c); // trade routes pay both ends (see game/trade)
   const pax = sum('pax');
   if (pax && net.linked.length && paxHolds(s, c.owner)) inc += pax; // Pax Romana
   {
@@ -377,7 +379,7 @@ export function trainableKinds(s: GameState, pid: number): UnitKind[] {
 export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
   heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
-  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t)];
+  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
   if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -414,7 +416,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     // a city afloat (the Maori Great Waka) can only be taken from the water, by a ship or boat standing on it
     const afloat = t.cityId !== null && !!cityById(s, t.cityId)?.data?.waka;
     // a treaty partner's city can't be taken (see game/diplomacy)
-    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
+    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && !isTrader(u) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
@@ -431,6 +433,12 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
       const d = UNITS[k];
       add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
         u && !afloat ? 'City tile is occupied' : full ? `City supports ${unitCap(city)} units` : afloat && !room ? 'No free tile beside the Great Waka' : undefined);
+    }
+    for (const k of TRADER_KINDS) { // merchants (see game/trade); a Trade Ship is launched onto the water beside the city
+      const d = UNITS[k];
+      const ship = k === 'tradeship';
+      add(`train:${k}`, traderName(p.tribe, k), `${d.name}. ${d.blurb} 🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
+        full ? `City supports ${unitCap(city)} units` : ship ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : u && !afloat ? 'City tile is occupied' : afloat && !room ? 'No free tile beside the Great Waka' : undefined);
     }
     return acts;
   }
@@ -534,8 +542,10 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('mech:') || id.startsWith('hero:')) return hookDoAction(s, pid, t, id); // heroes run through the mechanic hooks
   if (id.startsWith('wild:')) return wildDoAction(s, pid, t, id);
   if (id.startsWith('wonder:')) return wonderDoAction(s, pid, t, id);
+  if (id.startsWith('trade:')) return tradeDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
+    if (kind === 'tradeship') { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
     if (city?.data?.waka) return trainAfloat(s, city, kind);
     spawnUnit(s, kind, pid, t.x, t.y, t.cityId);
     return true;
@@ -634,6 +644,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
   }
   payRoadBonuses(s, pid);
   revealAround(s, pid);
+  tradeSweep(s); // routes to a city that changed hands are cut (see game/trade)
   return true;
 }
 
@@ -723,16 +734,17 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       if (!isExplored(s, pid, to.x, to.y)) continue;
       if (unitAt(s, to.x, to.y)) continue;
       if (isLava(to)) continue; // molten rock (see game/wild)
-      if (!mayStep(s, pid, from, to)) continue; // a treaty partner's borders (see game/diplomacy)
+      if (!mayStep(s, pid, from, to) && !(isTrader(u) && to.cityId === null)) continue; // a treaty partner's borders (see game/diplomacy); merchants may cross them
       let opt: MoveOption = { x: to.x, y: to.y };
       let cost = 1;
       let stop = false;
       if (naval) {
         if (isLand(to)) {
+          if (u.kind === 'tradeship') continue; // a Trade Ship carries no one ashore (see game/trade)
           if (to.terrain === 'mountain' && !canClimb(s, pid)) continue;
           opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;
-        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship' && !u.data?.voyager) continue; // voyagers: born on a Great Waka
+        } else if (to.terrain === 'ocean' && u.kind !== 'ship' && u.kind !== 'warship' && u.kind !== 'tradeship' && !u.data?.voyager) continue; // voyagers: born on a Great Waka
       } else {
         if (isWater(to)) {
           // amphibious units wade through shallows, but still board a boat at a port

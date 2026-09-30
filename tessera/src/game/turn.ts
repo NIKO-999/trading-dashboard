@@ -9,6 +9,7 @@ import { cultureUnrest } from './rebels';
 import { diploTurnStart } from './diplomacy';
 import { wildRound } from './wild';
 import { wonderTurnStart } from './wonders';
+import { tradeSweep } from './trade';
 import type { GameState } from './types';
 
 const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
@@ -17,6 +18,7 @@ const AI_BONUS = { easy: 0, normal: 1, hard: 2 } as const;
 export function startTurn(s: GameState) {
   const p = s.players[s.current];
   if (s.turn > 0) cultureUnrest(s, p.id); // restless conquered cities may revolt before they pay (see game/rebels)
+  tradeSweep(s); // trade routes to cities that changed hands, or between empires now at war, are cut (see game/trade)
   if (s.turn > 0) {
     const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;

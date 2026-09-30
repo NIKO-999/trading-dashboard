@@ -16,6 +16,7 @@ import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
 import { wonderAi } from './wonders';
 import { allyFoes, diploAi, hostile } from './diplomacy';
+import { isTraderKind, raidSpots, tradeAi } from './trade';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -41,6 +42,7 @@ export function aiStep(s: GameState): boolean {
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
   if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
   if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
+  if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
@@ -59,7 +61,7 @@ export function aiStep(s: GameState): boolean {
   }
 
   // 3. Units.
-  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id))) {
+  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id) && !isTraderKind(x.kind))) { // merchants go their own way (see game/trade)
     if (unitStep(s, u)) return true;
     done.add(u.id);
   }
@@ -444,6 +446,7 @@ function findGoals(s: GameState, u: Unit): Goal[] {
       if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 }); // mist may hide it
     }
   }
+  for (const r of raidSpots(s, pid, u)) goals.push({ x: r.x, y: r.y, w: 2 }); // an enemy trade trail to pillage (see game/trade)
   const allyWar = allyFoes(s, pid); // honouring an alliance: go after whoever attacked an ally
   for (const e of s.units) {
     if (!hostile(s, pid, e.owner) || isNeutral(s, e.owner) || !isExplored(s, pid, e.x, e.y)) continue; // beasts are fought when they come near, not hunted

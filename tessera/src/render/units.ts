@@ -4,6 +4,7 @@ import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import type { TribeId, UnitKind } from '../game/types';
 import { drawKraken } from './wild';
+import { drawTradeShip, drawTrader } from './trade';
 import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, roof, shade, softShadow, type Ctx } from './prims';
 
 interface Look { skin: string; hair: string }
@@ -47,6 +48,8 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   const d = UNITS[kind];
   if (opts.shadow !== false) softShadow(ctx, x, y + 1, d.naval ? 20 : 11, d.naval ? 6.5 : 4.4, 0.32);
   if (kind === 'kraken') return drawKraken(ctx, x, y); // a Great Beast (see render/wild)
+  if (kind === 'tradeship') return drawTradeShip(ctx, tribe, x, y); // each empire's merchants (see render/trade)
+  if (kind === 'trader') return drawTrader(ctx, tribe, x, y);
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
@@ -124,7 +127,7 @@ const isHeavy = (kind: UnitKind) =>
  * Draws a figure. `seated` hides the legs (riders). The returned points are the weapon hand,
  * the off hand (shields) and the y of the top of the head.
  */
-function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number, seated = false): Body {
+export function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number, k: number, seated = false): Body {
   const L = LOOK[tribe];
   const T = TRIBES[tribe];
   const armoured = kind === 'swordsman' || kind === 'knight' || kind === 'giant' || kind === 'legionary' || kind === 'immortal' || kind === 'shotelai';
@@ -12599,7 +12602,7 @@ function tbBoat(ctx: Ctx, kind: UnitKind, x: number, y: number) {
 // ----- the yak
 
 /** A great shaggy yak: a heavy dark body under a long skirt of hair that nearly sweeps the ground, a humped shoulder, a broad low head and wide up-curving horns. */
-function tbYak(ctx: Ctx, x: number, y: number, k: number, body: string) {
+export function tbYak(ctx: Ctx, x: number, y: number, k: number, body: string) {
   const dk = shade(body, -0.3), mid = body, lite = shade(body, 0.24);
   const E = (ex: number, ey: number, rx: number, ry: number, c: string, rot = 0) => {
     ctx.beginPath();

@@ -19,6 +19,8 @@ export type UnitKind =
   | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
   // each empire's named champion (see game/heroes)
   | 'hero'
+  // every empire's merchants: a land caravan and a sea trader, drawn in each empire's own style (see game/trade)
+  | 'trader' | 'tradeship'
   // neutral Great Beasts (see game/wild)
   | 'kraken';
 
@@ -166,7 +168,26 @@ export interface GameState {
   wonders?: WonderState;
   /** Diplomacy: treaties, offers and opinions between empires (see game/diplomacy). Missing when off and in older saves (everyone at war). */
   diplo?: DiploState;
+  /** Trade routes opened by Traders and Trade Ships (see game/trade). Missing in older saves and until the first is opened. */
+  trade?: TradeState;
 }
+
+/**
+ * A permanent trade route between two cities (`a`: the trader's home, `b`: where it settled). `pa`/`pb` are the owners
+ * when it was opened: the route is cut as soon as either city changes hands. `path` is the trail as tile indices.
+ */
+export interface TradeRoute {
+  id: number;
+  a: number;
+  b: number;
+  pa: number;
+  pb: number;
+  by: number; // the empire whose trader opened it
+  sea: boolean;
+  path: number[];
+  since: number;
+}
+export interface TradeState { routes: TradeRoute[] }
 
 /** A treaty between two empires (`a` < `b`). War is the absence of one. */
 export interface DiploPact {

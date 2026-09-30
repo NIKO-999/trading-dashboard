@@ -46,9 +46,11 @@ import { celebrateWonder, wonderHud, wondersList } from './wonders';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
+import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, traderName, traderPreview } from '../game/trade';
+import { tradeList } from './trade';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:') || id.startsWith('hero:');
+const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:') || id.startsWith('hero:') || id.startsWith('trade:');
 
 interface Selection { x: number; y: number; mode: 'unit' | 'tile' }
 
@@ -875,8 +877,9 @@ export class GameView {
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
-          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
-        h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null)));
+          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${UNITS[u.carrying].name})` : ''}`),
+        h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null,
+          u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null))); // the route yield preview (see game/trade)
       this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:')), p.tribe); // empire actions on a unit's tile (launch, board...) and camp bids
       return;
     }
@@ -921,7 +924,7 @@ export class GameView {
     const T = TRIBES[owner.tribe];
     const mine = city.owner === this.me;
     const info = mine
-      ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
+      ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${routesOfCity(this.s, city).length ? ` · trade routes ${routesOfCity(this.s, city).length}/${routesPerCity(city)}` : ''}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
       : isRogueCity(this.s, city) ? rogueDescribe(this.s, city)
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     // a conquered city's unrest, with what moves it (see game/rebels)
@@ -1533,7 +1536,7 @@ export class GameView {
       list.replaceChildren(...show());
     } }, label);
     const go = (x: number, y: number) => { close(); this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 450); this.select({ x, y, mode: 'tile' }); };
-    const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', () => [wondersList(s, this.me, go)]));
+    const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', () => [wondersList(s, this.me, go)]), tab(`Trade${routeIncome(s, this.me) ? ` +${routeIncome(s, this.me)}★` : ''}`, () => [tradeList(s, this.me, go)]));
     (tabs.children[wonders ? 1 : 0] as HTMLElement).classList.add('on');
     list.replaceChildren(...(wonders ? [wondersList(s, this.me, go)] : rows));
     const diplo = diploOn(s) ? h('button', { class: 'mini-btn diplo-open', onclick: () => { close(); this.openDiplomacy(); } }, 'Diplomacy: treaties, trade & tribute') : null;
@@ -1566,11 +1569,11 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
   if (wild) return wild;
   const wonder = wonderDescribe(s, t, viewer); // a World Wonder standing or rising (see game/wonders)
   if (wonder) return wonder;
-  if (isAsh(t)) {
-    const d = describePlainTile(s, t, viewer);
-    return { title: d.title, desc: `${d.desc} ${ASH_NOTE}` };
-  }
-  return describePlainTile(s, t, viewer);
+  const d = describePlainTile(s, t, viewer);
+  const ash = isAsh(t) ? ` ${ASH_NOTE}` : '';
+  const trails = liveRoutes(s).filter((r) => r.path.includes(t.y * s.size + t.x) && t.cityId === null); // a trade trail runs here (see game/trade)
+  const trade = trails.length ? ` Trade route: ${trails.map((r) => `${cityById(s, r.a)?.name} ⇄ ${cityById(s, r.b)?.name}`).join(', ')}. An enemy unit standing here can pillage it.` : '';
+  return ash || trade ? { title: d.title, desc: `${d.desc}${ash}${trade}` } : d;
 }
 
 function describePlainTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
