@@ -179,6 +179,9 @@ Every **Mine** digs **1 Iron a turn** per level (Deep Mine 2, level 3: 3); every
 ### Luxuries
 Six rare deposits: **Silk** (forest, Forestry), **Spices** (forest/swamp, Forestry), **Wine** (field, Farming), **Ivory** (field/desert, Hunting), **Pearls** (shallows, Fishing), **Incense** (desert, Farming). Every capital starts with one within 2 tiles; more lie in clusters across the map. Developing one (5★: Silk Farm, Spice Garden, Vineyard, Ivory Camp, Pearl Beds, Incense Grove) grows its city +1 and pays **+2★ a turn for each different luxury** you hold, **+1★ for each extra copy**.
 
+### Buying Iron and Horses
+With **Diplomacy** on, the Diplomacy screen lets you buy **2 Iron or 2 Horses for 6★** from any empire you are not at war with. The computer sells only a surplus (it keeps 4 of a resource its own units need), and it buys from others when it is short.
+
 ### Monopolies
 Hold **3 or more developed copies of one luxury** and you have a Monopoly on it: every copy pays **2★** (not just the first), and each live trade route you run pays **+1★** more (up to +5).
 

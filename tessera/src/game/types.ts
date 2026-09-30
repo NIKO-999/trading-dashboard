@@ -225,7 +225,9 @@ export interface DiploOffer {
   id: number;
   from: number;
   to: number;
-  kind: 'peace' | 'alliance' | 'trade' | 'gift' | 'demand' | 'demandTurns' | 'call';
+  kind: 'peace' | 'alliance' | 'trade' | 'gift' | 'demand' | 'demandTurns' | 'call'
+    // buying strategic resources: the sender pays BARTER.price Stars for BARTER.amount Iron or Horses (see game/goods)
+    | 'buyIron' | 'buyHorses';
   turn: number;
   stars?: number; // tribute: the sum, or the Stars a turn
   turns?: number; // ongoing tribute: for how many turns

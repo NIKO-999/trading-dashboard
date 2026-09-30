@@ -21,7 +21,8 @@ import { UNITS } from '../data/units';
 import { emit } from './events';
 import { dist, neighbors } from './grid';
 import type { DiploOffer, DiploPact, DiploState, GameState, Tile, TribeId } from './types';
-import { citiesOf, score, tileOwnerPlayer } from './rules';
+import { citiesOf, hasTech, score, tileOwnerPlayer } from './rules';
+import { STOCK_CAP, stockOf, STRATEGIC_NAME, type Strategic } from './goods';
 
 export type Relation = 'war' | 'peace' | 'alliance';
 
@@ -47,6 +48,17 @@ export const GIFT = 5;
 /** A one-off tribute demand, and an ongoing one (Stars a turn, for that many turns). */
 export const DEMAND = 10;
 export const DEMAND_TURNS = { stars: 2, turns: 5 };
+/** Buying strategic resources from another empire: this many for this many Stars. */
+export const BARTER = { amount: 2, price: 6 };
+/** The resource a barter offer buys. */
+export const barterGood = (kind: OfferKind): Strategic | null => (kind === 'buyIron' ? 'iron' : kind === 'buyHorses' ? 'horses' : null);
+/** How much of a resource an AI keeps for itself before it will sell: all it has if it can train units that use it. */
+function aiSpare(s: GameState, pid: number, r: Strategic): number {
+  const have = stockOf(s.players[pid])[r];
+  const uses = r === 'iron' ? hasTech(s, pid, 'smithing') || hasTech(s, pid, 'engineering') : hasTech(s, pid, 'chivalry');
+  return Math.max(0, have - (uses ? 4 : 0));
+}
+
 /** Rounds an offer to a human waits for an answer before it lapses. */
 export const OFFER_LIFE = 2;
 /** Rounds before an AI repeats the same offer to the same empire. */
@@ -349,6 +361,12 @@ export function offerCheck(s: GameState, from: number, to: number, kind: OfferKi
     case 'demand': return s.players[to].stars < DEMAND ? 'They cannot pay it' : null;
     case 'demandTurns': return d.tribute.some((t) => t.from === to && t.to === from) ? 'They already pay you tribute' : null;
     case 'call': return null;
+    case 'buyIron': case 'buyHorses': {
+      if (rel === 'war') return 'Not while at war';
+      if (stars < BARTER.price) return 'Not enough stars';
+      const r = barterGood(kind)!;
+      return stockOf(s.players[to])[r] < BARTER.amount ? `They have no ${STRATEGIC_NAME[r]} to spare` : null;
+    }
   }
 }
 
@@ -365,6 +383,7 @@ export function propose(s: GameState, from: number, to: number, kind: OfferKind)
   d.ai.offerId = offer.id;
   if (kind === 'demand') offer.stars = DEMAND;
   if (kind === 'demandTurns') { offer.stars = DEMAND_TURNS.stars; offer.turns = DEMAND_TURNS.turns; }
+  if (barterGood(kind)) offer.stars = BARTER.price;
   if (s.players[to].human) {
     d.offers.push(offer);
     emit({ type: 'toast', player: from, text: `Your envoy leaves for the ${people(s, to)}s. They will answer on their turn.` });
@@ -397,7 +416,8 @@ export function answer(s: GameState, id: number, yes: boolean): boolean {
 /** An offer that no longer makes sense (peace offered while already at peace...). */
 const stale = (s: GameState, o: DiploOffer) =>
   (o.kind === 'peace' && relation(s, o.from, o.to) !== 'war') || ((o.kind === 'alliance' || o.kind === 'trade') && relation(s, o.from, o.to) === 'war')
-  || (o.kind === 'call' && relation(s, o.to, o.enemy!) !== 'peace') || (o.kind === 'demand' && s.players[o.to].stars < (o.stars ?? 0));
+  || (o.kind === 'call' && relation(s, o.to, o.enemy!) !== 'peace') || (o.kind === 'demand' && s.players[o.to].stars < (o.stars ?? 0))
+  || (!!barterGood(o.kind) && (s.players[o.from].stars < BARTER.price || stockOf(s.players[o.to])[barterGood(o.kind)!] < BARTER.amount));
 
 /** Carries out (or turns down) an offer. */
 function resolve(s: GameState, o: DiploOffer, yes: boolean) {
@@ -408,7 +428,7 @@ function resolve(s: GameState, o: DiploOffer, yes: boolean) {
     if (o.kind === 'demand' || o.kind === 'demandTurns') moodAdd(s, from, to, -10); // a refused demand angers the demander
     else if (o.kind === 'call') { moodAdd(s, from, to, -20); announce(s, `The ${them}s refuse to join the ${people(s, from)}s' war.`, [from, to]); return; }
     else moodAdd(s, from, to, -2);
-    const what = { peace: 'peace', alliance: 'an alliance', trade: 'a trade deal', demand: 'tribute', demandTurns: 'tribute', gift: 'a gift', call: '' }[o.kind];
+    const what = { peace: 'peace', alliance: 'an alliance', trade: 'a trade deal', demand: 'tribute', demandTurns: 'tribute', gift: 'a gift', call: '', buyIron: 'to sell Iron', buyHorses: 'to sell Horses' }[o.kind];
     emit({ type: 'toast', player: from, text: `The ${them}s decline ${what}.` });
     return;
   }
@@ -440,6 +460,17 @@ function resolve(s: GameState, o: DiploOffer, yes: boolean) {
       declareWar(s, to, o.enemy!, true);
       break;
     case 'gift': break;
+    case 'buyIron': case 'buyHorses': {
+      const r = barterGood(o.kind)!;
+      const n = Math.min(BARTER.amount, stockOf(s.players[to])[r]);
+      stockOf(s.players[to])[r] -= n;
+      stockOf(s.players[from])[r] = Math.min(STOCK_CAP, stockOf(s.players[from])[r] + n);
+      s.players[from].stars -= BARTER.price;
+      s.players[to].stars += BARTER.price;
+      moodAdd(s, to, from, 3);
+      announce(s, `The ${them}s sell the ${people(s, from)}s ${n} ${STRATEGIC_NAME[r]} for ${BARTER.price}★.`, [from, to]);
+      break;
+    }
   }
 }
 
@@ -465,6 +496,7 @@ export function aiAnswer(s: GameState, o: DiploOffer): boolean {
     case 'demand': case 'demandTurns': return near && ratio >= (PERSONA[s.players[from].tribe].war >= RAIDER ? RAID_TRIBUTE : 2.2) && op > -60;
     case 'call': return opinion(s, to, from) >= 15 && power(s, to) >= power(s, o.enemy!) * 0.5;
     case 'gift': return true;
+    case 'buyIron': case 'buyHorses': return op >= -20 && aiSpare(s, to, barterGood(o.kind)!) >= BARTER.amount;
   }
 }
 
@@ -513,6 +545,12 @@ export function diploAi(s: GameState, pid: number): boolean {
     if (me.war >= RAIDER && near && ratio >= RAID_TRIBUTE && try_(b, 'demandTurns')) return true;
     if (p && p.trade === undefined && op + me.trade * 15 >= 0 && try_(b, 'trade')) return true;
     if (rel === 'peace' && s.turn - p!.since >= PACT_LOCK && op >= 35 && try_(b, 'alliance')) return true;
+    // short of Iron or Horses for the units it can train: buy some from a partner who has them
+    const have = stockOf(s.players[pid]);
+    if (s.players[pid].stars >= BARTER.price + 6) {
+      if ((hasTech(s, pid, 'smithing') || hasTech(s, pid, 'engineering')) && have.iron < 2 && try_(b, 'buyIron')) return true;
+      if (hasTech(s, pid, 'chivalry') && have.horses < 2 && try_(b, 'buyHorses')) return true;
+    }
   }
   return false;
 }

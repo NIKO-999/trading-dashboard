@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { stockOf } from '../src/game/goods';
 import { aiStep } from '../src/game/ai';
 import {
   aiAnswer, allies, answer, BETRAYAL, canDeal, declareCheck, declareWar, diploAi, diploIncome, diploTurnStart, GIFT, hostile, mayStep, NEAR, nearness,
   offersFor, opinion, opinionWhy, PACT_LOCK, pactOf, power, propose, relation, tradeValue,
+  BARTER, offerCheck,
 } from '../src/game/diplomacy';
 import { drain } from '../src/game/events';
 import { dist, isLand, neighbors, tileAt } from '../src/game/grid';
@@ -261,4 +263,31 @@ test('a 30-turn all-AI game signs and breaks treaties, and still ends', () => {
   assert.ok(signed >= 3, `treaties signed: ${signed}`);
   assert.ok(broken >= 1, `treaties broken: ${broken}`);
   assert.ok(trade >= 1, `trade deals: ${trade}`);
+});
+
+test('barter: buy Iron from an empire at peace; an AI sells only what it can spare', () => {
+  const s = hotseat();
+  reveal(s);
+  meet(s, 0, 1);
+  assert.equal(offerCheck(s, 0, 1, 'buyIron'), 'Not while at war');
+  sign(s, 0, 1, 'peace');
+  s.players[0].stars = 20;
+  stockOf(s.players[1]).iron = 1;
+  assert.match(offerCheck(s, 0, 1, 'buyIron')!, /no Iron/);
+  stockOf(s.players[1]).iron = 6;
+  const before = s.players[1].stars;
+  assert.equal(propose(s, 0, 1, 'buyIron'), 'sent');
+  const o = offersFor(s, 1).find((x) => x.kind === 'buyIron')!;
+  assert.ok(answer(s, o.id, true));
+  assert.equal(stockOf(s.players[0]).iron, BARTER.amount);
+  assert.equal(stockOf(s.players[1]).iron, 6 - BARTER.amount);
+  assert.equal(s.players[0].stars, 20 - BARTER.price);
+  assert.equal(s.players[1].stars, before + BARTER.price);
+  // an AI (the Vikings) that needs its iron for swordsmen keeps it, and sells a surplus
+  const ask = { id: 99, from: 0, to: 2, kind: 'buyIron' as const, turn: s.turn, stars: BARTER.price };
+  s.players[2].techs.push('smithing');
+  stockOf(s.players[2]).iron = 4;
+  assert.equal(aiAnswer(s, ask), false);
+  stockOf(s.players[2]).iron = 8;
+  assert.equal(aiAnswer(s, ask), true);
 });

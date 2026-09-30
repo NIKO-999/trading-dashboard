@@ -2,9 +2,11 @@
 // that shows an offer waiting for the player at the start of their turn. Runs only in the browser.
 import { portraitKind, TRIBES } from '../data/tribes';
 import {
+  BARTER,
   declareCheck, declareWar, DEMAND, DEMAND_TURNS, diploNews, GIFT, offerCheck, opinionWhy, opinionWord, pactOf, propose, relation, TRADE_CAP, tradeIncome, tradeValue, type OfferKind,
 } from '../game/diplomacy';
 import { citiesOf } from '../game/rules';
+import { stockOf } from '../game/goods';
 import type { DiploOffer, GameState } from '../game/types';
 import { h } from './dom';
 import { unitPortrait } from './menu';
@@ -99,6 +101,8 @@ function row(v: DiploView, b: number, reopen: () => void): HTMLElement {
     btn(`Gift ${GIFT}★`, 'gift'),
     btn(`Demand ${DEMAND}★`, 'demand'),
     btn(`Demand ${DEMAND_TURNS.stars}★×${DEMAND_TURNS.turns}`, 'demandTurns'),
+    rel !== 'war' ? btn(`Buy ${BARTER.amount} ⛏ Iron (${BARTER.price}★)`, 'buyIron') : null,
+    rel !== 'war' ? btn(`Buy ${BARTER.amount} 🐎 Horses (${BARTER.price}★)`, 'buyHorses') : null,
     rel !== 'war' ? war() : null,
   ];
   return h('div', { class: `stat-row diplo-row rel-${rel}`, style: { '--tc': T.color } as Record<string, string> },
@@ -124,6 +128,10 @@ function offerText(s: GameState, o: DiploOffer): { title: string; text: string }
     case 'demandTurns': return { title: `${who} demand`, text: `The ${who}s demand ${o.stars}★ a turn for ${o.turns} turns. Refusing will anger them.` };
     case 'call': return { title: 'A call to arms', text: `Your ally, the ${who}s, has been attacked by the ${people(s, o.enemy!)}s. Join the war against them? Declining will anger your ally (honouring the call costs no trust).` };
     case 'gift': return { title: `${who} gift`, text: `The ${who}s send a gift.` };
+    case 'buyIron': case 'buyHorses': {
+      const r = o.kind === 'buyIron' ? 'Iron' : 'Horses';
+      return { title: `${who} merchants`, text: `The ${who}s offer ${o.stars}★ for ${BARTER.amount} of your ${r} (you have ${stockOf(s.players[o.to])[o.kind === 'buyIron' ? 'iron' : 'horses']}).` };
+    }
   }
 }
 
