@@ -34,6 +34,7 @@ export function perksOf(s: GameState, pid: number): Perk[] {
     const t = UNIQUE_BY_ID[id];
     if (t) out.push(...t.perks);
   }
+  for (const a of s.players[pid].culture?.adopted ?? []) out.push(...(a.perks ?? [])); // traditions taken from conquered peoples (see culture.ts)
   return out;
 }
 

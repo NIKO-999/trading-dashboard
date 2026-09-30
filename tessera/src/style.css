@@ -296,3 +296,9 @@ ul.traits .effect { display: block; font-weight: 600; }
 .mech-hud { position: absolute; top: calc(92px + var(--safe-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 520px); display: flex; justify-content: center; text-align: center; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.65); font-size: 0.85rem; line-height: 1.25; }
 .mech-hud > * { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .mech-hud:empty { display: none; }
+/* culture blending: traditions adopted from conquered peoples */
+.reward-row.culture { flex-wrap: wrap; gap: 10px; }
+.reward-row.culture .rbtn.big { width: 112px; }
+.adopted { margin-top: 4px; display: flex; flex-direction: column; gap: 3px; }
+.adopted-row { display: flex; gap: 6px; align-items: center; font-size: 0.85rem; line-height: 1.15; }
+.adopted-row img, .adopted-row canvas { flex: none; }

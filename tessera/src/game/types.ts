@@ -1,3 +1,5 @@
+import type { Perk } from './perks';
+
 export type BaseTerrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
 export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'platform';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
@@ -85,7 +87,16 @@ export interface Player {
   met?: number[];
   /** State kept by this empire's mechanic (see game/mech), e.g. a calendar or a captive count. Always JSON-safe. */
   mech?: Record<string, unknown>;
+  /** Traditions adopted from conquered peoples, and choices still waiting to be made (see game/culture; missing in older saves). */
+  culture?: CultureState;
 }
+
+/** One sub-trait taken from a conquered people (`id` is a key of the culture registry; its perks are copied in, so
+ *  game/perks can read them without loading the registry). */
+export interface Adopted { id: string; from: TribeId; turn: number; city: string; perks: Perk[] }
+/** A choice offered when a city was taken: pick one of `options` (registry ids) from the people `from`. */
+export interface CultureOffer { from: TribeId; city: string; options: string[] }
+export interface CultureState { adopted: Adopted[]; offers: CultureOffer[] }
 
 export type GameMode = 'perfection' | 'domination';
 export type Difficulty = 'easy' | 'normal' | 'hard';

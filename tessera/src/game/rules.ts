@@ -4,6 +4,7 @@ import { hookActions, hookAfterAttack, hookAfterMove, hookAttackTargets, hookBlo
 import { perksOf, perkSum, perkUnit, unitMatches } from './perks';
 import { NAVAL_UPGRADE, UNITS, type UnitDef } from '../data/units';
 import { emit } from './events';
+import { cityOrigin, offerCulture } from './culture';
 import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
@@ -485,6 +486,8 @@ function capture(s: GameState, u: Unit, t: Tile) {
   } else if (t.cityId !== null) {
     const c = cityById(s, t.cityId)!;
     const from = c.owner;
+    const origin = cityOrigin(s, c); // the people who first held it (kept through later captures)
+    c.data = { ...(c.data ?? {}), origin };
     c.owner = pid;
     c.capital = false;
     c.pendingRewards = [];
@@ -495,6 +498,7 @@ function capture(s: GameState, u: Unit, t: Tile) {
     claimTerritory(s, c.id);
     emit({ type: 'capture', player: pid, cityId: c.id, from });
     hookCityCaptured(s, c, from);
+    offerCulture(s, pid, c, origin); // Culture Blending: a choice of one of that people's traditions (see game/culture)
     checkElimination(s, from, pid);
     if (s.players[pid].tribe === 'persia') { // Royal Tribute
       s.players[pid].stars += 3;

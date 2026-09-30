@@ -28,6 +28,8 @@ import { unitPortrait } from './menu';
 import { showSharpnessTest } from './diag';
 import { modal, toast } from './modal';
 import { showTechTree } from './techtree';
+import { adoptedLines, showCultureOffer } from './culture';
+import { adopt, offersOf } from '../game/culture';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:');
@@ -907,6 +909,14 @@ export class GameView {
       this.rewardTimer = window.setTimeout(() => this.checkRewards(), 350);
       return;
     }
+    // a conquered people's tradition to adopt comes first (see ui/culture)
+    const offered = showCultureOffer(this.s, this.me, (from, id) => {
+      sfx.play('build');
+      this.rewardOpen = false;
+      this.act(() => adopt(this.s, this.me, from, id));
+      this.checkRewards();
+    });
+    if (offered) { this.rewardOpen = true; return; }
     const c = citiesOf(this.s, this.me).find((k) => k.pendingRewards.length);
     if (!c) return;
     this.rewardOpen = true;
@@ -1226,10 +1236,13 @@ export class GameView {
         h('div', {},
           h('b', {}, known ? `${T.people}${p.id === this.me ? ' (you)' : ''}` : 'Unknown empire'),
           h('div', { class: 'muted small' }, !p.alive ? 'Destroyed' : known ? `${score(s, p.id).toLocaleString()} pts · ${citiesOf(s, p.id).length} cities · ${p.techs.length} techs` : 'Not yet met'),
+          known ? adoptedLines(s, p.id) : null,
+          p.id === this.me && offersOf(s, this.me).length && this.myTurn()
+            ? h('button', { class: 'mini-btn', onclick: () => { close(); this.checkRewards(); } }, 'Adopt a conquered tradition') : null,
         ),
       );
     });
-    modal({ title: 'Empires', body: rows, dismissable: true, cls: 'stats' });
+    const close = modal({ title: 'Empires', body: rows, dismissable: true, cls: 'stats' });
   }
 
   /** Opens the tech tree; with `focus`, that tech is highlighted and its research card opened. */

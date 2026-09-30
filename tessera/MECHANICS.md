@@ -64,7 +64,7 @@
 - If the defender survives and the attacker is within the defender's range, it **counter-attacks** with `round( defenceForce / total × defence × 4.5 )`.
 - **Terrain bonus:** ×1.5 in your own city (×4 with City Walls, for fortify units), ×2 on a mountain (Climbing), ×1.5 in forest with Archery, ×1.5 in swamp, ×1.5 afloat with Aquaculture, else ×1.
 - **Veterans:** 3 kills → +5 max HP, healed. **Recover** action heals 4 HP (2 outside your borders) and uses the unit's turn.
-- **Capturing:** a unit standing on an enemy city or an unclaimed **village** can capture it (villages become level-1 cities). A captured city loses its capital status and pending rewards; the capturer joins its garrison. Eliminating an empire's last city removes it.
+- **Capturing:** a unit standing on an enemy city or an unclaimed **village** can capture it (villages become level-1 cities). A captured city loses its capital status and pending rewards; the capturer joins its garrison. Eliminating an empire's last city removes it. Taking a city founded by another people also offers one of that people's traditions (§10).
 
 ## 5. Terrain, resources, improvements
 
@@ -275,4 +275,18 @@ Every empire has (a) **passive traits** — one signature bonus, extra strengths
 - **Strengths:** High-Altitude Endurance (Units on your land heal 1 HP every turn.)
 - **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Landlocked Plateau (Boats and ships move 1 less.)
 - **Skill line:** T1 Mani Walls: Units in the mountains defend 0.5 better. → T2 Yak Herds: Every animal harvest grows the city by 1 more. Mounted units cost 1★ less. → T3 Monasteries: +1★ a turn for every temple. Units on your land heal 2 HP every turn.
+
+## 10. Culture Blending (traditions of the conquered)
+
+- Every city remembers its **origin**: the people who first held it (`city.data.origin`, recorded on capture and kept through later captures).
+- **Capturing** a city whose origin people is not your own offers a choice of **one of 2–3 sub-traits** of that people (a card like the level-up reward; the computer picks the option it scores best). A toast announces the offer and the pick.
+- Sub-traits come from the donor's historical **strength**, the first suitable step of its **skill line** (anything that names "your unique unit" is skipped) and, for six empires, a **light version of its mechanic**:
+  - *Coastal Pillage* (Viking): a unit on an enemy improvement beside water can raze it for 2× its cost in ★; the city loses 1 population.
+  - *Horns of the Buffalo* (Zulu): foot soldiers deal 1.5× damage to an enemy with 3+ of your foot soldiers around it.
+  - *Kiai Strike* (Japanese): 15% of attacks take no counter-blow.
+  - *Feigned Retreat* (Mongol): riders and archers without *escape* may pull back 1 tile after attacking.
+  - *Royal Tribute* (Persian): +2★ per city captured. *Devşirme Levy* (Ottoman): each capture grows your nearest other city by 1.
+- **Limits:** each origin people can be adopted from once, and an empire holds at most **3** traditions.
+- Adopted traditions are listed on the in-game **Empires** screen as "Adopted from the X".
+- *Still to come:* conquered cities whose ways were never adopted may rebel into Rogue States (plugs in at `culture.cultureUnrest`).
 

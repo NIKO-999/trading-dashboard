@@ -1,4 +1,5 @@
 import { UNITS } from '../data/units';
+import { aiAdopt } from './culture';
 import { cityVisibleTo, hookAi } from './mech';
 import { dist, isLand, neighbors, tileAt } from './grid';
 import { roadNetwork } from './network';
@@ -27,6 +28,7 @@ export function aiStep(s: GameState): boolean {
     economyDone = false;
   }
   const p = s.players[pid];
+  if (aiAdopt(s, pid)) return true; // a conquered people's tradition waiting to be chosen
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
 
   // 1. Level-up rewards.

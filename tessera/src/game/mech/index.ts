@@ -2,6 +2,7 @@
 // mechanic, so a mechanic can act on its owner or on the whole world.
 import type { Action, MoveOption } from '../rules';
 import type { City, GameState, Tile, TribeId, Unit } from '../types';
+import { adoptedHooks } from '../culture';
 import type { AttackInfo, CombatCtx, MechRegistry, MoveCtx, Mechanic } from './types';
 import { mech as egypt } from './egypt';
 import { mech as aztec } from './aztec';
@@ -36,13 +37,23 @@ export type { Mechanic, MoveCtx, CombatCtx, AttackInfo } from './types';
 /** The mechanic of an empire. */
 export const mechOf = (s: GameState, pid: number): Mechanic => MECH[s.players[pid].tribe];
 
+/** A player's own mechanic, then the light hooks of traditions it adopted from conquered peoples (see game/culture). */
+const own = (s: GameState, pid: number): Mechanic[] => {
+  const extra = adoptedHooks(s, pid);
+  return extra.length ? [MECH[s.players[pid].tribe], ...extra] : [MECH[s.players[pid].tribe]];
+};
+
 const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
-  for (const p of s.players) if (p.alive) fn(MECH[p.tribe], p.id);
+  for (const p of s.players) {
+    if (!p.alive) continue;
+    fn(MECH[p.tribe], p.id);
+    if (p.culture?.adopted?.length) for (const m of adoptedHooks(s, p.id)) fn(m, p.id);
+  }
 };
 
 export function hookSetup(s: GameState) { each(s, (m, o) => m.setup?.(s, o)); }
-export function hookTurnStart(s: GameState, pid: number) { mechOf(s, pid).turnStart?.(s, pid); }
-export function hookTurnEnd(s: GameState, pid: number) { mechOf(s, pid).turnEnd?.(s, pid); }
+export function hookTurnStart(s: GameState, pid: number) { for (const m of own(s, pid)) m.turnStart?.(s, pid); }
+export function hookTurnEnd(s: GameState, pid: number) { for (const m of own(s, pid)) m.turnEnd?.(s, pid); }
 
 export function hookMoveStep(s: GameState, u: Unit, from: Tile, to: Tile, ctx: MoveCtx) { each(s, (m, o) => m.moveStep?.(s, o, u, from, to, ctx)); }
 export function hookExtraMoves(s: GameState, u: Unit): MoveOption[] { return mechOf(s, u.owner).extraMoves?.(s, u.owner, u) ?? []; }
@@ -64,9 +75,9 @@ export function hookAfterAttack(s: GameState, a: Unit, d: Unit, info: AttackInfo
 export function hookUnitDied(s: GameState, u: Unit, killer: Unit | null) { each(s, (m, o) => m.unitDied?.(s, o, u, killer)); }
 export function hookCityCaptured(s: GameState, c: City, from: number) { each(s, (m, o) => m.cityCaptured?.(s, o, c, from)); }
 
-export function hookIncome(s: GameState, pid: number): number { return mechOf(s, pid).income?.(s, pid) ?? 0; }
-export function hookActions(s: GameState, pid: number, t: Tile): Action[] { return mechOf(s, pid).actions?.(s, pid, t) ?? []; }
-export function hookDoAction(s: GameState, pid: number, t: Tile, id: string): boolean { return mechOf(s, pid).doAction?.(s, pid, t, id) ?? false; }
+export function hookIncome(s: GameState, pid: number): number { return own(s, pid).reduce((n, m) => n + (m.income?.(s, pid) ?? 0), 0); }
+export function hookActions(s: GameState, pid: number, t: Tile): Action[] { return own(s, pid).flatMap((m) => m.actions?.(s, pid, t) ?? []); }
+export function hookDoAction(s: GameState, pid: number, t: Tile, id: string): boolean { return own(s, pid).some((m) => m.doAction?.(s, pid, t, id) ?? false); }
 export function hookBlock(s: GameState, pid: number, actionId: string, t: Tile): string | undefined {
   let why: string | undefined;
   each(s, (m, o) => { why ??= m.block?.(s, o, pid, actionId, t); });
@@ -87,5 +98,5 @@ export function cityVisibleTo(s: GameState, viewer: number, c: City): boolean {
   return ok;
 }
 
-export function hookAi(s: GameState, pid: number): boolean { return mechOf(s, pid).ai?.(s, pid) ?? false; }
+export function hookAi(s: GameState, pid: number): boolean { return own(s, pid).some((m) => m.ai?.(s, pid) ?? false); }
 export const MECH_IDS = Object.keys(MECH) as TribeId[];
