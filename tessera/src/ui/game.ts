@@ -118,7 +118,7 @@ export class GameView {
       this.settings.sharp = m.sharp;
       saveSettings(this.settings);
       setSharpness(m.sharp);
-      this.photoImg.style.visibility = 'hidden';
+      this.hidePhoto();
       this.resize();
       mark();
     } }, m.label));
@@ -223,34 +223,81 @@ export class GameView {
     this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${this.settings.display && this.settings.display !== 'standard' ? ` ${this.settings.display}` : ''}${ms}`;
   }
 
-  /** Photo display: once the map rests it is shown as a picture (iOS shows pictures pin-sharp). */
+  /**
+   * Photo display. iOS shows a live canvas soft but a picture pin-sharp, so the map is shown as a
+   * picture: one a little larger than the screen, slid (and, while pinching, scaled) with the camera
+   * as you scroll, and retaken whenever the view settles or the game changes. The live canvas stays
+   * underneath for the moments a fresh picture isn't ready yet.
+   */
   private photoImg = (() => {
     const img = document.createElement('img');
     img.alt = '';
     img.draggable = false;
-    img.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;visibility:hidden;';
+    img.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;visibility:hidden;transform-origin:0 0;will-change:transform;';
     document.getElementById('game')!.after(img);
     return img;
   })();
-  private photoStale = false;
+  private photoRenderer = new WorldRenderer();
+  private photoCanvas = document.createElement('canvas');
+  private photoValid = false; // the picture shows the current game state
+  private photoWanted = false; // the view has changed since the picture was taken
   private photoBusy = false;
   private photoUrl = '';
+  private photoAt = { x: 0, y: 0, zoom: 1, mx: 0, my: 0, w: 0, h: 0, version: -1 };
+
+  private hidePhoto() {
+    this.photoValid = false;
+    this.photoImg.style.visibility = 'hidden';
+  }
+
+  /** Slides the picture to where the camera now is; hides it if it no longer covers the screen. */
+  private placePhoto() {
+    if (!this.photoValid) return;
+    const P = this.photoAt;
+    const k = this.cam.zoom / P.zoom;
+    const snap = (v: number) => Math.round(v * this.dpr) / this.dpr; // whole device pixels keep it sharp
+    const left = snap(this.cam.x - k * (P.x + P.mx)), top = snap(this.cam.y - k * (P.y + P.my));
+    const covers = left <= 0.5 && top <= 0.5 && left + k * P.w >= this.vw - 0.5 && top + k * P.h >= this.vh - 0.5;
+    this.photoImg.style.transform = Math.abs(k - 1) < 1e-6 ? `translate(${left}px, ${top}px)` : `translate(${left}px, ${top}px) scale(${k})`;
+    this.photoImg.style.visibility = covers ? 'visible' : 'hidden';
+    // retake before the edge shows: once less than 40% of the spare border is left
+    const slack = Math.min(-left, -top, left + k * P.w - this.vw, top + k * P.h - this.vh);
+    this.photoCovers = covers && slack > Math.min(P.mx, P.my) * 0.4;
+  }
+  private photoCovers = false;
+  private photoTakenAt = 0;
 
   private takePhoto() {
     this.photoBusy = true;
-    this.photoStale = false;
-    this.canvas.toBlob((blob) => {
+    this.photoTakenAt = performance.now();
+    this.photoWanted = false;
+    const mx = Math.round(Math.min(220, this.vw * 0.35)), my = Math.round(Math.min(320, this.vh * 0.3));
+    const W = this.vw + mx * 2, H = this.vh + my * 2;
+    const pc = this.photoCanvas;
+    pc.width = Math.round(W * this.dpr);
+    pc.height = Math.round(H * this.dpr);
+    const pctx = pc.getContext('2d')!;
+    pctx.setTransform(pc.width / W, 0, 0, pc.height / H, 0, 0);
+    const lc = new Camera();
+    lc.x = this.cam.x + mx;
+    lc.y = this.cam.y + my;
+    lc.zoom = this.cam.zoom;
+    this.photoRenderer.render(pctx, this.s, this.me, lc, this.ov, W, H, this.dpr, this.version, false);
+    const at = { x: this.cam.x, y: this.cam.y, zoom: this.cam.zoom, mx, my, w: W, h: H, version: this.version };
+    pc.toBlob((blob) => {
       this.photoBusy = false;
-      if (!blob || this.destroyed || this.photoStale || this.settings.display !== 'image') return;
+      if (!blob || this.destroyed || this.settings.display !== 'image') return;
       const url = URL.createObjectURL(blob);
       const img = this.photoImg;
       img.onload = () => {
-        if (this.photoStale || this.settings.display !== 'image') return;
-        img.style.width = `${this.vw}px`;
-        img.style.height = `${this.vh}px`;
-        img.style.visibility = 'visible';
-        if (this.photoUrl) URL.revokeObjectURL(this.photoUrl);
+        if (this.photoUrl && this.photoUrl !== url) URL.revokeObjectURL(this.photoUrl);
         this.photoUrl = url;
+        if (this.version !== at.version || this.settings.display !== 'image') { this.photoWanted = true; return; }
+        this.photoAt = at;
+        img.style.width = `${W}px`;
+        img.style.height = `${H}px`;
+        this.photoValid = true;
+        this.placePhoto();
       };
       img.src = url;
     }, 'image/png');
@@ -283,9 +330,20 @@ export class GameView {
       if (now - this.tagAt > 1000) { this.tagAt = now; this.showTag(); }
       this.drawnVersion = this.version;
       this.lastFrame = now;
-      if (photo) { this.photoImg.style.visibility = 'hidden'; this.photoStale = true; }
+      if (photo) {
+        // only scrolling and zooming keep the picture: anything that changes the map itself hides it
+        if (fxActive || this.version !== this.photoAt.version) this.hidePhoto();
+        this.photoWanted = true;
+      }
     }
-    if (photo && this.photoStale && !this.photoBusy && now - this.lastFrame > 220) this.takePhoto();
+    if (photo) {
+      this.placePhoto();
+      // retaken once the view rests, including a finger resting mid-scroll
+      const resting = this.touching ? now - this.lastPointerAt > 150 : !camMoving;
+      if (this.photoWanted && !this.photoBusy && resting && !fxActive && now - this.lastFrame > 120) this.takePhoto();
+      // a long scroll runs past the picture's edge: take a new one on the way rather than show the soft live map
+      else if (!this.photoBusy && !fxActive && (camMoving || this.touching) && this.version === this.photoAt.version && !this.photoCovers && now - this.photoTakenAt > 200) this.takePhoto();
+    }
     this.raf = requestAnimationFrame(this.loop);
   };
 
