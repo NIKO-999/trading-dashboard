@@ -9,7 +9,7 @@ import { drain, type GameEvent } from '../game/events';
 import { tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
-  moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, type Action,, attackRange } from '../game/rules';
+  moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, attackRange, type Action } from '../game/rules';
 import { endTurn, isHumanTurn } from '../game/turn';
 import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
 import { surgingNodes } from '../game/skills';
