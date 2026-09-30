@@ -206,7 +206,7 @@ test('walking onto a camp burns it too, and the guard must fall first', () => {
   const before = s.players[1].stars;
   assert.ok(attack(s, h, r));
   assert.ok(!s.units.includes(r));
-  assert.equal(s.players[1].stars, before + RAIDER_BOUNTY);
+  assert.equal(s.players[1].stars, before + RAIDER_BOUNTY + 1); // and Chiefdom's +1★ a kill (see game/government)
 });
 
 test('bribe: the clan leaves you alone for a while and raids someone else', () => {

@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.42',
+    items: [
+      '🏛 Governments: tap Govern on the dock. Start as a Chiefdom; new eras unlock Autocracy, Oligarchy, Republics, Monarchy and Theocracy, each with its own bonus.',
+      '🃏 Policy cards: 18 cards in Military, Economic and Wild slots. Fill a slot for free; swap once a turn to suit war or peace.',
+    ],
+  },
+  {
     version: '0.41',
     items: [
       '🎖 Governors: tap your city to appoint a Steward, Treasurer, Marshal or Scholar. One slot, plus one more each era; they are promoted after 8 turns.',
