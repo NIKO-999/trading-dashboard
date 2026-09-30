@@ -6,6 +6,8 @@ export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'pla
   | 'bridge';
 export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
 export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market'
+  // a tamed herd and planted fruit trees, raised like the others (see game/levels)
+  | 'pasture' | 'orchard'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
@@ -110,6 +112,8 @@ export interface Player {
   skill?: SkillState;
   /** This empire's hero (see game/heroes; missing in older saves and before the hero first joins). */
   hero?: HeroState;
+  /** Tiles this empire has raised a level so far (see game/levels; missing in older saves): each makes the next dearer. */
+  raised?: number;
 }
 
 export interface HeroState {

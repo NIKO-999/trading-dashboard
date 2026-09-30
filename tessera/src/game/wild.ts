@@ -87,7 +87,7 @@ export const LAVA_DAMAGE = 5;
 export const ASH_POP = 1;
 export const ASH_STARS = 1;
 /** Improvements lava destroys (the empires' own monuments are built to last). */
-const MELTS = ['farm', 'mine', 'lumber', 'temple', 'market'];
+const MELTS = ['farm', 'mine', 'lumber', 'temple', 'market', 'pasture', 'orchard'];
 
 /** What mercenaries offer, with the lowest bid a camp accepts and how often each is on offer. */
 export const OFFERS: { kind: UnitKind; min: number; w: number }[] = [

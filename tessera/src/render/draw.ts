@@ -21,7 +21,8 @@ import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
 import { drawWonderIcon, drawWonderTile } from './wonders';
 import { drawBridgeGround, drawRoleIcon, drawRoleTile } from './roles';
 import { drawAuxIcon } from './auxiliaries';
-import { isUpgraded } from '../game/roles';
+import { tileLevel } from '../game/levels';
+import { drawDistrictBanners, drawDistrictGround, drawLevelIcon, drawLevelTile } from './levels';
 import { wonderOn } from '../game/wonders';
 
 const FISH_ICON = FISH;
@@ -210,6 +211,7 @@ function drawStaticGround(ctx: Ctx, s: GameState, viewer: number, cam: Camera, _
   const shown = visibleTiles(s, cam, vw, vh);
   for (const t of shown) if (explored(t.x, t.y)) drawGround(ctx, s, t, explored);
   for (const t of shown) if (explored(t.x, t.y)) drawBorders(ctx, s, t, explored, viewer);
+  drawDistrictGround(ctx, s, explored); // Districts' linked outlines (see render/levels)
   ctx.restore();
 }
 
@@ -222,6 +224,7 @@ function drawStaticTop(ctx: Ctx, s: GameState, viewer: number, cam: Camera, ov: 
     if (!explored(t.x, t.y)) drawFog(ctx, s, t, explored);
     else drawScenery(ctx, s, t, ov.glow.has(t.y * s.size + t.x), viewer);
   }
+  drawDistrictBanners(ctx, s, explored); // Districts' banners (see render/levels)
   ctx.restore();
 }
 
@@ -541,6 +544,7 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   drawCamp(ctx, s, t, c.x, c.y); // a mercenary camp (see game/wild)
   if (wonder) drawWonderTile(ctx, s, t, c.x, c.y);
   drawRoleTile(ctx, s, t, c.x, c.y); // forts, grand works and undermined walls (see render/roles)
+  drawLevelTile(ctx, s, t, c.x, c.y); // pastures, orchards, what each level adds, and level pips (see render/levels)
   for (const m of Object.values(MECH_RENDER)) m?.tile?.(ctx, s, t, c.x, c.y);
 }
 
@@ -2006,7 +2010,7 @@ function drawImprovement(ctx: Ctx, s: GameState, t: Tile, x: number, y: number) 
   const tribe = owner !== null && s.players[owner] ? TRIBES[s.players[owner].tribe] : TRIBES[t.biome];
   ctx.save();
   ctx.translate(x, y);
-  const k = isUpgraded(t) ? 1.5 : 1.25; // a Master Builder's grand work is drawn larger (see game/roles)
+  const k = [1.25, 1.25, 1.5, 1.7][tileLevel(t)]; // each level is drawn bigger (see game/levels)
   ctx.scale(k, k);
   switch (t.improvement) {
     case 'mine':
@@ -5302,6 +5306,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   if (icon.startsWith('wonder:')) return drawWonderIcon(ctx, icon.slice(7), x, y); // World Wonders (see render/wonders)
   if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
   if (icon.startsWith('aux:') && drawAuxIcon(ctx, icon, tribe, x, y)) return; // a Healer's Convert (see render/auxiliaries)
+  if (icon.startsWith('level:') && drawLevelIcon(ctx, icon, tribe, x, y)) return; // tile levels (see render/levels)
   switch (icon) {
     case 'fruit':
     case 'crop':

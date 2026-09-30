@@ -16,7 +16,7 @@
 
 ### Stars (★) — money
 - You earn Stars **at the start of your turn**: `income`, summed over all your cities.
-- **City income** = city level + 1 (if it is the capital) + 1 (Workshop) + 1 per Grand Garden + 1 per Market in its territory + 1 if you know Trade + road-network income + empire-specific bonuses (see §7).
+- **City income** = city level + 1 (if it is the capital) + 1 (Workshop) + 1 per Grand Garden + 1 per Market in its territory + 1 if you know Trade + road-network income + raised tiles and Districts (§5a) + empire-specific bonuses (see §7).
 - **Road network income:** +1★ if the city's road network reaches another of your cities (one paying link per city) and +1★ per 15 connected road tiles.
 - Stars are spent on: **researching techs**, **training units**, **building improvements**, roads, and empire-specific actions.
 - One-off sources: whales (+10★), ruins (Buried Treasure +10★), Treasury level-up reward (+5★, +8★ from level 6), clearing forest/draining swamp (+1★), empire kill bounties, etc.
@@ -164,11 +164,84 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 
 **Resources** on tiles (spawn rates): fruit 22% / crop 17% of fields, animals 27% of forests, ore on mountains (30%) and a little on fields/forests, fish on shallows (30%), whales on ocean (9%). Every capital and village start is guaranteed enough resources to level up.
 
-**Improvements** (built on your own territory, cost ★ → effect): Farm 5 (+2 pop, Farming) · Mine 5 (+2 pop, Mining) · Lumber hut 3 (+1 pop, Forestry) · Port 7 (shallows; +1 pop, lets land units board boats, Fishing) · Temple 10 (+1 pop, +100 score, Masonry) · Market 8 (+1★/turn, Carpentry) · Grove/Mountain shrine 8 (+1 pop, +100 score) · Road 3 (Roads; Romans 2). Harvest actions cost 2★ (fruit, hunt, fish, whale).
+**Improvements** (built on your own territory, cost ★ → effect): Farm 5 (+2 pop, Farming) · Mine 5 (+2 pop, Mining) · Lumber hut 3 (+1 pop, Forestry) · Port 7 (shallows; +1 pop, lets land units board boats, Fishing) · Temple 10 (+1 pop, +100 score, Masonry) · Market 8 (+1★/turn, Carpentry) · Grove/Mountain shrine 8 (+1 pop, +100 score) · Road 3 (Roads; Romans 2). Harvest actions cost 2★ (fruit, hunt, fish, whale). Instead of the one-off hunt or fruit harvest you may tame a **Pasture** or plant an **Orchard** (§5a). Improvements can be raised to levels 2 and 3 (§5a).
 
 **Borders:** a city claims the 3×3 (radius 1) tiles around it; Border Growth makes it 5×5.
 
 **Ruins** scattered on the map give one of: Ancient Scrolls (a free tech), Lost Tribe (+3 pop), Old Maps (reveal map), Forgotten Champion (a veteran), Buried Treasure (+10★).
+
+## 5a. Tile levels, Districts and specialities
+
+*(game/levels.ts; drawn by render/levels.ts into the map picture, so levels, pips and Districts show on the resting, photographed map.)*
+
+**Levels.** Tap an improved tile in your land and choose **Upgrade**. Every improvement has three levels; each pays more and is drawn visibly bigger and richer (larger buildings, a new building for the level, and two or three gold pips at the tile's front corner).
+- **Level 2** needs the kind's tier-2 tech and **6★**; **level 3** needs its tier-3 tech, **10★** and a **city of level 4 or more**.
+- **Every tile you have raised makes your next upgrade 1★ dearer**, so the extra income levels off instead of snowballing.
+- A raised tile **keeps its improvement**: every rule that counts farms, mines, markets or temples (Khmer, Mali, Maya, China, Egypt, wonders, perks) still counts it. A level lapses if the improvement is destroyed (lava, a Viking raid).
+- The Upgrade button shows the next level's gain, price and tech; when the tech is missing it is locked with the tech's name, and a tap opens that tech. The tile panel shows the current level and what the next one gives.
+
+| Resource | Level 1 | Level 2 (tech) | Level 3 (tech) |
+|---|---|---|---|
+| Crops | Farm | **Estate**: +1★/turn, +1 pop (Farming) | **Granary Fields**: +2★/turn, +2 pop, and +1 pop for each farm beside it (up to 2), once (Masonry) |
+| Ore | Mine | **Deep Mine**: +1★/turn (Mining) | **Foundry**: +2★/turn; units trained in its city cost 1★ less (Smithing) |
+| Forest | Lumber Hut | **Sawmill**: +1★/turn (Forestry) | **Timberworks**: +2★/turn; boats, ships, boat upgrades and siege engines from its city cost 2★ less (Carpentry) |
+| Shallows | Port | **Harbour**: +1★/turn, +1 pop (Sailing) | **Great Harbour**: +2★/turn; ships and boats of its city move +1 (Navigation) |
+| Market | Market (+1★) | **Bazaar**: +2★ in all (Roads) | **Exchange**: +3★ in all; each trade route of its city pays +1★ (Trade) |
+| Temple/Shrine | Temple | **Great Temple**: +1 pop, +100 score (Meditation) | **Sanctuary**: +2 pop, +150 score; your units in its city's land heal 2 HP a turn (Philosophy) |
+| Animals | (hunt, one-off) | **Pasture**: tame instead of hunting, +1★/turn (Horsemanship) | **Stables**: +2★/turn; mounted units of its city defend +1 (Chivalry) |
+| Fruit | (harvest, one-off) | **Orchard**: plant instead of harvesting, +1★/turn (Farming) | **Vineyard**: +2★/turn; its city grows +1 more each time it levels up (Masonry; at most 2 vineyards count) |
+
+"Its city" is the city whose land the tile is in; for Great Harbour and Stables it is the unit's home city.
+
+**Districts.** Three or more **level-3 tiles of one kind** that touch (all eight ways) and belong to one empire form a named District. It pays **+2★ a turn** to the city holding most of it and adds a themed extra. A toast announces it; the map links its tiles with an outline in its colour and flies a banner; the city panel and the ⚒ Economy chip list it.
+
+| District | Extra |
+|---|---|
+| Agricultural Heartland (Granary Fields) | its city grows +1 every 3rd turn |
+| Industrial District (Foundries) | units trained in its city cost 1★ more less |
+| Timber Yards (Timberworks) | your units on its tiles defend +1 |
+| Great Docks (Great Harbours) | ships and boats in its city's waters heal 3 HP a turn |
+| Merchant Quarter (Exchanges) | its city's trade routes pay +1★ more each |
+| Holy District (Sanctuaries) | +300 score while it stands |
+| Horse Country (Stables) | mounted units trained in its city cost 1★ less |
+| Garden Country (Vineyards) | its city grows +1 every 3rd turn |
+
+**Economy chip.** Once you have a raised tile, a ⚒ chip under the score bar shows what raised tiles and Districts pay a turn (gold once a District stands); tap it for the full list.
+
+**Master Builder** (Economy empires, §15): upgrades a tile on or beside it at **half price**, and **once per city** it may skip the level's tech.
+
+**Empire specialities.** Each empire has one kind it is famous for. Either new ones are **built straight at level 2** (they pay the level-2 income at once and count as two raised tiles toward the rising price; the build's own growth stands in for the level's one-off growth), or upgrading them **costs a third less** and **level 2 needs no tech** (for Pastures and Orchards: planting them needs no tech and costs a third less). The empire screens list it under Strengths.
+
+| Empire | Speciality | Effect |
+|---|---|---|
+| Egyptian | **Nile Estates** | The flood plains fed an empire: farms are built straight as Estates. |
+| Aztec | **Chinampas** | Floating gardens on the lake: farm upgrades cost a third less and Estates need no tech. |
+| Māori | **Māra Kai** | Breadfruit and kūmara gardens: orchards cost a third less and need no tech. |
+| Roman | **Imperial Quarries** | Stone and iron for the legions: mine upgrades cost a third less and Deep Mines need no tech. |
+| Pirate | **Pirate Havens** | Every cove a haven: port upgrades cost a third less and Harbours need no tech. |
+| Viking | **Longship Yards** | Timber for the fleets: lumber huts are built straight as Sawmills. |
+| Japanese | **Satoyama Woods** | Tended forests of cedar: lumber upgrades cost a third less and Sawmills need no tech. |
+| Mongol | **Steppe Herds** | A people of horses: pastures cost a third less and need no tech. |
+| Greek | **Olive Groves** | Oil and wine of the Aegean: orchards cost a third less and need no tech. |
+| Zulu | **Cattle Kraals** | Wealth was counted in cattle: pastures cost a third less and need no tech. |
+| Persian | **Royal Bazaars** | The bazaars of the Royal Road: market upgrades cost a third less and Bazaars need no tech. |
+| Celtic | **Cattle Lords** | Herds were the chieftains’ wealth: pastures cost a third less and need no tech. |
+| Inuit | **Kayak Landings** | Life came from the sea: port upgrades cost a third less and Harbours need no tech. |
+| Inca | **Andén Terraces** | Terraced slopes feed the Andes: farm upgrades cost a third less and Estates need no tech. |
+| Aksumite | **Rock-hewn Churches** | Churches carved from the living rock: temple upgrades cost a third less and Great Temples need no tech. |
+| Aboriginal | **Stone Fish Traps** | Budj Bim’s weirs and traps: port upgrades cost a third less and Harbours need no tech. |
+| Chinese | **Silk Markets** | The Silk Road ends here: markets are built straight as Bazaars (and Silk Road doubles what their levels pay). |
+| Indian | **Temple Towns** | Great temple towns of the south: temple upgrades cost a third less and Great Temples need no tech. |
+| Malian | **Gold of Bambuk** | The richest gold fields known: mines are built straight as Deep Mines. |
+| Lakota | **Horse Herds** | The horse nation: pastures cost a third less and need no tech. |
+| Ottoman | **Imperial Foundries** | The cannon foundries of Tophane: mine upgrades cost a third less and Deep Mines need no tech. |
+| Maya | **Pyramid Temples** | Every city a temple city: temple upgrades cost a third less and Great Temples need no tech. |
+| Korean | **Rice Paddies** | Terraced paddies of the peninsula: farm upgrades cost a third less and Estates need no tech. |
+| Khmer | **Temple Mountains** | Angkor’s temple mountains: temple upgrades cost a third less and Great Temples need no tech. |
+| Swahili | **Coral Harbours** | Stone ports of the monsoon trade: port upgrades cost a third less and Harbours need no tech. |
+| Tibetan | **Yak Herds** | Yak herds of the high plateau: pastures cost a third less and need no tech. |
+
+**Computer players** upgrade when they have Stars to spare (keeping 8★ + 2★ a city back), preferring their speciality, the best Stars for the price, and a level 3 beside other level-3 tiles of the kind (a District in the making). Their Master Builders raise tiles too.
 
 ## 6. The map
 
@@ -556,7 +629,7 @@ Every empire belongs to one of three types (`category` in `data/tribes`). Each t
 
 ### 💰 Master Builder
 - **Half-price building:** on its own tile or any tile of yours beside it, it builds a Farm, Mine, Port or Market for **half the price, rounded up** (the tile menu shows "Build Farm (½)"), with the same effect as the ordinary build. Uses its turn.
-- **Upgrade** (8★, uses its turn): Farm → **Estate**, Mine → **Deep Mine**, Port → **Harbour**, Market → **Bazaar**. An upgraded tile pays **+1★ a turn** to its city and grows it **+1** once; it is drawn larger, with a manor, a headframe, a crane and harbour light, or a domed hall. It counts only while the improvement stands.
+- **Upgrade (½)** (uses its turn): raises an improved tile of yours on or beside it to its **next level** (§5a: Farm → Estate → Granary Fields, Mine → Deep Mine → Foundry...) for **half the usual price** (rounded up). **Once per city** it may skip the level's tech (the action says so; the city remembers). The city-level rule for level 3 still applies. Its level-2 works are drawn as before (a manor, a headframe, a crane and harbour light, a domed hall). Grand works from older saves (Estate, Deep Mine, Harbour, Bazaar) load as level 2.
 
 ### 💰 Tax Collector
 - **Station Here** (in one of your cities, uses its turn): while it stays on the city tile the city pays **+50% Stars** (rounded up, on everything the city earns). One unit stands on a city tile, so one collector counts per city and you can never have more stationed collectors than cities.

@@ -4,6 +4,7 @@
 // small popover listing every readout in full. The chip summaries are pure, so they can be tested without a page.
 import { onBrink, unrestOf, UNREST_MAX, UNREST_WARN } from '../game/rebels';
 import { hasTech, paxHolds } from '../game/rules';
+import { districtsOf, levelIncome, upgradeCount } from '../game/levels';
 import { surgingNodes } from '../game/skills';
 import type { City, GameState } from '../game/types';
 import { h } from './dom';
@@ -43,6 +44,13 @@ export function skillChip(s: GameState, me: number): HudChip | null {
   if (hasTech(s, me, 'rome:3')) return paxHolds(s, me) ? { icon: '🏛', text: 'Pax holds', tone: 'gold' } : { icon: '🏛', text: 'Pax broken', tone: 'warn' };
   if (hasTech(s, me, 'fork:mercenary')) return { icon: '⚔', text: 'growth ½' };
   return null;
+}
+
+/** The Economy chip: what raised tiles and Districts pay a turn ("+6★ · 1 dist"), gold once a District stands (see game/levels). */
+export function economyChip(s: GameState, me: number): HudChip | null {
+  if (!upgradeCount(s, me)) return null;
+  const d = districtsOf(s, me).length;
+  return { icon: '⚒', text: `+${levelIncome(s, me)}★${d ? ` · ${d} dist` : ''}`, tone: d ? 'gold' : undefined };
 }
 
 /** A restless conquered city as a chip: "Kyoto 3/6", red when it revolts next turn. */

@@ -9,6 +9,7 @@ import { HERO_MECH } from '../heroes';
 import { ROLE_MECH } from '../roles';
 import { AUX_MECH } from '../auxiliaries';
 import { UNIQUE_MECH } from '../uniques';
+import { LEVEL_MECH } from '../levels';
 import { mech as egypt } from './egypt';
 import { mech as aztec } from './aztec';
 import { mech as polynesia } from './polynesia';
@@ -45,12 +46,12 @@ export const mechOf = (s: GameState, pid: number): Mechanic => (s.players[pid].n
 
 /**
  * A player's own mechanic, then its hero (see game/heroes), its role units (see game/roles) its auxiliaries (see
- * game/auxiliaries) and its unique unit's ability (see game/uniques), then the light hooks of
+ * game/auxiliaries), its unique unit's ability (see game/uniques) and its tile levels (see game/levels), then the light hooks of
  * traditions it adopted from conquered peoples (see game/culture).
  */
 const own = (s: GameState, pid: number): Mechanic[] => {
   const extra = adoptedHooks(s, pid);
-  return extra.length ? [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH, ...extra] : [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH];
+  return extra.length ? [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH, LEVEL_MECH, ...extra] : [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH, LEVEL_MECH];
 };
 
 const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
@@ -61,6 +62,7 @@ const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
     fn(ROLE_MECH, p.id);
     fn(AUX_MECH, p.id);
     fn(UNIQUE_MECH, p.id);
+    fn(LEVEL_MECH, p.id);
     if (p.culture?.adopted?.length) for (const m of adoptedHooks(s, p.id)) fn(m, p.id);
   }
 };

@@ -19,6 +19,7 @@ import { uniqueEdge } from './uniques';
 import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
 import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, upgradeWhy } from './army';
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
+import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -88,6 +89,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   const net = roadNetwork(s, c);
   inc += networkIncome(net);
   inc += cityRouteIncome(s, c); // trade routes pay both ends (see game/trade)
+  inc += levelCityIncome(s, c); // raised tiles and Districts (see game/levels)
   const pax = sum('pax');
   if (pax && net.linked.length && paxHolds(s, c.owner)) inc += pax; // Pax Romana
   {
@@ -114,7 +116,7 @@ export function score(s: GameState, pid: number) {
   const techs = p.techs.reduce((a, t) => a + (TECH_BY_ID[t] ? (TECH_BY_ID[t].ring === 'core' || TECH_BY_ID[t].ring === 'culture' ? TECH_BY_ID[t].tier : 1) : 1), 0);
   const army = s.units.filter((u) => u.owner === pid).reduce((a, u) => a + def(u).cost, 0);
   const wonders = wondersHeldBy(s, pid).length * WONDER_SCORE; // World Wonders (see game/wonders)
-  return explored * 5 + territory * 20 + levels * 50 + cities.length * 100 + techs * 100 + army * 5 + p.kills * 20 + p.bonusScore + wonders;
+  return explored * 5 + territory * 20 + levels * 50 + cities.length * 100 + techs * 100 + army * 5 + p.kills * 20 + p.bonusScore + wonders + levelScore(s, pid); // Holy Districts (see game/levels)
 }
 
 // ---------------------------------------------------------------- research
@@ -229,6 +231,7 @@ export function addPop(s: GameState, c: City, n: number, carried = false) {
     const ls = perkSum(s, c.owner, 'levelstar');
     if (ls) { s.players[c.owner].stars += ls; emit({ type: 'stars', player: c.owner, x: c.x, y: c.y, amount: ls }); }
   }
+  if (c.level > before) levelGrowOnLevelUp(s, c, c.level - before); // Vineyards (see game/levels)
   while (c.pop < 0 && c.level > 1) {
     c.level--;
     c.pop += popNeeded(c.level);
@@ -386,9 +389,10 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
   heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
-  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t)];
+  specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
+  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
-  if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
+  if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
   if (wonderOn(s, t) && unitAt(s, t.x, t.y)?.owner !== pid) acts = acts.filter((a) => !a.id.startsWith('mech:'));
   const beast = unitAt(s, t.x, t.y);
@@ -432,7 +436,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     }
     if (u.hp < maxHp(u)) add('recover', 'Recover', `Heal ${mine ? 4 : 2} HP.`, 0, null, 'heal', u.moved || u.attacked ? 'Unit has already acted' : outOfSupply(u) ? 'Out of supply: no healing' : undefined);
     const up = NAVAL_UPGRADE[u.kind];
-    if (up && def(u).naval) add(`upgrade:${up}`, `Upgrade to ${UNITS[up].name}`, UNITS[up].blurb, UNITS[up].cost, UNITS[up].tech, 'ship');
+    if (up && def(u).naval) add(`upgrade:${up}`, `Upgrade to ${UNITS[up].name}`, UNITS[up].blurb, Math.max(1, UNITS[up].cost - levelBoatDiscount(s, t.owner)), UNITS[up].tech, 'ship'); // Timberworks (see game/levels)
     // a land unit in one of your cities trains up to the next unit of its line (see game/army)
     const next = upgradeTarget(s, u);
     if (next && t.cityId !== null && mine) {
@@ -448,25 +452,27 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     // a Recruiter or Tax Collector stationed on the city does not block it either: new units step out beside it (see game/roles)
     const posted = !!u && !afloat && postedCity(s, u) === city;
     const land = u && !afloat ? (posted ? (!postSpawn(s, city) ? 'No free tile beside the city' : undefined) : 'City tile is occupied') : afloat && !room ? 'No free tile beside the Great Waka' : undefined;
+    // a Foundry, Timberworks and some Districts make units trained here cheaper (see game/levels)
+    const cost = (k: UnitKind) => { const c = trainCost(s, pid, k); return c > 1 ? Math.max(1, c - levelTrainDiscount(s, city, k)) : c; };
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
-      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
+      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, cost(k), d.tech, k,
         land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
     }
     for (const k of AUX_KINDS) { // every empire's Spearman, Scout and Healer, in its own name (see game/auxiliaries)
       const d = UNITS[k];
-      add(`train:${k}`, auxName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
+      add(`train:${k}`, auxName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, cost(k), d.tech, k,
         land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
     }
     for (const k of TRADER_KINDS) { // merchants (see game/trade); a Trade Ship is launched onto the water beside the city
       const d = UNITS[k];
       const ship = k === 'tradeship';
-      add(`train:${k}`, traderName(p.tribe, k), `${d.name}. ${d.blurb} 🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
+      add(`train:${k}`, traderName(p.tribe, k), `${d.name}. ${d.blurb} 🛡${d.def} ❤${d.hp} ➜${d.move}`, cost(k), d.tech, k,
         full ? `City supports ${unitCap(city)} units` : ship ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : land);
     }
     for (const k of roleKindsOf(p.tribe)) { // the empire type's two role units (see game/roles); ships are launched like a Trade Ship
       const d = UNITS[k];
-      add(`train:${k}`, roleName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
+      add(`train:${k}`, roleName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, cost(k), d.tech, k,
         full ? `City supports ${unitCap(city)} units` : d.naval ? (!shipSpawn(s, city) ? 'No free water beside the city' : undefined) : land);
     }
     return acts;
@@ -574,6 +580,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('trade:')) return tradeDoAction(s, pid, t, id);
   if (id.startsWith('role:')) return roleDoAction(s, pid, t, id);
   if (id.startsWith('aux:')) return auxDoAction(s, pid, t, id);
+  if (id.startsWith('level:')) return levelDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     if (kind === 'tradeship' || isRoleShip(kind)) { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
@@ -610,9 +617,10 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       if (r === 'animal' && p.tribe === 'zulu') return grow(2, 'harvest', 'animal'); // Great Hunt
       return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1, 'harvest', r ?? ''); // Sea Hunters
     }
-    case 'farm': t.improvement = 'farm'; return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
-    case 'mine': t.improvement = 'mine'; return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
-    case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; return grow(1 + b, 'lumber'); }
+    // an empire's speciality may be built straight at level 2 (specialStart; see game/levels)
+    case 'farm': t.improvement = 'farm'; specialStart(s, pid, t); return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
+    case 'mine': t.improvement = 'mine'; specialStart(s, pid, t); return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
+    case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; specialStart(s, pid, t); return grow(1 + b, 'lumber'); }
     case 'clear': { // Clear Cutting pays more for the timber
       const pay = 1 + perkSum(s, pid, 'clearStar');
       t.terrain = 'field'; p.stars += pay; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: pay });
@@ -622,10 +630,10 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     case 'drain':
       t.terrain = 'field'; p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 });
       return true;
-    case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; return grow(1 + b, 'port'); }
+    case 'port': { const b = clusterBonus(s, t, 'port'); t.improvement = 'port'; specialStart(s, pid, t); return grow(1 + b, 'port'); }
     case 'shrine':
-    case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; return grow(1 + b, 'temple'); }
-    case 'market': { const b = clusterBonus(s, t, 'market'); t.improvement = 'market'; return b || perkSum(s, pid, 'grow', (pk) => pk.on === 'market') ? grow(b, 'market') : (emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }), true); }
+    case 'temple': { const b = clusterBonus(s, t, 'temple'); t.improvement = 'temple'; p.bonusScore += 100; specialStart(s, pid, t); return grow(1 + b, 'temple'); }
+    case 'market': { const b = clusterBonus(s, t, 'market'); t.improvement = 'market'; specialStart(s, pid, t); return b || perkSum(s, pid, 'grow', (pk) => pk.on === 'market') ? grow(b, 'market') : (emit({ type: 'harvest', player: pid, x: t.x, y: t.y, pop: 0 }), true); }
   }
   return false;
 }

@@ -9,6 +9,7 @@ import { UNIQUE_ABILITY } from '../game/uniques';
 import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
 import { describePerk } from '../game/perks';
 import { roleName } from '../game/roles';
+import { SPECIALITY } from '../game/levels';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
@@ -202,6 +203,7 @@ function traitLists(id: TribeId): Node[] {
     h('ul', { class: 'traits' },
       item('pro', 'Signature', '', t.bonus),
       ...(SUPPLY_NOTES[id] ? [item('pro', 'No supply lines', '', SUPPLY_NOTES[id]!)] : []), // exempt from supply (see game/army)
+      item('pro', `Speciality: ${SPECIALITY[id].name}`, '', SPECIALITY[id].why), // tile levels (see game/levels)
       ...TRAITS[id].pros.map((p) => item('pro', p.name, p.why, p.perks.map(describePerk).join(' '))),
     ),
     h('h5', { class: 'cons' }, 'Weaknesses'),

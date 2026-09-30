@@ -20,6 +20,7 @@ import { isTraderKind, raidSpots, tradeAi } from './trade';
 import { bridgesBuilt, isRoleUnit, postAt, roleAi, roleTechWant } from './roles';
 import { armyAi, outOfSupply, suppliedAt, supplyExempt } from './army';
 import { auxAi, auxTechWant, isSupport } from './auxiliaries';
+import { levelAi } from './levels';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -74,6 +75,8 @@ export function aiStep(s: GameState): boolean {
     done.add(u.id);
   }
 
+  // Rich after the army and the economy: raise a tile a level (see game/levels).
+  if (levelAi(s, pid)) return true;
   // A World Wonder when rich: begin one, or put the spare stars into the one rising (see game/wonders).
   if (wonderAi(s, pid)) return true;
   // Leftover stars: one more economic pass after units moved.

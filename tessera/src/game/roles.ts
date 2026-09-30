@@ -16,8 +16,8 @@
 //     "Undermine" an enemy city beside them: for UNDERMINE_TURNS turns its walls and garrison bonus count for nothing.
 //  💰 Economy
 //   - Master Builder. Builds a farm, mine, port or market on its own tile or one beside it at half price (rounded up),
-//     and upgrades one into a grand work (farm → Estate, mine → Deep Mine, port → Harbour, market → Bazaar) for
-//     UPGRADE_COST★: +UPGRADE_STARS★ a turn to the city and +UPGRADE_POP population. Each action uses its turn.
+//     and raises an improved tile there to its next level (see game/levels: farm → Estate → Granary Fields...) at half
+//     the price; once per city it may skip the level's tech. Each action uses its turn.
 //   - Tax Collector. "Station Here" in a city: while it stays, the city pays TAX_PCT more Stars (rounded up). Only one
 //     unit can stand on a city tile, so one collector counts per city and never more collectors than cities. Fragile,
 //     and killing it pays a bounty.
@@ -31,7 +31,7 @@
 // stationed in) and `data.militia`; on cities `data.recruiter` (a stationed recruiter raises the unit cap, kept in step
 // by `roleSweep`), `data.rally` (the turn Rally Militia is ready again), `data.mined` (undermined until this turn) and
 // `data.outpost` (founded by a Voyager); on tiles `data.sfort` (a Sappers' fort, the builder's id), `data.bridge` and
-// `data.up` (the improvement kind a Master Builder upgraded; it only counts while that improvement still stands).
+// `data.up` (from older saves: the improvement a Master Builder upgraded; game/levels reads it as level 2).
 //
 // The hooks run through the empire-mechanic framework (see mech/index): ROLE_MECH is called for every living empire,
 // so each hook checks `owner`. The computer players use the units through `roleAi` (called from game/ai).
@@ -50,9 +50,11 @@ import {
 } from './rules';
 import { roadNetwork } from './network';
 import { shipSpawn } from './trade';
-import type { City, GameState, Improvement, Tile, TribeId, Unit, UnitKind } from './types';
+import type { City, GameState, Tile, TribeId, Unit, UnitKind } from './types';
 import { campAt, isLava, isNeutral, nearBeast } from './wild';
 import { wonderOn } from './wonders';
+import { aName, LEVELS, levelGain, levelName, nextLevel, raiseTile, tileLevel } from './levels';
+import { TECH_BY_ID } from '../data/techs';
 
 // ---------------------------------------------------------------- tuning
 
@@ -64,17 +66,12 @@ export const FORT_COST = 2;
 export const FORT_DEF = 1;
 export const BRIDGE_COST = 2;
 export const UNDERMINE_TURNS = 3;
-export const UPGRADE_COST = 8;
-export const UPGRADE_STARS = 1;
-export const UPGRADE_POP = 1;
 export const TAX_PCT = 0.5;
 export const FLEET_STARS = 1;
 export const CATCH: Record<'fish' | 'whale', { stars: number; pop: number }> = { fish: { stars: 2, pop: 1 }, whale: { stars: 5, pop: 1 } };
 export const OUTPOST_GAP = 3;
 /** Stars the killer of a role unit collects. */
 export const BOUNTY: Partial<Record<UnitKind, number>> = { recruiter: 3, collector: 4 };
-/** What a Master Builder turns each improvement into. */
-export const UPGRADES: Partial<Record<Improvement, string>> = { farm: 'Estate', mine: 'Deep Mine', port: 'Harbour', market: 'Bazaar' };
 const BUILDS = ['farm', 'mine', 'port', 'market'];
 
 export const ROLE_KINDS: UnitKind[] = ['recruiter', 'sapper', 'builder', 'collector', 'fishfleet', 'voyager'];
@@ -186,17 +183,13 @@ export const undermined = (s: GameState, c: City) => typeof c.data?.mined === 'n
 export const minedLeft = (s: GameState, c: City) => (undermined(s, c) ? (c.data!.mined as number) - s.turn : 0);
 /** A Sappers' fort (not a Roman castra). */
 export const isSapperFort = (t: Tile) => t.improvement === 'fort' && typeof t.data?.sfort === 'number';
-/** Has a Master Builder upgraded the improvement standing on this tile? */
-export const isUpgraded = (t: Tile) => !!t.improvement && t.data?.up === t.improvement;
-/** The name of a tile's improvement, upgraded or not. */
-export const upgradeName = (t: Tile) => (isUpgraded(t) ? UPGRADES[t.improvement!] : undefined);
-export const upgradesOf = (s: GameState, c: City) => s.tiles.filter((t) => t.owner === c.id && isUpgraded(t)).length;
+/** Has the improvement on this tile been raised to level 2 or 3 (see game/levels)? Drawn as a grand work (see render/roles). */
+export const isUpgraded = (t: Tile) => tileLevel(t) >= 2;
 /** The Tax Collector's share of a city's income `inc` (0 without one). */
 export const taxBonus = (s: GameState, c: City, inc: number) => (postAt(s, c, 'collector') ? Math.ceil(Math.max(0, inc) * TAX_PCT) : 0);
 /** What the role units add to a city's income on top of `inc` (called at the end of rules.cityIncome). */
 export function roleCityIncome(s: GameState, c: City, inc: number, tax: boolean): number {
-  const up = upgradesOf(s, c) * UPGRADE_STARS;
-  return up + (tax ? taxBonus(s, c, inc + up) : 0);
+  return tax ? taxBonus(s, c, inc) : 0;
 }
 /** The Stars a city's Tax Collector brings in a turn right now. */
 export const cityTax = (s: GameState, c: City) => cityIncome(s, c) - cityIncome(s, c, false);
@@ -296,9 +289,13 @@ function unitActs(s: GameState, pid: number, u: Unit): RoleAct[] {
           const reason = base.needs ? base.reason : why(cost, block ?? null);
           push(t, 'build', `${base.label} (½)`, `${base.desc} ${name}: half price; uses its turn.`, cost, base.icon, reason, base.id, base.needs);
         }
-        if (t.improvement && UPGRADES[t.improvement] && !isUpgraded(t)) {
-          const up = UPGRADES[t.improvement]!;
-          push(t, 'upgrade', `Upgrade to ${up}`, `${name} raises a grand ${up}: +${UPGRADE_STARS}★ a turn to the city and +${UPGRADE_POP} population. Uses its turn.`, UPGRADE_COST, 'role:upgrade', why(UPGRADE_COST, hookBlock(s, pid, t.improvement, t) ?? null));
+        // the next level of an improved tile, at half price; once per city it may skip the tech (see game/levels)
+        const n = t.improvement ? nextLevel(s, pid, t, { half: true, skip: true }) : null;
+        if (n) {
+          const up = LEVELS[n.kind].names[n.lvl - 1];
+          const skip = !hasTech(s, pid, n.tech) && !n.needs;
+          const reason = n.needs ? `${n.reason} (${name} already skipped a tech in ${cityById(s, t.owner)?.name})` : why(n.cost, n.reason ?? hookBlock(s, pid, t.improvement!, t) ?? null);
+          push(t, 'upgrade', `Upgrade to ${up} (½)`, `${name} raises it to level ${n.lvl}: ${levelGain(n.kind, n.lvl)}. Half price${skip ? `; skips ${TECH_BY_ID[n.tech].name} (once per city)` : ''}; uses its turn.`, n.cost, 'role:upgrade', reason, undefined, n.needs);
         }
       }
       break;
@@ -412,16 +409,10 @@ export function roleDoAction(s: GameState, pid: number, _t: Tile, id: string): b
       log(s, `${people(s, pid)} ${name} builds a ${arg}.`);
       return used();
     }
-    case 'upgrade': {
-      const c = cityById(s, tg.owner);
-      if (!tg.improvement || !c) return false;
-      tg.data = { ...(tg.data ?? {}), up: tg.improvement };
-      addPop(s, c, UPGRADE_POP);
-      emit({ type: 'harvest', player: pid, x: tg.x, y: tg.y, pop: UPGRADE_POP });
-      emit({ type: 'toast', player: pid, text: `${name} raises a grand ${UPGRADES[tg.improvement]} for ${c.name}: +${UPGRADE_STARS}★ a turn.` });
-      log(s, `${people(s, pid)} ${name} raises a ${UPGRADES[tg.improvement]}.`);
+    case 'upgrade':
+      if (!tg.improvement || !raiseTile(s, pid, tg, true)) return false;
+      log(s, `${people(s, pid)} ${name} raises ${aName(levelName(tg)!)}.`);
       return used();
-    }
     case 'fish': {
       const r = tg.resource;
       const c = nearestCity(s, pid, tg);
@@ -462,7 +453,7 @@ export function rolePreview(s: GameState, u: Unit): string {
     case 'collector':
       return c ? `Stationed in ${c.name}: +${cityTax(s, c)}★ a turn in taxes.` : 'Walk it into one of your cities and Station it there for +50% Stars. Fragile: killing it pays the enemy a bounty.';
     case 'sapper': return 'Lays a road wherever it marches. Build a fort where it stands, a bridge over a shallow beside it (tap the water), or undermine an enemy city beside it.';
-    case 'builder': return 'Tap a tile of yours beside it (or its own) to build there at half price, or to upgrade a farm, mine, port or market.';
+    case 'builder': return 'Tap a tile of yours beside it (or its own) to build there at half price, or to raise an improved tile to its next level at half price (once per city it may skip the tech).';
     case 'fishfleet': return `Earns ${FLEET_STARS}★ a turn at sea. Sail onto fish or whales anywhere to bring in the catch.`;
     case 'voyager': return s.players[u.owner].tribe === 'pirates' ? 'A long-range scout: the Brethren hold no land, so it explores the seas (sees 3 tiles).' : `Explore the seas and found an outpost on an empty unclaimed coast (${Math.max(0, outpostRoom(s, u.owner))} allowed now; one for every 2 cities).`;
   }
@@ -546,7 +537,7 @@ function builderSpots(s: GameState, pid: number): Tile[] {
   const p = s.players[pid];
   return s.tiles.filter((t) => {
     if (tileOwnerPlayer(s, t) !== pid || t.cityId !== null || campAt(s, t.x, t.y)) return false;
-    if (t.improvement) return !!UPGRADES[t.improvement] && !isUpgraded(t);
+    if (t.improvement) return !!nextLevel(s, pid, t, { half: true, skip: true }) && !nextLevel(s, pid, t, { half: true, skip: true })!.needs;
     if (t.resource === 'crop') return hasTech(s, pid, 'farming');
     if (t.resource === 'ore') return hasTech(s, pid, 'mining');
     return t.terrain === 'shallow' && !t.resource && hasTech(s, pid, 'fishing') && p.tribe !== 'polynesia'

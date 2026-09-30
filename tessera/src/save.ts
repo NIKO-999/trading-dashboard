@@ -1,4 +1,5 @@
 import { maxHp } from './game/rules';
+import { migrateLevels } from './game/levels';
 import type { GameState, TribeId } from './game/types';
 
 // Per-device conveniences only: the in-progress game, settings and local high scores.
@@ -28,6 +29,7 @@ export const loadGame = (): GameState | null => {
   if (!s || s.version !== 1 || s.over) return null;
   // older saves could hold units above full health (boats used to inflate it)
   for (const u of s.units) u.hp = Math.min(u.hp, maxHp(u));
+  migrateLevels(s); // a Master Builder's grand works become level-2 tiles (see game/levels)
   return s;
 };
 export const clearSave = () => {

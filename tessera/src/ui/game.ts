@@ -43,7 +43,7 @@ import { adopt, offersOf } from '../game/culture';
 import { knows, wonderDescribe } from '../game/wonders';
 import { WONDER_BY_ID } from '../data/wonders';
 import { celebrateWonder, wonderChip, wonderHud, wondersList } from './wonders';
-import { ChipRow, shortChip, skillChip, unrestChip, type HudLine } from './hudchips';
+import { ChipRow, economyChip, shortChip, skillChip, unrestChip, type HudLine } from './hudchips';
 import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
 import { showDiplomacy, showOffer } from './diplomacy';
 import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isHero } from '../game/heroes';
@@ -52,7 +52,8 @@ import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, tra
 import { tradeList } from './trade';
 import { auxName, auxParts, auxPreview, isAuxKind } from '../game/auxiliaries';
 import { categoryOf } from '../data/tribes';
-import { cityTax, fleetIncome, isRoleKind, isSapperFort, minedLeft, postAt, rallyLeft, RECRUIT_CAP, RECRUIT_DISCOUNT, roleName, roleParts, rolePreview, upgradeName, upgradesOf, UPGRADE_STARS } from '../game/roles';
+import { cityTax, fleetIncome, isRoleKind, isSapperFort, minedLeft, postAt, rallyLeft, RECRUIT_CAP, RECRUIT_DISCOUNT, roleName, roleParts, rolePreview } from '../game/roles';
+import { DISTRICT_STARS, DISTRICTS, districtsOf, levelCityLine, levelDescribe, levelIncome, levelName, tileLevel, upgradeCount } from '../game/levels';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:') || id.startsWith('hero:') || id.startsWith('trade:');
@@ -760,6 +761,8 @@ export class GameView {
     if (hud) lines.push({ key: 'mech', ...(ui?.chip?.(view) ?? { icon: '◆', text: shortChip(hud.textContent ?? '') }), full: hud });
     const skill = this.skillReadout();
     if (skill) lines.push(skill);
+    const econ = this.economyReadout(); // raised tiles and Districts (see game/levels)
+    if (econ) lines.push(econ);
     const openWonders = () => this.openStats(true);
     const wonder = wonderChip(this.s, this.me); // a wonder being raised or held (see ui/wonders)
     if (wonder) lines.push({ key: 'wonder', ...wonder, full: wonderHud(this.s, this.me, openWonders), onTap: openWonders });
@@ -772,6 +775,16 @@ export class GameView {
     }
     this.mechDock.onclick = () => dock.open();
     this.mechDock.replaceChildren(h('span', { class: 'round' }, iconEl(dock.icon as Parameters<typeof iconEl>[0])), h('span', { class: 'dock-label' }, dock.label));
+  }
+
+  /** The Economy chip: Stars a turn from raised tiles, and every District with its bonus, in full. */
+  private economyReadout(): HudLine | null {
+    const s = this.s, me = this.me;
+    const chip = economyChip(s, me);
+    if (!chip) return null;
+    const ds = districtsOf(s, me);
+    const text = `Raised tiles: ${upgradeCount(s, me)}, paying +${levelIncome(s, me)}★ a turn${ds.length ? '' : '. Three touching level-3 tiles of one kind form a District'}`;
+    return { key: 'economy', ...chip, full: h('div', { class: 'skill-hud' }, text, ...ds.map((d) => h('div', {}, h('b', {}, d.name), `: +${DISTRICT_STARS}★ a turn, ${DISTRICTS[d.kind].extra}.`))) };
   }
 
   /** The skill tree's passive states (surging Wildcards, Pax Romana, a fork's cost): a chip, and its full line. */
@@ -983,8 +996,8 @@ export class GameView {
       parts.push(`${roleName(T, 'recruiter')} stationed: units ${RECRUIT_DISCOUNT}★ cheaper, +${RECRUIT_CAP} unit slot, Rally Militia ${left ? `in ${left} turn${left === 1 ? '' : 's'}` : 'ready (when foes are within 3)'}`);
     }
     if (post?.kind === 'collector' && mine) parts.push(`${roleName(T, 'collector')} stationed: +${cityTax(s, city)}★ a turn in taxes (included)`);
-    const ups = upgradesOf(s, city);
-    if (ups && mine) parts.push(`${ups} grand work${ups === 1 ? '' : 's'}: +${ups * UPGRADE_STARS}★ a turn`);
+    const lv = levelCityLine(s, city); // raised tiles and Districts (see game/levels)
+    if (lv && mine) parts.push(lv);
     if (minedLeft(s, city)) parts.push(`Undermined: walls and garrison bonus down for ${minedLeft(s, city)} turn${minedLeft(s, city) === 1 ? '' : 's'}`);
     if (city.data?.outpost) parts.push('An outpost founded by a Voyager');
     return parts.length ? h('div', { class: 'small role-line' }, parts.join(' · ')) : null;
@@ -1654,7 +1667,11 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
   const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra' };
   // the role units' works (see game/roles): a Sappers' fort, a Master Builder's grand work, a bridge
   if (isSapperFort(t)) return { title: 'Fort', desc: `Raised by ${TRIBES[s.players[t.data!.sfort as number].tribe].people} sappers: their units here defend +1. ${where}` };
-  if (upgradeName(t)) return { title: upgradeName(t)!, desc: `A grand ${imp[t.improvement!]?.toLowerCase() ?? 'work'} raised by a Master Builder: +${UPGRADE_STARS}★ a turn to its city. ${terrain[t.terrain]}. ${where}` };
+  // a raised tile (see game/levels): its level, and what the next one gives, for what and when
+  if (tileLevel(t) >= 2 || (tileLevel(t) === 1 && owner === viewer)) {
+    const title = tileLevel(t) === 1 && t.improvement === 'temple' && t.terrain !== 'field' ? (t.terrain === 'forest' ? 'Grove Shrine' : 'Mountain Shrine') : levelName(t)!;
+    return { title, desc: `${levelDescribe(s, t, viewer)} ${terrain[t.terrain]}. ${where}` };
+  }
   if (t.terrain === 'bridge') return { title: 'Bridge', desc: `A wooden bridge over the shallows: land units walk over it (a road); ships can no longer pass. ${where}` };
   if (t.village) return { title: 'Village', desc: 'Move a unit here, then claim it next turn to found a city.' };
   if (t.ruin) return { title: 'Ancient Ruins', desc: 'Step on them to discover what was left behind.' };

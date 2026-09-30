@@ -11,9 +11,10 @@ import { endTurn, startTurn } from '../src/game/turn';
 import type { GameState, TribeId, Unit, UnitKind } from '../src/game/types';
 import {
   BOUNTY, BRIDGE_COST, RECRUIT_DISCOUNT, CATCH, cityTax, FLEET_STARS, FORT_COST, FORT_DEF, isSapperFort, isUpgraded, outpostRoom, RALLY_COOLDOWN, ROLE_KINDS, ROLE_NAMES, roleKindsOf, roleName,
-  roleParts, UNDERMINE_TURNS, UPGRADE_COST, UPGRADE_STARS,
+  roleParts, UNDERMINE_TURNS,
 } from '../src/game/roles';
 import { UNITS } from '../src/data/units';
+import { LEVEL_COST, LEVELS, tileLevel } from '../src/game/levels';
 import { CATEGORIES, TRIBE_IDS, TRIBES } from '../src/data/tribes';
 import { drawUnitSprite } from '../src/render/units';
 import { drawBridgeGround, drawRoleGround, drawRoleIcon, drawRoleTile } from '../src/render/roles';
@@ -172,8 +173,8 @@ test('Sappers: roads as they march, forts, bridges and undermined walls (Rome’
   assert.equal(garrisonBonus(s, enemy), 4, 'the walls stand again');
 });
 
-test('Master Builder: half-price builds beside it, and upgrades that pay a Star a turn', () => {
-  const s = sandbox(['egypt', 'rome']);
+test('Master Builder: half-price builds beside it, and half-price level upgrades that pay a Star a turn', () => {
+  const s = sandbox(['india', 'rome']);
   const c = foundCity(s, 4, 4, 0, true);
   const b = unit(s, 0, 'builder', 5, 5, c.id);
   tile(s, 5, 4).resource = 'crop';
@@ -195,15 +196,17 @@ test('Master Builder: half-price builds beside it, and upgrades that pay a Star 
   tile(s, 4, 5).terrain = 'shallow';
   const port = acts(s, 0, 4, 5).find((a) => a.id.endsWith(':port'))!;
   assert.equal(port.cost, 4);
-  // upgrade the farm into an Estate: +UPGRADE_STARS a turn and a little growth
+  // raise the farm to an Estate (level 2, see game/levels) at half price: +1★ a turn and a little growth
   const inc = cityIncome(s, c);
   const st = s.players[0].stars;
   const up = find(s, 0, 5, 4, 'upgrade')!;
-  assert.equal(up.label, 'Upgrade to Estate ↗', 'an arrow points to the tile beside the builder');
+  assert.equal(up.label, 'Upgrade to Estate (½) ↗', 'an arrow points to the tile beside the builder');
+  assert.equal(up.cost, Math.ceil(LEVEL_COST[2] / 2));
   assert.ok(doAction(s, 0, tile(s, 5, 4), up.id));
-  assert.equal(s.players[0].stars, st - UPGRADE_COST);
+  assert.equal(s.players[0].stars, st - Math.ceil(LEVEL_COST[2] / 2));
   assert.ok(isUpgraded(tile(s, 5, 4)));
-  assert.equal(cityIncome(s, c), inc + UPGRADE_STARS);
+  assert.equal(tileLevel(tile(s, 5, 4)), 2);
+  assert.equal(cityIncome(s, c), inc + LEVELS.farm.stars[1]);
   // it counts only while the farm stands
   tile(s, 5, 4).improvement = null;
   assert.equal(cityIncome(s, c), inc);
@@ -371,7 +374,7 @@ test('a 30-turn all-AI game: every type trains and uses its role units', () => {
       drain();
     }
     assert.ok(s.over);
-    for (const l of s.log) for (const [k, re] of [['station', /stationed in/], ['rally', /rally militia/], ['fort', /raise a fort/], ['bridge', /bridge the/], ['undermine', / undermine /], ['build', /builds a /], ['upgrade', /raises a /], ['outpost', /found an outpost/]] as const) if (re.test(l.text)) used[k] = (used[k] ?? 0) + 1;
+    for (const l of s.log) for (const [k, re] of [['station', /stationed in/], ['rally', /rally militia/], ['fort', /raise a fort/], ['bridge', /bridge the/], ['undermine', / undermine /], ['build', /builds a /], ['upgrade', /raises an? /], ['outpost', /found an outpost/]] as const) if (re.test(l.text)) used[k] = (used[k] ?? 0) + 1;
     JSON.parse(JSON.stringify(s));
   }
   assert.ok(trained.size >= 5, `role units trained: ${[...trained].join(', ')}`);
