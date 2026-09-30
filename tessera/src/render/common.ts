@@ -69,4 +69,8 @@ export interface Overlay {
   glow: Set<number>; // tiles (y*size+x) holding something the viewer can harvest right now
   fx: Fx;
   now: number;
+  /** Drawing a still picture of the map (the photo display): units rest without idle motion, and the live screen's tap areas are left alone. */
+  still?: boolean;
+  /** The living layer (see render/living) shows the moving parts as sharp page elements: units with their badges and buttons, water life and banners are left out. */
+  living?: boolean;
 }

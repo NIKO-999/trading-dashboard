@@ -15,18 +15,18 @@ import { drawWildOverlay, WILD_COLOR } from './wild';
 import { isRogueCity, isRogueUnit, rogueLook } from '../game/rebels';
 import { drawRebelOverlay, drawUnrestBadge, REBEL_COLOR } from './rebels';
 
-interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
+export interface Motion { x: number; y: number; lift: number; sx: number; sy: number; facing: number; water: boolean }
 
 const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 
-function ground(s: GameState, x: number, y: number) {
+export function ground(s: GameState, x: number, y: number) {
   const c = tileCenter(x, y);
   const t = tileAt(s, x, y);
   return { x: c.x, y: c.y + (t && isWaterTile(t) ? WATER_DROP - 1 : 0), water: !!t && isWaterTile(t) };
 }
 
-/** Where a unit is drawn right now: walking its path, lunging, bobbing on water or idling. */
-export function unitMotion(s: GameState, u: Unit, fx: Fx, now: number, ready: boolean): Motion {
+/** Where a unit is drawn right now: walking its path, lunging, bobbing on water or idling (`idle` off: at rest, as in a still picture). */
+export function unitMotion(s: GameState, u: Unit, fx: Fx, now: number, ready: boolean, idle = true): Motion {
   let p = ground(s, u.x, u.y);
   let lift = 0, sx = 1, sy = 1;
   const mv = fx.moves.get(u.id);
@@ -65,7 +65,7 @@ export function unitMotion(s: GameState, u: Unit, fx: Fx, now: number, ready: bo
       sx *= 1 + Math.sin(Math.PI * k) * 0.06;
     }
   }
-  if (!REDUCED_MOTION) {
+  if (!REDUCED_MOTION && idle) {
     if (p.water) p = { ...p, y: p.y + Math.sin(now / 520 + u.id) * 1.2 };
     else if (ready && !mv) lift += (Math.sin(now / 380 + u.id * 1.7) + 1) * 0.9;
   }
@@ -94,14 +94,9 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
 
   drawSelection(ctx, s, ov, now, explored);
 
-  const units = s.units
-    .filter((u) => explored(u.x, u.y) && onScreen(tileCenter(u.x, u.y)) && (viewer < 0 || unitVisibleTo(s, viewer, u)))
-    .sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+  const units = shownUnits(s, viewer, cam, vw, vh);
   const motion = new Map<number, Motion>();
-  for (const u of units) {
-    const ready = u.owner === viewer && s.current === viewer && !u.moved;
-    motion.set(u.id, unitMotion(s, u, fx, now, ready));
-  }
+  for (const u of units) motion.set(u.id, unitMotion(s, u, fx, now, unitReady(s, u, viewer), !ov.still));
   // Zoomed far out, units are drawn a little larger than the map so they don't shrink to specks.
   const us = unitScale(cam.zoom);
   // ground shadows first so no unit's shadow lands on another unit
@@ -114,13 +109,13 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   ctx.restore();
 
   // City labels go under the units, so a unit standing in front of a city is never hidden.
-  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen, now);
+  drawCityLabels(ctx, s, viewer, cam, dpr, explored, onScreen, now, !ov.still);
 
   ctx.save();
   ctx.translate(cam.x, cam.y);
   ctx.scale(cam.zoom, cam.zoom);
   const pxScale = us * cam.zoom * dpr;
-  for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact, us);
+  if (!ov.living) for (const u of units) drawUnit(ctx, s, u, motion.get(u.id)!, ov, viewer, pxScale, exact, us);
 
   for (const g of fx.ghosts) {
     const k = (now - g.t0) / GHOST_MS;
@@ -156,7 +151,7 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
   }
   for (const m of Object.values(MECH_RENDER)) m?.overlay?.(ctx, s, viewer, cam, ov, now);
   drawWildOverlay(ctx, s, viewer, cam, ov, now); // smoke, lava glow, the Kraken's arms (see game/wild)
-  drawRebelOverlay(ctx, s, viewer, now); // the Rogue States' war banners (see game/rebels)
+  if (!ov.living) drawRebelOverlay(ctx, s, viewer, now); // the Rogue States' war banners (see game/rebels)
   ctx.restore();
 
   drawScreenOverlay(ctx, s, viewer, cam, ov, dpr, units, motion);
@@ -164,13 +159,30 @@ export function drawDynamic(ctx: Ctx, s: GameState, viewer: number, cam: Camera,
 
 // ---------------------------------------------------------------- units
 
+/** The units drawn on screen, back to front: explored, visible to the viewer and near the view. */
+export function shownUnits(s: GameState, viewer: number, cam: Camera, vw: number, vh: number): Unit[] {
+  const w0 = cam.toWorld(-90, -140), w1 = cam.toWorld(vw + 90, vh + 140);
+  return s.units
+    .filter((u) => {
+      if (viewer >= 0 && !s.players[viewer].explored[u.y * s.size + u.x]) return false;
+      const p = tileCenter(u.x, u.y);
+      return p.x > w0.x && p.x < w1.x && p.y > w0.y && p.y < w1.y && (viewer < 0 || unitVisibleTo(s, viewer, u));
+    })
+    .sort((a, b) => a.x + a.y - (b.x + b.y) || a.x - b.x);
+}
+
+/** A unit of the viewer's that can still move this turn: it idles (breathes) while it waits. */
+export const unitReady = (s: GameState, u: Unit, viewer: number) => u.owner === viewer && s.current === viewer && !u.moved;
+/** A unit of the viewer's that has done everything this turn: drawn greyed out. */
+export const unitSpent = (s: GameState, u: Unit, viewer: number) => u.owner === viewer && s.current === viewer && u.moved && u.attacked;
+
 /** World units per unit-art unit: the normal size, growing a little (up to 22%) when zoomed far out. */
 export const unitScale = (zoom: number) => UNIT_SCALE * (zoom < 1 ? Math.min(1.22, Math.pow(1 / zoom, 0.28)) : 1);
 
 function drawUnit(ctx: Ctx, s: GameState, u: Unit, m: Motion, ov: Overlay, viewer: number, pxScale: number, exact: boolean, us: number) {
   const now = ov.now;
   const tribe = rogueLook(s, u) ?? s.players[u.owner].tribe; // rebels wear their own people's colours (see game/rebels)
-  const spent = u.owner === viewer && s.current === viewer && u.moved && u.attacked;
+  const spent = unitSpent(s, u, viewer);
   const fl = ov.fx.flashes.get(u.id);
   const flashK = fl === undefined ? -1 : (now - fl) / FLASH_MS;
   const flashing = flashK >= 0 && flashK <= 1;
@@ -229,18 +241,45 @@ export function drawWaterLife(ctx: Ctx, s: GameState, viewer: number, cam: Camer
     const c = tileCenter(t.x, t.y);
     if (!onScreen(c)) continue;
     const cy = c.y + WATER_DROP;
+    if (ov.living) {
+      // the fish, whales and glints swim in the living layer; only the whale's still ring stays in the picture
+      if (t.resource === 'whale') whaleRing(ctx, c.x, cy);
+      continue;
+    }
     if (t.resource === 'fish') drawFishSchool(ctx, t, c.x, cy, t0);
     else if (t.resource === 'whale') drawWhale(ctx, t, c.x, cy, t0);
     // a glint that twinkles now and then
-    const tw = Math.pow(Math.max(0, Math.sin(t0 / 700 + t.seed)), 12);
+    const tw = glintAlpha(t0, t.seed);
     if (tw > 0.02) {
-      const g = uv(c.x, cy, rand(t.seed, 31) * 0.6 - 0.3, rand(t.seed, 32) * 0.6 - 0.3);
+      const g = glintAt(t, c.x, cy);
       ctx.globalAlpha = tw;
-      poly(ctx, [g.x, g.y - 3.2, g.x + 0.8, g.y - 0.6, g.x + 3.2, g.y, g.x + 0.8, g.y + 0.6, g.x, g.y + 3.2, g.x - 0.8, g.y + 0.6, g.x - 3.2, g.y, g.x - 0.8, g.y - 0.6], '#ffffff');
+      drawGlint(ctx, g.x, g.y);
       ctx.globalAlpha = 1;
     }
   }
   ctx.restore();
+}
+
+/** How bright a water tile's glint is at time `now` (it flashes briefly every ~4.4 s). */
+export const glintAlpha = (now: number, seed: number) => Math.pow(Math.max(0, Math.sin(now / 700 + seed)), 12);
+/** Where on a water tile (top-face centre (cx, cy)) its glint twinkles. */
+export const glintAt = (t: Tile, cx: number, cy: number) => uv(cx, cy, rand(t.seed, 31) * 0.6 - 0.3, rand(t.seed, 32) * 0.6 - 0.3);
+/** A four-pointed white glint centred on (x, y). */
+export function drawGlint(ctx: Ctx, x: number, y: number) {
+  poly(ctx, [x, y - 3.2, x + 0.8, y - 0.6, x + 3.2, y, x + 0.8, y + 0.6, x, y + 3.2, x - 0.8, y + 0.6, x - 3.2, y, x - 0.8, y - 0.6], '#ffffff');
+}
+
+/** The shape of a tile's fish school: its loop around the tile, its speed and direction, and its fish. */
+export function fishSchool(t: Tile) {
+  const dir = rand(t.seed, 201) < 0.5 ? 1 : -1;
+  return {
+    dir,
+    rate: (0.45 + rand(t.seed, 202) * 0.15) * dir, // radians a second around the loop
+    spin0: rand(t.seed, 203) * 6.28,
+    ou: rand(t.seed, 204) * 0.08 - 0.04, ov: rand(t.seed, 205) * 0.08 - 0.04,
+    ru: 0.26 + rand(t.seed, 206) * 0.04, rv: 0.17 + rand(t.seed, 207) * 0.03,
+    sizes: [0, 1, 2].map((i) => 0.8 + rand(t.seed, 260 + i) * 0.2),
+  };
 }
 
 const LEAP_MS = 760;
@@ -252,13 +291,9 @@ const LEAP_ARC = 1.5; // how far round its loop a leaping fish lands (radians)
  */
 function drawFishSchool(ctx: Ctx, t: Tile, cx: number, cy: number, now: number) {
   const [body, back] = FISH[t.biome];
-  const P = TRIBES[t.biome].palette;
-  const water = t.terrain === 'shallow' ? P.shallow : P.ocean;
-  const dir = rand(t.seed, 201) < 0.5 ? 1 : -1;
-  const rate = (0.45 + rand(t.seed, 202) * 0.15) * dir; // radians a second around the loop
-  const spin = (now / 1000) * rate + rand(t.seed, 203) * 6.28;
-  const ou = rand(t.seed, 204) * 0.08 - 0.04, ov = rand(t.seed, 205) * 0.08 - 0.04;
-  const ru = 0.26 + rand(t.seed, 206) * 0.04, rv = 0.17 + rand(t.seed, 207) * 0.03;
+  const water = waterColor(t);
+  const { dir, rate, spin0, ou, ov, ru, rv, sizes } = fishSchool(t);
+  const spin = (now / 1000) * rate + spin0;
   // the leap: which fish, and where along its loop it happens
   const period = 6000 + rand(t.seed, 208) * 3000;
   const clock = now + rand(t.seed, 209) * period;
@@ -278,7 +313,7 @@ function drawFishSchool(ctx: Ctx, t: Tile, cx: number, cy: number, now: number) 
   for (let i = 0; i < 3; i++) {
     const ph = spin + (i * Math.PI * 2) / 3;
     const wob = 1 + Math.sin(now / 900 + i * 2.1 + t.seed) * 0.08;
-    const k = 0.8 + rand(t.seed, 260 + i) * 0.2;
+    const k = sizes[i];
     const at = (a: number) => uv(cx, cy, ou + Math.cos(a) * ru * wob, ov + Math.sin(a) * rv * wob);
     // it jumps LEAP_ARC ahead along its loop, then stays under until the loop catches up with
     // where it splashed down, so it resurfaces exactly there
@@ -423,31 +458,54 @@ export function drawFish(ctx: Ctx, x: number, y: number, heading: number, body: 
   ctx.restore();
 }
 
+/** The colour of a water tile's surface. */
+export const waterColor = (t: Tile) => (t.terrain === 'shallow' ? TRIBES[t.biome].palette.shallow : TRIBES[t.biome].palette.ocean);
+
+/** How far a whale has risen out of the water (world units) at time `now`. */
+export const whaleRise = (now: number, seed: number) => Math.sin(now / 1100 + seed) * 1.6;
+/** How far a whale's flukes are lifted (world units) at time `now`. */
+export const whaleTail = (now: number, seed: number) => Math.sin(now / 500 + seed) * 2;
+/** A whale spouts every few seconds. */
+export const WHALE_SPOUT_MS = 3600;
+/** How far through its spout a whale is: 0..1 while spouting, -1 between spouts. */
+export function whaleSpout(now: number, seed: number) {
+  const k = ((now + seed * 53) % WHALE_SPOUT_MS) / WHALE_SPOUT_MS;
+  return k < 0.35 ? k / 0.35 : -1;
+}
+
 function drawWhale(ctx: Ctx, t: Tile, x: number, y: number, now: number) {
-  const rise = Math.sin(now / 1100 + t.seed) * 1.6;
-  const wy = y + 3 - rise;
+  const wy = y + 3 - whaleRise(now, t.seed);
+  whaleRing(ctx, x, y);
+  whaleBody(ctx, x, wy, whaleTail(now, t.seed));
+  const q = whaleSpout(now, t.seed);
+  if (q >= 0) whaleSpoutAt(ctx, x, wy, q);
+}
+
+/** The still ring of ripples round a whale (water tile's top-face centre at (x, y)). */
+export function whaleRing(ctx: Ctx, x: number, y: number) {
   ctx.strokeStyle = 'rgba(255,255,255,0.45)';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.ellipse(x, y + 4, 18, 6, 0, 0, Math.PI * 2);
   ctx.stroke();
+}
+
+/** A whale's back and tail centred on (x, wy); `tail` lifts the flukes. */
+export function whaleBody(ctx: Ctx, x: number, wy: number, tail: number) {
   ellipse(ctx, x, wy, 15, 5.6, '#25344f');
   ellipse(ctx, x - 2, wy - 2.2, 11, 3, '#3d5378');
   ellipse(ctx, x - 5, wy - 2.8, 4, 1.2, '#5a739c');
-  const tail = Math.sin(now / 500 + t.seed) * 2;
   poly(ctx, [x + 13, wy - 1, x + 21, wy - 7 + tail, x + 17.5, wy - 1.5, x + 21, wy + 3 + tail], '#25344f');
-  // spout every few seconds
-  const period = 3600;
-  const k = ((now + t.seed * 53) % period) / period;
-  if (k < 0.35) {
-    const q = k / 0.35;
-    ctx.globalAlpha = 1 - q;
-    for (let i = -2; i <= 2; i++) {
-      const dx = i * 2.2 * q, h = 14 * Math.sin(Math.PI * Math.min(1, q * 1.4)) * (1 - Math.abs(i) * 0.15);
-      ellipse(ctx, x - 7 + dx * 2, wy - 5 - h, 1.4, 1.4, '#eaf8ff');
-    }
-    ctx.globalAlpha = 1;
+}
+
+/** A whale's spout, `q` (0..1) of the way through, over a whale centred on (x, wy). */
+export function whaleSpoutAt(ctx: Ctx, x: number, wy: number, q: number) {
+  ctx.globalAlpha = 1 - q;
+  for (let i = -2; i <= 2; i++) {
+    const dx = i * 2.2 * q, h = 14 * Math.sin(Math.PI * Math.min(1, q * 1.4)) * (1 - Math.abs(i) * 0.15);
+    ellipse(ctx, x - 7 + dx * 2, wy - 5 - h, 1.4, 1.4, '#eaf8ff');
   }
+  ctx.globalAlpha = 1;
 }
 
 // ---------------------------------------------------------------- selection
@@ -654,7 +712,7 @@ function drawParticle(ctx: Ctx, p: Fx['particles'][number], now: number) {
 // ---------------------------------------------------------------- screen-space overlay
 
 /** How big city labels and health badges are drawn, and how much a label shows, at this zoom. */
-function overlayScale(zoom: number) {
+export function overlayScale(zoom: number) {
   // They shrink with the map (more slowly, so they stay legible) and show less further out: the
   // full label close up, name and population in the middle distance, just the name far out,
   // where only wounded units keep their health badge.
@@ -678,20 +736,36 @@ const BUBBLE_COLORS: Record<BubbleKind, [string, string]> = { attack: ['#8fd4ff'
 
 /** Round pin-shaped buttons above the selected unit showing what it can do: strike, heal or claim. */
 function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], motion: Map<number, Motion>, k: number, us: number, snap: (v: number) => number) {
-  bubbleRects = [];
+  const spots = bubbleSpots(ov, cam, units, motion, k, us);
+  const rects: typeof bubbleRects = [];
+  if (!ov.still) bubbleRects = rects; // a still picture keeps the live screen's tap areas
+  for (const b of spots) {
+    const cx = snap(b.x), cy = snap(b.y + Math.sin(ov.now / 380) * 1.6 * k);
+    if (!ov.living) drawBubble(ctx, b.kind, b.off, cx, cy, b.r, k);
+    rects.push({ kind: b.kind, x: cx, y: cy, r: b.r });
+  }
+}
+
+/** Where the selected unit's action bubbles go (screen space, before their bob), left to right. */
+export function bubbleSpots(ov: Overlay, cam: Camera, units: Unit[], motion: Map<number, Motion>, k: number, us: number) {
   const kinds = ov.bubbles;
-  if (!kinds?.length || !ov.selected) return;
+  if (!kinds?.length || !ov.selected) return [];
   const u = units.find((v) => v.x === ov.selected!.x && v.y === ov.selected!.y);
   const m = u && motion.get(u.id);
-  if (!u || !m) return;
+  if (!u || !m) return [];
   const R = 15 * k, gap = 5 * k;
   const total = kinds.length * R * 2 + (kinds.length - 1) * gap;
   const tip = cam.toScreen(m.x, m.y - m.lift - 40 * us / 1.3);
-  const bob = Math.sin(ov.now / 380) * 1.6 * k;
-  kinds.forEach((kind, i) => {
-    const cx = snap(tip.x - total / 2 + R + i * (R * 2 + gap));
-    const cy = snap(tip.y - R - 27 * k + bob); // well clear of the tile above the unit, which a tap may be aiming for
-    const off = !!ov.bubblesOff?.includes(kind);
+  return kinds.map((kind, i) => ({
+    unit: u, kind, off: !!ov.bubblesOff?.includes(kind), r: R,
+    x: tip.x - total / 2 + R + i * (R * 2 + gap),
+    y: tip.y - R - 27 * k, // well clear of the tile above the unit, which a tap may be aiming for
+  }));
+}
+
+/** One action bubble centred on (cx, cy) with radius R; `off` greys it out. */
+export function drawBubble(ctx: Ctx, kind: BubbleKind, off: boolean, cx: number, cy: number, R: number, k: number) {
+  {
     const [hi, lo] = off ? ['#cfd4dc', '#8d95a3'] : BUBBLE_COLORS[kind];
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
@@ -718,8 +792,7 @@ function drawActionBubbles(ctx: Ctx, ov: Overlay, cam: Camera, units: Unit[], mo
     ctx.globalAlpha = off ? 0.8 : 1;
     drawBubbleIcon(ctx, kind, cx, cy, R * 0.55);
     ctx.globalAlpha = 1;
-    bubbleRects.push({ kind, x: cx, y: cy, r: R });
-  });
+  }
 }
 
 function drawBubbleIcon(ctx: Ctx, kind: BubbleKind, x: number, y: number, s: number) {
@@ -803,17 +876,18 @@ export function unitAtScreen(s: GameState, viewer: number, cam: Camera, sx: numb
   return best;
 }
 
-function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean, now: number) {
+function drawCityLabels(ctx: Ctx, s: GameState, viewer: number, cam: Camera, dpr: number, explored: (x: number, y: number) => boolean, onScreen: (p: Pt) => boolean, now: number, record: boolean) {
   const snap = (v: number) => Math.round(v * dpr) / dpr;
   const { k, detail } = overlayScale(cam.zoom);
-  labelRects = [];
+  const rects: typeof labelRects = [];
+  if (record) labelRects = rects;
   for (const c of s.cities) {
     const p = tileCenter(c.x, c.y);
     if (!explored(c.x, c.y) || !onScreen(p) || !cityVisibleTo(s, viewer, c)) continue;
     const sp = cam.toScreen(p.x, p.y + 12);
     const r = drawCityLabel(ctx, s, c, snap(sp.x), snap(sp.y), k, snap, detail);
     if (c.owner === viewer) drawUnrestBadge(ctx, s, c, r, k, now); // a restless conquered city (see game/rebels)
-    labelRects.push({ id: c.id, ...r });
+    rects.push({ id: c.id, ...r });
   }
 }
 
@@ -823,14 +897,11 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
   const { k, kh, detail } = overlayScale(cam.zoom);
   const us = unitScale(cam.zoom);
 
-  for (const u of units) {
-    const m = motion.get(u.id)!;
-    const hold = ov.fx.hpHold.get(u.id);
-    const hp = hold && ov.now < hold.until ? hold.hp : u.hp;
-    const selected = ov.selected?.x === u.x && ov.selected?.y === u.y;
-    if (detail === 'name' && hp >= maxHp(u) && !selected) continue;
-    const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
-    drawHpBadge(ctx, s, u, snap(sp.x), snap(sp.y), kh, hp);
+  if (!ov.living) {
+    for (const u of units) {
+      const b = hpBadge(s, u, ov, cam, motion.get(u.id)!, detail, kh, us);
+      if (b) drawHpBadge(ctx, b.color, b.hp, b.low, b.veteran, snap(b.x), snap(b.y), kh);
+    }
   }
   drawActionBubbles(ctx, ov, cam, units, motion, k, us, snap);
   for (const f of ov.fx.floaters) {
@@ -855,7 +926,7 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
   }
 }
 
-type LabelDetail = 'full' | 'mid' | 'name';
+export type LabelDetail = 'full' | 'mid' | 'name';
 
 function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail): { x0: number; y0: number; x1: number; y1: number } {
   const T = { color: isRogueCity(s, c) ? REBEL_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
@@ -956,8 +1027,19 @@ function drawPopulation(ctx: Ctx, c: City, x: number, by: number, k: number, sna
   }
 }
 
-function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, k: number, shownHp: number) {
+/** A unit's health badge, if it shows at this zoom: its look and where it goes (screen space). */
+export function hpBadge(s: GameState, u: Unit, ov: Overlay, cam: Camera, m: Motion, detail: LabelDetail, kh: number, us: number) {
+  const hold = ov.fx.hpHold.get(u.id);
+  const hp = Math.ceil(hold && ov.now < hold.until ? hold.hp : u.hp);
+  const selected = ov.selected?.x === u.x && ov.selected?.y === u.y;
+  if (detail === 'name' && hp >= maxHp(u) && !selected) return null;
+  const sp = cam.toScreen(m.x - 18 * us / 1.3, m.y - m.lift - 36 * us / 1.3);
   const color = isRogueUnit(s, u) ? REBEL_COLOR : s.players[u.owner].neutral ? WILD_COLOR : TRIBES[s.players[u.owner].tribe].color;
+  return { x: sp.x, y: sp.y, color, hp, low: hp <= maxHp(u) * 0.35, veteran: !!u.veteran, k: kh };
+}
+
+/** A shield-shaped health badge centred on (x, y): `low` shows the number in red, `veteran` adds a star. */
+export function drawHpBadge(ctx: Ctx, color: string, hp: number, low: boolean, veteran: boolean, x: number, y: number, k: number) {
   const w = 16 * k, h = 18 * k;
   const shield = (ox: number, oy: number) => {
     ctx.beginPath();
@@ -981,12 +1063,11 @@ function drawHpBadge(ctx: Ctx, s: GameState, u: Unit, x: number, y: number, k: n
   ctx.lineWidth = 2.2 * k;
   ctx.lineJoin = 'round';
   ctx.stroke();
-  const hp = Math.ceil(shownHp);
-  ctx.fillStyle = hp <= maxHp(u) * 0.35 ? '#d62828' : '#1d1d24';
+  ctx.fillStyle = low ? '#d62828' : '#1d1d24';
   ctx.font = `700 ${Math.round((hp >= 10 ? 10 : 11) * k)}px ${FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(hp), x, y + 0.5 * k);
   ctx.textBaseline = 'alphabetic';
-  if (u.veteran) drawStar(ctx, x, y - h / 2 - 4 * k, 4.5 * k);
+  if (veteran) drawStar(ctx, x, y - h / 2 - 4 * k, 4.5 * k);
 }

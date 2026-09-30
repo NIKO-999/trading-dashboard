@@ -18,7 +18,9 @@ import { perkRange } from '../game/perks';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
-import { renderDpr, setSharpness } from '../render/common';
+import { REDUCED_MOTION, renderDpr, setSharpness } from '../render/common';
+import { livingScene } from '../render/living';
+import { LivingLayer, picturePlace } from './living';
 import { setCrispArt } from '../render/prims';
 import { clearSpriteCache, isDirectDraw, setDirectDraw } from '../render/sprites';
 import { WILD_COLOR } from '../render/wild';
@@ -149,7 +151,8 @@ export class GameView {
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.ro);
     window.visualViewport?.removeEventListener('resize', this.ro);
-    this.photoImg.remove();
+    for (const img of this.photoImgs) img.remove();
+    this.living.destroy();
     if (this.photoUrl) URL.revokeObjectURL(this.photoUrl);
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -227,16 +230,21 @@ export class GameView {
    * Photo display. iOS shows a live canvas soft but a picture pin-sharp, so the map is shown as a
    * picture: one a little larger than the screen, slid (and, while pinching, scaled) with the camera
    * as you scroll, and retaken whenever the view settles or the game changes. The live canvas stays
-   * underneath for the moments a fresh picture isn't ready yet.
+   * underneath for the moments a fresh picture isn't ready yet. What moves on its own at rest (units
+   * breathing, fish, glints, banners) is left out of the picture and shown by the living layer on top
+   * (see ui/living). Two picture elements take turns, so a new picture and its living layer appear
+   * together, once both are ready.
    */
-  private photoImg = (() => {
+  private photoImgs = [0, 1].map(() => {
     const img = document.createElement('img');
     img.alt = '';
     img.draggable = false;
     img.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;visibility:hidden;transform-origin:0 0;will-change:transform;';
     document.getElementById('game')!.after(img);
     return img;
-  })();
+  });
+  private photoImg = this.photoImgs[0]; // the one on screen
+  private living = new LivingLayer(this.photoImgs[0]); // after both pictures (each went in straight after the canvas)
   private photoRenderer = new WorldRenderer();
   private photoCanvas = document.createElement('canvas');
   private photoValid = false; // the picture shows the current game state
@@ -248,18 +256,18 @@ export class GameView {
   private hidePhoto() {
     this.photoValid = false;
     this.photoImg.style.visibility = 'hidden';
+    this.living.place(this.cam, this.dpr, false, this.version);
   }
 
   /** Slides the picture to where the camera now is; hides it if it no longer covers the screen. */
   private placePhoto() {
     if (!this.photoValid) return;
     const P = this.photoAt;
-    const k = this.cam.zoom / P.zoom;
-    const snap = (v: number) => Math.round(v * this.dpr) / this.dpr; // whole device pixels keep it sharp
-    const left = snap(this.cam.x - k * (P.x + P.mx)), top = snap(this.cam.y - k * (P.y + P.my));
+    const { left, top, k, transform } = picturePlace(P, this.cam, this.dpr);
     const covers = left <= 0.5 && top <= 0.5 && left + k * P.w >= this.vw - 0.5 && top + k * P.h >= this.vh - 0.5;
-    this.photoImg.style.transform = Math.abs(k - 1) < 1e-6 ? `translate(${left}px, ${top}px)` : `translate(${left}px, ${top}px) scale(${k})`;
+    this.photoImg.style.transform = transform;
     this.photoImg.style.visibility = covers ? 'visible' : 'hidden';
+    this.living.place(this.cam, this.dpr, covers, this.version);
     // retake before the edge shows: once less than 40% of the spare border is left
     const slack = Math.min(-left, -top, left + k * P.w - this.vw, top + k * P.h - this.vh);
     this.photoCovers = covers && slack > Math.min(P.mx, P.my) * 0.4;
@@ -267,7 +275,7 @@ export class GameView {
   private photoCovers = false;
   private photoTakenAt = 0;
 
-  private takePhoto() {
+  private async takePhoto() {
     this.photoBusy = true;
     this.photoTakenAt = performance.now();
     this.photoWanted = false;
@@ -282,25 +290,39 @@ export class GameView {
     lc.x = this.cam.x + mx;
     lc.y = this.cam.y + my;
     lc.zoom = this.cam.zoom;
-    this.photoRenderer.render(pctx, this.s, this.me, lc, this.ov, W, H, this.dpr, this.version, false);
+    // with motion allowed, the moving parts go in the living layer instead of the picture
+    const living = !REDUCED_MOTION;
+    this.photoRenderer.render(pctx, this.s, this.me, lc, { ...this.ov, still: true, living }, W, H, this.dpr, this.version, false);
+    const scene = living ? livingScene(this.s, this.me, lc, this.ov, W, H, this.dpr) : null;
     const at = { x: this.cam.x, y: this.cam.y, zoom: this.cam.zoom, mx, my, w: W, h: H, version: this.version };
-    pc.toBlob((blob) => {
-      this.photoBusy = false;
-      if (!blob || this.destroyed || this.settings.display !== 'image') return;
+    const current = () => !this.destroyed && this.settings.display === 'image' && this.version === at.version;
+    try {
+      const blob = await new Promise<Blob | null>((done) => pc.toBlob(done, 'image/png'));
+      if (!blob || !current()) { this.photoWanted = !this.destroyed; return; }
       const url = URL.createObjectURL(blob);
-      const img = this.photoImg;
-      img.onload = () => {
-        if (this.photoUrl && this.photoUrl !== url) URL.revokeObjectURL(this.photoUrl);
-        this.photoUrl = url;
-        if (this.version !== at.version || this.settings.display !== 'image') { this.photoWanted = true; return; }
-        this.photoAt = at;
-        img.style.width = `${W}px`;
-        img.style.height = `${H}px`;
-        this.photoValid = true;
-        this.placePhoto();
-      };
+      const img = this.photoImgs[this.photoImg === this.photoImgs[0] ? 1 : 0]; // the one off screen
       img.src = url;
-    }, 'image/png');
+      img.style.width = `${W}px`;
+      img.style.height = `${H}px`;
+      const ready = await Promise.all([img.decode().then(() => true, () => false), scene ? this.living.prepare(scene, at) : true]);
+      if (!ready[0] || !ready[1] || !current()) {
+        URL.revokeObjectURL(url);
+        this.photoWanted = !this.destroyed;
+        return;
+      }
+      // the new picture and its living layer go on screen in the same frame
+      this.photoImg.style.visibility = 'hidden';
+      this.photoImg = img;
+      if (this.photoUrl) URL.revokeObjectURL(this.photoUrl);
+      this.photoUrl = url;
+      if (scene) this.living.commit();
+      else this.living.clear();
+      this.photoAt = at;
+      this.photoValid = true;
+      this.placePhoto();
+    } finally {
+      this.photoBusy = false;
+    }
   }
 
   private loop = (now: number = performance.now()) => {
@@ -340,9 +362,9 @@ export class GameView {
       this.placePhoto();
       // retaken once the view rests, including a finger resting mid-scroll
       const resting = this.touching ? now - this.lastPointerAt > 150 : !camMoving;
-      if (this.photoWanted && !this.photoBusy && resting && !fxActive && now - this.lastFrame > 120) this.takePhoto();
+      if (this.photoWanted && !this.photoBusy && resting && !fxActive && now - this.lastFrame > 120) void this.takePhoto();
       // a long scroll runs past the picture's edge: take a new one on the way rather than show the soft live map
-      else if (!this.photoBusy && !fxActive && (camMoving || this.touching) && this.version === this.photoAt.version && !this.photoCovers && now - this.photoTakenAt > 200) this.takePhoto();
+      else if (!this.photoBusy && !fxActive && (camMoving || this.touching) && this.version === this.photoAt.version && !this.photoCovers && now - this.photoTakenAt > 200) void this.takePhoto();
     }
     this.raf = requestAnimationFrame(this.loop);
   };
