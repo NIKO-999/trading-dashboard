@@ -161,7 +161,7 @@ export const SUPPLY_NOTES: Partial<Record<TribeId, string>> = {
 /** Units that never need supply: heroes, boats and ships, the wild, the peoples who lived off the land, Pirates afloat. */
 export function supplyExempt(s: GameState, u: Unit): boolean {
   const p = s.players[u.owner];
-  if (!p || p.neutral || u.kind === 'hero' || u.carrying === 'hero' || def(u).naval) return true;
+  if (!p || p.neutral || u.kind === 'hero' || u.carrying === 'hero' || u.kind === 'immortal' /* the Undying need no supply */ || def(u).naval) return true;
   if (LIVES_OFF_LAND.includes(p.tribe)) return true;
   const t = tileAt(s, u.x, u.y);
   return p.tribe === 'pirates' && !!t && (isWater(t) || t.terrain === 'platform');
