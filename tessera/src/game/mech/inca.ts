@@ -213,9 +213,9 @@ export const mech: Mechanic = {
     for (const u of s.units) {
       if (u.owner !== owner || u.moved || !zipper(s, u) || u.kind === 'explorer' || u.hp < 5) continue;
       const here = enemyDist(s, owner, u.x, u.y);
-      if (here <= 2) continue; // already in the fight
+      if (here <= 1) continue; // already in the fight
       let best: MoveOption | null = null;
-      let bestD = here - 2;
+      let bestD = here - 1; // worth a zip when it lands at least two tiles closer
       for (const o of zipDestinations(s, owner, u.x, u.y)) {
         if (!isExplored(s, owner, o.x, o.y)) continue;
         const d = enemyDist(s, owner, o.x, o.y);
@@ -265,7 +265,7 @@ export const mech: Mechanic = {
       const home = cities.find((c) => c.capital) ?? cities[0];
       for (const t of mine) {
         if (chaskiCheck(s, owner, t)) continue;
-        if (posts.some((o) => dist(o.x, o.y, t.x, t.y) < 4)) continue; // spread the relay line out
+        if (posts.some((o) => dist(o.x, o.y, t.x, t.y) < 3)) continue; // spread the relay line out
         const d = nearHome && home ? dist(t.x, t.y, home.x, home.y) : enemyDist(s, owner, t.x, t.y);
         if (d < d0) { pick = t; d0 = d; }
       }

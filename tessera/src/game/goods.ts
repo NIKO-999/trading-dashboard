@@ -10,6 +10,7 @@ import { TRIBES } from '../data/tribes';
 import { neighbors } from './grid';
 import { tileLevel } from './levels';
 import type { Rng } from './rng';
+import { routesOf } from './trade';
 import type { GameState, Player, Resource, Terrain, Tile, UnitKind } from './types';
 
 export type Strategic = 'iron' | 'horses';
@@ -113,10 +114,24 @@ export function luxuriesOf(s: GameState, pid: number): Partial<Record<Luxury, nu
   return out;
 }
 
-/** Stars a turn from luxuries: LUX_FIRST for each different kind, LUX_EXTRA for each further copy. */
+/** Copies of one luxury that make a Monopoly. */
+export const MONOPOLY_AT = 3;
+/** The most Stars a Monopoly's trade routes add. */
+export const MONOPOLY_ROUTES_MAX = 5;
+
+/** The luxuries `pid` holds a Monopoly on (MONOPOLY_AT or more developed copies). */
+export const monopoliesOf = (s: GameState, pid: number): Luxury[] =>
+  (Object.entries(luxuriesOf(s, pid)) as [Luxury, number][]).filter(([, n]) => n >= MONOPOLY_AT).map(([l]) => l);
+
+/**
+ * Stars a turn from luxuries: LUX_FIRST for each different kind, LUX_EXTRA for each further copy. A Monopoly pays
+ * LUX_FIRST for every copy, and +1★ for each live trade route the empire runs (up to MONOPOLY_ROUTES_MAX).
+ */
 export function luxuryIncome(s: GameState, pid: number): number {
   const held = Object.values(luxuriesOf(s, pid));
-  return held.reduce((n, c) => n + LUX_FIRST + (c - 1) * LUX_EXTRA, 0);
+  let n = held.reduce((a, c) => a + (c >= MONOPOLY_AT ? c * LUX_FIRST : LUX_FIRST + (c - 1) * LUX_EXTRA), 0);
+  if (held.some((c) => c >= MONOPOLY_AT)) n += Math.min(MONOPOLY_ROUTES_MAX, routesOf(s, pid).length);
+  return n;
 }
 
 /** Sprinkles luxury deposits over the map (clusters of 1-3 of a kind), and one within reach of every capital. */

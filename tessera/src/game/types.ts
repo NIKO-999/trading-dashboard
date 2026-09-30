@@ -122,6 +122,8 @@ export interface Player {
   stock?: { iron: number; horses: number };
   /** Techs made cheaper by a Eureka (see game/sparks; missing in older saves). */
   sparks?: string[];
+  /** The era reached and the Age it brought (see game/eras; missing in older saves). */
+  era?: import('./eras').EraState;
 }
 
 export interface HeroState {

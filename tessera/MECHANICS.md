@@ -1,6 +1,6 @@
 # Tessera — how the game works
 
-*Generated from the game's source at v0.27.0, updated for v0.39.0 (all numbers below are read from the code). Balance is still being tuned, so numbers may shift.*
+*Generated from the game's source at v0.27.0, updated for v0.40.0 (all numbers below are read from the code). Balance is still being tuned, so numbers may shift.*
 
 ## 1. The basics
 
@@ -178,6 +178,15 @@ Every **Mine** digs **1 Iron a turn** per level (Deep Mine 2, level 3: 3); every
 
 ### Luxuries
 Six rare deposits: **Silk** (forest, Forestry), **Spices** (forest/swamp, Forestry), **Wine** (field, Farming), **Ivory** (field/desert, Hunting), **Pearls** (shallows, Fishing), **Incense** (desert, Farming). Every capital starts with one within 2 tiles; more lie in clusters across the map. Developing one (5★: Silk Farm, Spice Garden, Vineyard, Ivory Camp, Pearl Beds, Incense Grove) grows its city +1 and pays **+2★ a turn for each different luxury** you hold, **+1★ for each extra copy**.
+
+### Monopolies
+Hold **3 or more developed copies of one luxury** and you have a Monopoly on it: every copy pays **2★** (not just the first), and each live trade route you run pays **+1★** more (up to +5).
+
+### Tech from contact
+A tech that an empire you have **met** already knows costs **20% less** (it stacks with a Eureka).
+
+### Eras and Ages
+Empires move through four eras as they learn techs: **Ancient → Classical (6 techs) → Medieval (12) → Renaissance (20)**. Entering an era grows every city (+1, +1, +2), pays 5 / 10 / 15★ and 150 score, and is announced to every empire that has met you. Your **Era Score** during the era just ended (Eurekas, battles won up to 4, city levels gained, wonders ×3) sets the next 5 turns: **7+ → Golden Age** (+1★ in every city), **2 or less → Dark Age** (techs 25% cheaper while you rebuild). The 🏛 chip shows the era, the Age and the score.
 
 ## 5a. Tile levels, Districts and specialities
 

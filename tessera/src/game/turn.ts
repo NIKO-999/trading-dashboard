@@ -1,6 +1,7 @@
 import { emit } from './events';
 import { goodsTurnStart } from './goods';
 import { checkSparks } from './sparks';
+import { eraCheck } from './eras';
 import { revealAround } from './mapgen';
 import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
@@ -57,6 +58,7 @@ export function startTurn(s: GameState) {
   wonderTurnStart(s, p.id); // a wonder site on land it has lost is closed (see game/wonders)
   revealAround(s, p.id);
   checkSparks(s, p.id); // Eurekas (see game/sparks)
+  eraCheck(s, p.id); // a tech from a ruin or a gift can cross into a new era (see game/eras)
 }
 
 /** Ends the current player's turn and starts the next living player's. */

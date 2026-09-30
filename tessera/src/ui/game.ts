@@ -1,4 +1,6 @@
 import { MECH_UI } from './mech';
+import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
+import { monopoliesOf, MONOPOLY_AT } from '../game/goods';
 import { isLuxury, LUX_EXTRA, LUX_FIRST, LUXURIES, LUXURY_IDS, luxuriesOf, luxuryIncome, STOCK_CAP, stockOf, stockYield, type Luxury } from '../game/goods';
 import { checkSparks } from '../game/sparks';
 import type { MechView } from './mech/types';
@@ -764,6 +766,8 @@ export class GameView {
     if (hud) lines.push({ key: 'mech', ...(ui?.chip?.(view) ?? { icon: '◆', text: shortChip(hud.textContent ?? '') }), full: hud });
     const skill = this.skillReadout();
     if (skill) lines.push(skill);
+    const era = this.eraReadout(); // the era and its Age (see game/eras)
+    if (era) lines.push(era);
     const goods = this.goodsReadout(); // Iron, Horses and luxuries (see game/goods)
     if (goods) lines.push(goods);
     const econ = this.economyReadout(); // raised tiles and Districts (see game/levels)
@@ -782,6 +786,22 @@ export class GameView {
     this.mechDock.replaceChildren(h('span', { class: 'round' }, iconEl(dock.icon as Parameters<typeof iconEl>[0])), h('span', { class: 'dock-label' }, dock.label));
   }
 
+  /** The Era chip: the era, a Golden or Dark Age and its turns left, the Era Score, and what the next era needs. */
+  private eraReadout(): HudLine | null {
+    const s = this.s, me = this.me, p = s.players[me];
+    const e = eraState(s, me), age = ageOf(s, me), left = e.until - s.turn;
+    const next = ERAS[e.n + 1];
+    const score = eraScore(s, me);
+    const text = age === 'golden' ? `Golden ${left}` : age === 'dark' ? `Dark ${left}` : ERAS[e.n].name;
+    return {
+      key: 'era', icon: '🏛', text, tone: age === 'golden' ? 'gold' : age === 'dark' ? 'warn' : undefined,
+      full: h('div', { class: 'skill-hud' },
+        h('div', {}, h('b', {}, `${ERAS[e.n].name} Era`), age === 'golden' ? ` · Golden Age: +${GOLDEN_STARS}★ in every city for ${left} more turn${left === 1 ? '' : 's'}.` : age === 'dark' ? ` · Dark Age: techs ${Math.round(DARK_OFF * 100)}% cheaper for ${left} more turn${left === 1 ? '' : 's'}.` : ''),
+        next ? h('div', {}, `Next: the ${next.name} Era at ${next.at} techs (you know ${p.techs.length}). On arrival ${next.bonus}.`) : h('div', {}, 'The last era: well done.'),
+        next ? h('div', {}, h('b', {}, `Era Score ${score}`), `: ${GOLDEN_AT}+ when the next era begins brings a Golden Age, ${DARK_AT} or less a Dark Age. Earn it with Eurekas, battles won, cities grown and wonders.`) : null),
+    };
+  }
+
   /** The Resources chip: the Iron and Horses stockpiles, and what luxuries pay, in full. */
   private goodsReadout(): HudLine | null {
     const s = this.s, me = this.me;
@@ -794,7 +814,8 @@ export class GameView {
       full: h('div', { class: 'skill-hud' },
         h('div', {}, h('b', {}, 'Iron: '), `${have.iron}/${STOCK_CAP} (+${y.iron} a turn from Mines). Swordsmen use 2, Catapults 1.`),
         h('div', {}, h('b', {}, 'Horses: '), `${have.horses}/${STOCK_CAP} (+${y.horses} a turn from Pastures). Knights use 2.`),
-        h('div', {}, h('b', {}, 'Luxuries: '), kinds.length ? `${kinds.join(', ')}: +${pay}★ a turn.` : `none yet. Each different one pays ${LUX_FIRST}★ a turn.`)),
+        h('div', {}, h('b', {}, 'Luxuries: '), kinds.length ? `${kinds.join(', ')}: +${pay}★ a turn.` : `none yet. Each different one pays ${LUX_FIRST}★ a turn.`),
+        h('div', {}, h('b', {}, 'Monopolies: '), monopoliesOf(s, me).length ? `${monopoliesOf(s, me).map((l) => LUXURIES[l].name).join(', ')}: every copy pays ${LUX_FIRST}★ and trade routes +1★ each.` : `hold ${MONOPOLY_AT} of one luxury for a Monopoly.`)),
     };
   }
 

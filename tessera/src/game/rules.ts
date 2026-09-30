@@ -21,6 +21,8 @@ import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, up
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
+import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
+import { MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
 import { isLuxury, LUX_COST, LUX_EXTRA, LUX_FIRST, LUXURIES, luxuriesOf, luxuryIncome, needNote, needWhy, spendNeeds } from './goods';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
@@ -106,7 +108,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   return inc + roleCityIncome(s, c, inc, tax); // a Master Builder's grand works and a Tax Collector's share (see game/roles)
 }
 
-export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c), 0) + luxuryIncome(s, pid); // luxuries pay the empire (see game/goods)
+export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c) + ageCityIncome(s, pid), 0) + luxuryIncome(s, pid); // luxuries pay the empire (see game/goods)
 
 export function score(s: GameState, pid: number) {
   const p = s.players[pid];
@@ -127,9 +129,20 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const t = TECH_BY_ID[tech];
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
-  const sparkedBase = sparked(s, pid, tech) ? Math.ceil(base * (1 - EUREKA_OFF)) : base; // a Eureka (see game/sparks)
+  // a Eureka (game/sparks), a met rival who already knows it, and a Dark Age (game/eras) each take a share off
+  const mult = (sparked(s, pid, tech) ? 1 - EUREKA_OFF : 1) * (knownByContact(s, pid, tech) ? 1 - CONTACT_OFF : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
+  const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
   const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
+}
+
+/** The share a tech gets cheaper when an empire you have met already knows it. */
+export const CONTACT_OFF = 0.2;
+/** A met, living rival that already knows `tech`, or undefined. */
+export function knownByContact(s: GameState, pid: number, tech: string): Player | undefined {
+  const met = s.players[pid].met;
+  if (!met?.length) return undefined;
+  return s.players.find((q) => q.id !== pid && q.alive && !q.neutral && met.includes(q.id) && q.techs.includes(tech));
 }
 
 export type ResearchStatus = 'owned' | 'available' | 'locked' | 'sealed';
@@ -153,6 +166,7 @@ export function research(s: GameState, pid: number, tech: string) {
     const cap = citiesOf(s, pid).find((c) => c.capital) ?? citiesOf(s, pid)[0];
     if (cap) addPop(s, cap, 1);
   }
+  eraCheck(s, pid); // a new era (see game/eras)
   return true;
 }
 
@@ -506,8 +520,11 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     default:
       if (isLuxury(t.resource)) { // a luxury deposit (see game/goods)
         const L = LUXURIES[t.resource];
-        const held = !!luxuriesOf(s, pid)[t.resource];
-        add('luxury', L.works, `+1 population and +${held ? LUX_EXTRA : LUX_FIRST}★ a turn${held ? ` (another ${L.name})` : ` (a new luxury: ${LUX_FIRST}★ for each different one, ${LUX_EXTRA}★ for each extra copy)`}.`, LUX_COST, L.tech, `lux:${t.resource}`);
+        const n = luxuriesOf(s, pid)[t.resource] ?? 0;
+        const note = !n ? ` (a new luxury: ${LUX_FIRST}★ for each different one, ${LUX_EXTRA}★ for each extra copy)`
+          : n + 1 === MONOPOLY_AT ? ` and a ${L.name} Monopoly: every copy pays ${LUX_FIRST}★, trade routes +1★ each`
+          : n + 1 > MONOPOLY_AT ? ` (your Monopoly)` : ` (another ${L.name}; ${MONOPOLY_AT} make a Monopoly)`;
+        add('luxury', L.works, `+1 population and +${n + 1 >= MONOPOLY_AT ? LUX_FIRST : n ? LUX_EXTRA : LUX_FIRST}★ a turn${note}.`, LUX_COST, L.tech, `lux:${t.resource}`);
       }
   }
   if (!t.improvement && !t.resource) {
@@ -633,7 +650,12 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1, 'harvest', r ?? ''); // Sea Hunters
     }
     // an empire's speciality may be built straight at level 2 (specialStart; see game/levels)
-    case 'luxury': t.improvement = 'estate'; return grow(1, 'luxury');
+    case 'luxury': {
+      t.improvement = 'estate';
+      const kind = t.resource as Luxury;
+      if (luxuriesOf(s, pid)[kind] === MONOPOLY_AT) emit({ type: 'toast', player: pid, text: `👑 ${LUXURIES[kind].name} Monopoly! Every ${LUXURIES[kind].name} tile now pays ${LUX_FIRST}★, and your trade routes pay +1★ each (up to ${MONOPOLY_ROUTES_MAX}).` });
+      return grow(1, 'luxury');
+    }
     case 'farm': t.improvement = 'farm'; specialStart(s, pid, t); return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
     case 'mine': t.improvement = 'mine'; specialStart(s, pid, t); return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
     case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; specialStart(s, pid, t); return grow(1 + b, 'lumber'); }
