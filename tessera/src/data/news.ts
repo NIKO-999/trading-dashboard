@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.43',
+    items: [
+      '🌄 Natural Wonders: eight rare landmarks (Thundermantle Falls, Glimmerdeep Grotto, Mount Halcyra and more). Be the first to see one for Stars and score; hold it in your borders for its own bonus.',
+      '✨ A gold light through the clouds marks a wonder you have not reached yet. Find them all under Empires → Wonders.',
+    ],
+  },
+  {
     version: '0.42',
     items: [
       '🏛 Governments: tap Govern on the dock. Start as a Chiefdom; new eras unlock Autocracy, Oligarchy, Republics, Monarchy and Theocracy, each with its own bonus.',
