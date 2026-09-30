@@ -28,7 +28,7 @@ let memoState: GameState | null = null; // a new or loaded game starts a fresh m
 const done = new Set<number>();
 let economyDone = false;
 
-const HARVEST_IDS = ['harvest', 'farm', 'mine', 'lumber', 'port', 'shrine', 'temple', 'market'];
+const HARVEST_IDS = ['harvest', 'farm', 'mine', 'lumber', 'port', 'shrine', 'temple', 'market', 'luxury'];
 
 /** Performs one AI action for the current player. Returns false once the AI has nothing left to do. */
 export function aiStep(s: GameState): boolean {
@@ -187,7 +187,7 @@ function economyStep(s: GameState, pid: number): boolean {
       if ((a.id === 'temple' || a.id === 'shrine') && p.stars < 16) continue;
       // one port is enough for most empires; pirates' ports also pay income, so they build more
       if (a.id === 'port' && p.tribe !== 'pirates' && s.tiles.some((x) => x.improvement === 'port' && tileOwnerPlayer(s, x) === pid)) continue;
-      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' ? 4 : a.id === 'port' && abroad ? 6 : 2;
+      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' || a.id === 'luxury' ? 4 : a.id === 'port' && abroad ? 6 : 2;
       harvests.push({ t, id: a.id, cost: a.cost, value: value / Math.max(1, a.cost) });
     }
   }

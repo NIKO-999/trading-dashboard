@@ -63,7 +63,7 @@ test('every capital and village starts with enough resources to level up', () =>
       const spots = [...s.tiles.filter((t) => t.village), ...s.cities.map((c) => tileAt(s, c.x, c.y)!)];
       for (const t of spots) {
         const ring = s.tiles.filter((n) => Math.max(Math.abs(n.x - t.x), Math.abs(n.y - t.y)) === 1);
-        const worth = ring.reduce((a, n) => a + (n.resource ? pop[n.resource] : 0), 0);
+        const worth = ring.reduce((a, n) => a + (n.resource ? ((pop as Record<string, number>)[n.resource] ?? 1) : 0), 0);
         assert.ok(worth >= 3, `${mapSize} seed ${seed}: ${t.village ? 'village' : 'capital'} at ${t.x},${t.y} only has ${worth} population of resources`);
         checked++;
       }

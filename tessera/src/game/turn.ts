@@ -1,4 +1,6 @@
 import { emit } from './events';
+import { goodsTurnStart } from './goods';
+import { checkSparks } from './sparks';
 import { revealAround } from './mapgen';
 import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
@@ -23,6 +25,7 @@ export function startTurn(s: GameState) {
   if (s.turn > 0) {
     const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;
+    goodsTurnStart(s, p.id); // mines dig Iron, pastures breed Horses (see game/goods)
   }
   diploTurnStart(s, p.id); // declared wars begin, trade and tribute pay, allies share maps (see game/diplomacy)
   for (const u of s.units) {
@@ -53,6 +56,7 @@ export function startTurn(s: GameState) {
   skillTurnStart(s, p.id);
   wonderTurnStart(s, p.id); // a wonder site on land it has lost is closed (see game/wonders)
   revealAround(s, p.id);
+  checkSparks(s, p.id); // Eurekas (see game/sparks)
 }
 
 /** Ends the current player's turn and starts the next living player's. */
@@ -62,6 +66,7 @@ export function endTurn(s: GameState) {
   checkGameOver(s);
   if (s.over) return;
   hookTurnEnd(s, s.current);
+  checkSparks(s, s.current); // what the turn's moves earned (see game/sparks)
   let next = s.current;
   do {
     next = (next + 1) % s.players.length;

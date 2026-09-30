@@ -20,6 +20,8 @@ import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions
 import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, upgradeWhy } from './army';
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
+import { EUREKA_OFF, sparked } from './sparks';
+import { isLuxury, LUX_COST, LUX_EXTRA, LUX_FIRST, LUXURIES, luxuriesOf, luxuryIncome, needNote, needWhy, spendNeeds } from './goods';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -104,7 +106,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   return inc + roleCityIncome(s, c, inc, tax); // a Master Builder's grand works and a Tax Collector's share (see game/roles)
 }
 
-export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c), 0);
+export const income = (s: GameState, pid: number) => citiesOf(s, pid).reduce((sum, c) => sum + cityIncome(s, c), 0) + luxuryIncome(s, pid); // luxuries pay the empire (see game/goods)
 
 export function score(s: GameState, pid: number) {
   const p = s.players[pid];
@@ -125,7 +127,8 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const t = TECH_BY_ID[tech];
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(base * 0.67) : base) - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
+  const sparkedBase = sparked(s, pid, tech) ? Math.ceil(base * (1 - EUREKA_OFF)) : base; // a Eureka (see game/sparks)
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
@@ -445,7 +448,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     const next = upgradeTarget(s, u);
     if (next && t.cityId !== null && mine) {
       const d = UNITS[next];
-      add(`upgrade:${next}`, `Upgrade to ${d.name}`, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}. Keeps its veteran rank and health; uses its turn.`, upgradeCost(s, pid, u.kind, next), d.tech, next, upgradeWhy(s, u));
+      add(`upgrade:${next}`, `Upgrade to ${d.name}`, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}. Keeps its veteran rank and health; uses its turn.${needNote(next)}`, upgradeCost(s, pid, u.kind, next), d.tech, next, upgradeWhy(s, u) ?? needWhy(s, pid, next));
     }
   }
 
@@ -460,8 +463,8 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     const cost = (k: UnitKind) => { const c = trainCost(s, pid, k); return c > 1 ? Math.max(1, c - levelTrainDiscount(s, city, k)) : c; };
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
-      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, cost(k), d.tech, k,
-        land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
+      add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}${needNote(k)}`, cost(k), d.tech, k,
+        land ?? (full ? `City supports ${unitCap(city)} units` : needWhy(s, pid, k))); // Iron and Horses (see game/goods)
     }
     for (const k of AUX_KINDS) { // every empire's Spearman, Scout and Healer, in its own name (see game/auxiliaries)
       const d = UNITS[k];
@@ -499,7 +502,13 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;
     case 'whale': add('harvest', 'Whaling', 'Gain 10★.', 2, 'whaling', 'whale'); break;
     case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' ? 3 : 2} population.`, 5, 'farming', 'farm'); break;
-    case 'ore': add('mine', 'Build Mine', '+2 population.', 5, 'mining', 'mine'); break;
+    case 'ore': add('mine', 'Build Mine', '+2 population and 1 Iron a turn.', 5, 'mining', 'mine'); break;
+    default:
+      if (isLuxury(t.resource)) { // a luxury deposit (see game/goods)
+        const L = LUXURIES[t.resource];
+        const held = !!luxuriesOf(s, pid)[t.resource];
+        add('luxury', L.works, `+1 population and +${held ? LUX_EXTRA : LUX_FIRST}★ a turn${held ? ` (another ${L.name})` : ` (a new luxury: ${LUX_FIRST}★ for each different one, ${LUX_EXTRA}★ for each extra copy)`}.`, LUX_COST, L.tech, `lux:${t.resource}`);
+      }
   }
   if (!t.improvement && !t.resource) {
     if (t.terrain === 'forest') {
@@ -587,6 +596,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('level:')) return levelDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
+    spendNeeds(s, pid, kind); // Iron and Horses (see game/goods)
     if (kind === 'tradeship' || isRoleShip(kind)) { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
     if (city?.data?.waka) return trainAfloat(s, city, kind);
     if (u && postedCity(s, u) === city) { const w = postSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; } // steps out beside a stationed unit
@@ -596,6 +606,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('upgrade:') && u) {
     const hpRatio = u.hp / maxHp(u);
     if (!def(u).naval) s.log.push({ turn: s.turn, text: `${TRIBES[p.tribe].people} ${UNITS[u.kind].name} upgraded to ${UNITS[id.slice(8) as UnitKind].name} in ${city?.name ?? 'a city'}.` });
+    if (!def(u).naval) spendNeeds(s, pid, id.slice(8) as UnitKind); // Iron and Horses (see game/goods)
     u.kind = id.slice(8) as UnitKind;
     u.hp = Math.max(1, Math.round(maxHp(u) * hpRatio));
     u.moved = u.attacked = true;
@@ -622,6 +633,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1, 'harvest', r ?? ''); // Sea Hunters
     }
     // an empire's speciality may be built straight at level 2 (specialStart; see game/levels)
+    case 'luxury': t.improvement = 'estate'; return grow(1, 'luxury');
     case 'farm': t.improvement = 'farm'; specialStart(s, pid, t); return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
     case 'mine': t.improvement = 'mine'; specialStart(s, pid, t); return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
     case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; specialStart(s, pid, t); return grow(1 + b, 'lumber'); }

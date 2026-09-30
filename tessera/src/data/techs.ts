@@ -36,18 +36,18 @@ const T = (id: string, name: string, tier: 1 | 2 | 3, parent: string | null, ang
 
 export const TECHS: TechDef[] = [
   T('gathering', 'Gathering', 1, null, 0, 'Harvest fruit (+1 pop).'),
-  T('farming', 'Farming', 2, 'gathering', 0, 'Build farms on crops (+2 pop).'),
+  T('farming', 'Farming', 2, 'gathering', 0, 'Build farms on crops (+2 pop). Plant Vineyards and Incense Groves (luxuries).'),
   T('masonry', 'Masonry', 3, 'farming', 0, 'Build temples; city walls reward.'),
   T('tactics', 'Tactics', 2, 'gathering', 0, 'Train Defenders.'),
-  T('engineering', 'Engineering', 3, 'tactics', 0, 'Train Catapults.'),
+  T('engineering', 'Engineering', 3, 'tactics', 0, 'Train Catapults (1 Iron each).'),
 
-  T('hunting', 'Hunting', 1, null, 0, 'Hunt wild animals (+1 pop). Train Spearmen.'),
+  T('hunting', 'Hunting', 1, null, 0, 'Hunt wild animals (+1 pop). Train Spearmen. Set up Ivory Camps (luxury).'),
   T('archery', 'Archery', 2, 'hunting', 0, 'Train Archers. Forest defence bonus.'),
   T('spiritualism', 'Spiritualism', 3, 'archery', 0, 'Grove shrines: +1 pop from forests, free heal.'),
-  T('forestry', 'Forestry', 2, 'hunting', 0, 'Lumber huts (+1 pop). Clear forests.'),
+  T('forestry', 'Forestry', 2, 'hunting', 0, 'Lumber huts (+1 pop). Clear forests. Silk Farms and Spice Gardens (luxuries).'),
   T('carpentry', 'Carpentry', 3, 'forestry', 0, 'Build markets: +1★ city income each.'),
 
-  T('fishing', 'Fishing', 1, null, 0, 'Catch fish (+1 pop). Build ports.'),
+  T('fishing', 'Fishing', 1, null, 0, 'Catch fish (+1 pop). Build ports. Pearl Beds (luxury).'),
   T('sailing', 'Sailing', 2, 'fishing', 0, 'Upgrade boats to Galleys; sail open ocean.'),
   T('navigation', 'Navigation', 3, 'sailing', 0, 'Upgrade to Triremes.'),
   T('whaling', 'Whaling', 2, 'fishing', 0, 'Hunt whales (+10★).'),
@@ -56,12 +56,12 @@ export const TECHS: TechDef[] = [
   T('riding', 'Riding', 1, null, 0, 'Train Riders.'),
   T('roads', 'Roads', 2, 'riding', 0, 'Build roads: faster travel. Roads joined to cities grow them.'),
   T('trade', 'Trade', 3, 'roads', 0, 'Cities earn +1★ each turn.'),
-  T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence.'),
-  T('chivalry', 'Chivalry', 3, 'horsemanship', 0, 'Train Knights.'),
+  T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence. Tame herds into Pastures, which breed Horses.'),
+  T('chivalry', 'Chivalry', 3, 'horsemanship', 0, 'Train Knights (2 Horses each).'),
 
   T('climbing', 'Climbing', 1, null, 0, 'Move onto mountains. Units on a mountain defend at ×2.'),
-  T('mining', 'Mining', 2, 'climbing', 0, 'Build mines on ore (+2 pop).'),
-  T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen.'),
+  T('mining', 'Mining', 2, 'climbing', 0, 'Build mines on ore (+2 pop and 1 Iron a turn).'),
+  T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen (2 Iron each).'),
   T('meditation', 'Meditation', 2, 'climbing', 0, 'Mountain shrines (+1 pop). Train Healers.'),
   T('philosophy', 'Philosophy', 3, 'meditation', 0, 'All future techs cost 33% less.'),
 ];

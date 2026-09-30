@@ -117,6 +117,7 @@ test('formation links pair friendly units of one line standing side by side, and
 
 test('upgrade in a city: warrior → swordsman with Smithing, paying the difference plus 1, keeping rank and health', () => {
   const s = sandbox(['greeks', 'japan']);
+  for (const p of s.players) p.stock = { iron: 12, horses: 12 }; // Iron-age units need Iron (see game/goods)
   const c = foundCity(s, 2, 2, 0, true);
   const u = unit(s, 0, 'warrior', 2, 2);
   u.hp = 5;
@@ -190,6 +191,7 @@ test('upgrade rules: needs the tech, your own city and an unspent turn; empires 
 
 test('the computer upgrades a unit waiting in its city only when rich', () => {
   const s = sandbox(['greeks', 'japan']);
+  for (const p of s.players) p.stock = { iron: 12, horses: 12 }; // Iron-age units need Iron (see game/goods)
   foundCity(s, 2, 2, 0, true);
   const u = unit(s, 0, 'warrior', 2, 2);
   const cost = upgradeAct(s, u)!.cost;

@@ -1,4 +1,5 @@
 import { prereqs, TECH_BY_ID, techsFor, type TechDef } from '../data/techs';
+import { EUREKA_OFF, EUREKAS, sparked } from '../game/sparks';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { portraitKind, TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
@@ -114,6 +115,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
         h('span', { class: 'tt-glyph', html: `<svg width="26" height="26" viewBox="-13 -13 26 26">${glyph(t.ring, 10)}${st === 'sealed' ? '<path d="M-6 -6L6 6M6 -6L-6 6"/>' : ''}</svg>` }),
         h('span', { class: 'tt-label' }, t.name),
         st === 'available' ? h('span', { class: 'tt-cost' }, starSpan(cost)) : null,
+        st !== 'owned' && sparked(s, pid, t.id) ? h('span', { class: 'tt-spark', title: 'Eureka' }, '💡') : null,
       ));
     }
 
@@ -169,6 +171,11 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const body: (Node | string)[] = [h('p', { class: 'tt-kind' }, t.tribe ? `${ringLabel(t)} · ${tribe.people}` : ringLabel(t))];
     if (t.flavor) body.push(h('p', { class: 'muted' }, t.flavor));
     if (!t.tribe || UNIQUE_BY_ID[t.id].perks.length) body.push(h('p', {}, unlocks));
+    if (EUREKAS[id] && st !== 'owned') { // Eurekas (see game/sparks)
+      body.push(sparked(s, pid, id)
+        ? h('p', { class: 'tt-eureka on' }, `💡 Eureka earned (${EUREKAS[id].goal.toLowerCase()}): ${Math.round(EUREKA_OFF * 100)}% cheaper.`)
+        : h('p', { class: 'tt-eureka' }, `💡 Eureka: ${EUREKAS[id].goal.toLowerCase()} to make this ${Math.round(EUREKA_OFF * 100)}% cheaper.`));
+    }
     if (role) body.push(h('p', {}, h('b', {}, `${roleName(p.tribe, role)}: `), UNITS[role].blurb)); // this empire type's role unit
     for (const k of AUX_KINDS.filter((x) => UNITS[x].tech === id)) body.push(h('p', {}, h('b', {}, `${auxName(p.tribe, k)} (${UNITS[k].name}, ${UNITS[k].cost}★): `), UNITS[k].blurb)); // a Spearman or Healer (see game/auxiliaries)
     if (t.cond) {

@@ -1,12 +1,12 @@
 # Tessera — how the game works
 
-*Generated from the game's source at v0.27.0 (all numbers below are read from the code). Balance is still being tuned, so numbers may shift.*
+*Generated from the game's source at v0.27.0, updated for v0.39.0 (all numbers below are read from the code). Balance is still being tuned, so numbers may shift.*
 
 ## 1. The basics
 
 - A turn-based tile strategy game on an isometric square grid. You play one of **26 empires** against 1–25 computer or hot-seat opponents.
 - **Three empire types** (§15): ⚔️ **Military**, 💰 **Economy** and ⚓ **Naval**. Each type trains two role units of its own; the New Game picker and the Twenty-Six Empires screen list the empires by type.
-- **Two modes:** *Perfection* — the game ends after a turn limit (default **30 turns**) and the highest **score** wins. *Domination* — no turn limit; last empire standing (or last human alive → best score) wins; with Diplomacy on, survivors who are all allied win together (§12).
+- **Three modes:** *Perfection* — the game ends after a turn limit (default **30 turns**) and the highest **score** wins. *Domination* — no turn limit; last empire standing (or last human alive → best score) wins; with Diplomacy on, survivors who are all allied win together (§12). *One City Challenge* — every empire keeps only its capital: no villages, no outposts, Great Wakas or sea-cities; capturing a rival's city razes it (+1,000 score) and knocks that empire out. No turn limit: conquer every empire to win.
 - **Difficulty** (easy / normal / hard): computer players get **+0 / +1 / +2 free Stars each turn**.
 - **Start:** every empire begins with **5 Stars**, one capital (level 1) and one warrior. Everything else is hidden by fog.
 - **Fog of war:** a tile you have seen stays "explored" forever (you still only see enemy units you currently have eyes on). Cities reveal their border radius +1; units reveal 1 tile (2 from a mountain, 2 for a Pathfinder).
@@ -169,6 +169,15 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 **Borders:** a city claims the 3×3 (radius 1) tiles around it; Border Growth makes it 5×5.
 
 **Ruins** scattered on the map give one of: Ancient Scrolls (a free tech), Lost Tribe (+3 pop), Old Maps (reveal map), Forgotten Champion (a veteran), Buried Treasure (+10★).
+
+### Eurekas
+Every tech of the shared tree has a goal in the world (e.g. *Build a port* → Sailing, *Have a unit on a mountain* → Meditation, *Stockpile 3 Iron* → Smithing). Meet it before researching the tech and that tech costs **40% less** for good. The goal shows on the tech card; a 💡 marks sparked techs in the tree. Checked after each of your actions and at the start and end of every turn.
+
+### Strategic resources: Iron and Horses
+Every **Mine** digs **1 Iron a turn** per level (Deep Mine 2, level 3: 3); every **Pasture** breeds **1 Horse** (Stables 2). Each stockpile holds up to **12**. **Swordsmen use 2 Iron, Catapults 1 Iron, Knights 2 Horses** when trained or upgraded into (an empire's unique unit needs what the unit it replaces needs). The ⚖ chip under the score bar shows the stockpiles.
+
+### Luxuries
+Six rare deposits: **Silk** (forest, Forestry), **Spices** (forest/swamp, Forestry), **Wine** (field, Farming), **Ivory** (field/desert, Hunting), **Pearls** (shallows, Fishing), **Incense** (desert, Farming). Every capital starts with one within 2 tiles; more lie in clusters across the map. Developing one (5★: Silk Farm, Spice Garden, Vineyard, Ivory Camp, Pearl Beds, Incense Grove) grows its city +1 and pays **+2★ a turn for each different luxury** you hold, **+1★ for each extra copy**.
 
 ## 5a. Tile levels, Districts and specialities
 

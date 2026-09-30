@@ -6,6 +6,7 @@ import { perkRange, perkSum, unitMatches } from './perks';
 import { setupWild } from './wild';
 import { newDiplo } from './diplomacy';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
+import { placeLuxuries } from './goods';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
 
@@ -132,6 +133,7 @@ export function createGame(opts: NewGameOptions): GameState {
 
   placeVillagesAndRuins(state, rng, capitals);
   ensureGrowthResources(state, rng);
+  placeLuxuries(state, makeRng(seed ^ 0x10c5)); // its own stream, so the rest of the map is unchanged
   if (peaks === 0) flattenMountains(state); // homelands may have put a peak down since
   hookSetup(state);
   if (opts.wild) setupWild(state, makeRng(seed ^ 0x5eed)); // its own stream, so the rest of the map is the same either way
@@ -334,7 +336,7 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
 }
 
 /** Population a resource adds when harvested (whales only pay stars). */
-const RESOURCE_POP: Record<Resource, number> = { fruit: 1, animal: 1, fish: 1, crop: 2, ore: 2, whale: 0 };
+const RESOURCE_POP: Record<Resource, number> = { fruit: 1, animal: 1, fish: 1, crop: 2, ore: 2, whale: 0, silk: 1, spices: 1, wine: 1, ivory: 1, pearls: 1, incense: 1 };
 /** Population worth of resources every city is guaranteed inside its first borders: a city needs 2 to level up. */
 const MIN_GROWTH = 3;
 

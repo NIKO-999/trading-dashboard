@@ -4,10 +4,14 @@ export type BaseTerrain = 'field' | 'forest' | 'mountain' | 'shallow' | 'ocean';
 export type Terrain = BaseTerrain | 'desert' | 'swamp' | 'tundra' | 'ice' | 'platform'
   // a shallow bridged by Sappers (see game/roles): walkable land with a road over the water
   | 'bridge';
-export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale';
+export type Resource = 'fruit' | 'crop' | 'animal' | 'fish' | 'ore' | 'whale'
+  // luxuries: rare deposits that pay Stars once developed (see game/goods)
+  | 'silk' | 'spices' | 'wine' | 'ivory' | 'pearls' | 'incense';
 export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'market'
   // a tamed herd and planted fruit trees, raised like the others (see game/levels)
   | 'pasture' | 'orchard'
+  // a developed luxury: silk farm, vineyard, pearl beds... (see game/goods)
+  | 'estate'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
@@ -114,6 +118,10 @@ export interface Player {
   hero?: HeroState;
   /** Tiles this empire has raised a level so far (see game/levels; missing in older saves): each makes the next dearer. */
   raised?: number;
+  /** Stockpiled strategic resources (see game/goods; missing in older saves). */
+  stock?: { iron: number; horses: number };
+  /** Techs made cheaper by a Eureka (see game/sparks; missing in older saves). */
+  sparks?: string[];
 }
 
 export interface HeroState {

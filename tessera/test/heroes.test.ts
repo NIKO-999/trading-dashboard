@@ -154,6 +154,7 @@ test('Mansa Musa: Gift of Gold pays 15 stars and grows the capital', () => {
 
 test('Suleiman: Imperial Largesse halves the next build, then is spent', () => {
   const { s, cap } = withHero('ottoman');
+  s.players[0].stock = { iron: 12, horses: 12 }; // Iron-age units need Iron (see game/goods)
   s.players[0].stars = 20;
   s.players[0].techs.push('smithing');
   const t = tileAt(s, cap.x, cap.y)!;

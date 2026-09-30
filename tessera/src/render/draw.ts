@@ -24,6 +24,8 @@ import { drawAuxIcon } from './auxiliaries';
 import { tileLevel } from '../game/levels';
 import { drawDistrictBanners, drawDistrictGround, drawLevelIcon, drawLevelTile } from './levels';
 import { wonderOn } from '../game/wonders';
+import { isLuxury, type Luxury } from '../game/goods';
+import { drawEstate, drawLuxury } from './goods';
 
 const FISH_ICON = FISH;
 const T_LIME_C = '#c9d43a'; // Aksumite lime-gold
@@ -529,12 +531,15 @@ function drawScenery(ctx: Ctx, s: GameState, t: Tile, glow: boolean, viewer = -1
   if (t.terrain === 'mountain' && !wonder && !drawVolcano(ctx, t, c.x, c.y)) drawMountains(ctx, t, c.x, c.y, P);
   if (isClimate(t.terrain)) drawClimate(ctx, t, c.x, c.y);
   // once a farm or mine is built it replaces the wild crop or ore it was built on
-  if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') {
+  if (isLuxury(t.resource)) { // luxuries, wild or worked (see render/goods)
+    if (t.improvement === 'estate') { const o = tileOwnerPlayer(s, t); drawEstate(ctx, t.resource, c.x, c.y, o !== null && s.players[o] ? TRIBES[s.players[o].tribe].color : '#ddd'); }
+    else if (!t.improvement) drawLuxury(ctx, t.resource, c.x, c.y);
+  } else if (t.resource && !t.improvement && t.resource !== 'fish' && t.resource !== 'whale') {
     if (t.terrain === 'desert' && t.resource === 'fruit') drawOasis(ctx, t, c.x, c.y);
     else drawResource(ctx, t, c.x, c.y, t.biome);
   }
   if (t.improvement === 'farm') drawFarmCrops(ctx, c.x, c.y, t.seed);
-  else if (t.improvement) drawImprovement(ctx, s, t, c.x, c.y);
+  else if (t.improvement && t.improvement !== 'estate') drawImprovement(ctx, s, t, c.x, c.y);
   if (t.village) drawVillage(ctx, c.x, c.y);
   if (t.ruin) drawRuin(ctx, t, c.x, c.y);
   if (t.cityId !== null) {
@@ -5307,6 +5312,11 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
   if (icon.startsWith('aux:') && drawAuxIcon(ctx, icon, tribe, x, y)) return; // a Healer's Convert (see render/auxiliaries)
   if (icon.startsWith('level:') && drawLevelIcon(ctx, icon, tribe, x, y)) return; // tile levels (see render/levels)
+  if (icon.startsWith('lux:')) { // a luxury's works (see render/goods)
+    const kind = icon.slice(4) as Luxury;
+    if (kind === 'pearls') { ellipse(ctx, x, y + 6, 21, 10, P.shallow); return drawLuxury(ctx, kind, x, y - 2); }
+    return drawLuxury(ctx, kind, x, y + 2);
+  }
   switch (icon) {
     case 'fruit':
     case 'crop':

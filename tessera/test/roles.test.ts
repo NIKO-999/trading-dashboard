@@ -85,6 +85,7 @@ test('only an empire of the type can train its role units, each behind a tech', 
 
 test('Recruiter: stationed in a city it cuts training costs, adds a unit slot, rallies militia and pays a bounty', () => {
   const s = sandbox(['rome', 'egypt']);
+  for (const p of s.players) p.stock = { iron: 12, horses: 12 }; // Iron-age units need Iron (see game/goods)
   const c = foundCity(s, 3, 3, 0, true);
   const cap = unitCap(c), cost = acts(s, 0, 3, 3).find((a) => a.id === 'train:swordsman')!.cost;
   const u = unit(s, 0, 'recruiter', 3, 3, c.id);
