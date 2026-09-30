@@ -22,7 +22,7 @@ import type { Mechanic } from './types';
 export const MIST_REACH = 2;
 export const STUPA_COST = 8;
 export const STUPA_MAX = 1;
-export const SOLITUDE_CAP = 2;
+export const SOLITUDE_CAP = 3;
 const FAR = 99;
 
 const isPeak = (t: Tile) => t.terrain === 'mountain';

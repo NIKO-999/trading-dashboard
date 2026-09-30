@@ -1,12 +1,14 @@
-// Japan: Way of the Blade (Kiai). A critical strike takes no counter-blow, and a unit at 1 HP fights its final turn
-// with fourfold attack (Last Stand). Crits are decided by a hash of the seed, turn and unit ids, so the preview, the
-// real attack and the AI's plan always agree.
+// Japan: Way of the Blade (Kiai). A critical strike takes no counter-blow and earns KIAI_STARS in honour, and a unit
+// at 1 HP fights its final turn with fourfold attack (Last Stand). Crits are decided by a hash of the seed, turn and
+// unit ids, so the preview, the real attack and the AI's plan always agree.
 import { UNITS } from '../../data/units';
 import { attack, attackOptions, previewCombat } from '../rules';
 import type { GameState, Unit } from '../types';
 import type { Mechanic } from './types';
 
-export const KIAI_CHANCE = 0.3;
+export const KIAI_CHANCE = 0.4;
+/** Honour: every Kiai that lands earns the daimyo this many Stars. */
+export const KIAI_STARS = 3;
 
 const isJapan = (s: GameState, u: Unit) => s.players[u.owner].tribe === 'japan';
 
@@ -26,7 +28,7 @@ export const isKiai = (s: GameState, a: Unit, d: Unit) => isJapan(s, a) && roll(
 
 export const mech: Mechanic = {
   name: 'Way of the Blade (Kiai)',
-  blurb: 'A critical strike takes no counter-blow, and a dying warrior strikes with fourfold force.',
+  blurb: 'A critical strike takes no counter-blow and earns Stars in honour, and a dying warrior strikes with fourfold force.',
 
   stat(s, owner, u, stat) {
     if (stat !== 'atk' || u.owner !== owner || u.hp !== 1) return 0;
@@ -44,6 +46,7 @@ export const mech: Mechanic = {
   afterAttack(s, owner, a, d) {
     if (a.owner !== owner || !isKiai(s, a, d)) return;
     a.data = { ...a.data, kiai: s.turn };
+    s.players[owner].stars += KIAI_STARS;
     s.log.push({ turn: s.turn, text: 'Kiai! A critical strike lands without a counter-blow.' });
   },
 

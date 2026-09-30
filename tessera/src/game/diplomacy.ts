@@ -31,6 +31,17 @@ export const PACT_LOCK = 3;
 export const WAR_LOCK = 3;
 /** Reputation lost with everyone for breaking a treaty (it heals a point a round). */
 export const BETRAYAL = 25;
+/** Raiders are expected to raid: the aggressive lose only this share of BETRAYAL when they break a treaty. */
+export const RAIDER_BETRAYAL = 0.6;
+/** Warlike empires (a war drive of at least this) live by raiding, see `diploAi`. */
+export const RAIDER = 0.8;
+/** How much stronger than a close treaty partner an empire must be before it breaks the treaty (raiders need less). */
+export const breakEdge = (war: number) => (war >= RAIDER ? 1.15 : 1.4 + (1 - war) * 1.5);
+/** How much stronger than a close neighbour a raider must be to have its tribute demands paid. */
+export const RAID_TRIBUTE = 1.6;
+/** The reputation an empire loses for breaking a treaty. */
+export const betrayalCost = (s: GameState, pid: number) =>
+  Math.round(BETRAYAL * (PERSONA[s.players[pid].tribe].war >= RAIDER ? RAIDER_BETRAYAL : 1));
 /** The gift the Diplomacy screen sends. */
 export const GIFT = 5;
 /** A one-off tribute demand, and an ongoing one (Stars a turn, for that many turns). */
@@ -271,7 +282,7 @@ export function declareWar(s: GameState, a: number, b: number, honour = false): 
   delete p.trade;
   s.diplo!.tribute = s.diplo!.tribute.filter((t) => !((t.from === a && t.to === b) || (t.from === b && t.to === a)));
   if (!honour) {
-    s.diplo!.rep[a] = (s.diplo!.rep[a] ?? 0) - BETRAYAL;
+    s.diplo!.rep[a] = (s.diplo!.rep[a] ?? 0) - betrayalCost(s, a);
     moodAdd(s, b, a, -40);
   }
   announce(s, `The ${people(s, a)}s declare war on the ${people(s, b)}s${honour ? ' to stand by their ally' : ''}! It begins on their next turn.`, [a, b], true,
@@ -445,11 +456,13 @@ export function aiAnswer(s: GameState, o: DiploOffer): boolean {
     case 'peace': {
       // afraid of them, or simply not interested in a war; the warlike like easy prey
       const fear = ratio >= 1.3 ? 25 * (1 - me.war) : ratio <= 0.6 && near ? -15 * me.war * 2 : 0;
+      if (me.war >= RAIDER && near && ratio <= 0.9) return false; // a raider never lets a weaker neighbour off the hook
       return op + fear - me.war * 10 + (near ? 0 : 12) >= -10;
     }
     case 'alliance': return op >= 30 && (op >= 45 || sharedEnemies(s, from, to).length > 0);
     case 'trade': return op + me.trade * 15 >= 0;
-    case 'demand': case 'demandTurns': return near && ratio >= 2.2 && op > -60;
+    // a raider at the door is paid off sooner
+    case 'demand': case 'demandTurns': return near && ratio >= (PERSONA[s.players[from].tribe].war >= RAIDER ? RAID_TRIBUTE : 2.2) && op > -60;
     case 'call': return opinion(s, to, from) >= 15 && power(s, to) >= power(s, o.enemy!) * 0.5;
     case 'gift': return true;
   }
@@ -484,18 +497,20 @@ export function diploAi(s: GameState, pid: number): boolean {
     const p = pactOf(s, pid, b);
     // break a treaty: strong, they are weak and close, and we don't much like them (the warlike need less of an edge)
     if (p && p.declared === undefined && !declareCheck(s, pid, b) && near
-      && ((ratio >= 1.4 + (1 - me.war) * 1.5 && op < (p.kind === 'alliance' ? -10 : 15 + me.war * 20)) || (runaway(s, b) && ratio >= 1 && op < 10))) {
+      && ((ratio >= breakEdge(me.war) && op < (p.kind === 'alliance' ? -10 : 15 + me.war * 20)) || (runaway(s, b) && ratio >= 1 && op < 10))) {
       return declareWar(s, pid, b);
     }
     if (rel === 'war') {
-      const prey = near && ratio >= 1.4 && me.war >= 0.5; // strong and close: keep the war going
-      // the warlike only sue for peace when losing (a raider's living is other people's land)
-      const wants = me.war >= 0.8 ? ratio <= 0.7 : op >= 0 || ratio <= 0.7 || !near;
+      const prey = near && me.war >= 0.5 && ratio >= Math.min(1.4, breakEdge(me.war)); // strong and close: keep the war going
+      // a raider picks its fights: peace with everyone who is not prey, so its whole army falls on the weak neighbour
+      const wants = me.war >= RAIDER || op >= 0 || ratio <= 0.7 || !near;
       if (!prey && wants && try_(b, 'peace')) return true;
-      if (prey && ratio >= 2.5 && s.players[b].stars >= DEMAND && try_(b, 'demand')) return true;
+      if (prey && ratio >= (me.war >= RAIDER ? RAID_TRIBUTE : 2.5) && s.players[b].stars >= DEMAND && try_(b, 'demand')) return true;
       if (ratio <= 0.4 && near && s.players[pid].stars >= 25 && op < 0 && try_(b, 'gift')) return true; // buying goodwill before asking for peace
       continue;
     }
+    // a raider at peace with a weak neighbour still takes its cut: tribute, or the treaty goes (see above)
+    if (me.war >= RAIDER && near && ratio >= RAID_TRIBUTE && try_(b, 'demandTurns')) return true;
     if (p && p.trade === undefined && op + me.trade * 15 >= 0 && try_(b, 'trade')) return true;
     if (rel === 'peace' && s.turn - p!.since >= PACT_LOCK && op >= 35 && try_(b, 'alliance')) return true;
   }

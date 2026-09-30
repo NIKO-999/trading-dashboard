@@ -22,7 +22,7 @@ import type { Mechanic } from './types';
 
 export const GROVE_COST = 4;
 export const GROW_EVERY = 3;
-export const VOW_CAP = 4;
+export const VOW_CAP = 3;
 export const VOW_POP = 8;
 export const MAX_GROVES_PER_CITY = 4;
 

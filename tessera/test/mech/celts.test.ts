@@ -5,7 +5,7 @@ import { aiTurn } from '../../src/game/ai';
 import { doAction, moveOptions, moveUnit, tileActions } from '../../src/game/rules';
 import { endTurn } from '../../src/game/turn';
 import { dist, neighbors, tileAt } from '../../src/game/grid';
-import { counter, groveCount, isGrove, vowIncome, vowStars } from '../../src/game/mech/celts';
+import { counter, groveCount, isGrove, VOW_CAP, vowIncome, vowStars } from '../../src/game/mech/celts';
 import type { GameState, Tile } from '../../src/game/types';
 
 function setup() {
@@ -99,8 +99,8 @@ test('Grove Vow: forests beside a grove pay stars (capped) and slowly grow the c
   const base = vowIncome(s, me);
   assert.equal(base, 2);
   for (const n of ring.slice(2, 7)) n.terrain = 'forest';
-  assert.equal(vowIncome(s, me), 4, 'capped per city');
-  // population: 4 forests -> +1 pop every 2 turns
+  assert.equal(vowIncome(s, me), VOW_CAP, 'capped per city');
+  // population: the vow fills by up to 4 a turn -> +1 pop every 2 turns
   const total = () => city.level * 100 + city.pop;
   const t0 = total();
   for (let i = 0; i < 4; i++) nextTurnOf(s, me);

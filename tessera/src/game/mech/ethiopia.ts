@@ -29,7 +29,7 @@ export const RAY_CAP = 4;
 export const LINK_RANGE = 6;
 export const GRID_DAMAGE = 1;
 export const TARIFF_CAP = 8;
-export const CARAVAN_PER_CITY = 1; // a flat road-tax per city
+export const CARAVAN_PER_CITY = 2; // a flat road-tax per city
 export const CHOKE_OPEN = 4;
 
 export const isStele = (t: Tile) => t.improvement === 'stele' && typeof t.data?.stele === 'number';

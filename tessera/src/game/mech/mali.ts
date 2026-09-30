@@ -22,7 +22,7 @@ export const FLOOD_COST = 8;
 export const CARAVAN_COST = 3;
 export const PAUSE_TURNS = 2;
 export const INFLATION_TURNS = 4;
-export const TOLL_CAP = 5; // stars per caravan per turn
+export const TOLL_CAP = 4; // stars per caravan per turn
 export const MAX_CARAVANS = 3;
 
 interface MaliState { floods: number; tolls: number; caravans: number }
