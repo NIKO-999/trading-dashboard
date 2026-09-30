@@ -107,11 +107,12 @@ export class GameView {
    */
   private showDisplayPicker() {
     document.querySelector('.display-picker')?.remove();
-    const MODES: { label: string; display: 'standard' | 'exact'; sharp: 1 | 4 }[] = [
+    const MODES: { label: string; display: 'standard' | 'exact' | 'image'; sharp: 1 | 4 }[] = [
       { label: '1', display: 'standard', sharp: 1 },
       { label: '2', display: 'exact', sharp: 1 },
       { label: '3', display: 'exact', sharp: 4 },
       { label: '4', display: 'standard', sharp: 4 },
+      { label: '5', display: 'image', sharp: 1 },
     ];
     const current = () => MODES.findIndex((m) => m.display === (this.settings.display ?? 'standard') && m.sharp === (this.settings.sharp === 1 ? 1 : 4));
     const buttons = MODES.map((m, i) => h('button', { class: 'dp-opt', onclick: () => {
@@ -119,12 +120,13 @@ export class GameView {
       this.settings.sharp = m.sharp;
       saveSettings(this.settings);
       setSharpness(m.sharp);
+      this.photoImg.style.visibility = 'hidden';
       this.resize();
       mark();
     } }, m.label));
     const mark = () => buttons.forEach((b, i) => b.classList.toggle('on', i === current()));
     const bar = h('div', { class: 'display-picker' },
-      h('div', { class: 'dp-text' }, 'Which map looks sharpest? Tap each number, look at the map, keep the best.'),
+      h('div', { class: 'dp-text' }, 'Which map looks sharpest? Tap each number, look at the map for a second, keep the best. (5 = still picture)'),
       h('div', { class: 'dp-row' }, ...buttons, h('button', { class: 'dp-done', onclick: () => {
         this.settings.displayPicked = true;
         saveSettings(this.settings);
@@ -149,6 +151,8 @@ export class GameView {
     cancelAnimationFrame(this.raf);
     window.removeEventListener('resize', this.ro);
     window.visualViewport?.removeEventListener('resize', this.ro);
+    this.photoImg.remove();
+    if (this.photoUrl) URL.revokeObjectURL(this.photoUrl);
     const ctx = this.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -218,7 +222,40 @@ export class GameView {
   /** The tiny corner tag: version, drawing density, drawing mode and how long a frame takes to draw. */
   private showTag() {
     const ms = this.frameAvg > 0 ? ` · ${isDirectDraw() ? 'direct' : 'cached'} ${this.frameAvg.toFixed(0)}ms` : '';
-    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${this.settings.display === 'exact' ? ' exact' : ''}${ms}`;
+    this.buildTag.textContent = `v${__APP_VERSION__.replace(/\.0$/, '')} · ${+this.dpr.toFixed(2)}×${this.settings.display && this.settings.display !== 'standard' ? ` ${this.settings.display}` : ''}${ms}`;
+  }
+
+  /** Photo display: once the map rests it is shown as a picture (iOS shows pictures pin-sharp). */
+  private photoImg = (() => {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.draggable = false;
+    img.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;visibility:hidden;';
+    document.getElementById('game')!.after(img);
+    return img;
+  })();
+  private photoStale = false;
+  private photoBusy = false;
+  private photoUrl = '';
+
+  private takePhoto() {
+    this.photoBusy = true;
+    this.photoStale = false;
+    this.canvas.toBlob((blob) => {
+      this.photoBusy = false;
+      if (!blob || this.destroyed || this.photoStale || this.settings.display !== 'image') return;
+      const url = URL.createObjectURL(blob);
+      const img = this.photoImg;
+      img.onload = () => {
+        if (this.photoStale || this.settings.display !== 'image') return;
+        img.style.width = `${this.vw}px`;
+        img.style.height = `${this.vh}px`;
+        img.style.visibility = 'visible';
+        if (this.photoUrl) URL.revokeObjectURL(this.photoUrl);
+        this.photoUrl = url;
+      };
+      img.src = url;
+    }, 'image/png');
   }
 
   private loop = (now: number = performance.now()) => {
@@ -238,14 +275,19 @@ export class GameView {
     // finger-up (a system gesture, an app switch), and a stuck "touching" must never leave the map
     // as a stretched, blurry copy: once the fingers rest for a moment it is redrawn sharp.
     const interacting = this.touching > 0 && now - this.lastPointerAt < 200;
-    if (camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion || now - this.lastFrame > (isDirectDraw() ? 50 : 33)) {
+    const photo = this.settings.display === 'image';
+    const needed = camMoving || fxActive || gestureEnded || this.touching > 0 || this.version !== this.drawnVersion;
+    // in photo mode the resting map is a still picture, so the idle breathing redraws stop
+    if (needed || (!photo && now - this.lastFrame > (isDirectDraw() ? 50 : 33))) {
       const t0 = performance.now();
       this.renderer.render(this.ctx, this.s, this.me, this.cam, this.ov, this.vw, this.vh, this.dpr, this.version, interacting);
       this.frameAvg = this.frameAvg ? this.frameAvg * 0.9 + (performance.now() - t0) * 0.1 : performance.now() - t0;
       if (now - this.tagAt > 1000) { this.tagAt = now; this.showTag(); }
       this.drawnVersion = this.version;
       this.lastFrame = now;
+      if (photo) { this.photoImg.style.visibility = 'hidden'; this.photoStale = true; }
     }
+    if (photo && this.photoStale && !this.photoBusy && now - this.lastFrame > 220) this.takePhoto();
     this.raf = requestAnimationFrame(this.loop);
   };
 
