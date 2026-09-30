@@ -1,5 +1,6 @@
 import { TECH_BY_ID } from '../data/techs';
 import { LINE_PARENT } from '../data/uniqueTechs';
+import { govAi } from './governors';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
 import { condActive } from './alignment';
@@ -49,6 +50,7 @@ export function aiStep(s: GameState): boolean {
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
   if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
+  if (govAi(s, pid, (c) => s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && dist(c.x, c.y, u.x, u.y) <= 3))) return true; // governors (see game/governors)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {

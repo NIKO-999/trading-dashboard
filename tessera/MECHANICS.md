@@ -191,6 +191,13 @@ A tech that an empire you have **met** already knows costs **20% less** (it stac
 ### Eras and Ages
 Empires move through four eras as they learn techs: **Ancient → Classical (6 techs) → Medieval (12) → Renaissance (20)**. Entering an era grows every city (+1, +1, +2), pays 5 / 10 / 15★ and 150 score, and is announced to every empire that has met you. Your **Era Score** during the era just ended (Eurekas, battles won up to 4, city levels gained, wonders ×3) sets the next 5 turns: **7+ → Golden Age** (+1★ in every city), **2 or less → Dark Age** (techs 25% cheaper while you rebuild). The 🏛 chip shows the era, the Age and the score.
 
+### Governors
+Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus 1 for each era reached**, and each kind at most once. Appointing a kind already serving elsewhere moves them (their clock restarts). After **8 turns in office** a governor is promoted to rank 2.
+- **Steward:** the city grows +1 every 3 turns (every 2 at rank 2).
+- **Treasurer:** +2★ a turn (+3 at rank 2), +1★ per Market in the city's land.
+- **Marshal:** your units in the city's land defend +0.5 (+1 at rank 2); units trained there cost 1★ less; the city never grows restless.
+- **Scholar:** every tech costs 1★ less (2 at rank 2).
+
 ## 5a. Tile levels, Districts and specialities
 
 *(game/levels.ts; drawn by render/levels.ts into the map picture, so levels, pips and Districts show on the resting, photographed map.)*

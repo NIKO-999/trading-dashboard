@@ -21,6 +21,7 @@ import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, up
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
+import { govActions, govCityIncome, govDefense, govDiscount, govDoAction, govTechOff } from './governors';
 import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
 import { MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
 import { isLuxury, LUX_COST, LUX_EXTRA, LUX_FIRST, LUXURIES, luxuriesOf, luxuryIncome, needNote, needWhy, spendNeeds } from './goods';
@@ -94,6 +95,7 @@ export function cityIncome(s: GameState, c: City, tax = true) {
   inc += networkIncome(net);
   inc += cityRouteIncome(s, c); // trade routes pay both ends (see game/trade)
   inc += levelCityIncome(s, c); // raised tiles and Districts (see game/levels)
+  inc += govCityIncome(s, c); // a Treasurer (see game/governors)
   const pax = sum('pax');
   if (pax && net.linked.length && paxHolds(s, c.owner)) inc += pax; // Pax Romana
   {
@@ -132,7 +134,8 @@ export function techCost(s: GameState, pid: number, tech: string) {
   // a Eureka (game/sparks), a met rival who already knows it, and a Dark Age (game/eras) each take a share off
   const mult = (sparked(s, pid, tech) ? 1 - EUREKA_OFF : 1) * (knownByContact(s, pid, tech) ? 1 - CONTACT_OFF : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
   const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) // a Scholar (see game/governors)
+    - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech));
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
 }
 
@@ -409,8 +412,9 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
   heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
+  govDiscount(s, pid, t, base); // a Marshal (see game/governors)
   specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
-  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t)];
+  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
   if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -611,6 +615,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('role:')) return roleDoAction(s, pid, t, id);
   if (id.startsWith('aux:')) return auxDoAction(s, pid, t, id);
   if (id.startsWith('level:')) return levelDoAction(s, pid, t, id);
+  if (id.startsWith('gov:')) return govDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     spendNeeds(s, pid, kind); // Iron and Horses (see game/goods)
@@ -971,7 +976,7 @@ export function defenseBonus(s: GameState, u: Unit) {
     const inCity = t.cityId !== null && cityById(s, t.cityId)?.owner === u.owner;
     extra = perkSum(s, u.owner, 'terrain', (p) => (p.on === 'forest' && t.terrain === 'forest') || (p.on === 'mountain' && t.terrain === 'mountain') || (p.on === 'own' && tileOwnerPlayer(s, t) === u.owner) || (p.on === 'city' && inCity) || (p.on === 'away' && tileOwnerPlayer(s, t) !== u.owner) || (p.on === 'ice' && t.terrain === 'ice'));
   }
-  return Math.max(0.5, baseDefense(s, u, t) + extra);
+  return Math.max(0.5, baseDefense(s, u, t) + extra + govDefense(s, u.owner, t)); // a Marshal (see game/governors)
 }
 
 function baseDefense(s: GameState, u: Unit, t: Tile) {

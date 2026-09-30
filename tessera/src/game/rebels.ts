@@ -16,6 +16,7 @@
 //    are all gone musters a new warrior every few rounds. Any empire can capture it the ordinary way.
 //  - AI. Computer empires garrison restless cities (`rebelAi`) and keep a guard in them (`holdsPost`).
 import { TRIBES } from '../data/tribes';
+import { govCalm } from './governors';
 import { UNITS } from '../data/units';
 import { adoptedOf, cityOrigin } from './culture';
 import { emit } from './events';
@@ -130,7 +131,7 @@ function tell(s: GameState, x: number, y: number, text: string, but: number) {
 export function cultureUnrest(s: GameState, pid: number): void {
   if (!rebelsOn(s) || s.players[pid].neutral) return;
   for (const c of citiesOf(s, pid)) {
-    if (!subject(s, c)) {
+    if (!subject(s, c) || govCalm(c)) { // a Marshal keeps the peace (see game/governors)
       if (c.data?.unrest !== undefined) { const { unrest: _gone, ...rest } = c.data; c.data = rest; }
       continue;
     }

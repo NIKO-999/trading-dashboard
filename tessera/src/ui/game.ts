@@ -1,4 +1,5 @@
 import { MECH_UI } from './mech';
+import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
 import { monopoliesOf, MONOPOLY_AT } from '../game/goods';
 import { isLuxury, LUX_EXTRA, LUX_FIRST, LUXURIES, LUXURY_IDS, luxuriesOf, luxuryIncome, STOCK_CAP, stockOf, stockYield, type Luxury } from '../game/goods';
@@ -1011,7 +1012,7 @@ export class GameView {
     const T = TRIBES[owner.tribe];
     const mine = city.owner === this.me;
     const info = mine
-      ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${routesOfCity(this.s, city).length ? ` · trade routes ${routesOfCity(this.s, city).length}/${routesPerCity(city)}` : ''}${city.walls ? ' · walls' : ''}${this.roadLine(city)}`
+      ? `Level ${city.level} · population ${city.pop}/${popNeeded(city.level)} · +${cityIncome(this.s, city)}★ per turn · units ${city.units}/${unitCap(city)}${routesOfCity(this.s, city).length ? ` · trade routes ${routesOfCity(this.s, city).length}/${routesPerCity(city)}` : ''}${city.walls ? ' · walls' : ''}${govOf(city) ? ` · ${GOVERNORS[govOf(city)!.k].name} (rank ${govRank(this.s, govOf(city)!)})` : ''}${this.roadLine(city)}`
       : isRogueCity(this.s, city) ? rogueDescribe(this.s, city)
       : `${T.people} city · level ${city.level}${city.walls ? ' · walls' : ''}`;
     // a conquered city's unrest, with what moves it (see game/rebels)

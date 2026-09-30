@@ -2,6 +2,7 @@ import { emit } from './events';
 import { goodsTurnStart } from './goods';
 import { checkSparks } from './sparks';
 import { eraCheck } from './eras';
+import { govTurnStart } from './governors';
 import { revealAround } from './mapgen';
 import { hookIncome, hookTurnEnd, hookTurnStart } from './mech';
 import { perkSum } from './perks';
@@ -58,6 +59,7 @@ export function startTurn(s: GameState) {
   wonderTurnStart(s, p.id); // a wonder site on land it has lost is closed (see game/wonders)
   revealAround(s, p.id);
   checkSparks(s, p.id); // Eurekas (see game/sparks)
+  govTurnStart(s, p.id); // Stewards grow their cities, governors are promoted (see game/governors)
   eraCheck(s, p.id); // a tech from a ruin or a gift can cross into a new era (see game/eras)
 }
 
