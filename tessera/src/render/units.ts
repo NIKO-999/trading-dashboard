@@ -7,6 +7,8 @@ import { drawKraken } from './wild';
 import { drawTradeShip, drawTrader } from './trade';
 import { drawRoleUnit } from './roles';
 import { isRoleKind } from '../game/roles';
+import { drawAuxUnit } from './auxiliaries';
+import { isAuxKind } from '../game/auxiliaries';
 import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, roof, shade, softShadow, type Ctx } from './prims';
 
 interface Look { skin: string; hair: string }
@@ -53,6 +55,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   if (kind === 'tradeship') return drawTradeShip(ctx, tribe, x, y); // each empire's merchants (see render/trade)
   if (kind === 'trader') return drawTrader(ctx, tribe, x, y);
   if (isRoleKind(kind)) return drawRoleUnit(ctx, kind, tribe, x, y); // each empire's role units (see render/roles)
+  if (isAuxKind(kind)) return drawAuxUnit(ctx, kind, tribe, x, y); // each empire's spearmen, scouts and healers (see render/auxiliaries)
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);

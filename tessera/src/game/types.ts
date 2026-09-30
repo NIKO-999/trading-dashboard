@@ -25,6 +25,8 @@ export type UnitKind =
   | 'trader' | 'tradeship'
   // the role units of the three empire types, drawn in each empire's own style (see game/roles)
   | 'recruiter' | 'sapper' | 'builder' | 'collector' | 'fishfleet' | 'voyager'
+  // every empire's auxiliaries: anti-cavalry spearmen, scouts and healers, drawn in each empire's own style (see game/auxiliaries)
+  | 'spearman' | 'scout' | 'healer'
   // neutral Great Beasts (see game/wild)
   | 'kraken';
 

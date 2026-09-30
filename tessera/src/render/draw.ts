@@ -20,6 +20,7 @@ import { drawCamp, drawVolcano, drawWildGround } from './wild';
 import { REBEL_COLOR, REBEL_ROOF, rogueStyle } from './rebels';
 import { drawWonderIcon, drawWonderTile } from './wonders';
 import { drawBridgeGround, drawRoleIcon, drawRoleTile } from './roles';
+import { drawAuxIcon } from './auxiliaries';
 import { isUpgraded } from '../game/roles';
 import { wonderOn } from '../game/wonders';
 
@@ -5300,6 +5301,7 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
   if (icon in UNITS) return drawUnitSprite(ctx, icon as UnitKind, tribe, x, y + 12);
   if (icon.startsWith('wonder:')) return drawWonderIcon(ctx, icon.slice(7), x, y); // World Wonders (see render/wonders)
   if (icon.startsWith('role:') && drawRoleIcon(ctx, icon, tribe, x, y)) return; // the role units' actions (see render/roles)
+  if (icon.startsWith('aux:') && drawAuxIcon(ctx, icon, tribe, x, y)) return; // a Healer's Convert (see render/auxiliaries)
   switch (icon) {
     case 'fruit':
     case 'crop':

@@ -41,7 +41,7 @@ export const TECHS: TechDef[] = [
   T('tactics', 'Tactics', 2, 'gathering', 0, 'Train Defenders.'),
   T('engineering', 'Engineering', 3, 'tactics', 0, 'Train Catapults.'),
 
-  T('hunting', 'Hunting', 1, null, 0, 'Hunt wild animals (+1 pop).'),
+  T('hunting', 'Hunting', 1, null, 0, 'Hunt wild animals (+1 pop). Train Spearmen.'),
   T('archery', 'Archery', 2, 'hunting', 0, 'Train Archers. Forest defence bonus.'),
   T('spiritualism', 'Spiritualism', 3, 'archery', 0, 'Grove shrines: +1 pop from forests, free heal.'),
   T('forestry', 'Forestry', 2, 'hunting', 0, 'Lumber huts (+1 pop). Clear forests.'),
@@ -62,7 +62,7 @@ export const TECHS: TechDef[] = [
   T('climbing', 'Climbing', 1, null, 0, 'Move onto mountains. Units on a mountain defend at ×2.'),
   T('mining', 'Mining', 2, 'climbing', 0, 'Build mines on ore (+2 pop).'),
   T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen.'),
-  T('meditation', 'Meditation', 2, 'climbing', 0, 'Mountain shrines (+1 pop).'),
+  T('meditation', 'Meditation', 2, 'climbing', 0, 'Mountain shrines (+1 pop). Train Healers.'),
   T('philosophy', 'Philosophy', 3, 'meditation', 0, 'All future techs cost 33% less.'),
 ];
 

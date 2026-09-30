@@ -10,6 +10,7 @@ import { ringLabel, skyLayout, skyLinks, type Sky } from './constellation';
 import { h, iconEl, starSpan } from './dom';
 import { modal } from './modal';
 import { isRoleKind, roleKindsOf, roleName } from '../game/roles';
+import { AUX_KINDS, auxName } from '../game/auxiliaries';
 import { unitPortrait } from './menu';
 
 // The Constellation View: the skill tree as stars on a pitch-black sky (layout in ui/constellation.ts). Learned stars
@@ -169,6 +170,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     if (t.flavor) body.push(h('p', { class: 'muted' }, t.flavor));
     if (!t.tribe || UNIQUE_BY_ID[t.id].perks.length) body.push(h('p', {}, unlocks));
     if (role) body.push(h('p', {}, h('b', {}, `${roleName(p.tribe, role)}: `), UNITS[role].blurb)); // this empire type's role unit
+    for (const k of AUX_KINDS.filter((x) => UNITS[x].tech === id)) body.push(h('p', {}, h('b', {}, `${auxName(p.tribe, k)} (${UNITS[k].name}, ${UNITS[k].cost}★): `), UNITS[k].blurb)); // a Spearman or Healer (see game/auxiliaries)
     if (t.cond) {
       const on = condActive(s, pid, t.cond);
       body.push(h('p', { class: `tt-surge${on ? ' on' : ''}` }, `Surge — while ${COND_TEXT[t.cond].when}: ${t.surge} `, h('b', {}, on ? '(surging now)' : '(dormant)')));

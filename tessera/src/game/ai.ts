@@ -19,6 +19,7 @@ import { allyFoes, diploAi, hostile } from './diplomacy';
 import { isTraderKind, raidSpots, tradeAi } from './trade';
 import { bridgesBuilt, isRoleUnit, postAt, roleAi, roleTechWant } from './roles';
 import { armyAi, outOfSupply, suppliedAt, supplyExempt } from './army';
+import { auxAi, auxTechWant, isSupport } from './auxiliaries';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -46,6 +47,7 @@ export function aiStep(s: GameState): boolean {
   if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
+  if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
 
   // 1. Level-up rewards.
   for (const c of citiesOf(s, pid)) {
@@ -67,7 +69,7 @@ export function aiStep(s: GameState): boolean {
   }
 
   // 3. Units.
-  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id) && !isTraderKind(x.kind) && !isRoleUnit(x))) { // merchants and role units go their own way (see game/trade, game/roles)
+  for (const u of s.units.filter((x) => x.owner === pid && !done.has(x.id) && !isTraderKind(x.kind) && !isRoleUnit(x) && !isSupport(x))) { // merchants, role units, scouts and healers go their own way (see game/trade, game/roles, game/auxiliaries)
     if (unitStep(s, u)) return true;
     done.add(u.id);
   }
@@ -168,7 +170,7 @@ function roadStep(s: GameState, pid: number): boolean {
 function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
-  const myUnits = s.units.filter((u) => u.owner === pid && !isRoleUnit(u)); // role units don't fight (see game/roles)
+  const myUnits = s.units.filter((u) => u.owner === pid && !isRoleUnit(u) && !isSupport(u)); // role units, scouts and healers don't fight (see game/roles, game/auxiliaries)
   const enemiesNear = s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
   const abroad = targetsOnlyOverseas(s, pid);
 
@@ -221,7 +223,7 @@ function economyStep(s: GameState, pid: number): boolean {
       const node = skillWant(s, pid, id, owned, enemiesNear);
       if (node !== null) return node;
       const line = LINE_PARENT[p.tribe] === id ? 6 : 0; // the empire's own line grows out of this one
-      return Math.max(line, roleTechWant(s, pid, id), baseWant(id)); // and a tech that unlocks a role unit is worth having
+      return Math.max(line, roleTechWant(s, pid, id), auxTechWant(s, pid, id), baseWant(id)); // and a tech that unlocks a role unit (or a needed auxiliary) is worth having
     };
     const baseWant = (id: string) => {
       switch (id) {

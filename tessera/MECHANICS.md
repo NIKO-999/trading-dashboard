@@ -85,7 +85,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 
 ## 4. Units and combat
 
-**Trainable in a city (cost ★):** Warrior 2 · Rider 3 (Riding) · Archer 3 (Archery) · Defender 3 (Tactics) · Swordsman 5 (Smithing) · Catapult 8 (Engineering) · Knight 8 (Chivalry). Each empire replaces some of these with its own unique unit (§7). **Boats** are made by moving a land unit into a port (a boat carries it; upgrades: Canoe → Galley 5★ with Sailing → Trireme 15★ with Navigation). **Colossus** (40 HP) comes from level-up rewards; **Pathfinders** from ruins/rewards. Each empire type also trains two **role units** (§15).
+**Trainable in a city (cost ★):** Warrior 2 · Rider 3 (Riding) · Archer 3 (Archery) · Defender 3 (Tactics) · Swordsman 5 (Smithing) · Catapult 8 (Engineering) · Knight 8 (Chivalry). Each empire replaces some of these with its own unique unit (§7). **Boats** are made by moving a land unit into a port (a boat carries it; upgrades: Canoe → Galley 5★ with Sailing → Trireme 15★ with Navigation). **Colossus** (40 HP) comes from level-up rewards; **Pathfinders** from ruins/rewards. Each empire type also trains two **role units** (§15), and every empire trains three **auxiliaries**: Spearman 3★ (Hunting), Scout 2★ and Healer 4★ (Meditation) (§16).
 
 **Stats** (base): Warrior 10 HP, attack 2, defence 2, move 1 · Rider 10/2/1, move 2 · Archer 10/2/1, range 2 · Defender 15/1/3 · Swordsman 15/3/3 · Catapult 10/4/0, range 3 · Knight 10/3.5/1, move 3 · Galley 10/2/2 move 3 range 2 · Trireme 15/4/3.
 
@@ -98,6 +98,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 - defence force = defence × (defender HP / max HP) × **terrain bonus**
 - damage dealt = `round( attackForce / (attackForce + defenceForce) × attack × 4.5 )`
 - If the defender survives and the attacker is within the defender's range, it **counter-attacks** with `round( defenceForce / total × defence × 4.5 )`.
+- **Spearmen** (§16) defend ×2 against a mounted attacker (on top of the terrain bonus) and deal +50% damage when they attack a mounted unit.
 - **Terrain bonus:** ×1.5 in your own city (×4 with City Walls, for fortify units; ×1 while Sappers have undermined it, §15), ×2 on a mountain (Climbing), ×1.5 in forest with Archery, ×1.5 in swamp, ×1.5 afloat with Aquaculture, else ×1.
 - **Veterans:** 3 kills → +5 max HP, healed. **Recover** action heals 4 HP (2 outside your borders) and uses the unit's turn (not while out of supply, §4a).
 - **Formations** add to the attack and defence above (§4a); the attack preview names them.
@@ -512,4 +513,30 @@ Every empire belongs to one of three types (`category` in `data/tribes`). Each t
 - **Found Outpost** (on an empty, unclaimed land tile beside it — no city, village, ruin, camp or unit, not a mountain — at least **3** tiles from every city): the tile becomes a new **level-1 city** of yours, and the ship is used up (its slot is freed). You may hold **one outpost for every 2 cities** you own. The Pirates hold no land (their cities are platforms, §10), so their Voyager only explores.
 
 **Computer players** research the tech of their role units, station recruiters in their largest (or threatened) cities and rally militia when a city is threatened, send sappers toward enemy cities (building roads on the way, forts when enemies are near, bridges to land worth reaching, and undermining a city their soldiers are besieging), keep a builder building and upgrading, station tax collectors in their richest cities, send fleets to the nearest fish and whales, and send voyagers to explore and settle empty coasts.
+
+## 16. Auxiliaries: Spearman, Scout and Healer
+
+Every empire trains three **auxiliaries** (see `game/auxiliaries`), named and drawn in its own style: a Roman *Triarius* behind a red oval shield, a Japanese *Yari Ashigaru* with a long tasselled pike, a Zulu *Umkhonto Spearman* with a cowhide shield; a Pirate *Lookout* with a spyglass, an Inca *Chaski Scout* with a knotted cord, a Lakota *Wolf Scout* under a wolf skin; a Greek *Asklepian Healer* with a serpent staff, a Tibetan *Amchi Healer* with a prayer wheel, a Khmer *Kru Khmer Healer* with a smoking censer... They are trained in a city like any unit and take a unit slot.
+
+| Unit | Cost | HP | Attack | Defence | Move | Tech | Skills |
+|---|---|---|---|---|---|---|---|
+| Spearman | 3★ | 10 | 1.5 | 2 | 1 | Hunting | dash, fortify |
+| Scout | 2★ | 8 | 0 | 1 | 3 (sees 3) | — | dash, forestwalk |
+| Healer | 4★ | 8 | 0 | 1 | 1 | Meditation | dash |
+
+### Spearman
+- **Braced spears:** defends at **double strength** against a mounted attacker (its defence ×2, so it also strikes back much harder), and deals **+50% damage** when it attacks a mounted unit (the blow is shown big as "Spears!").
+- **Mounted** means the mounted list used by the skill tree: Riders, Knights, Chariots, Horse Archers, War Elephants and the mounted uniques (Jaguar Warriors, Lakota Horse Warriors, Khampa Riders), plus the heroes who ride: Genghis Khan, Ramesses II, Sitting Bull and Songtsen Gampo. A unit in a boat is never mounted.
+- Otherwise an ordinary foot soldier: it captures, fortifies and counts as melee for perks.
+
+### Scout
+- Moves **3**, sees **3** tiles around it and walks through forest without stopping. No attack, never captures cities or villages.
+- **Ruins:** a Scout that opens a ruin finds **+3★** on top of the ruin's own reward.
+
+### Healer (Monk)
+- No attack, never captures. At the **start of your turn** every unit of yours standing next to a Healer heals **2 HP** (per Healer; not the Healer itself).
+- **Convert** (uses its turn, then **5 turns** of cooldown): an enemy unit next to it at **half health or less** changes sides. It arrives spent (it cannot act until your next turn) and unsupported (no city pays for it, like the garrison of a captured city); its old city gets the slot back. It counts as an attack for diplomacy. Heroes, Great Beasts, Rogue State units and siege engines (Catapults, Hwacha) cannot be converted, nor, with Diplomacy on, the units of an empire you hold a treaty with.
+- **Where you see it:** tap the Healer: its panel says "Convert: ready" or "ready in N turns", and a Convert button (with an arrow to the target) appears for each enemy beside it, greyed out with the reason when it can't be used; tapping a wounded enemy beside your Healer shows the same button. On the map a green ring lies under every Healer (brighter while Convert is ready), and a small green cross marks each wounded unit of its empire beside it (healed next turn); healing floats up as green numbers. A convert is toasted to both sides and logged.
+
+**Computer players** train a Scout in the first turns while much of the map is unknown (and send it to ruins and the edge of the fog), research Hunting and train Spearmen in the city nearest the horsemen when mounted units make up a third or more of an enemy host near their cities, research Meditation once their army is large and keep a Healer beside it (two for a very large army), moving it next to the wounded, and Convert the most valuable wounded enemy they can.
 

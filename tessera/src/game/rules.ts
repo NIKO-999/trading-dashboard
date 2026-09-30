@@ -17,6 +17,7 @@ import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
 import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
 import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, upgradeWhy } from './army';
+import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
 // ---------------------------------------------------------------- basics
@@ -384,7 +385,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   const base = baseTileActions(s, pid, t);
   heroDiscount(s, pid, base); // Suleiman's Imperial Largesse (see game/heroes)
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
-  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t)];
+  let acts = [...base, ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t)];
   // a mercenary camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/wonders)
   if (campAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain'].includes(a.id));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -424,7 +425,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     // a city afloat (the Maori Great Waka) can only be taken from the water, by a ship or boat standing on it
     const afloat = t.cityId !== null && !!cityById(s, t.cityId)?.data?.waka;
     // a treaty partner's city can't be taken (see game/diplomacy)
-    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && !isTrader(u) && !isRoleUnit(u) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
+    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && !isTrader(u) && !isRoleUnit(u) && !isSupport(u) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
@@ -449,6 +450,11 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
       add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`, trainCost(s, pid, k), d.tech, k,
+        land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
+    }
+    for (const k of AUX_KINDS) { // every empire's Spearman, Scout and Healer, in its own name (see game/auxiliaries)
+      const d = UNITS[k];
+      add(`train:${k}`, auxName(p.tribe, k), `${d.name}. ${d.blurb} ${d.atk ? `⚔${d.atk} ` : ''}🛡${d.def} ❤${d.hp} ➜${d.move}`, trainCost(s, pid, k), d.tech, k,
         land ?? (full ? `City supports ${unitCap(city)} units` : undefined));
     }
     for (const k of TRADER_KINDS) { // merchants (see game/trade); a Trade Ship is launched onto the water beside the city
@@ -566,6 +572,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('wonder:')) return wonderDoAction(s, pid, t, id);
   if (id.startsWith('trade:')) return tradeDoAction(s, pid, t, id);
   if (id.startsWith('role:')) return roleDoAction(s, pid, t, id);
+  if (id.startsWith('aux:')) return auxDoAction(s, pid, t, id);
   if (id.startsWith('train:')) {
     const kind = id.slice(6) as UnitKind;
     if (kind === 'tradeship' || isRoleShip(kind)) { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
@@ -854,6 +861,7 @@ export function moveUnit(s: GameState, u: Unit, x: number, y: number): boolean {
 
 function openRuin(s: GameState, u: Unit, t: Tile) {
   t.ruin = false;
+  scoutRuin(s, u, t); // a Scout finds a little more (see game/auxiliaries)
   const pid = u.owner;
   const p = s.players[pid];
   const roll = (t.seed + s.turn) % 5;
@@ -931,7 +939,7 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
   const f = formation(s, a, d); // volley, charge and shield wall (see game/army)
   const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk);
-  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def);
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
   const aForce = atk * (a.hp / maxHp(a));
   const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
   const total = aForce + dForce || 1;

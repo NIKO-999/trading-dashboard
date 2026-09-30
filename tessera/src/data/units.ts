@@ -84,6 +84,12 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   fishfleet: U({ kind: 'fishfleet', name: 'Fishing Fleet', cost: 5, hp: 10, atk: 0, def: 1, move: 3, range: 1, naval: true, vision: 2, skills: ['dash'], tech: 'fishing', blurb: 'Launched beside a coastal city. Brings in fish and whales anywhere at sea for Stars and people, and 1★ a turn.' }),
   voyager: U({ kind: 'voyager', name: 'Voyager', cost: 8, hp: 10, atk: 0, def: 1, move: 4, range: 1, naval: true, vision: 3, skills: ['dash'], tech: 'sailing', blurb: 'A long-range explorer ship that crosses the ocean. Found an outpost city on an unclaimed coast.' }),
 
+  // Every empire's auxiliaries (see game/auxiliaries): their name and look come from the empire. Scouts and Healers
+  // never fight or capture
+  spearman: U({ kind: 'spearman', name: 'Spearman', cost: 3, hp: 10, atk: 1.5, def: 2, move: 1, range: 1, skills: ['dash', 'fortify'], tech: 'hunting', blurb: 'Cheap spear infantry. Defends at double strength against mounted units and strikes them for +50%.' }),
+  scout: U({ kind: 'scout', name: 'Scout', cost: 2, hp: 8, atk: 0, def: 1, move: 3, range: 1, vision: 3, skills: ['dash', 'forestwalk'], tech: null, blurb: 'A fast explorer that sees far and slips through forest. Finds 3★ more in ruins. Cannot fight or capture.' }),
+  healer: U({ kind: 'healer', name: 'Healer', cost: 4, hp: 8, atk: 0, def: 1, move: 1, range: 1, skills: ['dash'], tech: 'meditation', blurb: 'Heals your units beside it 2 HP every turn, and can Convert a badly wounded enemy beside it (every 5 turns). Cannot fight or capture.' }),
+
   // Neutral Great Beasts (see game/wild): never trained, owned by the hidden neutral player
   kraken: U({ kind: 'kraken', name: 'Kraken', cost: 0, hp: 30, atk: 4, def: 2, move: 1, range: 1, naval: true, skills: [], tech: null, trainable: false, blurb: 'A leviathan of the deep ocean. Drags down any ship that sails too close.' }),
 };

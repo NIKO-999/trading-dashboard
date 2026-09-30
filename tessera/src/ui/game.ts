@@ -50,6 +50,7 @@ import { cooldownLeft, HERO_ATK_PER_LEVEL, HERO_MAX_LEVEL, HERO_XP, heroDef, isH
 import { lacksSupply, outOfSupply, shieldWall, SUPPLY_RANGE } from '../game/army';
 import { isTraderKind, liveRoutes, routeIncome, routesOfCity, routesPerCity, traderName, traderPreview } from '../game/trade';
 import { tradeList } from './trade';
+import { auxName, auxParts, auxPreview, isAuxKind } from '../game/auxiliaries';
 import { categoryOf } from '../data/tribes';
 import { cityTax, fleetIncome, isRoleKind, isSapperFort, minedLeft, postAt, rallyLeft, RECRUIT_CAP, RECRUIT_DISCOUNT, roleName, roleParts, rolePreview, upgradeName, upgradesOf, UPGRADE_STARS } from '../game/roles';
 
@@ -890,18 +891,21 @@ export class GameView {
             : isNeutral(this.s, u.owner)
             ? h('span', { class: 'tribe-chip', style: { '--tc': WILD_COLOR } as Record<string, string> }, 'Wild')
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
-          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : isRoleKind(u.kind) ? roleName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${d.name}${u.carrying ? ` (carrying ${isRoleKind(u.carrying) ? roleName(owner.tribe, u.carrying) : UNITS[u.carrying].name})` : ''}`),
+          hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : isRoleKind(u.kind) ? roleName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${isAuxKind(u.kind) ? auxName(owner.tribe, u.kind) : d.name}${u.carrying ? ` (carrying ${isRoleKind(u.carrying) ? roleName(owner.tribe, u.carrying) : isAuxKind(u.carrying) ? auxName(owner.tribe, u.carrying) : UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null, this.supplyLine(u),
           u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null, // the route yield preview (see game/trade)
-          isRoleKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${u.owner === this.me ? rolePreview(this.s, u) : d.blurb}`) : null))); // what a role unit does (see game/roles)
-      // empire actions on a unit's tile (launch, board...), camp bids, and this role unit's own actions (see game/roles)
-      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:') || roleParts(a.id)?.unit === u.id), p.tribe);
+          isRoleKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${u.owner === this.me ? rolePreview(this.s, u) : d.blurb}`) : null, // what a role unit does (see game/roles)
+          isAuxKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${auxPreview(this.s, u)}`) : null))); // a Spearman's brace, a Scout's reach, a Healer's cooldown (see game/auxiliaries)
+      // empire actions on a unit's tile (launch, board...), camp bids, this role unit's own actions (see game/roles), and
+      // a Healer's Convert: its own, or a healer's aimed at this enemy (see game/auxiliaries)
+      this.renderActions(allActs.filter((a) => UNIT_ACTIONS(a.id) || a.id.startsWith('mech:') || a.id.startsWith('wild:') || a.id.startsWith('wonder:') || roleParts(a.id)?.unit === u.id
+        || (!!auxParts(a.id) && (auxParts(a.id)!.unit === u.id || auxParts(a.id)!.target === t.y * this.s.size + t.x))), p.tribe);
       return;
     }
 
     // a tile's menu: what can be done here, and the role units' actions aimed at this tile (see game/roles)
     const here = t.y * this.s.size + t.x;
-    const tileActs = allActs.filter((a) => !UNIT_ACTIONS(a.id) && (!a.id.startsWith('role:') || roleParts(a.id)?.target === here));
+    const tileActs = allActs.filter((a) => !UNIT_ACTIONS(a.id) && (!a.id.startsWith('role:') || roleParts(a.id)?.target === here) && !a.id.startsWith('aux:'));
     const city = t.cityId !== null ? cityById(this.s, t.cityId) : undefined;
     if (city) return this.cityPanel(city, close, head, tileActs);
 

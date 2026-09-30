@@ -136,7 +136,7 @@ test('AI builds terraces and outposts', () => {
 
 test('all-AI 20-turn game with Inca completes and the AI uses the mechanic', () => {
   let used = 0, zips = 0;
-  for (const seed of [11, 3, 7]) {
+  for (const seed of [11, 3, 7, 1]) { // zips are rare and depend on how the war unfolds: seed 1 has several
     const s: GameState = createGame({ seed, human: null, opponents: ['inca', 'japan', 'mongols'], mode: 'perfection' });
     startTurn(s);
     let guard = 0;
