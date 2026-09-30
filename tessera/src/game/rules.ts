@@ -15,6 +15,7 @@ import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoActio
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
 import { cityRouteIncome, isTrader, shipSpawn, tradeActions, tradeDoAction, traderDiscount, TRADER_KINDS, tradeSweep, traderName } from './trade';
+import { uniqueEdge } from './uniques';
 import { isRoleShip, isRoleUnit, postedCity, postSpawn, RECRUIT_CAP, roleActions, roleCityIncome, roleDiscount, roleDoAction, roleKindsOf, roleName, undermined } from './roles';
 import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, upgradeWhy } from './army';
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
@@ -938,10 +939,11 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
   const f = formation(s, a, d); // volley, charge and shield wall (see game/army)
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk);
-  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
-  const aForce = atk * (a.hp / maxHp(a));
-  const dForce = dd * (d.hp / maxHp(d)) * defenseBonus(s, d);
+  const edge = uniqueEdge(s, a, d); // unique units' matchup bonuses (see game/uniques)
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk + edge.atk);
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def + edge.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
+  const aForce = atk * (edge.fury ? 1 : a.hp / maxHp(a));
+  const dForce = dd * (d.hp / maxHp(d)) * (edge.pierce ? Math.min(1, defenseBonus(s, d)) : defenseBonus(s, d));
   const total = aForce + dForce || 1;
   const ranged = dist(a.x, a.y, d.x, d.y) > 1;
   let dmg = Math.round((aForce / total) * atk * 4.5);

@@ -5,6 +5,7 @@ import { CATEGORIES, categoryOf, portraitKind, TRIBE_IDS, TRIBES, type CategoryD
 import { UNITS } from '../data/units';
 import { TRAITS } from '../data/traits';
 import { MECH } from '../game/mech';
+import { UNIQUE_ABILITY } from '../game/uniques';
 import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
 import { describePerk } from '../game/perks';
 import { roleName } from '../game/roles';
@@ -173,6 +174,17 @@ function roleUnits(id: TribeId): Node[] {
   ];
 }
 
+/** An empire's unique unit, what it replaces and its signature ability (see game/uniques), with its stats. */
+function uniqueLine(id: TribeId) {
+  const t = TRIBES[id];
+  const d = UNITS[t.unique];
+  const a = UNIQUE_ABILITY[t.unique];
+  return h('p', { class: 'unique-line' },
+    h('b', {}, `Unique unit: ${d.name}`), ` (replaces ${UNITS[t.replaces].name}). `,
+    a ? h('b', {}, `${a.name}: `) : null, a ? a.desc : d.blurb,
+    h('span', { class: 'muted' }, ` ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`));
+}
+
 /** An empire's strengths and weaknesses, each with the history behind it. */
 function traitLists(id: TribeId): Node[] {
   const t = TRIBES[id];
@@ -252,7 +264,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
     const detail = h('div', { class: 'tribe-detail' },
       h('h4', {}, t.name),
       h('p', {}, t.blurb),
-      h('p', {}, h('b', {}, `${UNITS[t.unique].name}: `), UNITS[t.unique].blurb),
+      uniqueLine(choice.tribe),
       ...traitLists(choice.tribe),
     );
     const start = h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START');
@@ -334,7 +346,7 @@ function showEmpires(handlers: MenuHandlers) {
             h('p', {}, h('b', {}, 'Starts with: '), t.startTech[0].toUpperCase() + t.startTech.slice(1)),
             ...traitLists(id),
             h('p', {}, h('b', {}, 'Skill line: '), UNIQUE_TECHS.filter((u) => u.tribe === id).map((u) => u.name).join(' → ')),
-            h('p', {}, h('b', {}, `${UNITS[t.unique].name}`), ` (replaces ${UNITS[t.replaces].name}): ${UNITS[t.unique].blurb}`),
+            uniqueLine(id),
           ),
         );
       })]),

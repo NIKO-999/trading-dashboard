@@ -5,6 +5,7 @@ import type { Action } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
 import { hostile } from '../diplomacy';
+import { rocketSplash } from '../uniques';
 
 // Singijeon Rocket Fleets: Korean siege engines fire high-arc salvos. They can hit any tile in range, even fogged or
 // unexplored ones, and every hit sets the tile ablaze for a few turns. Fire is kept in tile.data.fire (turns left);
@@ -45,6 +46,7 @@ function salvo(s: GameState, a: Unit, t: Tile) {
       s.players[a.owner].kills++;
       a.veteranKills++;
     }
+    if (a.kind === 'hwacha') rocketSplash(s, a, t.x, t.y, dmg); // the hwacha's volley spreads (see game/uniques)
   }
   ignite(t, a.owner);
   a.attacked = true;

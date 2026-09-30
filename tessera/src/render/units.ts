@@ -4697,7 +4697,8 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   if (tribe === 'china') cnHorseGear(ctx, kind, x, y, saddle);
   if (tribe === 'korea') krHorseGear(ctx, kind, x, y, saddle);
   const b = figure(ctx, kind, tribe, saddle.x, saddle.y, 0.9, true);
-  if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, b, 0.9);
+  // the bow is drawn high, above the horse's head, so rider, bow and horse all read at a glance
+  if (kind === 'horsearcher') return drawWeapon(ctx, 'archer', tribe, { ...b, hand: { x: b.hand.x - 1, y: b.hand.y - 5 } }, 0.9);
   if (kind === 'knight' || kind === 'rider') drawShield(ctx, tribe, kind, b.off.x - 1.5, b.off.y + 1.5, 0.7);
   if (tribe === 'celts') celtLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6);
   else if (tribe === 'china') cnLance(ctx, b.hand.x, b.hand.y, knight ? 2 : 1.6, knight);

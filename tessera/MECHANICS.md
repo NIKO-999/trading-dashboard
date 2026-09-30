@@ -91,6 +91,39 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 
 **Unit skills:** *dash* – can attack after moving · *escape* – can move after attacking · *persist* – can attack again after a kill · *fortify* – strong defence in own city · *forestwalk* – moves freely through forest · *amphibious* – wades through shallows · *carry* – carries a land unit · *plunder* – loots on kills · *scout* – Pathfinder.
 
+**Unique units:** each empire's own unit stands in for one base unit and has one signature ability, shown in the unit panel, the train menu and the empire screens; the attack preview already counts it. The abilities live in `game/uniques.ts` (the combat formula reads their matchup bonuses; the rest is a mechanic run for every empire). Stats are cost, HP/attack/defence.
+
+| Unit | Replaces | Stats | Ability |
+|---|---|---|---|
+| Chariot | Rider | 4★ 10/2.5/1, move 2, range 2 | **Archer chariot** — Shoots from 2 tiles and can drive on after shooting. |
+| Jaguar Warrior | Rider | 3★ 10/2.5/1, move 2 | **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow. |
+| Waka Taua | Canoe | 0★ 10/2/1, move 3, range 2 | **Ramming prow** — The fastest boat (carries a unit); rams adjacent ships for +50% damage. |
+| Legionary | Warrior | 2★ 10/2/3, move 1 | **Testudo** — Locks shields against missiles, +1 defence against ranged attacks. |
+| Buccaneer | Archer | 4★ 10/2/1, move 1, range 2 | **Plunder** — Wades through shallows and loots +2★ from every kill. |
+| Berserker | Swordsman | 4★ 15/4/2.5, move 1 | **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows. |
+| Samurai | Swordsman | 6★ 15/3/3, move 1 | **Bushidō** — Strikes again after every kill. |
+| Horse Archer | Archer | 4★ 10/2/1, move 2, range 2 | **Mounted archer** — Shoots from 2 tiles and can ride on after shooting. |
+| Hoplite | Defender | 3★ 15/2/3, move 1 | **Phalanx** — Its spear wall hits back 50% harder when attacked. |
+| Impi | Warrior | 2★ 10/2.5/1.5, move 1 | **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe. |
+| Immortal | Swordsman | 5★ 15/3/3, move 1 | **Undying** — Heals 3 HP at the start of every turn, wherever it stands. |
+| Clansman | Warrior | 2★ 12/2/1.5, move 1 | **Oak-grove warband** — Moves freely through forest and attacks +1 from forest. |
+| Harpooner | Archer | 3★ 10/2/1, move 1, range 2 | **Harpoon** — Double damage to ships, boats and Great Beasts. |
+| Slinger | Archer | 3★ 10/2.5/1, move 1, range 2 | **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain. |
+| Shotelai | Swordsman | 5★ 15/3/3, move 1 | **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus. |
+| Woomera Hunter | Archer | 3★ 10/2.5/1, move 1, range 3 | **Spear-thrower** — Throws 3 tiles, further than any archer; moves freely through forest. |
+| Crossbowman | Archer | 4★ 10/2.5/1, move 1, range 2 | **Siege bolts** — Shoots from 2 tiles; +1 attack against units in a city or fort. |
+| War Elephant | Knight | 8★ 20/3/1.5, move 2 | **Trample** — A melee blow carries through, and the enemy behind the target takes half the damage. |
+| Sofa | Warrior | 3★ 12/2.5/2, move 1 | **Mansa's guard** — +2 defence in its own cities. |
+| Horse Warrior | Rider | 3★ 10/2/1, move 2 | **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra). |
+| Janissary | Archer | 4★ 10/2.5/1, move 1, range 2 | **Musket volley** — Fires from 2 tiles; +1 attack against melee units. |
+| Holcan | Warrior | 2★ 10/2.5/1.5, move 1 | **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it. |
+| Hwacha | Catapult | 8★ 10/4/0, move 1, range 3 | **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too. |
+| Temple Guardian | Defender | 3★ 15/1.5/3, move 1 | **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead. |
+| Askari | Warrior | 2★ 10/2/2, move 1 | **Coast guard** — +1 defence on land beside water. |
+| Khampa Rider | Rider | 3★ 12/2/1.5, move 2 | **Highlander** — Mountains never stop its move; it rides over them like open ground. |
+
+Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossbowman) means on a city tile or a fort/wall tile. *Open ground* (Horse Warrior) is field, desert or tundra. The Temple Guardian only shields a land unit beside it and never drops below 1 HP doing so. The Hwacha's splash also follows a Korean rocket salvo, hits only enemies and can kill; the War Elephant's trample hits the one enemy straight behind the target (seen from where the elephant struck). The impi's extra tile is spent by its next move and lapses at the start of Zulu's next turn. The Holcan is hidden like a unit under the Sacred Canopy: an enemy unit or city right beside it sees it.
+
 **Movement:** each tile costs 1 point; roads (or city tiles) linked road-to-road cost 0.5. A unit must **stop** when it enters: a mountain (needs Climbing), forest (unless forestwalk or road), swamp (unless road), any tile next to an enemy (zone of control), a port when boarding. You cannot walk through units. Boats: shallows freely, deep ocean only as Galley/Trireme; landing ends the move.
 
 **Combat formula:**
@@ -205,6 +238,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.
+- **Unique unit — Chariot** (replaces the Rider): **Archer chariot** — Shoots from 2 tiles and can drive on after shooting.
 - **Unique mechanic — Dynastic Wonders & Afterlife:** Megaliths rise over fallen heroes and great souls return to the pyramids as Golden Guardians; fields beside water become free farms that flood every 4th turn with stars and +1 population.
 - **Strengths:** Pyramid Builders (Temples and shrines cost 2★ less.)
 - **Weaknesses:** Late to Iron (Smithing costs 2★ more to research. Foot soldiers defend 0.5 worse.); Children of the River (Boats and ships move 1 less.)
@@ -212,6 +246,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aztec (aztec)
 - **Signature bonus:** Sacred Hunt — hunting refunds 1★.
+- **Unique unit — Jaguar Warrior** (replaces the Rider): **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow.
 - **Unique mechanic — Blood Altar Ascension:** Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.
 - **Strengths:** Warriors Take Captives (+1★ for every enemy you defeat.)
 - **Weaknesses:** No Horses (Mounted units cost 2★ more.); Stone-Age Weapons (Smithing costs 2★ more to research. Units in your cities defend 0.5 worse.)
@@ -219,6 +254,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Māori (polynesia)
 - **Signature bonus:** Wayfinding — board boats from any coast, no port needed.
+- **Unique unit — Waka Taua** (replaces the Canoe): **Ramming prow** — The fastest boat (carries a unit); rams adjacent ships for +50% damage.
 - **Unique mechanic — Tā Moko & Waka Surge:** The capital is a Great Waka afloat on the sea that sails each turn, drinks the fish and whales around it into its people, and can anchor on a coast; Tāne's Tapu bars farms, mines, huts and ports, paying stars for untouched wilds instead.
 - **Strengths:** Master Navigators (Boats and ships move 1 further.)
 - **Weaknesses:** No Metal (Mining costs 1★ more to research. Smithing costs 1★ more to research.); No Beasts of Burden (Mounted units cost 2★ more.)
@@ -226,6 +262,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Roman (rome)
 - **Signature bonus:** All Roads — roads cost 1★ less.
+- **Unique unit — Legionary** (replaces the Warrior): **Testudo** — Locks shields against missiles, +1 defence against ranged attacks.
 - **Unique mechanic — Castra & Via Appia:** Soldiers pave roads as they march, and units on paved roads can dig in as mini-forts.
 - **Strengths:** Legion Discipline (Foot soldiers defend 0.5 better.)
 - **Weaknesses:** Senatorial Politics (Research cost 1★ more.); Reluctant Sailors (Boats and ships move 1 less.)
@@ -234,6 +271,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 ### Pirate (pirates)
 - **Signature bonus:** Sea Raiders — boats and ships move 1 extra tile and attack +1; ports cost 4★ and earn +1★ a turn.
 - **Needs no supply lines at sea** (§4a): their fleets carry their own stores, so Pirate units on the water or their platforms are never out of supply.
+- **Unique unit — Buccaneer** (replaces the Archer): **Plunder** — Wades through shallows and loots +2★ from every kill.
 - **Unique mechanic — Flotilla Republic & Black Market Havens:** No land at all: platforms stitch into sea-cities that tow across the waves, and boarded ships join the fleet. Stars come only from tolls and coastal raids, and are spent to recruit people into the platforms.
 - **Strengths:** Loot and Ransom (+1★ for every enemy you defeat.)
 - **Weaknesses:** No Farmland (Every farm grows the city by 1 less.); Sailors, not Soldiers (Foot soldiers defend 0.5 worse.)
@@ -241,6 +279,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Viking (vikings)
 - **Signature bonus:** Victory Feast — a unit heals 3 HP whenever it wins a fight.
+- **Unique unit — Berserker** (replaces the Swordsman): **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows.
 - **Unique mechanic — Great Heathen Fleet & Raid Havens:** Longships beach on any shore and found Danelaw havens that siphon 20% of a city's gold; Vikings build no markets or temples, but raze enemy improvements for 3x their cost and carry off a citizen.
 - **Strengths:** Raiders of the Coast (Boats and ships move 1 further.)
 - **Weaknesses:** Short Growing Season (Every farm grows the city by 1 less.); Oral Tradition (Research cost 1★ more.)
@@ -248,6 +287,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Japanese (japan)
 - **Signature bonus:** Home Ground — units get +1 defence inside your borders.
+- **Unique unit — Samurai** (replaces the Swordsman): **Bushidō** — Strikes again after every kill.
 - **Unique mechanic — Way of the Blade (Kiai):** A critical strike takes no counter-blow and earns Stars in honour, and a dying warrior strikes with fourfold force.
 - **Strengths:** Way of the Warrior (Foot soldiers hit 0.5 harder.)
 - **Weaknesses:** Seclusion (Boats and ships move 1 less.); Rigid Feudal Order (Units outside your borders defend 0.5 worse.)
@@ -256,6 +296,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 ### Mongol (mongols)
 - **Signature bonus:** Steppe Riders — mounted units cost 1★ less.
 - **Needs no supply lines** (§4a): their riders live off the steppe and their herds, so Mongol units are never out of supply.
+- **Unique unit — Horse Archer** (replaces the Archer): **Mounted archer** — Shoots from 2 tiles and can ride on after shooting.
 - **Unique mechanic — Feigned Retreat & Horde Steppe:** Riders strike, pull back and lure the enemy into an ambush set by waiting archers.
 - **Strengths:** Horse Archers (Mounted units hit 0.5 harder.)
 - **Weaknesses:** Nomads, not Builders (Buildings cost 2★ more.); Herders, not Farmers (Every farm grows the city by 2 less.)
@@ -263,6 +304,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Greek (greeks)
 - **Signature bonus:** Academy — every tech costs 1★ less.
+- **Unique unit — Hoplite** (replaces the Defender): **Phalanx** — Its spear wall hits back 50% harder when attacked.
 - **Unique mechanic — Oracle & Polis Democracy:** No permanent capital: the largest city is the seat and all cities vote a global Edict every few turns; equal-sized cities form an Amphictyony that pays +50% Stars on resource improvements.
 - **Strengths:** Phalanx Discipline (Foot soldiers defend 0.5 better.)
 - **Weaknesses:** Quarrelling City-States (Foot soldiers cost 1★ more.); Rocky, Thin Soil (Buildings cost 1★ more.)
@@ -270,6 +312,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Zulu (zulu)
 - **Signature bonus:** Great Hunt — hunting grows a city by 2 instead of 1.
+- **Unique unit — Impi** (replaces the Warrior): **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe.
 - **Unique mechanic — Chest & Horns Formation:** Melee units in a V around an enemy trap it, stopping its counter-attack and dealing triple damage.
 - **Strengths:** Age-Regiments (Your unique unit move 1 further.)
 - **Weaknesses:** No Sea Tradition (Boats and ships move 1 less.); Oral Learning (Research cost 1★ more.); Cattle Economy (Every farm grows the city by 1 less.)
@@ -277,6 +320,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Persian (persia)
 - **Signature bonus:** Royal Tribute — capturing a city pays 3★.
+- **Unique unit — Immortal** (replaces the Swordsman): **Undying** — Heals 3 HP at the start of every turn, wherever it stands.
 - **Unique mechanic — Royal Road Network & Satrap Extraction:** A fallen Immortal returns at the capital next turn while Stars flow; conquered cities pay double from their tiles but bleed Population unless garrisoned.
 - **Strengths:** The King’s Eyes and Ears (See 1 tile further around every unit and city.)
 - **Weaknesses:** Multi-Ethnic Levies (Foot soldiers hit 0.5 weaker.); Alexander’s Lesson (Units in your cities defend 0.5 worse.)
@@ -284,6 +328,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Celtic (celts)
 - **Signature bonus:** Sacred Groves — your units in a forest defend at ×2.
+- **Unique unit — Clansman** (replaces the Warrior): **Oak-grove warband** — Moves freely through forest and attacks +1 from forest.
 - **Unique mechanic — Druidic Ley Lines:** Plant Sacred Groves that spread forest and root enemies who enter it; the Celts never cut trees, and uncut forest beside groves pays stars and slowly grows cities.
 - **Strengths:** Fierce in Battle (Foot soldiers hit 0.5 harder.)
 - **Weaknesses:** Tribal Fragmentation (Research cost 1★ more.); Timber Hillforts (Units in your cities defend 0.5 worse.)
@@ -291,6 +336,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Inuit (inuit)
 - **Signature bonus:** Sea Hunters — every fish harvest gives +1 extra pop.
+- **Unique unit — Harpooner** (replaces the Archer): **Harpoon** — Double damage to ships, boats and Great Beasts.
 - **Unique mechanic — Glacial Freeze:** Land units and cities freeze water into permanent ice bridges that chill enemies without fire techs; whale and fish nodes pay a huge lump of stars and population, then must re-freeze before reuse.
 - **Strengths:** Masters of the Hunt (+1★ whenever you harvest a resource.)
 - **Weaknesses:** No Agriculture (Every farm grows the city by 2 less.); No Metal (Smithing costs 2★ more to research. Mining costs 2★ more to research.)
@@ -298,6 +344,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Inca (inca)
 - **Signature bonus:** Terraces — every mine adds +1 pop.
+- **Unique unit — Slinger** (replaces the Archer): **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain.
 - **Unique mechanic — Highland Terracing & Rope Bridges:** Chaski outposts on peaks sling land units by zipline to other outposts or across 4+ mountains, and mountains never block the Inca. Terrace farms on peaks and forest raise Star income x1.5 or x2 for each extra elevation (lowland, hill, peak) a city works.
 - **Strengths:** Qhapaq Ñan (Roads cost 1★ less.)
 - **Weaknesses:** No Wheel or Horse (Mounted units cost 2★ more.); Landlocked Highlands (Boats and ships move 1 less.)
@@ -305,6 +352,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aksumite (ethiopia)
 - **Signature bonus:** Highland Fortress — your units on mountains defend at ×2.5.
+- **Unique unit — Shotelai** (replaces the Swordsman): **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus.
 - **Unique mechanic — Monolithic Spire Network:** Stone Stelae ray enemies within three tiles and link into a laser grid, while crossroad tariffs pay Stars for foreign traffic past your borders.
 - **Strengths:** Christian Kingdom (+1★ a turn for every temple. Units in the mountains defend 0.5 better.)
 - **Weaknesses:** Cut Off from the Sea (Boats and ships move 1 less.); Isolated Highlands (See 1 tile less around every unit and city.)
@@ -313,6 +361,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 ### Aboriginal (aboriginal)
 - **Signature bonus:** Firestick Farming — clearing a forest also grows the city by 1.
 - **Needs no supply lines** (§4a): they know the Country and live off it, so Aboriginal units are never out of supply.
+- **Unique unit — Woomera Hunter** (replaces the Archer): **Spear-thrower** — Throws 3 tiles, further than any archer; moves freely through forest.
 - **Unique mechanic — Dreamtime Paths:** Paint invisible Songlines that let your units travel free and unseen; pilgrimages between distant landmarks pay Stars and grow your cities.
 - **Strengths:** Knowledge of Country (See 1 tile further around every unit and city.)
 - **Weaknesses:** No Farming Tradition (Farming costs 2★ more to research. Every farm grows the city by 1 less. Research cost 1★ more.); No Beasts of Burden (Mounted units cost 2★ more. Smithing costs 2★ more to research.)
@@ -320,6 +369,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Chinese (china)
 - **Signature bonus:** Silk Road — every market earns +1★ more.
+- **Unique unit — Crossbowman** (replaces the Archer): **Siege bolts** — Shoots from 2 tiles; +1 attack against units in a city or fort.
 - **Unique mechanic — Dynastic Mandate & Great Wall:** Border walls stop every enemy but siege engines and improved tiles pay +1★ while the Mandate holds (no city lost, no invader). Losing a city brings a Dynastic Shift (a tech refund, then mourning), and invaders halve your income.
 - **Strengths:** Teeming Population (+1★ whenever a city levels up.)
 - **Weaknesses:** Closed Empire (Boats and ships move 1 less.); Slow Bureaucracy (Siege engines cost 1★ more.)
@@ -327,6 +377,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Indian (india)
 - **Signature bonus:** Ahimsa — units heal 2 more HP when they rest.
+- **Unique unit — War Elephant** (replaces the Knight): **Trample** — A melee blow carries through, and the enemy behind the target takes half the damage.
 - **Unique mechanic — Karma & Sacred Beasts:** Defensive kills carry no penalty and turn neutral wildlife into fighting beasts.
 - **Strengths:** Fertile Ganges (Every farm grows the city by 1 more.)
 - **Weaknesses:** Imported Horses (Mounted units cost 2★ more.); Warring Rajas (Units in your cities defend 0.5 worse.)
@@ -334,6 +385,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Malian (mali)
 - **Signature bonus:** Gold of the Sahel — every mine earns +1★ a turn.
+- **Unique unit — Sofa** (replaces the Warrior): **Mansa's guard** — +2 defence in its own cities.
 - **Unique mechanic — Salt & Gold Inflation:** Flood a foreign city's markets with gold: its costs double and its production halts for 2 turns. Caravans earn Stars from every tile crossed through foreign or neutral lands, more when it is dangerous.
 - **Strengths:** Hajj Wealth (+1★ whenever a city levels up.)
 - **Weaknesses:** Landlocked Sahel (Boats and ships move 1 less.); Fragile Union (See 1 tile less around every unit and city.)
@@ -342,6 +394,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 ### Lakota (lakota)
 - **Signature bonus:** Horse Nation — your mounted units move 1 further.
 - **Needs no supply lines** (§4a): the people follow the buffalo, so Lakota units are never out of supply.
+- **Unique unit — Horse Warrior** (replaces the Rider): **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra).
 - **Unique mechanic — Great Plains Migration:** Camps pack up, roll up to 3 tiles a turn and re-settle, leaving enriched soil behind; assign herders to Follow Herds that wander the plains for double Stars.
 - **Strengths:** The Buffalo Nation (Every animal harvest grows the city by 1 more.)
 - **Weaknesses:** Nomads of the Plains (Buildings cost 1★ more.); No Metalworking (Smithing costs 2★ more to research. Farming costs 2★ more to research.)
@@ -349,6 +402,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Ottoman (ottoman)
 - **Signature bonus:** Imperial Foundry — catapults cost 3★ less.
+- **Unique unit — Janissary** (replaces the Archer): **Musket volley** — Fires from 2 tiles; +1 attack against melee units.
 - **Unique mechanic — Sublime Porte & Great Bombards:** Conquered cities train their old peoples’ elite and Great Bombards ignore walls; each conquest pays Devshirme stars (capped) and levies +1 population.
 - **Strengths:** Janissary Corps (Ranged units hit 0.5 harder.)
 - **Weaknesses:** Conservative Ulema (Research cost 1★ more.); Tax-Farming (−1★ a turn for every 2 markets.)
@@ -356,6 +410,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Maya (maya)
 - **Signature bonus:** Sky Watchers — every temple earns +1★ a turn.
+- **Unique unit — Holcan** (replaces the Warrior): **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it.
 - **Unique mechanic — Long Count Prophecies & Katun Cycles:** Every 13 turns an Era rewrites the map (dry seas, storms, a golden age...) and you may pay to choose it; every 5 turns your improvements pay double, and every 20 your cities grow free.
 - **Strengths:** Sky Watchers (See 1 tile further around every unit and city.)
 - **Weaknesses:** No Horses or Iron (Mounted units cost 2★ more. Smithing costs 1★ more to research.); Warring City-States (Units in your cities defend 0.5 worse.)
@@ -363,6 +418,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Korean (korea)
 - **Signature bonus:** Scholars — every tech you research grows your capital by 1.
+- **Unique unit — Hwacha** (replaces the Catapult): **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too.
 - **Unique mechanic — Singijeon Rocket Fleets:** Rocket salvos arc over fog and cover, setting targets ablaze for turns.
 - **Strengths:** Turtle Ships (Boats and ships hit 1 harder.)
 - **Weaknesses:** Hermit Kingdom (See 1 tile less around every unit and city.); Invaded from All Sides (Units in your cities defend 0.5 worse.)
@@ -370,6 +426,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Khmer (khmer)
 - **Signature bonus:** Baray Reservoirs — every farm earns +1★ a turn.
+- **Unique unit — Temple Guardian** (replaces the Defender): **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead.
 - **Unique mechanic — Great Reservoir Flooding:** Build barays and dams, then blow a dam to flood enemy armies for 2 turns; water and barays pay +1★ per resource they touch, compounding across linked canals.
 - **Strengths:** Jungle Fighters (Units in forests defend 0.5 better.)
 - **Weaknesses:** Landbound Empire (Boats and ships move 1 less.); Forced Labour (Temples and shrines cost 2★ more.)
@@ -377,6 +434,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Swahili (swahili)
 - **Signature bonus:** Monsoon Traders — your boats and ships move 1 further.
+- **Unique unit — Askari** (replaces the Warrior): **Coast guard** — +1 defence on land beside water.
 - **Unique mechanic — Monsoon Trade Currents:** The sea wind turns each season: ships sail fast with it and slow against it, and Lighthouses call it. Ships that sail with the wind past fish, whale and port tiles earn double Stars (half against).
 - **Strengths:** Coastal Fortresses (Units in your cities defend 0.5 better.)
 - **Weaknesses:** Traders, not Soldiers (Foot soldiers hit 0.5 weaker.); Rival Sultanates (See 1 tile less around every unit and city.)
@@ -384,6 +442,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Tibetan (tibet)
 - **Signature bonus:** Roof of the World — your units cross mountains without Climbing.
+- **Unique unit — Khampa Rider** (replaces the Rider): **Highlander** — Mountains never stop its move; it rides over them like open ground.
 - **Unique mechanic — Highland Stupa & Mist:** Sky Mist hides your cities until an enemy stands on an adjacent peak, and stupas extend it. Remote mountain and forest resources pay more Stars the farther they lie from any enemy.
 - **Strengths:** High-Altitude Endurance (Units on your land heal 1 HP every turn.)
 - **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Landlocked Plateau (Boats and ships move 1 less.)

@@ -8,6 +8,7 @@ import { perkSum } from '../perks';
 import { HERO_MECH } from '../heroes';
 import { ROLE_MECH } from '../roles';
 import { AUX_MECH } from '../auxiliaries';
+import { UNIQUE_MECH } from '../uniques';
 import { mech as egypt } from './egypt';
 import { mech as aztec } from './aztec';
 import { mech as polynesia } from './polynesia';
@@ -43,13 +44,13 @@ const NONE: Mechanic = { name: '', blurb: '' };
 export const mechOf = (s: GameState, pid: number): Mechanic => (s.players[pid].neutral ? NONE : MECH[s.players[pid].tribe]);
 
 /**
- * A player's own mechanic, then its hero (see game/heroes), its role units (see game/roles) and its auxiliaries (see
- * game/auxiliaries), then the light hooks of
+ * A player's own mechanic, then its hero (see game/heroes), its role units (see game/roles) its auxiliaries (see
+ * game/auxiliaries) and its unique unit's ability (see game/uniques), then the light hooks of
  * traditions it adopted from conquered peoples (see game/culture).
  */
 const own = (s: GameState, pid: number): Mechanic[] => {
   const extra = adoptedHooks(s, pid);
-  return extra.length ? [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, ...extra] : [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH];
+  return extra.length ? [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH, ...extra] : [MECH[s.players[pid].tribe], HERO_MECH, ROLE_MECH, AUX_MECH, UNIQUE_MECH];
 };
 
 const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
@@ -59,6 +60,7 @@ const each = (s: GameState, fn: (m: Mechanic, owner: number) => void) => {
     fn(HERO_MECH, p.id);
     fn(ROLE_MECH, p.id);
     fn(AUX_MECH, p.id);
+    fn(UNIQUE_MECH, p.id);
     if (p.culture?.adopted?.length) for (const m of adoptedHooks(s, p.id)) fn(m, p.id);
   }
 };

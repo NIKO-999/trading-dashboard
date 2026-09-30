@@ -15,6 +15,7 @@ import { endTurn, isHumanTurn } from '../game/turn';
 import { ASH_NOTE, BEASTS, empires, isAsh, isNeutral, wildDescribe } from '../game/wild';
 import { surgingNodes } from '../game/skills';
 import { perkRange } from '../game/perks';
+import { UNIQUE_ABILITY } from '../game/uniques';
 import type { City, GameState, Tile, TribeId, Unit, UnitKind } from '../game/types';
 import { Camera } from '../render/camera';
 import { roadNetwork, ROAD_MILESTONES } from '../game/network';
@@ -893,6 +894,7 @@ export class GameView {
             : h('span', { class: 'tribe-chip', style: { '--tc': TRIBES[owner.tribe].color } as Record<string, string> }, TRIBES[owner.tribe].people),
           hero ? `★ ${hero.name}${u.carrying ? ' (at sea)' : ''}` : isTraderKind(u.kind) ? traderName(owner.tribe, u.kind) : isRoleKind(u.kind) ? roleName(owner.tribe, u.kind) : `${u.veteran ? '★ ' : ''}${isAuxKind(u.kind) ? auxName(owner.tribe, u.kind) : d.name}${u.carrying ? ` (carrying ${isRoleKind(u.carrying) ? roleName(owner.tribe, u.carrying) : isAuxKind(u.carrying) ? auxName(owner.tribe, u.carrying) : UNITS[u.carrying].name})` : ''}`),
         h('div', { class: 'sheet-desc' }, hero && hs ? this.heroLine(u.owner, hero, hs) : null, stats, h('br'), status, preview ? ` ${preview}` : null, this.supplyLine(u),
+          UNIQUE_ABILITY[u.kind] ? h('div', { class: 'small trade-preview' }, h('b', {}, `${UNIQUE_ABILITY[u.kind]!.name}: `), UNIQUE_ABILITY[u.kind]!.desc) : null, // a unique unit's ability (see game/uniques)
           u.owner === this.me && isTraderKind(u.kind) ? h('div', { class: 'small trade-preview' }, traderPreview(this.s, u)) : null, // the route yield preview (see game/trade)
           isRoleKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${u.owner === this.me ? rolePreview(this.s, u) : d.blurb}`) : null, // what a role unit does (see game/roles)
           isAuxKind(u.kind) ? h('div', { class: 'small trade-preview' }, `${d.name}. ${auxPreview(this.s, u)}`) : null))); // a Spearman's brace, a Scout's reach, a Healer's cooldown (see game/auxiliaries)
@@ -939,7 +941,7 @@ export class GameView {
     if (!mine.length) return null;
     const best = mine.map((m) => ({ m, ...previewCombat(this.s, m, u) })).sort((a, b) => b.dmg - a.dmg)[0];
     const f = best.formation.length ? ` (${best.formation.join(', ')})` : ''; // formations (see game/army)
-    return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}, taking ${best.ret}${f}.`;
+    return `Your ${def(best.m).name} would deal ${best.dmg}${best.kills ? ' (kill)' : ''}${best.tag ? ` (${best.tag.replace(/!$/, '')})` : ''}, taking ${best.ret}${f}.`;
   }
 
   /** " · roads 5 (next bonus at 6) · linked to 2 cities" for the city panel. */
@@ -1671,6 +1673,8 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
 function projectileFor(kind: UnitKind, tribe: TribeId): Fx['projectiles'][number]['kind'] {
   if (kind === 'catapult') return ({ egypt: 'bolt', pirates: 'ball', greeks: 'bolt' } as Partial<Record<TribeId, 'bolt' | 'ball'>>)[tribe] ?? 'stone';
   if (kind === 'warship') return tribe === 'pirates' ? 'ball' : 'stone';
-  if (kind === 'buccaneer') return 'shot';
+  if (kind === 'buccaneer' || kind === 'janissary') return 'shot';
+  if (kind === 'slinger') return 'stone';
+  if (kind === 'harpooner' || kind === 'woomera') return 'bolt';
   return 'arrow';
 }
