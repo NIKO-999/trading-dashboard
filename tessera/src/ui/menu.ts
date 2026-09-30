@@ -1,4 +1,6 @@
 import { music } from '../audio/music';
+import { latestNews, NEWS } from '../data/news';
+import { modal } from './modal';
 import { SUPPLY_NOTES } from '../game/army';
 import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { CATEGORIES, categoryOf, portraitKind, TRIBE_IDS, TRIBES, type CategoryDef } from '../data/tribes';
@@ -127,7 +129,7 @@ export function showTitle(handlers: MenuHandlers) {
       h('button', { class: 'pill', onclick: () => showSetup(handlers, true) }, 'PASS & PLAY'),
     ),
     ...(canOfferInstall() ? [h('button', { class: 'install-btn', onclick: () => void installApp() }, 'Install app')] : []),
-    h('div', { class: 'title-version' }, `v${__APP_VERSION__.replace(/\.0$/, '')}`),
+    h('button', { class: 'title-version', onclick: showNews, 'aria-label': "What's new" }, `v${__APP_VERSION__.replace(/\.0$/, '')} · What's new`),
     h('div', { class: 'title-dock' },
       dockButton('menu', 'Settings', () => showSettings(handlers)),
       dockButton('trophy', 'High Scores', () => showScores(handlers)),
@@ -135,6 +137,30 @@ export function showTitle(handlers: MenuHandlers) {
       dockButton('info', 'About', () => showAbout(handlers)),
     ),
   );
+  newsOnce();
+}
+
+const NEWS_KEY = 'tessera.news.v1';
+
+/** The "What's new" card: the latest few releases. */
+function showNews() {
+  try { localStorage.setItem(NEWS_KEY, latestNews()); } catch { /* private mode */ }
+  modal({
+    title: "What's new",
+    cls: 'news-modal',
+    dismissable: true,
+    body: NEWS.slice(0, 3).map((n) => h('div', { class: 'news-block' }, h('div', { class: 'news-ver' }, `Version ${n.version}`), h('ul', { class: 'news-list' }, ...n.items.map((i) => h('li', {}, i))))),
+    buttons: [{ label: 'Play', primary: true }],
+  });
+}
+
+/** Shows the card once for each new release. */
+function newsOnce() {
+  let seen: string | null = null;
+  try { seen = localStorage.getItem(NEWS_KEY); } catch { return; }
+  if (seen === latestNews()) return;
+  if (seen === null && !loadGame()) { try { localStorage.setItem(NEWS_KEY, latestNews()); } catch { /* */ } return; } // a brand-new player needs no changelog
+  setTimeout(showNews, 400);
 }
 
 function dockButton(icon: Parameters<typeof iconEl>[0], label: string, onclick: () => void) {
