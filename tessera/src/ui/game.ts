@@ -28,7 +28,7 @@ import { drawIcon, FLASH_MS, FLOAT_MS, GHOST_MS, HOP_MS, LUNGE_MS, newFx, SAIL_M
 import { bubbleAt, cityLabelAt, unitAtScreen, type BubbleKind } from '../render/dynamic';
 import { music } from '../audio/music';
 import { sfx, type SoundName } from '../audio/sfx';
-import { addScore, clearSave, isIOS, loadSettings, saveGame, saveSettings } from '../save';
+import { addScore, clearSave, loadSettings, saveGame, saveSettings } from '../save';
 import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
 import { showSharpnessTest } from './diag';
@@ -97,8 +97,6 @@ export class GameView {
     if (import.meta.env.DEV) Object.assign(window, { __game: this });
     if (!isHumanTurn(s) && !s.over) void this.runRivals();
     else if (!s.over) this.startHumanTurn(true);
-    // iPhones have shown the map soft for reasons a page can't see, so offer the live picker once
-    if (isIOS() && !this.settings.displayPicked) setTimeout(() => this.showDisplayPicker(), 1200);
   }
 
   /**
