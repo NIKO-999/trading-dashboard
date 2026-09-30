@@ -9,7 +9,7 @@ import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
 
-export type MapSize = 'normal' | 'large' | 'huge';
+export type MapSize = 'normal' | 'large' | 'huge' | 'giant' | 'epic';
 
 /** How the land is laid out. 'balanced' lets each empire's own terrain decide; the rest reshape the whole world. */
 export type MapTerrain = 'balanced' | 'continents' | 'islands' | 'archipelago' | 'pangaea' | 'lakes' | 'highlands' | 'forests' | 'plains' | 'deserts' | 'wetlands' | 'frozen';
@@ -68,6 +68,9 @@ const SIZES: Record<MapSize, Record<number, number>> = {
   normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22, 11: 23, 12: 24, 13: 25, 14: 26, 15: 27, 16: 28, 17: 29, 18: 30, 19: 31, 20: 32, 21: 33, 22: 34, 23: 35, 24: 36, 25: 37, 26: 38 },
   large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26, 11: 27, 12: 28, 13: 29, 14: 30, 15: 31, 16: 32, 17: 33, 18: 34, 19: 35, 20: 36, 21: 37, 22: 38, 23: 39, 24: 40, 25: 41, 26: 42 },
   huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30, 11: 31, 12: 32, 13: 33, 14: 34, 15: 35, 16: 36, 17: 37, 18: 38, 19: 39, 20: 40, 21: 41, 22: 42, 23: 43, 24: 44, 25: 45, 26: 46 },
+  // beyond huge: long voyages and wide frontiers (a 26-empire epic map is 72 x 72)
+  giant: {2: 32, 3: 34, 4: 36, 5: 38, 6: 39, 7: 40, 8: 41, 9: 42, 10: 42, 11: 43, 12: 44, 13: 45, 14: 46, 15: 47, 16: 48, 17: 49, 18: 50, 19: 51, 20: 52, 21: 53, 22: 54, 23: 55, 24: 56, 25: 57, 26: 58},
+  epic: {2: 46, 3: 48, 4: 50, 5: 52, 6: 53, 7: 54, 8: 55, 9: 56, 10: 56, 11: 57, 12: 58, 13: 59, 14: 60, 15: 61, 16: 62, 17: 63, 18: 64, 19: 65, 20: 66, 21: 67, 22: 68, 23: 69, 24: 70, 25: 71, 26: 72},
 };
 
 export function createGame(opts: NewGameOptions): GameState {

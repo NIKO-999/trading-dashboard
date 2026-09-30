@@ -115,7 +115,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 
 ## 6. The map
 
-- **Size** depends on the number of empires and the setting (Normal / Large / Huge): e.g. 2 empires = 11×11 (normal), 5 = 16×16, 10 = 22×22, 26 = 46×46+.
+- **Size** depends on the number of empires and the setting (Normal / Large / Huge / Giant / Epic; Giant is Huge + 12 tiles a side, Epic Huge + 26, up to 72×72): e.g. 2 empires = 11×11 (normal), 5 = 16×16, 10 = 22×22, 26 = 46×46+.
 - **12 terrain styles:** Balanced (each empire's homeland shapes its surroundings), Continents, Islands, Archipelago, Pangaea, Lakes, Highlands, Forests, Plains, Deserts, Wetlands, Frozen. Each fixes the land share, blob size and the mix of fields/forests/mountains/climates.
 - Capitals are placed far apart; villages and ruins are scattered; each empire's homeland biome (palette and terrain mix) comes from its climate.
 

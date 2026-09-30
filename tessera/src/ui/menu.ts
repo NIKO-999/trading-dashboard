@@ -241,7 +241,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         : null,
       detail,
       choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4']], () => choice.opponents, (v) => (choice.opponents = v)),
-      seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge']], () => choice.mapSize, (v) => (choice.mapSize = v)),
+      seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge'], ['giant', 'Giant'], ['epic', 'Epic']], () => choice.mapSize, (v) => (choice.mapSize = v)),
       h('div', { class: 'seg-block' },
         h('div', { class: 'seg-label' }, 'Terrain'),
         h('div', { class: 'seg wrap' }, ...TERRAIN_STYLES.map((t) => h('button', { class: choice.terrain === t.id ? 'on' : '', onclick: () => { choice.terrain = t.id; render(); } }, t.name))),
