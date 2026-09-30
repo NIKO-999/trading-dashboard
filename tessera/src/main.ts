@@ -57,7 +57,7 @@ function newGame(choice: NewGameChoice) {
     const j = Math.floor(Math.random() * (i + 1));
     [others[i], others[j]] = [others[j], others[i]];
   }
-  const common = { mode: choice.mode, difficulty: choice.difficulty, mapSize: choice.mapSize, terrain: choice.terrain, wild: choice.wild !== false, rebels: choice.rebels !== false };
+  const common = { mode: choice.mode, difficulty: choice.difficulty, mapSize: choice.mapSize, terrain: choice.terrain, wild: choice.wild !== false, rebels: choice.rebels !== false, diplomacy: choice.diplomacy !== false };
   const state = choice.hotseat
     ? createGame({ ...common, human: null, humans: TRIBE_IDS.filter((t) => choice.seats[t] === 'human'), opponents: TRIBE_IDS.filter((t) => choice.seats[t] === 'ai') })
     : createGame({ ...common, human: choice.tribe, opponents: others.slice(0, choice.opponents) });

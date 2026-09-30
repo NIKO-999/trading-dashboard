@@ -149,6 +149,41 @@ export interface GameState {
   rebels?: boolean;
   /** World Wonders: great works being raised and those finished (see game/wonders). Missing in older saves and until the first is begun. */
   wonders?: WonderState;
+  /** Diplomacy: treaties, offers and opinions between empires (see game/diplomacy). Missing when off and in older saves (everyone at war). */
+  diplo?: DiploState;
+}
+
+/** A treaty between two empires (`a` < `b`). War is the absence of one. */
+export interface DiploPact {
+  a: number;
+  b: number;
+  kind: 'peace' | 'alliance';
+  since: number; // the round it was signed
+  trade?: number; // the round a trade deal was opened on top of it
+  declared?: number; // the round one side declared war; the war begins at the declarer's next turn
+  by?: number; // who declared it
+}
+/** An offer waiting for (or given to) an empire's answer. */
+export interface DiploOffer {
+  id: number;
+  from: number;
+  to: number;
+  kind: 'peace' | 'alliance' | 'trade' | 'gift' | 'demand' | 'demandTurns' | 'call';
+  turn: number;
+  stars?: number; // tribute: the sum, or the Stars a turn
+  turns?: number; // ongoing tribute: for how many turns
+  enemy?: number; // a call to arms: the empire that attacked the ally
+}
+export interface DiploState {
+  pacts: DiploPact[];
+  offers: DiploOffer[]; // waiting for a human's answer
+  tribute: { from: number; to: number; stars: number; until: number }[]; // ongoing tribute, paid at the payer's turn start
+  mood: Record<string, number>; // "a:b": how a feels about b from past deeds (gifts, demands, betrayals); fades a point a round
+  rep: Record<string, number>; // reputation lost for broken treaties (felt by everyone); heals a point a round
+  fought: Record<string, number>; // "a:b": the round a last attacked b
+  warSince: Record<string, number>; // "a:b" (a < b): the round their last war began
+  ai: Record<string, number>; // bookkeeping: rounds of the last AI initiative, repeated offers, calls to arms
+  victors?: number[]; // Domination: allies who won together
 }
 
 /** A wonder being raised by one empire on a tile of its land; `paid` Stars so far (see game/wonders). */

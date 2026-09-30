@@ -43,6 +43,8 @@ import { adopt, offersOf } from '../game/culture';
 import { knows, wonderDescribe } from '../game/wonders';
 import { WONDER_BY_ID } from '../data/wonders';
 import { celebrateWonder, wonderHud, wondersList } from './wonders';
+import { answer, diploIncome, diploNews, diploOn, offersFor, opinion, opinionWord, relation } from '../game/diplomacy';
+import { showDiplomacy, showOffer } from './diplomacy';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const UNIT_ACTIONS = (id: string) => id === 'capture' || id === 'recover' || id.startsWith('upgrade:');
@@ -716,7 +718,7 @@ export class GameView {
       );
     }
     const e = this.hudEls;
-    e.starsLabel.textContent = `Stars (+${income(this.s, this.me)})`;
+    e.starsLabel.textContent = `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me)})`; // trade and tribute count too (see game/diplomacy)
     e.turn.textContent = turnText;
     this.countTo(e.score, e.scoreBox, sc, (v) => v.toLocaleString());
     this.countTo(e.stars, e.starsBox, p.stars, String);
@@ -784,7 +786,7 @@ export class GameView {
     const turnText = this.s.maxTurns > 0 ? `${Math.min(this.s.turn, this.s.maxTurns)}/${this.s.maxTurns}` : String(this.s.turn);
     return h('div', { class: 'hud' },
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Score'), h('div', { class: 'hud-val' }, score(this.s, this.me).toLocaleString())),
-      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
+      h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, `Stars (+${income(this.s, this.me) + diploIncome(this.s, this.me)})`), h('div', { class: 'hud-val' }, iconEl('star', 'ico-star big'), String(p.stars))),
       h('div', { class: 'hud-cell' }, h('div', { class: 'hud-label' }, 'Turn'), h('div', { class: 'hud-val' }, turnText)),
     );
   }
@@ -1300,12 +1302,29 @@ export class GameView {
     this.version++;
     this.refresh();
     if (chime) sfx.play('turn');
+    if (this.hotseat && diploOn(this.s)) { // news about me that broke while another player held the device (see game/diplomacy)
+      const mine = TRIBES[this.s.players[pid].tribe].people;
+      for (const n of diploNews(this.s, pid, 4).reverse()) if (n.turn >= this.s.turn - 1 && n.text.includes(mine)) toast(n.text, TRIBES[this.s.players[pid].tribe].color);
+    }
     const welcomed = this.s.log.some((l) => l.text === `welcome:${pid}` || (l.text === 'welcome' && pid === this.s.players.findIndex((q) => q.human)));
     if (!welcomed) this.welcome();
     else {
       this.advanceHints();
+      this.checkOffers();
       this.checkRewards();
     }
+  }
+
+  /** Envoys waiting for me (proposals, demands, calls to arms; see game/diplomacy): one card at a time. */
+  private checkOffers() {
+    if (!this.myTurn() || this.destroyed || this.s.over) return;
+    const o = offersFor(this.s, this.me)[0];
+    if (!o) return;
+    showOffer(this.s, o, (yes) => {
+      sfx.play(yes ? 'build' : 'endturn');
+      this.act(() => answer(this.s, o.id, yes));
+      this.checkOffers();
+    });
   }
 
   /** My units that could still move or strike this turn but have done neither. */
@@ -1397,7 +1416,7 @@ export class GameView {
     const s = this.s;
     const ranking = empires(s).map((p) => ({ p, sc: score(s, p.id) })).sort((a, b) => b.sc - a.sc);
     const me = this.hotseat ? ranking.find((r) => r.p.human)!.p : s.players[this.me];
-    const won = s.winner === me.id;
+    const won = s.winner === me.id || !!s.diplo?.victors?.includes(me.id); // allies who win Domination together (see game/diplomacy)
     addScore({ score: score(s, me.id), tribe: me.tribe, won, mode: s.mode, turns: s.turn, date: new Date().toLocaleDateString() });
     clearSave();
     const winner = s.winner !== null ? s.players[s.winner] : null;
@@ -1408,7 +1427,8 @@ export class GameView {
       title,
       art: unitPortrait(portraitKind(me.tribe), me.tribe, 80),
       body: [
-        h('p', {}, won ? `The ${TRIBES[me.tribe].name} stands above all others.` : `The ${TRIBES[ranking[0].p.tribe].name} takes the crown this time.`),
+        h('p', {}, s.diplo?.victors ? `The alliance of the ${s.diplo.victors.map((id) => TRIBES[s.players[id].tribe].people).join(', ')} peoples rules the world together.`
+          : won ? `The ${TRIBES[me.tribe].name} stands above all others.` : `The ${TRIBES[ranking[0].p.tribe].name} takes the crown this time.`),
         h('ol', { class: 'rank' }, ...ranking.map((r) => h('li', { style: { color: TRIBES[r.p.tribe].color } }, `${TRIBES[r.p.tribe].people}${r.p.human ? (this.hotseat ? ' (player)' : ' (you)') : ''} — ${r.sc.toLocaleString()}${r.p.alive ? '' : ' ✝'}`))),
       ],
       buttons: [
@@ -1487,6 +1507,8 @@ export class GameView {
         h('div', {},
           h('b', {}, known ? `${T.people}${p.id === this.me ? ' (you)' : ''}` : 'Unknown empire'),
           h('div', { class: 'muted small' }, !p.alive ? 'Destroyed' : known ? `${score(s, p.id).toLocaleString()} pts · ${citiesOf(s, p.id).length} cities · ${p.techs.length} techs` : 'Not yet met'),
+          diploOn(s) && p.alive && p.id !== this.me && (s.players[this.me].met ?? []).includes(p.id)
+            ? h('div', { class: 'small' }, `${{ war: 'At war', peace: 'At peace', alliance: 'Allied' }[relation(s, this.me, p.id)]} · they feel ${opinionWord(opinion(s, p.id, this.me))}`) : null,
           known ? adoptedLines(s, p.id) : null,
           p.id === this.me && offersOf(s, this.me).length && this.myTurn()
             ? h('button', { class: 'mini-btn', onclick: () => { close(); this.checkRewards(); } }, 'Adopt a conquered tradition') : null,
@@ -1502,7 +1524,17 @@ export class GameView {
     const tabs = h('div', { class: 'stats-tabs' }, tab('Empires', () => rows), tab('Wonders', () => [wondersList(s, this.me, go)]));
     (tabs.children[wonders ? 1 : 0] as HTMLElement).classList.add('on');
     list.replaceChildren(...(wonders ? [wondersList(s, this.me, go)] : rows));
-    const close = modal({ title: 'Empires', body: [tabs, list], dismissable: true, cls: 'stats' });
+    const diplo = diploOn(s) ? h('button', { class: 'mini-btn diplo-open', onclick: () => { close(); this.openDiplomacy(); } }, 'Diplomacy: treaties, trade & tribute') : null;
+    const close = modal({ title: 'Empires', body: diplo ? [diplo, tabs, list] : [tabs, list], dismissable: true, cls: 'stats' });
+  }
+
+  /** The Diplomacy screen (see ui/diplomacy): treaties, trade, tribute and war with the empires I have met. */
+  private openDiplomacy() {
+    showDiplomacy({
+      s: this.s, me: this.me,
+      canAct: () => this.myTurn() && !this.busy,
+      act: (fn) => { this.act(fn); },
+    });
   }
 
   /** Opens the tech tree; with `focus`, that tech is highlighted and its research card opened. */
@@ -1531,7 +1563,10 @@ function describeTile(s: GameState, t: Tile, viewer: number): { title: string; d
 
 function describePlainTile(s: GameState, t: Tile, viewer: number): { title: string; desc: string } {
   const owner = tileOwnerPlayer(s, t);
-  const where = owner === null ? 'Unclaimed land.' : isNeutral(s, owner) ? `Rogue State territory (${cityById(s, t.owner)!.name}).` : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
+  const land = owner === null ? 'Unclaimed land.' : isNeutral(s, owner) ? `Rogue State territory (${cityById(s, t.owner)!.name}).` : `${TRIBES[s.players[owner].tribe].people} territory (${cityById(s, t.owner)!.name}).`;
+  // treaty borders (see game/diplomacy): a peace partner's land is closed, an ally's open
+  const rel = owner !== null && owner !== viewer && diploOn(s) && !isNeutral(s, owner) ? relation(s, viewer, owner) : 'war';
+  const where = rel === 'peace' ? `${land} Peace treaty: closed to your units.` : rel === 'alliance' ? `${land} Allied: open to your units.` : land;
   const terrain: Record<Tile['terrain'], string> = { field: 'Field', forest: 'Forest', mountain: 'Mountain', shallow: 'Shallow Water', ocean: 'Ocean', desert: 'Desert', swamp: 'Swamp', tundra: 'Tundra', ice: 'Ice', platform: 'Floating Platform' };
   const res: Record<string, [string, string]> = {
     fruit: ['Wild Fruit', 'Harvest with Gathering.'],

@@ -15,6 +15,7 @@ import type { GameState, Tile, Unit } from './types';
 import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
 import { wonderAi } from './wonders';
+import { allyFoes, diploAi, hostile } from './diplomacy';
 
 // Per-turn scratch memory so one unit isn't reconsidered forever.
 let memoKey = '';
@@ -36,6 +37,7 @@ export function aiStep(s: GameState): boolean {
   }
   const p = s.players[pid];
   if (aiAdopt(s, pid)) return true; // a conquered people's tradition waiting to be chosen
+  if (diploAi(s, pid)) return true; // a treaty offered, a war declared, tribute demanded (see game/diplomacy)
   if (hookAi(s, pid)) return true; // the empire's own mechanic took a step
   if (wildAi(s, pid)) return true; // a bid at a mercenary camp (see game/wild)
   if (rebelAi(s, pid)) return true; // a guard for a restless conquered city (see game/rebels)
@@ -159,7 +161,7 @@ function economyStep(s: GameState, pid: number): boolean {
   const p = s.players[pid];
   const cities = citiesOf(s, pid);
   const myUnits = s.units.filter((u) => u.owner === pid);
-  const enemiesNear = s.units.some((u) => u.owner !== pid && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
+  const enemiesNear = s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && isExplored(s, pid, u.x, u.y) && cities.some((c) => dist(c.x, c.y, u.x, u.y) <= 3));
   const abroad = targetsOnlyOverseas(s, pid);
 
   // Harvest: cheapest population gain first.
@@ -294,7 +296,7 @@ function unitStep(s: GameState, u: Unit): boolean {
   }
 
   // Stay put on a settlement we can capture next turn.
-  if (t.village || (t.cityId !== null && s.cities.find((c) => c.id === t.cityId)!.owner !== pid)) return false;
+  if (t.village || (t.cityId !== null && hostile(s, pid, s.cities.find((c) => c.id === t.cityId)!.owner))) return false;
 
   // Hurt and idle: recover.
   if (u.hp < maxHp(u) * 0.45 && !u.attacked) {
@@ -400,7 +402,7 @@ function targetsOnlyOverseas(s: GameState, pid: number): boolean {
   let home = false, away = false;
   for (const t of s.tiles) {
     if (!isExplored(s, pid, t.x, t.y)) continue;
-    const target = t.village || (t.cityId !== null && s.cities.find((c) => c.id === t.cityId)!.owner !== pid);
+    const target = t.village || (t.cityId !== null && hostile(s, pid, s.cities.find((c) => c.id === t.cityId)!.owner));
     if (!target) continue;
     if (mine.has(mass[t.y * s.size + t.x])) home = true;
     else away = true;
@@ -439,13 +441,14 @@ function findGoals(s: GameState, u: Unit): Goal[] {
     if (t.ruin) goals.push({ x: t.x, y: t.y, w: 2 });
     if (t.cityId !== null) {
       const c = s.cities.find((k) => k.id === t.cityId)!;
-      if (c.owner !== pid && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 }); // mist may hide it
+      if (hostile(s, pid, c.owner) && cityVisibleTo(s, pid, c)) goals.push({ x: t.x, y: t.y, w: s.turn > 5 ? 3 : 1 }); // mist may hide it
     }
   }
+  const allyWar = allyFoes(s, pid); // honouring an alliance: go after whoever attacked an ally
   for (const e of s.units) {
-    if (e.owner === pid || isNeutral(s, e.owner) || !isExplored(s, pid, e.x, e.y)) continue; // beasts are fought when they come near, not hunted
+    if (!hostile(s, pid, e.owner) || isNeutral(s, e.owner) || !isExplored(s, pid, e.x, e.y)) continue; // beasts are fought when they come near, not hunted
     const nearMine = myCities.some((c) => dist(c.x, c.y, e.x, e.y) <= 3);
-    goals.push({ x: e.x, y: e.y, w: nearMine ? 4 : 1 });
+    goals.push({ x: e.x, y: e.y, w: nearMine ? 4 : allyWar.has(e.owner) ? 3 : 1 });
   }
   // Exploration frontier: explored tiles bordering the unknown.
   if (goals.length < 3) {

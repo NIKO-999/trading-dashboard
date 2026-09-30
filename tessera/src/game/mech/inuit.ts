@@ -4,6 +4,7 @@ import { addPop, cityById, def, doAction, hasTech, isExplored, moveOptions, move
 import type { Action, MoveOption } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
+import { hostile } from '../diplomacy';
 
 // Glacial Freeze (A): an Inuit land unit may walk out onto open water beside it (shallows, or ocean touching land or
 // ice); the water freezes under its feet into permanent `ice` terrain, a land bridge for everyone. Inuit cities also
@@ -135,7 +136,7 @@ export const mech: Mechanic = {
       }
     }
     for (const u of s.units) { // freeze damage
-      if (u.owner === owner || u.hp <= 1) continue;
+      if (u.owner === owner || !hostile(s, owner, u.owner) || u.hp <= 1) continue;
       const t = tileAt(s, u.x, u.y);
       if (!t || !isIce(t) || FIRE_TECHS.some((k) => hasTech(s, u.owner, k))) continue;
       const n = Math.min(FREEZE_DAMAGE + (aura ? 1 : 0), u.hp - 1);

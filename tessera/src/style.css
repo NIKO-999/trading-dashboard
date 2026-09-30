@@ -360,3 +360,15 @@ ul.traits .effect { display: block; font-weight: 600; }
 .wonder-hud { pointer-events: auto; padding: 4px 12px 3px; border-radius: 999px; background: rgba(60,50,20,0.82); color: #ffe7a0; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,0.35); }
 .wonder-hud.hot { background: rgba(160,120,20,0.92); color: #fff; }
 .modal.wonder-card h2 { color: #ffd24a; }
+/* ------------------------------------------------ diplomacy (see ui/diplomacy) */
+.diplo-open { display: block; width: 100%; margin: 0 0 10px; }
+.diplo-row { align-items: flex-start; }
+.diplo-body { flex: 1; min-width: 0; }
+.diplo-rel { margin-left: 8px; padding: 2px 8px 0; border-radius: 8px; font-size: 0.8rem; font-weight: 700; background: #5a1e1e; color: #ffd0d0; }
+.diplo-rel.peace { background: #e9e5da; color: #2a2a2a; }
+.diplo-rel.alliance { background: var(--gold); color: #3a2a00; }
+.diplo-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.diplo-acts .mini-btn { margin-top: 6px; padding: 7px 10px 4px; font-size: 0.85rem; }
+.diplo-acts .mini-btn.war { background: #c4413b; color: #fff; }
+.mini-btn.off { opacity: 0.45; }
+.diplo-news { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }

@@ -4,6 +4,7 @@ import { citiesOf, def, removeUnit, tileOwnerPlayer, unitAt } from '../rules';
 import type { Action } from '../rules';
 import type { City, GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
+import { hostile } from '../diplomacy';
 
 // Khmer: the Great Reservoir (Baray) system.
 //
@@ -109,7 +110,7 @@ export function blowDam(s: GameState, owner: number, dam: Tile): number {
     const prev = t.data?.flood as { left: number; orig: string } | undefined;
     t.data = { ...(t.data ?? {}), flood: { left: FLOOD_TURNS, orig: prev?.orig ?? t.terrain, by: owner } };
     t.terrain = 'shallow';
-    if (here && here.owner !== owner && isLandUnit(here)) { wash(s, owner, here); washed++; }
+    if (here && hostile(s, owner, here.owner) && isLandUnit(here)) { wash(s, owner, here); washed++; }
   }
   return washed;
 }
@@ -214,7 +215,7 @@ export const mech: Mechanic = {
     // 1. Blow a dam when it drowns enemies and none of ours would be caught in the water.
     for (const d of mineTiles.filter(isDam)) {
       const zone = floodZone(s, owner, d);
-      const foes = zone.map((t) => unitAt(s, t.x, t.y)).filter((u): u is Unit => !!u && u.owner !== owner && isLandUnit(u));
+      const foes = zone.map((t) => unitAt(s, t.x, t.y)).filter((u): u is Unit => !!u && hostile(s, owner, u.owner) && isLandUnit(u));
       if (!foes.length || p.stars < FLOOD_COST) continue;
       if (foes.reduce((n, u) => n + u.hp, 0) < 5) continue;
       p.stars -= FLOOD_COST;

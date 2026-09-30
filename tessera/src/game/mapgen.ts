@@ -4,6 +4,7 @@ import { UNITS } from '../data/units';
 import { hookSetup } from './mech';
 import { perkRange, perkSum, unitMatches } from './perks';
 import { setupWild } from './wild';
+import { newDiplo } from './diplomacy';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { makeRng, weighted, type Rng } from './rng';
 import type { City, Difficulty, GameMode, GameState, Player, Resource, Terrain, Tile, TribeId, Unit, UnitKind } from './types';
@@ -58,6 +59,8 @@ export interface NewGameOptions {
   wild?: boolean;
   /** Rebellions: conquered cities left ungarrisoned may break away as Rogue States (see game/rebels). Off unless asked for; the new-game screen defaults it on. */
   rebels?: boolean;
+  /** Diplomacy: peace, alliances, trade and tribute between empires that have met (see game/diplomacy). Off unless asked for; the new-game screen defaults it on. */
+  diplomacy?: boolean;
 }
 
 // Map edge length by map size and number of empires.
@@ -106,6 +109,7 @@ export function createGame(opts: NewGameOptions): GameState {
     log: [],
     hintStep: 0,
     ...(opts.rebels ? { rebels: true } : {}),
+    ...(opts.diplomacy ? { diplo: newDiplo() } : {}),
   };
 
   const capitals = placeCapitals(rng, size, tribes.length);

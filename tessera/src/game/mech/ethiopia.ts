@@ -4,6 +4,7 @@ import { citiesOf, removeUnit, tileOwnerPlayer, unitAt } from '../rules';
 import type { Action } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
+import { hostile } from '../diplomacy';
 
 // Aksum: Monolithic Spire Network + Crossroad Tariffs.
 //
@@ -85,7 +86,7 @@ export function fireSpires(s: GameState, owner: number) {
   const st = activeSteles(s, owner);
   const dealt = new Map<number, number>();
   for (const t of st) {
-    for (const e of s.units.filter((u) => u.owner !== owner && dist(u.x, u.y, t.x, t.y) <= RAY_RANGE).sort((a, b) => a.id - b.id)) {
+    for (const e of s.units.filter((u) => hostile(s, owner, u.owner) && dist(u.x, u.y, t.x, t.y) <= RAY_RANGE).sort((a, b) => a.id - b.id)) {
       const got = dealt.get(e.id) ?? 0;
       const n = Math.min(RAY_DAMAGE, RAY_CAP - got);
       if (n <= 0) continue;
@@ -97,7 +98,7 @@ export function fireSpires(s: GameState, owner: number) {
   for (const l of gridLinks(s, owner))
     for (const bt of l.between) {
       const e = unitAt(s, bt.x, bt.y);
-      if (e && e.owner !== owner && !burned.has(e.id)) { burned.add(e.id); hurt(s, e, GRID_DAMAGE); }
+      if (e && hostile(s, owner, e.owner) && !burned.has(e.id)) { burned.add(e.id); hurt(s, e, GRID_DAMAGE); }
     }
 }
 

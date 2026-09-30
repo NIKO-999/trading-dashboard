@@ -4,6 +4,7 @@ import { citiesOf, def, previewCombat, removeUnit } from '../rules';
 import type { Action } from '../rules';
 import type { GameState, Tile, Unit } from '../types';
 import type { Mechanic } from './types';
+import { hostile } from '../diplomacy';
 
 // Singijeon Rocket Fleets: Korean siege engines fire high-arc salvos. They can hit any tile in range, even fogged or
 // unexplored ones, and every hit sets the tile ablaze for a few turns. Fire is kept in tile.data.fire (turns left);
@@ -34,7 +35,7 @@ function shooters(s: GameState, owner: number, x: number, y: number): Unit[] {
 function salvo(s: GameState, a: Unit, t: Tile) {
   const d = s.units.find((u) => u.x === t.x && u.y === t.y);
   emit({ type: 'attack', unitId: a.id, kind: a.kind, player: a.owner, from: { x: a.x, y: a.y }, to: { x: t.x, y: t.y }, ranged: true });
-  if (d && d.owner !== a.owner) {
+  if (d && hostile(s, a.owner, d.owner)) {
     const { dmg } = previewCombat(s, a, d);
     d.hp -= dmg;
     emit({ type: 'damage', unitId: d.id, x: d.x, y: d.y, amount: dmg });
@@ -116,7 +117,7 @@ export const mech: Mechanic = {
           const t = tileAt(s, x, y);
           if (!t || (x === a.x && y === a.y)) continue;
           const d = s.units.find((e) => e.x === x && e.y === y);
-          if (!d || d.owner === owner) continue;
+          if (!d || !hostile(s, owner, d.owner)) continue;
           // never scorch a tile that touches one of our own units standing in a fire we lit
           const own = s.units.some((e) => e.owner === owner && dist(e.x, e.y, x, y) === 0);
           if (own) continue;

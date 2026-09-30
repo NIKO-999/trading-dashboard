@@ -7,6 +7,7 @@ import { TRIBES, type BiomePalette } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { tileAt } from '../game/grid';
 import { cityById, tileOwnerPlayer } from '../game/rules';
+import { relation } from '../game/diplomacy';
 import type { City, GameState, Tile, TribeId, UnitKind } from '../game/types';
 import { Camera, LAND_DEPTH, TH, TW, WATER_DROP, tileCenter, tileTop } from './camera';
 import { band, box, drawStar, ellipse, faceQuad, ink, line, mix, poly, polyGrad, rand, roof, shade, softShadow, type Ctx, type Pt } from './prims';
@@ -205,7 +206,7 @@ function drawStaticGround(ctx: Ctx, s: GameState, viewer: number, cam: Camera, _
   const explored = (x: number, y: number) => viewer < 0 || s.players[viewer].explored[y * s.size + x];
   const shown = visibleTiles(s, cam, vw, vh);
   for (const t of shown) if (explored(t.x, t.y)) drawGround(ctx, s, t, explored);
-  for (const t of shown) if (explored(t.x, t.y)) drawBorders(ctx, s, t, explored);
+  for (const t of shown) if (explored(t.x, t.y)) drawBorders(ctx, s, t, explored, viewer);
   ctx.restore();
 }
 
@@ -445,10 +446,13 @@ function drawFog(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: numbe
 
 // ---------------------------------------------------------------- territory
 
-function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean) {
+function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: number) => boolean, viewer = -1) {
   const owner = tileOwnerPlayer(s, t);
   if (owner === null) return;
   const color = s.players[owner].neutral ? REBEL_COLOR : TRIBES[s.players[owner].tribe].color; // only Rogue States hold land for the neutral owner
+  // the viewer's treaty partners (see game/diplomacy): allies' fences are capped in gold, peace partners' in white
+  const rel = s.diplo && viewer >= 0 && owner !== viewer && !s.players[owner].neutral ? relation(s, viewer, owner) : 'war';
+  const trim = rel === 'alliance' ? ALLY_TRIM : rel === 'peace' ? PEACE_TRIM : undefined;
   const { x, y: ty } = tileTop(t.x, t.y);
   const y = ty + (isWaterTile(t) ? WATER_DROP : 0);
   const c = { x, y: y + HH };
@@ -463,15 +467,18 @@ function drawBorders(ctx: Ctx, s: GameState, t: Tile, explored: (x: number, y: n
     const n = tileAt(s, t.x + dx, t.y + dy);
     if (n && tileOwnerPlayer(s, n) === owner && explored(n.x, n.y)) continue;
     const inset = (p: Pt) => ({ x: p.x + (c.x - p.x) * 0.1, y: p.y + (c.y - p.y) * 0.1 });
-    fence(ctx, inset(a), inset(b), color);
+    fence(ctx, inset(a), inset(b), color, trim);
   }
 }
 
+const ALLY_TRIM = '#ffd54a';
+const PEACE_TRIM = '#f4f1e8';
+
 /** A row of raised, block-like fence posts along a territory edge. */
-function fence(ctx: Ctx, a: Pt, b: Pt, color: string) {
+function fence(ctx: Ctx, a: Pt, b: Pt, color: string, trim?: string) {
   const n = 6;
   const h = 5;
-  const top = shade(color, 0.3);
+  const top = trim ?? shade(color, 0.3);
   for (let i = 0; i < n; i++) {
     const f0 = (i + 0.2) / n, f1 = (i + 0.8) / n;
     const x0 = a.x + (b.x - a.x) * f0, y0 = a.y + (b.y - a.y) * f0;
@@ -479,7 +486,7 @@ function fence(ctx: Ctx, a: Pt, b: Pt, color: string) {
     poly(ctx, [x0, y0 + 2, x1, y1 + 2, x1, y1 - h, x0, y0 - h], shade(color, -0.35));
     poly(ctx, [x0, y0 + 0.5, x1, y1 + 0.5, x1, y1 - h, x0, y0 - h], color);
     ctx.strokeStyle = top;
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = trim ? 1.9 : 1.2;
     ctx.beginPath();
     ctx.moveTo(x0, y0 - h);
     ctx.lineTo(x1, y1 - h);

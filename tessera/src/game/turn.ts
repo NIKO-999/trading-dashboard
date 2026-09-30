@@ -6,6 +6,7 @@ import { skillTurnStart } from './skills';
 import { checkElimination, checkGameOver, citiesOf, income, maxHp, tileOwnerPlayer } from './rules';
 import { tileAt } from './grid';
 import { cultureUnrest } from './rebels';
+import { diploTurnStart } from './diplomacy';
 import { wildRound } from './wild';
 import { wonderTurnStart } from './wonders';
 import type { GameState } from './types';
@@ -20,6 +21,7 @@ export function startTurn(s: GameState) {
     const inc = income(s, p.id) + hookIncome(s, p.id) + (p.human ? 0 : AI_BONUS[s.difficulty]);
     p.stars += inc;
   }
+  diploTurnStart(s, p.id); // declared wars begin, trade and tribute pay, allies share maps (see game/diplomacy)
   for (const u of s.units) {
     u.hp = Math.min(u.hp, maxHp(u)); // saves from before boats kept their passenger's health
     if (u.owner !== p.id) continue;

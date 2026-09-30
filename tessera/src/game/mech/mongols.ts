@@ -12,6 +12,7 @@ import { attackOptions, def, moveOptions, moveUnit, previewCombat, removeUnit } 
 import type { GameState, Unit } from '../types';
 import { citiesOf } from '../rules';
 import type { Mechanic } from './types';
+import { hostile } from '../diplomacy';
 
 /** How far a unit may pull back after attacking. */
 export const RETREAT_TILES = 2;
@@ -73,7 +74,7 @@ export const mech: Mechanic = {
 
   // ---- horde steppe ambush
   afterMove(s, owner, u, _from, to) {
-    if (u.owner === owner || s.units.indexOf(u) < 0) return;
+    if (u.owner === owner || !hostile(s, owner, u.owner) || s.units.indexOf(u) < 0) return; // never a treaty partner
     for (const { u: a, ready } of ambushers(s, owner)) {
       if (!ready || dist(a.x, a.y, to.x, to.y) > ambushRange(a)) continue;
       const { dmg, kills } = previewCombat(s, a, u);

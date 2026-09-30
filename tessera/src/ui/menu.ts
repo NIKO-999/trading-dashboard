@@ -29,6 +29,7 @@ export interface NewGameChoice {
   hotseat: boolean; // pass & play on one device
   wild: boolean; // wild events: Great Beasts, volcanoes and mercenary camps (see game/wild)
   rebels?: boolean; // rebellions: restless conquered cities may break away as Rogue States (see game/rebels); on unless set false
+  diplomacy?: boolean; // peace, alliances, trade and tribute between empires (see game/diplomacy); on unless set false
   seats: Record<TribeId, Seat>; // pass & play: who plays each empire
 }
 
@@ -170,7 +171,7 @@ function traitLists(id: TribeId): Node[] {
 
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
-    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true,
+    tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true, diplomacy: true,
     seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
@@ -249,6 +250,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
       h('p', { class: 'muted small terrain-note' }, choice.rebels !== false
         ? 'Conquered cities left ungarrisoned far from your capital grow restless, and may break away as Rogue States. You are warned a turn before.'
         : 'Conquered cities stay loyal however you treat them.'),
+      seg('Diplomacy', [[1, 'On'], [0, 'Off']], () => (choice.diplomacy !== false ? 1 : 0), (v) => { choice.diplomacy = v === 1; render(); }),
+      h('p', { class: 'muted small terrain-note' }, choice.diplomacy !== false
+        ? 'Empires that meet can sign peace, alliances and trade deals, and demand tribute. Find it on the Empires screen.'
+        : 'Every empire is at war with every other, always.'),
       start,
     ];
     scroll.append(...parts.filter((n): n is Node => n !== null));

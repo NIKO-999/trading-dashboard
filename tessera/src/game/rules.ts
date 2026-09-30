@@ -9,6 +9,7 @@ import { cityOrigin, offerCulture } from './culture';
 import { clusterBonus, clusterHint, LINK_POP, MAX_LINKS_PAID_POP, MAX_PAYING_LINKS, networkIncome, roadNetwork, ROAD_MILESTONES, ROADS_PER_STAR } from './network';
 import { area, dist, isLand, isWater, neighbors, tileAt } from './grid';
 import { claimTerritory, foundCity, meet, revealAround, spawnUnit } from './mapgen';
+import { alliedVictory, diploFought, hostile, mayStep } from './diplomacy';
 import { ashBonus, beastSlain, campAt, isBeast, isLava, wildActions, wildDoAction } from './wild';
 import { wonderActions, wonderDoAction, wonderOn } from './wonders';
 import { WONDER_SCORE, wondersHeldBy } from '../data/wonders';
@@ -409,7 +410,8 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
   if (u && u.owner === pid) {
     // a city afloat (the Maori Great Waka) can only be taken from the water, by a ship or boat standing on it
     const afloat = t.cityId !== null && !!cityById(s, t.cityId)?.data?.waka;
-    if ((t.village || (t.cityId !== null && cityById(s, t.cityId)!.owner !== pid)) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
+    // a treaty partner's city can't be taken (see game/diplomacy)
+    if ((t.village || (t.cityId !== null && hostile(s, pid, cityById(s, t.cityId)!.owner))) && (def(u).naval === false || (afloat && def(u).naval && def(u).atk > 0))) {
       add('capture', t.village ? 'Claim Village' : 'Capture City', 'Take control of this settlement.', 0, null, 'flag',
         u.moved || u.attacked ? 'Units must start their turn here' : undefined);
     }
@@ -651,6 +653,10 @@ export function checkGameOver(s: GameState) {
   } else if (alive.length === 1) {
     s.over = true;
     s.winner = alive[0].id;
+  } else if (alliedVictory(s, alive.map((p) => p.id))) { // Domination: allied survivors win together (see game/diplomacy)
+    s.over = true;
+    s.winner = bestScorer(s);
+    s.diplo!.victors = alive.map((p) => p.id);
   } else if (s.mode === 'perfection' && s.maxTurns > 0 && s.turn >= s.maxTurns) {
     s.over = true;
     s.winner = bestScorer(s);
@@ -691,7 +697,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const parent = new Int32Array(size * size).fill(-1); // where each reachable tile was entered from
   const out = new Map<number, MoveOption>();
   const enemyNear = (x: number, y: number) =>
-    s.units.some((e) => e.owner !== pid && dist(e.x, e.y, x, y) === 1 && isExplored(s, pid, e.x, e.y));
+    s.units.some((e) => e.owner !== pid && dist(e.x, e.y, x, y) === 1 && isExplored(s, pid, e.x, e.y) && hostile(s, pid, e.owner));
   const hasRoad = (t: Tile) => t.road || t.cityId !== null;
 
   const start = tileAt(s, u.x, u.y)!;
@@ -708,6 +714,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       if (!isExplored(s, pid, to.x, to.y)) continue;
       if (unitAt(s, to.x, to.y)) continue;
       if (isLava(to)) continue; // molten rock (see game/wild)
+      if (!mayStep(s, pid, from, to)) continue; // a treaty partner's borders (see game/diplomacy)
       let opt: MoveOption = { x: to.x, y: to.y };
       let cost = 1;
       let stop = false;
@@ -761,7 +768,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
   const startI = start.y * size + start.x;
   for (const ex of hookExtraMoves(s, u)) { // jumps (ziplines, portals...) from empire mechanics
     const i = ex.y * size + ex.x;
-    if (!out.has(i) && !unitAt(s, ex.x, ex.y) && isExplored(s, pid, ex.x, ex.y)) { out.set(i, ex); parent[i] = startI; }
+    if (!out.has(i) && !unitAt(s, ex.x, ex.y) && isExplored(s, pid, ex.x, ex.y) && mayStep(s, pid, null, tileAt(s, ex.x, ex.y)!)) { out.set(i, ex); parent[i] = startI; }
   }
   return [...out.entries()].map(([i, opt]) => {
     const path: { x: number; y: number }[] = [];
@@ -865,7 +872,7 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
   if (u.attacked || d.atk <= 0) return [];
   const range = d.range + hookStat(s, u, 'range') + perkRange(s, u);
   const targets = s.units.filter((e) => e.owner !== u.owner && dist(e.x, e.y, u.x, u.y) <= range && isExplored(s, u.owner, e.x, e.y) && unitVisibleTo(s, u.owner, e));
-  return hookAttackTargets(s, u, targets);
+  return hookAttackTargets(s, u, targets).filter((e) => hostile(s, u.owner, e.owner)); // never a treaty partner (see game/diplomacy)
 }
 
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
@@ -891,6 +898,7 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
 export function attack(s: GameState, a: Unit, d: Unit): boolean {
   if (!attackOptions(s, a).includes(d)) return false;
   meet(s, a.owner, d.owner);
+  diploFought(s, a.owner, d.owner); // remembered, and the defender's allies are called to arms (see game/diplomacy)
   (s.players[a.owner].skill ??= {}).war = s.turn; // both sides are at war (War Host surges)
   (s.players[d.owner].skill ??= {}).war = s.turn;
   const { dmg, ret, kills, tag } = previewCombat(s, a, d);
@@ -930,7 +938,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
     }
     // Melee attackers advance into the tile they cleared.
     const t = tileAt(s, d.x, d.y)!;
-    if (def(a).range === 1 && isWater(t) === def(a).naval && (t.terrain !== 'mountain' || canClimb(s, a.owner))) {
+    if (def(a).range === 1 && isWater(t) === def(a).naval && (t.terrain !== 'mountain' || canClimb(s, a.owner)) && mayStep(s, a.owner, null, t)) {
       emit({ type: 'move', unitId: a.id, owner: a.owner, path: [{ x: a.x, y: a.y }, { x: d.x, y: d.y }], embark: false, disembark: false });
       a.x = d.x;
       a.y = d.y;
