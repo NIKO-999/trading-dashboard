@@ -642,6 +642,11 @@ export function checkElimination(s: GameState, pid: number, by: number) {
   if (!p.alive || citiesOf(s, pid).length > 0) return;
   p.alive = false;
   s.units = s.units.filter((u) => u.owner !== pid);
+  if (s.diplo) { // a fallen empire's treaties and tribute end with it
+    s.diplo.pacts = s.diplo.pacts.filter((x) => x.a !== pid && x.b !== pid);
+    s.diplo.tribute = s.diplo.tribute.filter((t) => t.from !== pid && t.to !== pid);
+    s.diplo.offers = s.diplo.offers.filter((o) => o.from !== pid && o.to !== pid);
+  }
   emit({ type: 'eliminated', player: pid, by });
   checkGameOver(s);
 }
