@@ -48,7 +48,7 @@ export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) =
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
 export const isExplored = (s: GameState, pid: number, x: number, y: number) => s.players[pid].explored[y * s.size + x];
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
-const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract'];
+const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract', 'camelrider', 'druzhina'];
 
 /** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
 const perkCost = (s: GameState, pid: number, k: UnitKind) => {
@@ -1055,7 +1055,7 @@ export function previewCombat(s: GameState, a: Unit, d: Unit) {
   const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk + edge.atk + tr.atk);
   const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def + edge.def + tr.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
   const aForce = atk * (edge.fury ? 1 : a.hp / maxHp(a));
-  const dForce = dd * (d.hp / maxHp(d)) * (edge.pierce || tr.pierce ? Math.min(1, defenseBonus(s, d)) : defenseBonus(s, d));
+  const dForce = dd * (edge.steadfast ? 1 : d.hp / maxHp(d)) * (edge.pierce || tr.pierce ? Math.min(1, defenseBonus(s, d)) : defenseBonus(s, d));
   const total = aForce + dForce || 1;
   const ranged = dist(a.x, a.y, d.x, d.y) > 1;
   let dmg = Math.round((aForce / total) * atk * 4.5);

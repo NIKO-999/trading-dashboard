@@ -242,7 +242,7 @@ function traitLists(id: TribeId): Node[] {
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
     tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true, clans: true, freeCities: true, diplomacy: true,
-    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off' },
+    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off', carthage: 'off', byzantium: 'off', arabia: 'off', rus: 'off', vietnam: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
   const seg = <T extends string | number>(label: string, opts: [T, string][], get: () => T, set: (v: T) => void) => {

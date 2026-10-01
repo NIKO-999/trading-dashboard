@@ -57,7 +57,7 @@ export const isAuxKind = (k: UnitKind | null | undefined) => !!k && AUX_KINDS.in
 export const isSupport = (u: Unit) => { const k = u.carrying ?? u.kind; return k === 'scout' || k === 'healer'; };
 
 /** Heroes who ride to war: they count as mounted against a Spearman (the rest fight on foot). */
-export const HORSE_HEROES: TribeId[] = ['mongols', 'egypt', 'lakota', 'tibet'];
+export const HORSE_HEROES: TribeId[] = ['mongols', 'egypt', 'lakota', 'tibet', 'arabia'];
 /** Is this unit mounted, as far as a Spearman is concerned? (A unit in a boat is not.) */
 export function isMounted(s: GameState, u: Unit): boolean {
   if (u.carrying) return false;
@@ -98,6 +98,11 @@ export const AUX_NAMES: Record<TribeId, Record<'spearman' | 'scout' | 'healer', 
   khmer: { spearman: 'Lompeng Spearman', scout: 'Forest Tracker', healer: 'Kru Khmer Healer' },
   swahili: { spearman: 'Mkuki Spearman', scout: 'Mpelelezi Scout', healer: 'Mganga Healer' },
   tibet: { spearman: 'Dung Spearman', scout: 'Lung-gom-pa Runner', healer: 'Amchi Healer' },
+  carthage: { spearman: 'Libyan Spearman', scout: 'Numidian Outrider', healer: 'Temple Physician' },
+  byzantium: { spearman: 'Skoutatos', scout: 'Prokoursator', healer: 'Xenon Physician' },
+  arabia: { spearman: 'Bedouin Spearman', scout: 'Camel Scout', healer: 'Bimaristan Physician' },
+  rus: { spearman: 'Opolchenie Spearman', scout: 'Forest Tracker', healer: 'Znakhar Healer' },
+  vietnam: { spearman: 'Village Militia', scout: 'Jungle Runner', healer: 'Herbal Doctor' },
 };
 /** The name an empire gives its auxiliary of this kind. */
 export const auxName = (tribe: TribeId, kind: UnitKind) => AUX_NAMES[tribe]?.[kind as 'spearman'] ?? UNITS[kind].name;

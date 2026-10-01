@@ -123,6 +123,11 @@ export const SPECIALITY: Record<TribeId, Speciality> = {
   khmer: { kind: 'temple', start: false, name: 'Temple Mountains', why: 'Angkor’s temple mountains: temple upgrades cost a third less and Great Temples need no tech.' },
   swahili: { kind: 'port', start: false, name: 'Coral Harbours', why: 'Stone ports of the monsoon trade: port upgrades cost a third less and Harbours need no tech.' },
   tibet: { kind: 'pasture', start: false, name: 'Yak Herds', why: 'Yak herds of the high plateau: pastures cost a third less and need no tech.' },
+  carthage: { kind: 'port', start: false, name: 'Cothon Harbours', why: 'The round harbours of Carthage: port upgrades cost a third less and Harbours need no tech.' },
+  byzantium: { kind: 'market', start: false, name: 'Silk Workshops', why: 'Smuggled silkworms and imperial looms: market upgrades cost a third less and Bazaars need no tech.' },
+  arabia: { kind: 'orchard', start: false, name: 'Date Palm Oases', why: 'Gardens in the desert: orchard upgrades cost a third less and need no tech.' },
+  rus: { kind: 'lumber', start: false, name: 'Forest Lodges', why: 'Timber, fur and honey of the great forest: lumber upgrades cost a third less and need no tech.' },
+  vietnam: { kind: 'farm', start: false, name: 'Wet-rice Paddies', why: 'Two harvests a year from the delta: farm upgrades cost a third less and Estates need no tech.' },
 };
 
 /** A line about an empire's speciality for the empire screens. */

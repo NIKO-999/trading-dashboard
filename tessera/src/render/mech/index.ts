@@ -25,7 +25,12 @@ import { render as polynesia } from './polynesia';
 import { render as rome } from './rome';
 import { render as swahili } from './swahili';
 import { render as tibet } from './tibet';
+import { render as carthage } from './carthage';
+import { render as byzantium } from './byzantium';
+import { render as arabia } from './arabia';
+import { render as rus } from './rus';
+import { render as vietnam } from './vietnam';
 import { render as vikings } from './vikings';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, lakota, mali, maya, mongols, ottoman, persia, pirates, polynesia, rome, swahili, tibet, vikings, zulu };
+export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, lakota, mali, maya, mongols, ottoman, persia, pirates, polynesia, rome, swahili, tibet, vikings, zulu, carthage, byzantium, arabia, rus, vietnam };

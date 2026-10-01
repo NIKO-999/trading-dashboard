@@ -59,6 +59,11 @@ const SPEAR: Record<TribeId, SpearLook> = {
   khmer: { head: 'broad', metal: BRONZE, shield: 'oval', face: '#8a5a33', mark: GOLD },
   swahili: { head: 'leaf', metal: STEEL, shield: 'hide', face: '#c9a06a', mark: '#2a7ab8' },
   tibet: { head: 'leaf', metal: STEEL, tassel: '#e8c21a', shield: 'wicker', face: '#8c1f3a', mark: GOLD },
+  carthage: { head: 'leaf', metal: BRONZE, tassel: '#5a1e6e', shield: 'round', face: '#5a1e6e', mark: '#e6d6b0' },
+  byzantium: { head: 'broad', metal: STEEL, tassel: '#d4a62a', shield: 'oval', face: '#2f7a3a', mark: GOLD },
+  arabia: { head: 'leaf', metal: STEEL, tassel: '#f0ead8', shield: 'round', face: '#2a5a10', mark: '#f0ead8' },
+  rus: { head: 'winged', metal: STEEL, tassel: '#e0b030', shield: 'tall', face: '#a83228', mark: '#e0b030' },
+  vietnam: { head: 'leaf', metal: BRONZE, tassel: '#f08aa8', shield: 'wicker', face: '#b03a2a', mark: '#f2d06a' },
 };
 
 /** What a Scout carries: a horn, a spyglass, a walking staff, a knotted message cord, a rolled map or a feathered lance. */
@@ -93,6 +98,11 @@ const SCOUT: Record<TribeId, ScoutLook> = {
   khmer: { gear: 'staff', pack: '#c8372d', hat: 'band', hatC: GOLD },
   swahili: { gear: 'map', pack: '#2a7ab8', hat: 'cap', hatC: '#f4efe0' },
   tibet: { gear: 'staff', pack: '#8c1f3a', hat: 'cap', hatC: '#e8c21a' },
+  carthage: { gear: 'horn', pack: '#e6d6b0', hat: 'band', hatC: '#5a1e6e' },
+  byzantium: { gear: 'map', pack: '#2f7a3a', hat: 'cap', hatC: '#d4a62a' },
+  arabia: { gear: 'spyglass', pack: '#d8c4a0', hat: 'wide', hatC: '#f0ead8' },
+  rus: { gear: 'horn', pack: '#6a4a30', hat: 'cap', hatC: '#5a3a2a' },
+  vietnam: { gear: 'cord', pack: '#c9a45a', hat: 'wide', hatC: '#e8d8a0' },
 };
 
 /** What a Healer holds: a staff with a snake, a smoking censer, a bowl of medicine, a rattle, a prayer wheel, a scroll
@@ -126,6 +136,11 @@ const HEALER: Record<TribeId, HealerLook> = {
   khmer: { tool: 'censer', robe: '#e89a2a', trim: '#8a3a1a' },
   swahili: { tool: 'herbs', robe: '#f4efe0', trim: '#2a7ab8' },
   tibet: { tool: 'wheel', robe: '#8c1f3a', trim: '#e8c21a' },
+  carthage: { tool: 'censer', robe: '#e6d6b0', trim: '#5a1e6e' },
+  byzantium: { tool: 'scroll', robe: '#1a3a20', trim: '#d4a62a', hood: true },
+  arabia: { tool: 'scroll', robe: '#f0ead8', trim: '#2a5a10' },
+  rus: { tool: 'herbs', robe: '#5a3a2a', trim: '#a83228' },
+  vietnam: { tool: 'herbs', robe: '#3a3a3a', trim: '#f08aa8' },
 };
 
 // ---------------------------------------------------------------- people

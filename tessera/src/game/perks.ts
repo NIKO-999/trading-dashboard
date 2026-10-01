@@ -48,7 +48,7 @@ export type Perk =
   | { k: 'wonderpct'; n: number } // World Wonders cost this share less
   | { k: 'raidheal'; n: number }; // HP a unit heals when it pillages
 
-export const MOUNTED_KINDS: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract'];
+export const MOUNTED_KINDS: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract', 'camelrider', 'druzhina'];
 const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha', 'ballista', 'cannon', 'ram'];
 
 /** All perks an empire has earned so far. */

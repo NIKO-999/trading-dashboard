@@ -121,6 +121,16 @@ export const HEROES: Record<TribeId, HeroDef> = {
     desc: 'Trade comes in on the wind: +2★ for each of your ports and ships (4★ to 14★).', fx: [{ k: 'starsPer', per: 'sea', n: 2, min: 4, max: 14 }] },
   tibet: { name: 'Songtsen Gampo', title: 'Emperor of the Plateau', ability: 'Mountain Mist', cd: 4,
     desc: 'Your units within 2 vanish into the mist (unseen by enemies) and get +1 defence until your next turn.', fx: [{ k: 'buff', r: 2, def: 1, veil: true }] },
+  carthage: { name: 'Hannibal Barca', title: 'Strategos of Carthage', ability: 'Cannae', cd: 5,
+    desc: 'The double envelopment: enemies within 2 lose 1 defence, and your units within 2 attack +1, until your next turn.', fx: [{ k: 'curse', r: 2, def: 1 }, { k: 'buff', r: 2, atk: 1 }] },
+  byzantium: { name: 'Belisarius', title: 'Magister Militum of the East', ability: 'Reconquest', cd: 4,
+    desc: 'Your units within 2 get +1 attack and +1 defence until your next turn.', fx: [{ k: 'buff', r: 2, atk: 1, def: 1 }] },
+  arabia: { name: 'Saladin', title: 'Sultan of Egypt and Syria', ability: 'Chivalrous Truce', cd: 4,
+    desc: 'Every one of your units inside your borders heals 4 HP, and you gain 3★.', fx: [{ k: 'heal', r: 'land', n: 4 }, { k: 'stars', n: 3 }] },
+  rus: { name: 'Alexander Nevsky', title: 'Prince of Novgorod', ability: 'Battle on the Ice', cd: 5,
+    desc: 'The ice cracks under the enemy: enemies within 2 cannot move on their next turn.', fx: [{ k: 'freeze', r: 2 }] },
+  vietnam: { name: 'Trần Hưng Đạo', title: 'Grand Prince, victor of Bạch Đằng', ability: 'Stakes of Bạch Đằng', cd: 5,
+    desc: 'Every enemy within 2 takes 3 damage, and your units within 2 get +1 defence until your next turn.', fx: [{ k: 'strike', r: 2, n: 3 }, { k: 'buff', r: 2, def: 1 }] },
 };
 
 // ---------------------------------------------------------------- state

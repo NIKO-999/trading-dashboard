@@ -1,5 +1,7 @@
 // Voxel-style unit figures: chunky big-headed people whose outfit, headgear and weapons
 // come from their empire, and whose silhouette comes from their class.
+import { TRIBE_ART } from './tribeart';
+import './tribes';
 import { TRIBES } from '../data/tribes';
 import { drawTroop } from './troops';
 import { UNITS } from '../data/units';
@@ -40,6 +42,11 @@ const LOOK: Record<TribeId, Look> = {
   khmer: { skin: '#b8763c', hair: '#141010' },
   swahili: { skin: '#6a4028', hair: '#120c08' },
   tibet: { skin: '#c9905a', hair: '#141010' },
+  carthage: { skin: '#c99260', hair: '#1a120c' },
+  byzantium: { skin: '#e2b88c', hair: '#2a1a10' },
+  arabia: { skin: '#c48c58', hair: '#140e0a' },
+  rus: { skin: '#f0caa6', hair: '#8a5a2a' },
+  vietnam: { skin: '#d8a874', hair: '#100c0c' },
 };
 
 const GOLD = '#f0c43a';
@@ -57,6 +64,7 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
   if (kind === 'trader') return drawTrader(ctx, tribe, x, y);
   if (isRoleKind(kind)) return drawRoleUnit(ctx, kind, tribe, x, y); // each empire's role units (see render/roles)
   if (isAuxKind(kind)) return drawAuxUnit(ctx, kind, tribe, x, y); // each empire's spearmen, scouts and healers (see render/auxiliaries)
+  if (TRIBE_ART[tribe]?.unit?.(ctx, kind, x, y)) return; // the newer empires' own art (see render/tribeart)
   if (d.naval) return drawBoat(ctx, kind, tribe, x, y);
   switch (kind) {
     case 'catapult': return drawCatapult(ctx, tribe, x, y);
@@ -170,6 +178,7 @@ export function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: n
     case 'lakota': torso = kind === 'swordsman' ? L.skin : T.color; legs = '#cdbb94'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'swordsman' || kind === 'buffalorider' ? L.skin : T.color; break; // fringed buckskin
     case 'maya': torso = kind === 'archer' || kind === 'explorer' ? MY_COT : kind === 'defender' ? MY_QUILT : kind === 'swordsman' ? MY_JAG : kind === 'giant' ? MY_JADED : kind === 'knight' || kind === 'rider' ? T.color : L.skin; legs = L.skin; sleeves = kind === 'defender' ? MY_QUILT : L.skin; break; // bare painted skin, quilted cotton or a jaguar pelt
     case 'india': torso = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; legs = IND_CREAM; sleeves = kind === 'defender' ? IND_TEAL : kind === 'swordsman' || kind === 'knight' ? IND_MAIL : L.skin; break; // white cotton dhoti; bare-chested but for gold, or quilted and mailed
+    default: { const dr = TRIBE_ART[tribe]?.dress?.(kind, armoured); if (dr) [torso, legs, sleeves] = dr; break; }
     case 'tibet': torso = TB_MAG_BODY; legs = '#3e3038'; sleeves = kind === 'warrior' || kind === 'archer' || kind === 'khampa' ? '#efe6d0' : kind === 'explorer' ? TB_MAG_BODY : TB_MAGD; break; // a wrap-front chuba over dark wool trousers, the tied-off sleeve showing a white shirt
     case 'khmer': [torso, legs, sleeves] = khColors(kind, L.skin); break; // silk sampot, bare or gilt-lamellar chest
     case 'korea': torso = kind === 'explorer' ? '#efe9d8' : armoured || kind === 'defender' ? T.colorDark : T.color; legs = kind === 'explorer' ? KR_WHITE : KR_COT; sleeves = torso; break; // a hanbok jeogori over baggy baji, studded coats for the heavy ranks
@@ -482,6 +491,7 @@ function dressTorso(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
     case 'swahili': swTorso(ctx, kind, x, y, w, h); break;
     case 'lakota': lkTorso(ctx, kind, x, y, w, h); break;
     case 'tibet': tbTorso(ctx, kind, x, y, w, h); break;
+    default: TRIBE_ART[tribe]?.torso?.(ctx, kind, x, y, w, h); break;
     case 'maya': myTorso(ctx, kind, x, y, w, h); break;
     case 'india': indTorso(ctx, kind, x, y, w, h); break;
     case 'khmer': khTorso(ctx, kind, x, y, w, h); break;
@@ -809,6 +819,7 @@ function drawFace(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: number
     case 'swahili': swFace(ctx, kind, x, y, w, h); break;
     case 'lakota': lkFace(ctx, kind, x, y, w, h); break;
     case 'tibet': tbFace(ctx, kind, x, y, w, h); break;
+    default: TRIBE_ART[tribe]?.face?.(ctx, kind, x, y, w, h); break;
     case 'maya': myFace(ctx, kind, x, y, w, h); break;
     case 'egypt':
       faceQuad(ctx, 'R', x, y, w, h, 0.18, 0.86, 0.62, 0.67, '#101010'); // kohl line
@@ -983,6 +994,7 @@ function drawHeadgear(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, top: 
     case 'swahili': swHead(ctx, kind, x, top, k, hw); break;
     case 'lakota': lkHead(ctx, kind, x, top, k, hw); break;
     case 'tibet': tbHead(ctx, kind, x, top, k, hw); break;
+    default: TRIBE_ART[tribe]?.head?.(ctx, kind, x, top, k, hw); break;
     case 'maya': myHead(ctx, kind, x, top, k, hw); break;
     case 'india': indHeadgear(ctx, kind, x, top, k, hw); break;
     case 'khmer': khHeadgear(ctx, kind, x, top, k, hw); break;
@@ -1521,6 +1533,11 @@ const HERO_LOOK: Record<TribeId, { base: UnitKind; regalia: Regalia; trim: strin
   khmer: { base: 'guardian', regalia: 'crown', trim: '#c8372d' },
   swahili: { base: 'askari', regalia: 'crown', trim: '#2a7ab8' },
   tibet: { base: 'khampa', regalia: 'band', trim: '#e8c21a' },
+  carthage: { base: 'sacredband', regalia: 'band', trim: '#e6d6b0' },
+  byzantium: { base: 'varangian', regalia: 'crown', trim: '#d4a62a' },
+  arabia: { base: 'swordsman', regalia: 'band', trim: '#f0ead8' },
+  rus: { base: 'swordsman', regalia: 'crown', trim: '#e0b030' },
+  vietnam: { base: 'rattan', regalia: 'band', trim: '#f2d06a' },
 };
 
 /**
@@ -1768,6 +1785,7 @@ function drawWeapon(ctx: Ctx, kind: UnitKind, tribe: TribeId, b: Body, k: number
   if (tribe === 'swahili' && swWeapon(ctx, kind, b, k)) return;
   if (tribe === 'lakota' && lkWeapon(ctx, kind, b, k)) return;
   if (tribe === 'tibet' && tbWeapon(ctx, kind, b, k)) return;
+  if (TRIBE_ART[tribe]?.weapon?.(ctx, kind, b, k)) return;
   if (isMy(tribe) && myWeapon(ctx, kind, b, k)) return;
   const { x, y } = b.hand;
   if (tribe === 'inuit') {
@@ -2203,6 +2221,7 @@ function drawShield(ctx: Ctx, tribe: TribeId, kind: UnitKind, x: number, y: numb
   if (tribe === 'swahili') return swShield(ctx, kind, x, y, k);
   if (tribe === 'lakota') return lkShield(ctx, kind, x, y, k);
   if (tribe === 'tibet') return tbShield(ctx, kind, x, y, k);
+  if (TRIBE_ART[tribe]?.shield?.(ctx, kind, x, y, k)) return;
   if (isMy(tribe)) return myShield(ctx, kind, x, y, k);
   const T = TRIBES[tribe];
   const rivets = (cx: number, cy: number, rx: number, ry: number, n: number, color: string) => {
@@ -4562,6 +4581,7 @@ function drawRider(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: numbe
   if (tribe === 'inca') return drawIncaRider(ctx, kind, x, y);
   if (tribe === 'lakota') return lkRider(ctx, kind, x, y);
   if (tribe === 'tibet') return tbRider(ctx, kind, x, y);
+  if (TRIBE_ART[tribe]?.unit?.(ctx, kind, x, y)) return;
   if (isMy(tribe)) return myRider(ctx, kind, x, y);
   if (tribe === 'india' && (kind === 'knight' || kind === 'elephant')) return drawIndianElephant(ctx, kind, x, y);
   const knight = kind === 'knight';
@@ -4824,6 +4844,7 @@ function drawCatapult(ctx: Ctx, tribe: TribeId, x: number, y: number) {
   if (tribe === 'swahili') return swCatapult(ctx, x, y);
   if (tribe === 'lakota') return lkCatapult(ctx, x, y);
   if (tribe === 'tibet') return tbCatapult(ctx, x, y);
+  if (TRIBE_ART[tribe]?.unit?.(ctx, 'catapult', x, y)) return;
   if (isMy(tribe)) return myCatapult(ctx, x, y);
   if (tribe === 'korea') return krHwacha(ctx, x, y);
   const T = TRIBES[tribe];
@@ -5448,6 +5469,7 @@ function drawBoat(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: number
   if (tribe === 'swahili') return drawSwahiliBoat(ctx, kind, x, y);
   if (tribe === 'lakota') return lkBoat(ctx, kind, x, y);
   if (tribe === 'tibet') return tbBoat(ctx, kind, x, y);
+  if (TRIBE_ART[tribe]?.unit?.(ctx, kind, x, y)) return;
   if (isMy(tribe)) return myBoat(ctx, kind, x, y);
   const hull = tribe === 'pirates' ? '#3b2a1e' : tribe === 'egypt' ? '#c9b36a' : tribe === 'vikings' || tribe === 'japan' ? '#6a4a2a' : '#8a5a2b';
   const w = 19 * s;
@@ -14832,6 +14854,11 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   khmer: { body: '#726c6a', feature: 'buffalo' }, // a water buffalo of the paddies
   swahili: { body: '#d8a648', feature: 'giraffe' }, // a reticulated giraffe of the coastal savannah
   tibet: { body: '#3a2a22', feature: 'yak' }, // a shaggy yak
+  carthage: { body: '#c89a5a', feature: 'lion' }, // a Barbary lion of the Atlas
+  byzantium: { body: '#8a7a6a', feature: 'ibex' }, // a wild goat of the Anatolian hills
+  arabia: { body: '#d8b06a', feature: 'hump' }, // a dromedary
+  rus: { body: '#5a3a24', feature: 'antlers' }, // an elk of the northern forest
+  vietnam: { body: '#5a5654', feature: 'buffalo' }, // a water buffalo of the paddies
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

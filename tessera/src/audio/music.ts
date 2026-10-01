@@ -280,6 +280,49 @@ const THEMES: Record<ThemeId, Theme> = {
     drone: { voice: 'dung', degrees: [0, 4], oct: -2, vol: 0.13, every: 2 },
     perc: [{ voice: 'cymbal', pat: 'X...............', vol: 0.09 }, { voice: 'gongperc', pat: '........o.......', vol: 0.1 }, { voice: 'frame', pat: '....x.......x...', vol: 0.12 }],
   },
+  // ------------------------------------------------------------------ Carthage: Phoenician double-reed and lyre over a frame drum, Phrygian-dominant
+  carthage: {
+    name: 'Tyrian Sea', bpm: 100, steps: 12, perBeat: 3, root: 50, scale: [0, 100, 400, 500, 700, 800, 1000], reverb: 0.45,
+    melody: { voice: 'aulos', oct: 1, vol: 0.15, density: 0.85, rhythms: R12, contour: 'wave', lo: -2, hi: 6, orn: 0.25, hold: 5 },
+    arp: { voice: 'lyre', oct: 0, vol: 0.13, pattern: [0, 2, 4, 2, 0, 4], rhythms: [[0, 2, 4, 6, 8, 10]], density: 0.9, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0, 4], oct: -1, vol: 0.07 },
+    perc: [{ voice: 'frame', pat: 'X..x..X.x.x.', vol: 0.2 }, { voice: 'tek', pat: '..x..x..o..x', vol: 0.09 }],
+  },
+  // ------------------------------------------------------------------ Byzantium: chant over an ison drone, bells, a double-harmonic mode
+  byzantium: {
+    gain: 1.3,
+    name: 'Golden Horn', bpm: 64, steps: 16, perBeat: 4, root: 48, scale: [0, 100, 400, 500, 700, 800, 1100], reverb: 0.75,
+    melody: { voice: 'voice', oct: 1, vol: 0.13, density: 0.6, rhythms: [[0, 4, 8, 12], [0, 8], [0, 6, 8, 12]], contour: 'arch', lo: -2, hi: 5, orn: 0.2, hold: 10 },
+    echo: { voice: 'lyre', oct: 1, vol: 0.08, density: 0.5, rhythms: [[0, 8], [4, 12]], contour: 'flat', lo: 0, hi: 4, hold: 6 },
+    drone: { voice: 'drone', degrees: [0], oct: -1, vol: 0.12 },
+    perc: [{ voice: 'gongperc', pat: 'X...............', vol: 0.12 }, { voice: 'cymbal', pat: '........o.......', vol: 0.06 }],
+  },
+  // ------------------------------------------------------------------ Arabia: maqam Hijaz, ney and oud, doum-tek on the darbuka
+  arabia: {
+    name: 'Round City', bpm: 104, steps: 16, perBeat: 4, root: 50, scale: [0, 100, 400, 500, 700, 800, 1000], reverb: 0.4,
+    melody: { voice: 'ney', oct: 1, vol: 0.17, density: 0.85, rhythms: R16, contour: 'wave', lo: -3, hi: 6, orn: 0.35, hold: 5 },
+    arp: { voice: 'oud', oct: 0, vol: 0.14, pattern: [0, 2, 4, 2, 0, 2, 3, 2], rhythms: [[0, 2, 4, 6, 8, 10, 12, 14]], density: 0.9, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0, 4], oct: -1, vol: 0.06 },
+    perc: [{ voice: 'doum', pat: 'X..x..X...x.x...', vol: 0.25 }, { voice: 'tek', pat: '.x.x.x...x.x.x.x', vol: 0.1 }],
+  },
+  // ------------------------------------------------------------------ Rus: a minor folk song, low choir and plucked gusli, a frame drum
+  rus: {
+    gain: 1.2,
+    name: 'Birch and Snow', bpm: 84, steps: 8, perBeat: 2, root: 45, scale: [0, 200, 300, 500, 700, 800, 1000], reverb: 0.6,
+    melody: { voice: 'voice', oct: 1, vol: 0.13, density: 0.8, rhythms: [[0, 2, 4, 6], [0, 3, 4, 6], [0, 4]], contour: 'descend', lo: -2, hi: 5, hold: 6 },
+    arp: { voice: 'harp', oct: 0, vol: 0.14, pattern: [0, 2, 4, 2], rhythms: [[0, 2, 4, 6]], density: 1, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0, 4], oct: -2, vol: 0.09 },
+    perc: [{ voice: 'frame', pat: 'X...x.x.', vol: 0.16 }, { voice: 'shaker', pat: '..x...x.', vol: 0.05 }],
+  },
+  // ------------------------------------------------------------------ Vietnam: pentatonic bamboo flute over a zither, wood blocks
+  vietnam: {
+    gain: 1.3,
+    name: 'Red River', bpm: 80, steps: 16, perBeat: 4, root: 53, scale: [0, 200, 500, 700, 900], reverb: 0.5,
+    melody: { voice: 'dizi', oct: 1, vol: 0.14, density: 0.8, rhythms: [[0, 6, 8], [0, 4, 8, 10], [0, 3, 6, 8, 12], [0, 8]], contour: 'wave', lo: -2, hi: 6, orn: 0.3, hold: 7 },
+    arp: { voice: 'guzheng', oct: 0, vol: 0.14, pattern: [0, 1, 2, 4, 2, 1], rhythms: [[0, 2, 4, 6, 8, 10, 12, 14]], density: 0.8, contour: 'flat' },
+    drone: { voice: 'gong', degrees: [0], oct: -1, vol: 0.06, every: 4 },
+    perc: [{ voice: 'wood', pat: 'X...x...x.x.x...', vol: 0.12 }, { voice: 'gongperc', pat: '........o.......', vol: 0.08 }],
+  },
 };
 
 // ---------------------------------------------------------------------------------------------- the engine

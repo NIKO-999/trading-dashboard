@@ -18,7 +18,7 @@ export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'mark
   | 'frontier'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
-export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
+export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet' | 'carthage' | 'byzantium' | 'arabia' | 'rus' | 'vietnam';
 export type Biome = TribeId;
 export type UnitKind =
   | 'warrior' | 'rider' | 'archer' | 'defender' | 'swordsman' | 'catapult' | 'knight' | 'giant'
@@ -29,6 +29,7 @@ export type UnitKind =
   | 'immortal' | 'clansman' | 'harpooner' | 'slinger' | 'shotelai' | 'woomera'
   | 'crossbowman' | 'elephant' | 'sofa' | 'buffalorider' | 'janissary'
   | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
+  | 'sacredband' | 'varangian' | 'camelrider' | 'druzhina' | 'rattan'
   // each empire's named champion (see game/heroes)
   | 'hero'
   // every empire's merchants: a land caravan and a sea trader, drawn in each empire's own style (see game/trade)

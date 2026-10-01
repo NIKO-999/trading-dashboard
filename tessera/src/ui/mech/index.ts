@@ -22,6 +22,11 @@ import { ui as pirates } from './pirates';
 import { ui as polynesia } from './polynesia';
 import { ui as swahili } from './swahili';
 import { ui as tibet } from './tibet';
+import { ui as carthage } from './carthage';
+import { ui as byzantium } from './byzantium';
+import { ui as arabia } from './arabia';
+import { ui as rus } from './rus';
+import { ui as vietnam } from './vietnam';
 import { ui as vikings } from './vikings';
 
-export const MECH_UI: MechUiRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, lakota, mali, maya, ottoman, persia, pirates, polynesia, swahili, tibet, vikings };
+export const MECH_UI: MechUiRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, india, inuit, khmer, lakota, mali, maya, ottoman, persia, pirates, polynesia, swahili, tibet, vikings, carthage, byzantium, arabia, rus, vietnam };

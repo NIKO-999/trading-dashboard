@@ -1,6 +1,7 @@
 // World rendering in a flat, low-poly isometric style. The terrain, scenery and cloud cover are
 // drawn into a cached layer that is only rebuilt when the game state or camera changes; units,
 // effects and labels are drawn on top every frame so they can animate cheaply.
+import { TRIBE_ART } from './tribeart';
 import { cityVisibleTo } from '../game/mech';
 import { MECH_RENDER } from './mech';
 import { TRIBES, type BiomePalette } from '../data/tribes';
@@ -1726,6 +1727,8 @@ function drawTree(ctx: Ctx, biome: TribeId, x: number, y: number, k: number, P: 
   if (biome === 'aboriginal') return aboriginalTree(ctx, x, y, k, P, variant);
   if (biome === 'lakota') return lkTree(ctx, x, y, k, P, variant);
   if (biome === 'tibet') return tbTree(ctx, x, y, k, P, variant);
+  const art = TRIBE_ART[biome];
+  if (art?.tree) return art.tree(ctx, x, y, k, P, variant); // the newer empires' own trees (see render/tribeart)
   if (biome === 'maya') return myTree(ctx, x, y, k, P, variant);
   if (biome === 'celts') return drawCeltTree(ctx, x, y, k, P, variant);
   if (biome === 'china') return drawChinaTree(ctx, x, y, k, P, variant);
@@ -1932,6 +1935,7 @@ const FRUIT: Record<TribeId, string> = {
   persia: '#d7443a', celts: '#7a2a5a', inuit: '#e85a6a', inca: '#f2c53a', ethiopia: '#b8324a', aboriginal: '#7a2a4a',
   china: '#e8423a', india: '#e8a02a', mali: '#f2b33a', lakota: '#8a2a4a', ottoman: '#c8244a',
   maya: '#f2b33a', korea: '#e8423a', khmer: '#f28a2a', swahili: '#e8423a', tibet: '#d8402a',
+  carthage: '#7a2a6a', byzantium: '#3a2a4a', arabia: '#8a5a2a', rus: '#c8243a', vietnam: '#f2c53a',
 };
 
 /** A round, softly lit fruit with a stalk and a leaf. */
@@ -2375,6 +2379,11 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'tibet':
       tbBuilding(ctx, x, y, big, capital);
+      break;
+    case 'carthage': case 'byzantium': case 'arabia': case 'rus': case 'vietnam':
+      if (TRIBE_ART[tribe]?.building) { TRIBE_ART[tribe]!.building!(ctx, x, y, big, roofC, capital); break; }
+      box(ctx, x, y, w, h, '#ece4d0');
+      roof(ctx, x, y - h, w + 2, 6, roofC);
       break;
     case 'maya':
       myBuilding(ctx, x, y, big, roofC, capital);

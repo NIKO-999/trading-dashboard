@@ -195,4 +195,39 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
       T('Landlocked Plateau', 'No sea for a thousand miles.', { k: 'move', n: -1, who: 'naval' }),
     ],
   },
+  carthage: {
+    pros: [T('Merchant Princes', 'Carthage ran the trade of the western sea.', { k: 'route', n: 0.25 })],
+    cons: [
+      T('Hired Armies', 'Carthage paid mercenaries rather than raising its own citizens.', { k: 'def', n: -0.5, who: 'melee' }),
+      T('Borrowed Horsemen', 'Its cavalry was Numidian, lent by allies.', { k: 'techcost', tech: 'riding', n: 2 }),
+    ],
+  },
+  byzantium: {
+    pros: [T('Imperial Bureaucracy', 'Tax rolls, mints and logothetes in every province.', { k: 'levelstar', n: 2 })],
+    cons: [
+      T('Endless Frontiers', 'Enemies on every border stretched its armies thin.', { k: 'terrain', on: 'away', n: -0.5 }),
+      T('Iconoclasm', 'Quarrels over holy images split the church.', { k: 'cost', of: 'temple', n: -2 }),
+    ],
+  },
+  arabia: {
+    pros: [T('Desert Caravans', 'Camel trains linked India, Africa and the Mediterranean.', { k: 'route', n: 0.25 })],
+    cons: [
+      T('Few Forests', 'Timber for ships had to be brought from afar.', { k: 'cost', of: 'naval', n: -1 }),
+      T('Tribal Rivalries', 'Old clan feuds never quite died.', { k: 'def', n: -0.5, who: 'melee' }),
+    ],
+  },
+  rus: {
+    pros: [T('Stubborn Defenders', 'Besieged towns of Rus fought to the last log wall.', { k: 'def', n: 0.5, who: 'melee' })],
+    cons: [
+      T('Frozen Ports', 'Ice shut the northern harbours half the year.', { k: 'move', n: -1, who: 'naval' }),
+      T('Rasputitsa', 'Spring mud swallowed every road.', { k: 'techcost', tech: 'roads', n: 2 }),
+    ],
+  },
+  vietnam: {
+    pros: [T('Rice Bowl', 'Two harvests a year from the river deltas.', { k: 'income', per: 'farm', n: 0.5 })],
+    cons: [
+      T('Few Horses', 'Rice country bred buffalo, not war-horses.', { k: 'cost', of: 'mounted', n: -1 }),
+      T('Northern Shadow', 'A giant neighbour always watched the border.', { k: 'vision', n: -1 }),
+    ],
+  },
 };

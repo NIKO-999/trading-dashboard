@@ -152,6 +152,31 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['Yak Herds', 'Wool, milk and hardy mounts.', [{ k: 'grow', on: 'animal', n: 1 }, { k: 'cost', of: 'mounted', n: 1 }]],
     ['Monasteries', 'Learning on every hilltop.', [{ k: 'income', per: 'temple', n: 1 }, { k: 'heal', n: 2 }]],
   ],
+  carthage: [
+    ['Cothon', 'A round war-harbour hidden behind the trade port.', [{ k: 'income', per: 'port', n: 1 }]],
+    ['Tyrian Purple', 'A dye worth more than its weight in silver.', [{ k: 'route', n: 0.25 }, { k: 'income', per: 'market', n: 1 }]],
+    ['Elephants over the Alps', 'Hannibal\'s march into the heart of Italy.', [{ k: 'atk', n: 0.5, who: 'mounted' }, { k: 'cost', of: 'mounted', n: 1 }]],
+  ],
+  byzantium: [
+    ['Hagia Sophia', 'A dome that seems to hang from heaven.', [{ k: 'income', per: 'temple', n: 1 }]],
+    ['Theme Armies', 'Soldier-farmers who guard their own fields.', [{ k: 'terrain', on: 'own', n: 0.5 }]],
+    ['Golden Solidus', 'The coin of the world for seven centuries.', [{ k: 'income', per: 'market', n: 1 }, { k: 'income', per: 'capital', n: 1 }]],
+  ],
+  arabia: [
+    ['House of Wisdom', 'Scholars translating every book they could find.', [{ k: 'cost', of: 'tech', n: 1 }]],
+    ['Caravanserai', 'An inn a day\'s ride apart along every road.', [{ k: 'route', n: 0.25 }, { k: 'income', per: 'road', n: 1 }]],
+    ['Algebra and Astrolabes', 'The stars measured, the sums balanced.', [{ k: 'vision', n: 1 }, { k: 'levelstar', n: 2 }]],
+  ],
+  rus: [
+    ['Veche Bell', 'The town bell calls the free assembly.', [{ k: 'levelpop', n: 1 }]],
+    ['Kremlin Walls', 'A timber fortress at the heart of every town.', [{ k: 'terrain', on: 'city', n: 0.5 }]],
+    ['Cossack Hosts', 'Free horsemen of the steppe frontier.', [{ k: 'atk', n: 0.5, who: 'mounted' }, { k: 'cost', of: 'mounted', n: 1 }]],
+  ],
+  vietnam: [
+    ['Dyke Builders', 'Earth walls that tame the Red River.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Bronze Drums', 'Their thunder called every village to war.', [{ k: 'atk', n: 0.5, who: 'melee' }]],
+    ['Fire Arrows', 'Rockets and fire-lances of the Tây Sơn.', [{ k: 'atk', n: 0.5, who: 'ranged' }, { k: 'atk', n: 0.5, who: 'siege' }]],
+  ],
 };
 
 /** The base tech each empire's line branches off (tied to what the line and the empire's mechanic are about). */
@@ -160,7 +185,8 @@ export const LINE_PARENT: Record<TribeId, string> = {
   japan: 'tactics', mongols: 'riding', greeks: 'tactics', zulu: 'hunting', persia: 'riding', celts: 'hunting',
   inuit: 'sailing', inca: 'climbing', ethiopia: 'climbing', aboriginal: 'gathering', china: 'gathering', india: 'gathering',
   mali: 'riding', lakota: 'hunting', ottoman: 'gathering', maya: 'gathering', korea: 'fishing', khmer: 'gathering',
-  swahili: 'fishing', tibet: 'climbing',
+  swahili: 'fishing', tibet: 'climbing', carthage: 'fishing', byzantium: 'gathering', arabia: 'riding', rus: 'hunting',
+  vietnam: 'gathering',
 };
 
 export const UNIQUE_TECHS: UniqueTech[] = (Object.keys(LINES) as TribeId[]).flatMap((tribe) =>

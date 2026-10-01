@@ -81,6 +81,7 @@ export const PERSONA: Record<TribeId, Persona> = {
   swahili: TRADERS, mali: TRADERS, china: TRADERS, polynesia: TRADERS, greeks: TRADERS,
   tibet: PEACEFUL, india: PEACEFUL, inuit: PEACEFUL, aboriginal: PEACEFUL,
   egypt: STEADY, inca: STEADY, ethiopia: STEADY, maya: STEADY, korea: STEADY, khmer: STEADY,
+  carthage: TRADERS, arabia: TRADERS, byzantium: STEADY, rus: MARTIAL, vietnam: MARTIAL,
 };
 
 // ---------------------------------------------------------------- state and relations

@@ -72,10 +72,10 @@ test('every capital and village starts with enough resources to level up', () =>
   assert.ok(checked > 500, `checked ${checked} settlements`);
 });
 
-test('a 26-empire game runs 30 AI turns cleanly', () => {
+test('a 31-empire game runs 30 AI turns cleanly', () => {
   const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection' });
-  assert.equal(s.players.length, 26);
-  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 26, 'every empire gets its own capital');
+  assert.equal(s.players.length, 31);
+  assert.equal(new Set(s.cities.map((c) => `${c.x},${c.y}`)).size, 31, 'every empire gets its own capital');
   startTurn(s);
   let guard = 0;
   while (!s.over && guard++ < 2000) {

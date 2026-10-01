@@ -36,7 +36,7 @@ const clearUnits = (s: GameState) => { s.units = []; for (const c of s.cities) c
 
 test('three rings: 25 core techs, a 3-node culture line per empire off a base tech, links, forks and 6-8 wildcards', () => {
   assert.equal(TECHS.length, 25);
-  assert.equal(UNIQUE_TECHS.length, 78);
+  assert.equal(UNIQUE_TECHS.length, TRIBE_IDS.length * 3);
   for (const u of UNIQUE_TECHS) assert.ok(TECH_BY_ID[u.parent], `${u.id} grows from a real tech`);
   for (const id of TRIBE_IDS) assert.equal(TECH_BY_ID[`${id}:1`].ring, 'culture');
   assert.equal(TECH_BY_ID['aztec:1'].parent, 'hunting');

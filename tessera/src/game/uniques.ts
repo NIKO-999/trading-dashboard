@@ -11,6 +11,7 @@ import { dist, isWater, neighbors, tileAt } from './grid';
 import { def, maxHp, removeUnit } from './rules';
 import { hostile } from './diplomacy';
 import { isBeast } from './wild';
+import { MOUNTED_KINDS } from './perks';
 import type { Mechanic } from './mech/types';
 import type { GameState, Tile, Unit, UnitKind } from './types';
 
@@ -44,6 +45,11 @@ export const UNIQUE_ABILITY: Partial<Record<UnitKind, UniqueAbility>> = {
   guardian: { name: 'Temple ward', desc: 'Friendly units next to it take a third less damage, and the guardian takes that share instead.' },
   askari: { name: 'Coast guard', desc: '+1 defence on land beside water.' },
   khampa: { name: 'Highlander', desc: 'Mountains never stop its move; it rides over them like open ground.' },
+  sacredband: { name: 'Sacred oath', desc: 'Defends at full strength however wounded.' },
+  varangian: { name: 'Emperor\'s guard', desc: 'In or beside one of your cities: +1 defence, and it heals 2 HP at the start of every turn.' },
+  camelrider: { name: 'Ship of the desert', desc: 'Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert.' },
+  druzhina: { name: 'Winter host', desc: 'Forest never stops it; +1 attack and defence on tundra and ice.' },
+  rattan: { name: 'Jungle guerrilla', desc: 'Moves freely through forest and swamp, and attacks +1 from them.' },
 };
 
 /** Tunables. */
@@ -53,6 +59,8 @@ export const HARPOON = 2;
 export const RAM = 1.5;
 export const SPLASH = 0.5; // share of the damage that splashes (hwacha) or tramples through (elephant)
 export const WARD = 1 / 3; // share of an adjacent friend's damage a temple guardian takes on
+export const VARANGIAN_HEAL = 2;
+export const CAMEL_SHY = 1.5;
 
 const OPEN = ['field', 'desert', 'tundra'];
 const tileOf = (s: GameState, u: Unit) => tileAt(s, u.x, u.y)!;
@@ -61,6 +69,9 @@ const coastal = (s: GameState, t: Tile) => !isWater(t) && neighbors(s, t.x, t.y)
 const ownCity = (s: GameState, u: Unit) => { const t = tileOf(s, u); return t.cityId !== null && s.cities.some((c) => c.id === t.cityId && c.owner === u.owner); };
 /** A unit on a city tile or behind a fort (Roman Castra, Sappers' forts) or a wall. */
 const fortified = (s: GameState, u: Unit) => { const t = tileOf(s, u); return t.cityId !== null || t.improvement === 'fort' || t.improvement === 'wall'; };
+/** In or right beside one of its owner's cities. */
+const byOwnCity = (s: GameState, u: Unit) => s.cities.some((c) => c.owner === u.owner && dist(c.x, c.y, u.x, u.y) <= 1);
+const isMounted = (u: Unit) => MOUNTED_KINDS.includes(u.carrying ?? u.kind);
 const isMelee = (u: Unit) => { const d = def(u); return d.range === 1 && !d.naval && d.atk > 0; };
 
 /**
@@ -74,7 +85,8 @@ export function uniqueEdge(s: GameState, a: Unit, d: Unit) {
   if (d.kind === 'legionary' && ranged) dd += 1; // testudo
   if (a.kind === 'crossbowman' && fortified(s, d)) atk += 1;
   if (a.kind === 'janissary' && isMelee(d)) atk += 1;
-  return { atk, def: dd, fury: a.kind === 'berserker', pierce: a.kind === 'shotelai' };
+  if (d.kind === 'camelrider' && isMounted(a)) dd += CAMEL_SHY; // horses shy from camels
+  return { atk, def: dd, fury: a.kind === 'berserker', pierce: a.kind === 'shotelai', steadfast: d.kind === 'sacredband' };
 }
 
 // ---------------------------------------------------------------- the temple guardian's ward and the elephant's trample
@@ -132,6 +144,10 @@ export const UNIQUE_MECH: Mechanic = {
       case 'buffalorider': return stat === 'atk' && OPEN.includes(tileOf(s, u).terrain) ? 1 : 0;
       case 'sofa': return stat === 'def' && ownCity(s, u) ? 2 : 0;
       case 'askari': return stat === 'def' && coastal(s, tileOf(s, u)) ? 1 : 0;
+      case 'varangian': return stat === 'def' && byOwnCity(s, u) ? 1 : 0;
+      case 'camelrider': return stat === 'atk' && tileOf(s, u).terrain === 'desert' ? 1 : 0;
+      case 'druzhina': return (stat === 'atk' || stat === 'def') && ['tundra', 'ice'].includes(tileOf(s, u).terrain) ? 1 : 0;
+      case 'rattan': return stat === 'atk' && ['forest', 'swamp'].includes(tileOf(s, u).terrain) ? 1 : 0;
       default: return 0;
     }
   },
@@ -182,6 +198,8 @@ export const UNIQUE_MECH: Mechanic = {
     if (charging(s, u) && dist(u.x, u.y, to.x, to.y) > HORNS_TILES) ctx.forbid = true;
     // the khampa rides over the peaks without stopping (an enemy beside the peak still stops it)
     if (u.kind === 'khampa' && to.terrain === 'mountain' && !s.units.some((e) => hostile(s, owner, e.owner) && dist(e.x, e.y, to.x, to.y) === 1)) ctx.stop = false;
+    // the rattan guard slips through the swamp as through the forest
+    if (u.kind === 'rattan' && to.terrain === 'swamp' && !s.units.some((e) => hostile(s, owner, e.owner) && dist(e.x, e.y, to.x, to.y) === 1)) ctx.stop = false;
   },
 
   turnStart(s, owner) {
@@ -192,6 +210,11 @@ export const UNIQUE_MECH: Mechanic = {
       if (u.kind === 'immortal' && u.hp < maxHp(u)) { // undying
         const before = u.hp;
         u.hp = Math.min(maxHp(u), u.hp + IMMORTAL_HEAL);
+        emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
+      }
+      if (u.kind === 'varangian' && u.hp < maxHp(u) && byOwnCity(s, u)) { // the emperor's guard
+        const before = u.hp;
+        u.hp = Math.min(maxHp(u), u.hp + VARANGIAN_HEAL);
         emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
       }
     }
