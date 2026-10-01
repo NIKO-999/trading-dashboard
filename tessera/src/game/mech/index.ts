@@ -46,8 +46,23 @@ import { mech as nubia } from './nubia';
 import { mech as majapahit } from './majapahit';
 import { mech as spain } from './spain';
 import { mech as haudenosaunee } from './haudenosaunee';
+import { mech as assyria } from './assyria';
+import { mech as poland } from './poland';
+import { mech as scotland } from './scotland';
+import { mech as england } from './england';
+import { mech as france } from './france';
+import { mech as germany } from './germany';
+import { mech as sweden } from './sweden';
+import { mech as portugal } from './portugal';
+import { mech as venice } from './venice';
+import { mech as kongo } from './kongo';
+import { mech as ashanti } from './ashanti';
+import { mech as mapuche } from './mapuche';
+import { mech as georgia } from './georgia';
+import { mech as nepal } from './nepal';
+import { mech as cree } from './cree';
 
-export const MECH: MechRegistry = { egypt, aztec, polynesia, rome, pirates, vikings, japan, mongols, greeks, zulu, persia, celts, inuit, inca, ethiopia, aboriginal, china, india, mali, lakota, ottoman, maya, korea, khmer, swahili, tibet, carthage, byzantium, arabia, rus, vietnam, babylon, nubia, majapahit, spain, haudenosaunee };
+export const MECH: MechRegistry = { egypt, aztec, polynesia, rome, pirates, vikings, japan, mongols, greeks, zulu, persia, celts, inuit, inca, ethiopia, aboriginal, china, india, mali, lakota, ottoman, maya, korea, khmer, swahili, tibet, carthage, byzantium, arabia, rus, vietnam, babylon, nubia, majapahit, spain, haudenosaunee, assyria, poland, scotland, england, france, germany, sweden, portugal, venice, kongo, ashanti, mapuche, georgia, nepal, cree };
 export type { Mechanic, MoveCtx, CombatCtx, AttackInfo } from './types';
 
 const NONE: Mechanic = { name: '', blurb: '' };

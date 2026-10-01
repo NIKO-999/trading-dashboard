@@ -76,12 +76,12 @@ export interface NewGameOptions {
 
 // Map edge length by map size and number of empires.
 const SIZES: Record<MapSize, Record<number, number>> = {
-  normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22, 11: 23, 12: 24, 13: 25, 14: 26, 15: 27, 16: 28, 17: 29, 18: 30, 19: 31, 20: 32, 21: 33, 22: 34, 23: 35, 24: 36, 25: 37, 26: 38, 27: 39, 28: 40, 29: 41, 30: 42, 31: 43, 32: 44, 33: 45, 34: 46, 35: 47, 36: 48 },
-  large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26, 11: 27, 12: 28, 13: 29, 14: 30, 15: 31, 16: 32, 17: 33, 18: 34, 19: 35, 20: 36, 21: 37, 22: 38, 23: 39, 24: 40, 25: 41, 26: 42, 27: 43, 28: 44, 29: 45, 30: 46, 31: 47, 32: 48, 33: 49, 34: 50, 35: 51, 36: 52 },
-  huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30, 11: 31, 12: 32, 13: 33, 14: 34, 15: 35, 16: 36, 17: 37, 18: 38, 19: 39, 20: 40, 21: 41, 22: 42, 23: 43, 24: 44, 25: 45, 26: 46, 27: 47, 28: 48, 29: 49, 30: 50, 31: 51, 32: 52, 33: 53, 34: 54, 35: 55, 36: 56 },
-  // beyond huge: long voyages and wide frontiers (a 36-empire epic map is 82 x 82)
-  giant: {2: 32, 3: 34, 4: 36, 5: 38, 6: 39, 7: 40, 8: 41, 9: 42, 10: 42, 11: 43, 12: 44, 13: 45, 14: 46, 15: 47, 16: 48, 17: 49, 18: 50, 19: 51, 20: 52, 21: 53, 22: 54, 23: 55, 24: 56, 25: 57, 26: 58, 27: 59, 28: 60, 29: 61, 30: 62, 31: 63, 32: 64, 33: 65, 34: 66, 35: 67, 36: 68},
-  epic: {2: 46, 3: 48, 4: 50, 5: 52, 6: 53, 7: 54, 8: 55, 9: 56, 10: 56, 11: 57, 12: 58, 13: 59, 14: 60, 15: 61, 16: 62, 17: 63, 18: 64, 19: 65, 20: 66, 21: 67, 22: 68, 23: 69, 24: 70, 25: 71, 26: 72, 27: 73, 28: 74, 29: 75, 30: 76, 31: 77, 32: 78, 33: 79, 34: 80, 35: 81, 36: 82},
+  normal: { 2: 11, 3: 13, 4: 15, 5: 16, 6: 18, 7: 19, 8: 20, 9: 21, 10: 22, 11: 23, 12: 24, 13: 25, 14: 26, 15: 27, 16: 28, 17: 29, 18: 30, 19: 31, 20: 32, 21: 33, 22: 34, 23: 35, 24: 36, 25: 37, 26: 38, 27: 39, 28: 40, 29: 41, 30: 42, 31: 43, 32: 44, 33: 45, 34: 46, 35: 47, 36: 48, 37: 49, 38: 50, 39: 51, 40: 52, 41: 53, 42: 54, 43: 55, 44: 56, 45: 57, 46: 58, 47: 59, 48: 60, 49: 61, 50: 62, 51: 63 },
+  large: { 2: 15, 3: 17, 4: 19, 5: 20, 6: 22, 7: 23, 8: 24, 9: 25, 10: 26, 11: 27, 12: 28, 13: 29, 14: 30, 15: 31, 16: 32, 17: 33, 18: 34, 19: 35, 20: 36, 21: 37, 22: 38, 23: 39, 24: 40, 25: 41, 26: 42, 27: 43, 28: 44, 29: 45, 30: 46, 31: 47, 32: 48, 33: 49, 34: 50, 35: 51, 36: 52, 37: 53, 38: 54, 39: 55, 40: 56, 41: 57, 42: 58, 43: 59, 44: 60, 45: 61, 46: 62, 47: 63, 48: 64, 49: 65, 50: 66, 51: 67 },
+  huge: { 2: 20, 3: 22, 4: 24, 5: 26, 6: 27, 7: 28, 8: 29, 9: 30, 10: 30, 11: 31, 12: 32, 13: 33, 14: 34, 15: 35, 16: 36, 17: 37, 18: 38, 19: 39, 20: 40, 21: 41, 22: 42, 23: 43, 24: 44, 25: 45, 26: 46, 27: 47, 28: 48, 29: 49, 30: 50, 31: 51, 32: 52, 33: 53, 34: 54, 35: 55, 36: 56, 37: 57, 38: 58, 39: 59, 40: 60, 41: 61, 42: 62, 43: 63, 44: 64, 45: 65, 46: 66, 47: 67, 48: 68, 49: 69, 50: 70, 51: 71 },
+  // beyond huge: long voyages and wide frontiers (a 51-empire epic map is 97 x 97)
+  giant: {2: 32, 3: 34, 4: 36, 5: 38, 6: 39, 7: 40, 8: 41, 9: 42, 10: 42, 11: 43, 12: 44, 13: 45, 14: 46, 15: 47, 16: 48, 17: 49, 18: 50, 19: 51, 20: 52, 21: 53, 22: 54, 23: 55, 24: 56, 25: 57, 26: 58, 27: 59, 28: 60, 29: 61, 30: 62, 31: 63, 32: 64, 33: 65, 34: 66, 35: 67, 36: 68, 37: 69, 38: 70, 39: 71, 40: 72, 41: 73, 42: 74, 43: 75, 44: 76, 45: 77, 46: 78, 47: 79, 48: 80, 49: 81, 50: 82, 51: 83},
+  epic: {2: 46, 3: 48, 4: 50, 5: 52, 6: 53, 7: 54, 8: 55, 9: 56, 10: 56, 11: 57, 12: 58, 13: 59, 14: 60, 15: 61, 16: 62, 17: 63, 18: 64, 19: 65, 20: 66, 21: 67, 22: 68, 23: 69, 24: 70, 25: 71, 26: 72, 27: 73, 28: 74, 29: 75, 30: 76, 31: 77, 32: 78, 33: 79, 34: 80, 35: 81, 36: 82, 37: 83, 38: 84, 39: 85, 40: 86, 41: 87, 42: 88, 43: 89, 44: 90, 45: 91, 46: 92, 47: 93, 48: 94, 49: 95, 50: 96, 51: 97},
 };
 
 export function createGame(opts: NewGameOptions): GameState {
@@ -335,6 +335,21 @@ function guaranteeStarterResources(state: GameState, rng: Rng, cx: number, cy: n
     majapahit: [{ terrain: 'field', res: 'fruit' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'forest', res: 'fruit' }],
     spain: [{ terrain: 'field', res: 'animal' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
     haudenosaunee: [{ terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'crop' }, { terrain: 'shallow', res: 'fish' }],
+    assyria: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'animal' }, { terrain: 'field', res: 'crop' }],
+    poland: [{ terrain: 'field', res: 'crop' }, { terrain: 'field', res: 'animal' }, { terrain: 'forest', res: 'animal' }],
+    scotland: [{ terrain: 'field', res: 'animal' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'mountain', res: 'ore' }],
+    england: [{ terrain: 'field', res: 'animal' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'crop' }],
+    france: [{ terrain: 'field', res: 'crop' }, { terrain: 'field', res: 'fruit' }, { terrain: 'shallow', res: 'fish' }],
+    germany: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'crop' }],
+    sweden: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'forest', res: 'animal' }],
+    portugal: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }, { terrain: 'field', res: 'crop' }],
+    venice: [{ terrain: 'shallow', res: 'fish' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'field', res: 'fruit' }],
+    kongo: [{ terrain: 'forest', res: 'fruit' }, { terrain: 'forest', res: 'animal' }, { terrain: 'shallow', res: 'fish' }],
+    ashanti: [{ terrain: 'mountain', res: 'ore' }, { terrain: 'forest', res: 'fruit' }, { terrain: 'field', res: 'crop' }],
+    mapuche: [{ terrain: 'forest', res: 'animal' }, { terrain: 'field', res: 'animal' }, { terrain: 'shallow', res: 'fish' }],
+    georgia: [{ terrain: 'field', res: 'fruit' }, { terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'animal' }],
+    nepal: [{ terrain: 'field', res: 'crop' }, { terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'animal' }],
+    cree: [{ terrain: 'forest', res: 'animal' }, { terrain: 'shallow', res: 'fish' }, { terrain: 'forest', res: 'animal' }],
     ethiopia: [{ terrain: 'field', res: 'crop' }, { terrain: 'mountain', res: 'ore' }, { terrain: 'field', res: 'fruit' }],
   };
   const free = rng.shuffle(ring.filter((t) => !t.resource));

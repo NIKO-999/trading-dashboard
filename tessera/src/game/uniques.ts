@@ -12,6 +12,7 @@ import { def, maxHp, removeUnit, tileOwnerPlayer } from './rules';
 import { hostile } from './diplomacy';
 import { isBeast } from './wild';
 import { MOUNTED_KINDS } from './perks';
+import { isShieldKind } from './army';
 import type { Mechanic } from './mech/types';
 import type { GameState, Tile, Unit, UnitKind } from './types';
 
@@ -54,6 +55,21 @@ export const UNIQUE_ABILITY: Partial<Record<UnitKind, UniqueAbility>> = {
   pitati: { name: 'Eye-shooter', desc: '+1 attack against wounded units.' },
   kris: { name: 'Island raider', desc: 'Wades through shallows; +1 attack from a tile beside water.' },
   conquistador: { name: 'Conquest', desc: '+1 attack against units in a city or fort.' },
+  siegetower: { name: 'Archers aloft', desc: '+1 attack against units in a city or fort.' },
+  wingedhussar: { name: 'Wings of terror', desc: '+1 attack against foot soldiers.' },
+  highlander: { name: 'Highland charge', desc: '+1 attack while at full health.' },
+  longbowman: { name: 'Longbow', desc: 'Shoots 3 tiles; +1 attack against mounted units.' },
+  garde: { name: 'Esprit de corps', desc: '+1 defence while next to another of your units.' },
+  landsknecht: { name: 'Doppelsöldner', desc: '+1.5 attack against shield units.' },
+  carolean: { name: 'Gå-på', desc: 'Charges home: +1.5 attack in melee.' },
+  cacador: { name: 'Skirmisher', desc: '+1 attack from forest or a mountain.' },
+  condottiere: { name: 'Paid in gold', desc: '+1 attack and defence while you hold 20★ or more.' },
+  ngao: { name: 'Mbeba shield', desc: '+1 defence against ranged attacks and in forest.' },
+  asafo: { name: 'Asafo company', desc: '+1 attack and defence inside your borders.' },
+  malon: { name: 'Malón raid', desc: '+2★ for every enemy it defeats.' },
+  khevsur: { name: 'Mountain knight', desc: '+1 attack and defence on or next to a mountain.' },
+  gurkha: { name: 'Kukri', desc: 'Mountains never stop it; +1 attack from a mountain or forest.' },
+  okihtcitaw: { name: 'Forest runner', desc: 'Moves 2 tiles, and forest never stops it.' },
   mohawk: { name: 'Great Law', desc: 'Forest never stops it, and it heals 2 HP at the start of every turn inside your borders.' },
 };
 
@@ -67,6 +83,7 @@ export const WARD = 1 / 3; // share of an adjacent friend's damage a temple guar
 export const VARANGIAN_HEAL = 2;
 export const CAMEL_SHY = 1.5;
 export const MOHAWK_HEAL = 2;
+export const MALON_LOOT = 2;
 
 const OPEN = ['field', 'desert', 'tundra'];
 const tileOf = (s: GameState, u: Unit) => tileAt(s, u.x, u.y)!;
@@ -95,6 +112,13 @@ export function uniqueEdge(s: GameState, a: Unit, d: Unit) {
   if (a.kind === 'sabum' && isMounted(d)) atk += 1;
   if (a.kind === 'pitati' && d.hp < maxHp(d)) atk += 1;
   if (a.kind === 'conquistador' && fortified(s, d)) atk += 1;
+  if (a.kind === 'siegetower' && fortified(s, d)) atk += 1;
+  if (a.kind === 'wingedhussar' && !isMounted(d) && !def(d).naval && def(d).range === 1) atk += 1; // foot soldiers
+  if (a.kind === 'highlander' && a.hp >= maxHp(a)) atk += 1;
+  if (a.kind === 'longbowman' && isMounted(d)) atk += 1;
+  if (a.kind === 'landsknecht' && isShieldKind(d.carrying ?? d.kind)) atk += 1.5;
+  if (a.kind === 'carolean' && !ranged) atk += 1.5;
+  if (d.kind === 'ngao' && ranged) dd += 1;
   return { atk, def: dd, fury: a.kind === 'berserker', pierce: a.kind === 'shotelai', steadfast: d.kind === 'sacredband' };
 }
 
@@ -158,6 +182,13 @@ export const UNIQUE_MECH: Mechanic = {
       case 'druzhina': return (stat === 'atk' || stat === 'def') && ['tundra', 'ice'].includes(tileOf(s, u).terrain) ? 1 : 0;
       case 'rattan': return stat === 'atk' && ['forest', 'swamp'].includes(tileOf(s, u).terrain) ? 1 : 0;
       case 'kris': return stat === 'atk' && coastal(s, tileOf(s, u)) ? 1 : 0;
+      case 'garde': return stat === 'def' && s.units.some((o) => o !== u && o.owner === u.owner && dist(o.x, o.y, u.x, u.y) === 1) ? 1 : 0;
+      case 'cacador': return stat === 'atk' && ['forest', 'mountain'].includes(tileOf(s, u).terrain) ? 1 : 0;
+      case 'condottiere': return (stat === 'atk' || stat === 'def') && s.players[u.owner].stars >= 20 ? 1 : 0;
+      case 'ngao': return stat === 'def' && inForest(s, u) ? 1 : 0;
+      case 'asafo': return (stat === 'atk' || stat === 'def') && tileOwnerPlayer(s, tileOf(s, u)) === owner ? 1 : 0;
+      case 'khevsur': return (stat === 'atk' || stat === 'def') && (tileOf(s, u).terrain === 'mountain' || neighbors(s, u.x, u.y).some((t) => t.terrain === 'mountain')) ? 1 : 0;
+      case 'gurkha': return stat === 'atk' && ['forest', 'mountain'].includes(tileOf(s, u).terrain) ? 1 : 0;
       default: return 0;
     }
   },
@@ -197,6 +228,10 @@ export const UNIQUE_MECH: Mechanic = {
       const bx = d.x + Math.sign(d.x - f.ax), by = d.y + Math.sign(d.y - f.ay);
       strike(s, a, bx, by, Math.round(info.dmg * SPLASH), 'Trample');
     }
+    if (a.kind === 'malon' && info.killed) { // malón raid: the spoils of the kill
+      s.players[owner].stars += MALON_LOOT;
+      emit({ type: 'stars', player: owner, x: a.x, y: a.y, amount: MALON_LOOT });
+    }
     if (a.kind === 'impi' && a.attacked) { // bull horns: run on to close the V
       (a.data ??= {}).horns = s.turn;
       a.moved = false;
@@ -207,7 +242,7 @@ export const UNIQUE_MECH: Mechanic = {
     if (u.owner !== owner) return;
     if (charging(s, u) && dist(u.x, u.y, to.x, to.y) > HORNS_TILES) ctx.forbid = true;
     // the khampa rides over the peaks without stopping (an enemy beside the peak still stops it)
-    if (u.kind === 'khampa' && to.terrain === 'mountain' && !s.units.some((e) => hostile(s, owner, e.owner) && dist(e.x, e.y, to.x, to.y) === 1)) ctx.stop = false;
+    if ((u.kind === 'khampa' || u.kind === 'gurkha') && to.terrain === 'mountain' && !s.units.some((e) => hostile(s, owner, e.owner) && dist(e.x, e.y, to.x, to.y) === 1)) ctx.stop = false;
     // the rattan guard slips through the swamp as through the forest
     if (u.kind === 'rattan' && to.terrain === 'swamp' && !s.units.some((e) => hostile(s, owner, e.owner) && dist(e.x, e.y, to.x, to.y) === 1)) ctx.stop = false;
   },

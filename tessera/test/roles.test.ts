@@ -45,9 +45,9 @@ const run = (s: GameState, pid: number, x: number, y: number, verb: string) => {
 
 test('three empire types: every empire has one, each type has two role units', () => {
   const count = (c: string) => TRIBE_IDS.filter((id) => TRIBES[id].category === c).length;
-  assert.equal(count('military'), 11);
-  assert.equal(count('economy'), 15);
-  assert.equal(count('naval'), 10);
+  assert.equal(count('military'), 18);
+  assert.equal(count('economy'), 20);
+  assert.equal(count('naval'), 13);
   assert.deepEqual(CATEGORIES.map((c) => c.id), ['military', 'economy', 'naval']);
   assert.deepEqual(CATEGORIES.flatMap((c) => c.units).sort(), [...ROLE_KINDS].sort());
   assert.deepEqual(roleKindsOf('rome'), ['recruiter', 'sapper']);

@@ -1937,6 +1937,7 @@ const FRUIT: Record<TribeId, string> = {
   maya: '#f2b33a', korea: '#e8423a', khmer: '#f28a2a', swahili: '#e8423a', tibet: '#d8402a',
   carthage: '#7a2a6a', byzantium: '#3a2a4a', arabia: '#8a5a2a', rus: '#c8243a', vietnam: '#f2c53a',
   babylon: '#7a3a2a', nubia: '#c8642a', majapahit: '#e86a2a', spain: '#f0882a', haudenosaunee: '#5a2a6a',
+  assyria: '#8a3a2a', poland: '#c8243a', scotland: '#5a2a6a', england: '#c8243a', france: '#5a2a6a', germany: '#7a1a2a', sweden: '#c8243a', portugal: '#f0882a', venice: '#c8243a', kongo: '#f2a03a', ashanti: '#f2b33a', mapuche: '#d01a3a', georgia: '#6a1a4a', nepal: '#d0203a', cree: '#3a2a6a',
 };
 
 /** A round, softly lit fruit with a stalk and a leaf. */
@@ -2383,6 +2384,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       break;
     case 'carthage': case 'byzantium': case 'arabia': case 'rus': case 'vietnam':
     case 'babylon': case 'nubia': case 'majapahit': case 'spain': case 'haudenosaunee':
+    case 'assyria': case 'poland': case 'scotland': case 'england': case 'france': case 'germany': case 'sweden': case 'portugal': case 'venice': case 'kongo': case 'ashanti': case 'mapuche': case 'georgia': case 'nepal': case 'cree':
       if (TRIBE_ART[tribe]?.building) { TRIBE_ART[tribe]!.building!(ctx, x, y, big, roofC, capital); break; }
       box(ctx, x, y, w, h, '#ece4d0');
       roof(ctx, x, y - h, w + 2, 6, roofC);

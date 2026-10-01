@@ -279,6 +279,21 @@ export const FISH: Record<TribeId, [string, string]> = {
   majapahit: ['#8af0d8', '#127ab0'],
   spain: ['#9ae0f0', '#1a5ca8'],
   haudenosaunee: ['#a8dce8', '#2a62a0'],
+  assyria: ['#9ae0d0', '#1a6aa8'],
+  poland: ['#a8dce8', '#2a62a0'],
+  scotland: ['#a8dce8', '#2a5a90'],
+  england: ['#a8dce8', '#2a5a98'],
+  france: ['#9ae0f0', '#1a5aa8'],
+  germany: ['#9ae0e8', '#245c98'],
+  sweden: ['#b0dce8', '#2a5a90'],
+  portugal: ['#9ae0f0', '#1a5ab0'],
+  venice: ['#8ae8e0', '#1a6aa8'],
+  kongo: ['#8ae0d0', '#1a6aa0'],
+  ashanti: ['#8ae0d0', '#1a6aa0'],
+  mapuche: ['#a8dce8', '#2a5a98'],
+  georgia: ['#9ae0e8', '#1a5aa8'],
+  nepal: ['#8ad0f0', '#2a80c0'],
+  cree: ['#a8dce8', '#2a5a90'],
 };
 
 /** Fish, whales and glints, drawn between the ground and scenery layers. */

@@ -202,6 +202,81 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['Longhouse', 'Many families under one roof.', [{ k: 'levelpop', n: 1 }]],
     ['Great Law of Peace', 'Five nations bound by one law.', [{ k: 'income', per: 'city', n: 1 }]],
   ],
+  assyria: [
+    ['Iron Weapons', 'Iron for every soldier, by the cartload.', [{ k: 'atk', n: 0.5, who: 'melee' }]],
+    ['Siege Engineers', 'Ramps, rams and towers against any wall.', [{ k: 'atk', n: 1, who: 'siege' }]],
+    ['Library of Ashurbanipal', 'Every tablet in the world, copied and kept.', [{ k: 'cost', of: 'tech', n: 1 }, { k: 'levelstar', n: 2 }]],
+  ],
+  poland: [
+    ['Sejm', 'The nobles meet to vote.', [{ k: 'income', per: 'bigcity', n: 1 }]],
+    ['Hussar Banners', 'Lances, wings and leopard skins.', [{ k: 'atk', n: 0.5, who: 'mounted' }, { k: 'cost', of: 'mounted', n: 1 }]],
+    ['Constitution of May', 'A modern law for a free people.', [{ k: 'levelpop', n: 1 }]],
+  ],
+  scotland: [
+    ['Clan Tartans', 'Every glen its own colours.', [{ k: 'def', n: 0.5, who: 'melee' }]],
+    ['Distilleries', 'Barley, peat and patience.', [{ k: 'income', per: 'farm', n: 0.5 }, { k: 'income', per: 'market', n: 1 }]],
+    ['Universities', 'St Andrews, Glasgow, Aberdeen, Edinburgh.', [{ k: 'cost', of: 'tech', n: 1 }]],
+  ],
+  england: [
+    ['Magna Carta', 'Even the king is under the law.', [{ k: 'levelstar', n: 2 }]],
+    ['Wool Trade', 'Fleeces shipped to every weaver in Europe.', [{ k: 'income', per: 'port', n: 1 }]],
+    ['Ships of the Line', 'Wooden walls of oak.', [{ k: 'def', n: 1, who: 'naval' }, { k: 'cost', of: 'naval', n: 1 }]],
+  ],
+  france: [
+    ['Vineyards', 'Burgundy, Bordeaux, Champagne.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Gothic Cathedrals', 'Stone lace and stained glass.', [{ k: 'income', per: 'temple', n: 1 }, { k: 'levelstar', n: 1 }]],
+    ['Salons', 'Philosophers argue in the drawing rooms.', [{ k: 'cost', of: 'tech', n: 1 }]],
+  ],
+  germany: [
+    ['Printing Press', 'Books for everyone, cheaply.', [{ k: 'cost', of: 'tech', n: 1 }]],
+    ['Hanse Kontors', 'Trading houses from Bergen to Novgorod.', [{ k: 'income', per: 'market', n: 1 }, { k: 'route', n: 0.25 }]],
+    ['Imperial Diet', 'Electors and princes in council.', [{ k: 'income', per: 'bigcity', n: 1 }, { k: 'def', n: 0.5, who: 'melee' }]],
+  ],
+  sweden: [
+    ['Falun Copper', 'Red copper for every roof in Europe.', [{ k: 'income', per: 'mine', n: 1 }]],
+    ['Leather Cannon', 'Light guns that march with the infantry.', [{ k: 'atk', n: 0.5, who: 'siege' }, { k: 'move', n: 1, who: 'siege' }]],
+    ['Indelningsverket', 'Every farm supports a soldier.', [{ k: 'unitcost', n: -1 }]],
+  ],
+  portugal: [
+    ['Caravels', 'Lateen sails that sail into the wind.', [{ k: 'move', n: 1, who: 'naval' }]],
+    ['Spice Route', 'Pepper from Calicut, cloves from the Moluccas.', [{ k: 'route', n: 0.5 }]],
+    ['Azulejos', 'Blue tiles on every wall.', [{ k: 'levelstar', n: 2 }, { k: 'income', per: 'temple', n: 1 }]],
+  ],
+  venice: [
+    ['Glassworks of Murano', 'Mirrors and beads for every court.', [{ k: 'income', per: 'market', n: 1 }]],
+    ['The Doge', 'Elected for life, watched by the Council.', [{ k: 'income', per: 'capital', n: 2 }]],
+    ['Galleys of the Arsenal', 'Built on an assembly line.', [{ k: 'atk', n: 0.5, who: 'naval' }, { k: 'route', n: 0.25 }]],
+  ],
+  kongo: [
+    ['Raffia Looms', 'Velvet-like cloth from palm fibre.', [{ k: 'income', per: 'lumber', n: 1 }]],
+    ['Nkisi', 'Guardian figures studded with nails.', [{ k: 'def', n: 0.5, who: 'melee' }]],
+    ['Mani Kongo', 'The king of kings at Mbanza Kongo.', [{ k: 'income', per: 'capital', n: 2 }, { k: 'levelstar', n: 1 }]],
+  ],
+  ashanti: [
+    ['Kente Looms', 'Woven strips in royal colours.', [{ k: 'income', per: 'market', n: 1 }]],
+    ['Golden Stool', 'The soul of the nation in a seat of gold.', [{ k: 'terrain', on: 'capital', n: 1 }]],
+    ['Great Roads', 'Eight roads out from Kumasi.', [{ k: 'income', per: 'road', n: 1 }, { k: 'route', n: 0.25 }]],
+  ],
+  mapuche: [
+    ['Lautaro’s Lesson', 'Learn the enemy’s horses, then turn them on him.', [{ k: 'atk', n: 0.5, who: 'mounted' }]],
+    ['Koyang Councils', 'Peace talks between the chiefs.', [{ k: 'heal', n: 1 }]],
+    ['Araucaria Groves', 'Pine nuts that feed a winter.', [{ k: 'income', per: 'lumber', n: 1 }]],
+  ],
+  georgia: [
+    ['Qvevri Wine', 'Wine aged in clay jars buried in the earth.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Svan Towers', 'Stone towers above every house.', [{ k: 'terrain', on: 'city', n: 0.5 }]],
+    ['Knight in the Panther’s Skin', 'A golden-age epic of chivalry.', [{ k: 'levelstar', n: 2 }, { k: 'income', per: 'temple', n: 1 }]],
+  ],
+  nepal: [
+    ['Terraced Fields', 'Rice climbing up the mountainside.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Pagoda Temples', 'Many-tiered roofs of the Newar masters.', [{ k: 'income', per: 'temple', n: 1 }]],
+    ['Gurkha Regiments', 'Brave and loyal, famous across the world.', [{ k: 'atk', n: 0.5, who: 'melee' }, { k: 'def', n: 0.5, who: 'melee' }]],
+  ],
+  cree: [
+    ['Birch-bark Canoes', 'Light enough to carry, strong enough for rapids.', [{ k: 'move', n: 1, who: 'naval' }]],
+    ['Trading Posts', 'Furs for kettles and knives.', [{ k: 'route', n: 0.25 }, { k: 'income', per: 'port', n: 1 }]],
+    ['Pemmican Stores', 'Dried meat and berries for the long winter.', [{ k: 'heal', n: 1 }, { k: 'grow', on: 'animal', n: 1 }]],
+  ],
 };
 
 /** The base tech each empire's line branches off (tied to what the line and the empire's mechanic are about). */
@@ -212,6 +287,7 @@ export const LINE_PARENT: Record<TribeId, string> = {
   mali: 'riding', lakota: 'hunting', ottoman: 'gathering', maya: 'gathering', korea: 'fishing', khmer: 'gathering',
   swahili: 'fishing', tibet: 'climbing', carthage: 'fishing', byzantium: 'gathering', arabia: 'riding', rus: 'hunting',
   vietnam: 'gathering', babylon: 'gathering', nubia: 'archery', majapahit: 'fishing', spain: 'sailing', haudenosaunee: 'farming',
+  assyria: 'engineering', poland: 'riding', scotland: 'hunting', england: 'sailing', france: 'gathering', germany: 'mining', sweden: 'mining', portugal: 'sailing', venice: 'fishing', kongo: 'forestry', ashanti: 'gathering', mapuche: 'riding', georgia: 'climbing', nepal: 'climbing', cree: 'hunting',
 };
 
 export const UNIQUE_TECHS: UniqueTech[] = (Object.keys(LINES) as TribeId[]).flatMap((tribe) =>

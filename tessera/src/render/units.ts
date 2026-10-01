@@ -52,6 +52,21 @@ const LOOK: Record<TribeId, Look> = {
   majapahit: { skin: '#b87a48', hair: '#120c0a' },
   spain: { skin: '#e2b48a', hair: '#2a1a10' },
   haudenosaunee: { skin: '#b07648', hair: '#100c0a' },
+  assyria: { skin: '#c99060', hair: '#140c08' },
+  poland: { skin: '#f0caa6', hair: '#6a4a2a' },
+  scotland: { skin: '#f0c8a8', hair: '#b5541f' },
+  england: { skin: '#f0c8a0', hair: '#5a3a1a' },
+  france: { skin: '#ecc49c', hair: '#4a2a14' },
+  germany: { skin: '#f0caa6', hair: '#7a5a2a' },
+  sweden: { skin: '#f2d0b0', hair: '#d9b441' },
+  portugal: { skin: '#dcae82', hair: '#2a1a10' },
+  venice: { skin: '#e8bf93', hair: '#3a2214' },
+  kongo: { skin: '#5e3a22', hair: '#0e0a08' },
+  ashanti: { skin: '#5a3820', hair: '#0e0a08' },
+  mapuche: { skin: '#b07648', hair: '#100c0a' },
+  georgia: { skin: '#e2b88c', hair: '#1a120c' },
+  nepal: { skin: '#c9905a', hair: '#141010' },
+  cree: { skin: '#b07648', hair: '#100c0a' },
 };
 
 const GOLD = '#f0c43a';
@@ -1548,6 +1563,21 @@ const HERO_LOOK: Record<TribeId, { base: UnitKind; regalia: Regalia; trim: strin
   majapahit: { base: 'kris', regalia: 'crown', trim: '#f0c43a' },
   spain: { base: 'swordsman', regalia: 'crown', trim: '#f0c43a' },
   haudenosaunee: { base: 'mohawk', regalia: 'plumes', trim: '#4a3a8a', plume: ['#f4efe0', '#4a3a8a', '#f4efe0'] },
+  assyria: { base: 'swordsman', regalia: 'crown', trim: '#d8b878' },
+  poland: { base: 'swordsman', regalia: 'crown', trim: '#f0c43a' },
+  scotland: { base: 'highlander', regalia: 'crown', trim: '#f0c43a' },
+  england: { base: 'swordsman', regalia: 'crown', trim: '#f0c43a' },
+  france: { base: 'swordsman', regalia: 'band', trim: '#f0c43a' },
+  germany: { base: 'landsknecht', regalia: 'crown', trim: '#f0c43a' },
+  sweden: { base: 'carolean', regalia: 'crown', trim: '#f0d000' },
+  portugal: { base: 'swordsman', regalia: 'band', trim: '#f0c43a' },
+  venice: { base: 'swordsman', regalia: 'band', trim: '#f0c43a' },
+  kongo: { base: 'ngao', regalia: 'crown', trim: '#f0c43a' },
+  ashanti: { base: 'asafo', regalia: 'crown', trim: '#f0c43a' },
+  mapuche: { base: 'malon', regalia: 'band', trim: '#e0e4e8' },
+  georgia: { base: 'swordsman', regalia: 'crown', trim: '#f0c43a' },
+  nepal: { base: 'gurkha', regalia: 'crown', trim: '#f0c43a' },
+  cree: { base: 'okihtcitaw', regalia: 'plumes', trim: '#6a8a3a', plume: ['#f4efe0', '#1a1a1e', '#f4efe0'] },
 };
 
 /**
@@ -14874,6 +14904,21 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   majapahit: { body: '#d8862a', feature: 'tiger' }, // a Javan tiger
   spain: { body: '#1a1a1e', feature: 'horns' }, // a black bull of the meseta
   haudenosaunee: { body: '#9a6a40', feature: 'antlers' }, // a white-tailed deer
+  assyria: { body: '#c8a060', feature: 'lion' },
+  poland: { body: '#5a4a3a', feature: 'bison' },
+  scotland: { body: '#b0622a', feature: 'horns' },
+  england: { body: '#8a5a3a', feature: 'antlers' },
+  france: { body: '#6a6a6a', feature: 'snout' },
+  germany: { body: '#4a3a2a', feature: 'snout' },
+  sweden: { body: '#6a4a2a', feature: 'antlers' },
+  portugal: { body: '#1a1a1e', feature: 'horns' },
+  venice: { body: '#c89a5a', feature: 'lion' },
+  kongo: { body: '#3a3a3a', feature: 'buffalo' },
+  ashanti: { body: '#d8862a', feature: 'lion' },
+  mapuche: { body: '#c8b08a', feature: 'llama' },
+  georgia: { body: '#8a7a6a', feature: 'ibex' },
+  nepal: { body: '#c8a070', feature: 'tiger' },
+  cree: { body: '#6a4a2a', feature: 'caribou' },
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

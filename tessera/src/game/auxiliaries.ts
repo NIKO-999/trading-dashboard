@@ -57,7 +57,7 @@ export const isAuxKind = (k: UnitKind | null | undefined) => !!k && AUX_KINDS.in
 export const isSupport = (u: Unit) => { const k = u.carrying ?? u.kind; return k === 'scout' || k === 'healer'; };
 
 /** Heroes who ride to war: they count as mounted against a Spearman (the rest fight on foot). */
-export const HORSE_HEROES: TribeId[] = ['mongols', 'egypt', 'lakota', 'tibet', 'arabia'];
+export const HORSE_HEROES: TribeId[] = ['mongols', 'egypt', 'lakota', 'tibet', 'arabia', 'mapuche', 'poland'];
 /** Is this unit mounted, as far as a Spearman is concerned? (A unit in a boat is not.) */
 export function isMounted(s: GameState, u: Unit): boolean {
   if (u.carrying) return false;
@@ -108,6 +108,21 @@ export const AUX_NAMES: Record<TribeId, Record<'spearman' | 'scout' | 'healer', 
   majapahit: { spearman: 'Bhayangkara Spearman', scout: 'Island Scout', healer: 'Jamu Healer' },
   spain: { spearman: 'Almogávar', scout: 'Explorador', healer: 'Hospitaller' },
   haudenosaunee: { spearman: 'Wolf Clan Spearman', scout: 'Forest Runner', healer: 'Medicine Keeper' },
+  assyria: { spearman: 'Assyrian Spearman', scout: 'Royal Courier', healer: 'Asu Physician' },
+  poland: { spearman: 'Piechota Spearman', scout: 'Steppe Rider Scout', healer: 'Barber-Surgeon' },
+  scotland: { spearman: 'Schiltron Spearman', scout: 'Ghillie Scout', healer: 'Clan Healer' },
+  england: { spearman: 'Billman', scout: 'Forester', healer: 'Barber-Surgeon' },
+  france: { spearman: 'Pikeman of the Line', scout: 'Chasseur', healer: 'Hôtel-Dieu Nurse' },
+  germany: { spearman: 'Pikeman', scout: 'Jäger', healer: 'Bader-Surgeon' },
+  sweden: { spearman: 'Pikeman', scout: 'Ski Scout', healer: 'Fältskär' },
+  portugal: { spearman: 'Lanceiro', scout: 'Explorador', healer: 'Misericórdia Nurse' },
+  venice: { spearman: 'Stradiot Spearman', scout: 'Lagoon Scout', healer: 'Plague Doctor' },
+  kongo: { spearman: 'Mbanza Spearman', scout: 'River Scout', healer: 'Nganga Healer' },
+  ashanti: { spearman: 'Asafo Spearman', scout: 'Forest Scout', healer: 'Herbalist' },
+  mapuche: { spearman: 'Weichafe Spearman', scout: 'Werken Messenger', healer: 'Machi Healer' },
+  georgia: { spearman: 'Mountain Spearman', scout: 'Svan Scout', healer: 'Monastery Healer' },
+  nepal: { spearman: 'Hill Spearman', scout: 'Sherpa Guide', healer: 'Ayurvedic Healer' },
+  cree: { spearman: 'Band Spearman', scout: 'Muskeg Runner', healer: 'Medicine Keeper' },
 };
 /** The name an empire gives its auxiliary of this kind. */
 export const auxName = (tribe: TribeId, kind: UnitKind) => AUX_NAMES[tribe]?.[kind as 'spearman'] ?? UNITS[kind].name;

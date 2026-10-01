@@ -18,7 +18,7 @@ export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'mark
   | 'frontier'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline' | 'caravanserai' | 'pyramid' | 'ziggurat' | 'mission';
-export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet' | 'carthage' | 'byzantium' | 'arabia' | 'rus' | 'vietnam' | 'babylon' | 'nubia' | 'majapahit' | 'spain' | 'haudenosaunee';
+export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet' | 'carthage' | 'byzantium' | 'arabia' | 'rus' | 'vietnam' | 'babylon' | 'nubia' | 'majapahit' | 'spain' | 'haudenosaunee' | 'assyria' | 'poland' | 'scotland' | 'england' | 'france' | 'germany' | 'sweden' | 'portugal' | 'venice' | 'kongo' | 'ashanti' | 'mapuche' | 'georgia' | 'nepal' | 'cree';
 export type Biome = TribeId;
 export type UnitKind =
   | 'warrior' | 'rider' | 'archer' | 'defender' | 'swordsman' | 'catapult' | 'knight' | 'giant'
@@ -31,6 +31,7 @@ export type UnitKind =
   | 'holcan' | 'hwacha' | 'guardian' | 'askari' | 'khampa'
   | 'sacredband' | 'varangian' | 'camelrider' | 'druzhina' | 'rattan'
   | 'sabum' | 'pitati' | 'kris' | 'conquistador' | 'mohawk'
+  | 'siegetower' | 'wingedhussar' | 'highlander' | 'longbowman' | 'garde' | 'landsknecht' | 'carolean' | 'cacador' | 'condottiere' | 'ngao' | 'asafo' | 'malon' | 'khevsur' | 'gurkha' | 'okihtcitaw'
   // each empire's named champion (see game/heroes)
   | 'hero'
   // every empire's merchants: a land caravan and a sea trader, drawn in each empire's own style (see game/trade)

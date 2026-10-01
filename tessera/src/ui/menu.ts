@@ -242,7 +242,7 @@ function traitLists(id: TribeId): Node[] {
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
   const choice: NewGameChoice = {
     tribe: 'rome', opponents: 4, mode: 'perfection', difficulty: 'normal', mapSize: 'normal', terrain: 'balanced', hotseat, wild: true, rebels: true, clans: true, freeCities: true, diplomacy: true,
-    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off', carthage: 'off', byzantium: 'off', arabia: 'off', rus: 'off', vietnam: 'off', babylon: 'off', nubia: 'off', majapahit: 'off', spain: 'off', haudenosaunee: 'off' },
+    seats: { rome: 'human', egypt: 'human', aztec: 'ai', polynesia: 'ai', pirates: 'off', vikings: 'ai', japan: 'off', mongols: 'off', greeks: 'off', zulu: 'off', persia: 'off', celts: 'off', inuit: 'off', inca: 'off', ethiopia: 'off', aboriginal: 'off', china: 'off', india: 'off', mali: 'off', lakota: 'off', ottoman: 'off', maya: 'off', korea: 'off', khmer: 'off', swahili: 'off', tibet: 'off', carthage: 'off', byzantium: 'off', arabia: 'off', rus: 'off', vietnam: 'off', babylon: 'off', nubia: 'off', majapahit: 'off', spain: 'off', haudenosaunee: 'off', assyria: 'off', poland: 'off', scotland: 'off', england: 'off', france: 'off', germany: 'off', sweden: 'off', portugal: 'off', venice: 'off', kongo: 'off', ashanti: 'off', mapuche: 'off', georgia: 'off', nepal: 'off', cree: 'off' },
   };
   const scroll = h('div', { class: 'scroll' });
   const seg = <T extends string | number>(label: string, opts: [T, string][], get: () => T, set: (v: T) => void) => {
@@ -400,7 +400,7 @@ function showAbout(handlers: MenuHandlers) {
     'about',
     backBar('About', () => showTitle(handlers)),
     h('div', { class: 'scroll prose' },
-      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of thirty-six empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
+      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of fifty-one empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
       h('h3', {}, 'How to play'),
       h('ul', {},
         h('li', {}, 'Stars (★) are your currency. Every city pays out each turn.'),

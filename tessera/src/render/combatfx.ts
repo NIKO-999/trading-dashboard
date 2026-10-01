@@ -57,12 +57,27 @@ export const DEATH_STYLES: Record<DeathTheme, DeathStyle> = {
   majapahit: { name: 'Cloves and frangipani', layers: [L('petal', 6, ['#fff6e0', '#ffd34a'], 'up', 50, 30, 1, 3.2, 5), L('square', 5, ['#6a3a1a', '#8a4a20'], 'up', 70, 240, 0.6, 2.2)] },
   spain: { name: 'Silver reales and carnations', layers: [L('coin', 5, ['#e0e4e8', '#b8bcc4'], 'up', 75, 260, 0.6, 2.6), L('petal', 5, ['#d7263d', '#ff5a6a'], 'up', 50, 30, 1, 3.2, 5)] },
   haudenosaunee: { name: 'Wampum beads and maple leaves', layers: [L('coin', 5, ['#f4f0e6', '#4a3a8a'], 'up', 70, 250, 0.6, 2.4), L('petal', 5, ['#d84a1a', '#f0a030'], 'up', 50, 30, 1.1, 3.6, 6)] },
+  assyria: { name: 'Clay dust and bronze scales', layers: [L('puff', 6, ['#c8a070', '#b08a5a'], 'ground', 28, -8, 0.7, 3.2), L('square', 5, ['#c9974a', '#a87a3a'], 'up', 75, 260, 0.6, 2.2)] },
+  poland: { name: 'Hussar feathers', layers: [L('feather', 7, ['#ffffff', '#e8e0d0', '#e04060'], 'up', 55, 30, 1.1, 4.2, 6)] },
+  scotland: { name: 'Heather and thistledown', layers: [L('petal', 6, ['#a05aa8', '#c88ad0'], 'up', 50, 30, 1, 3.2, 5), L('puff', 4, ['#f4f0e6'], 'up', 30, 10, 1.2, 4)] },
+  england: { name: 'Roses and oak leaves', layers: [L('petal', 6, ['#c8243a', '#ffffff'], 'up', 50, 30, 1, 3.2, 5), L('feather', 3, ['#4a7a3a', '#6a9a4a'], 'up', 55, 25, 1, 4, 6)] },
+  france: { name: 'Fleurs-de-lis and lavender', layers: [L('star', 5, ['#f0c43a', '#ffe08a'], 'up', 70, 120, 0.6, 2.6), L('petal', 5, ['#9a7ad8', '#c8b0f0'], 'up', 50, 30, 1, 3.2, 5)] },
+  germany: { name: 'Oak leaves and pfennigs', layers: [L('feather', 5, ['#5a8a3a', '#8aaa4a'], 'up', 55, 25, 1, 4, 6), L('coin', 4, ['#e0e4e8', '#c8a040'], 'up', 70, 250, 0.6, 2.4)] },
+  sweden: { name: 'Snow and copper shavings', layers: [L('puff', 5, ['#ffffff', '#e4eef6'], 'round', 40, -10, 0.9, 3.2), L('shard', 5, ['#c87a3a', '#e09a5a'], 'up', 70, 260, 0.6, 2.4)] },
+  portugal: { name: 'Blue tiles and sea spray', layers: [L('square', 7, ['#2a5ad0', '#f4f4f8'], 'up', 80, 260, 0.65, 2.2), L('drop', 4, ['#bff0f0'], 'up', 80, 300, 0.5, 1.6)] },
+  venice: { name: 'Glass beads and ducats', layers: [L('coin', 5, ['#f0c43a', '#e0a526'], 'up', 75, 260, 0.6, 2.6), L('shard', 5, ['#5ad0f0', '#f05aa0', '#8af08a'], 'up', 80, 270, 0.6, 2.4)] },
+  kongo: { name: 'Raffia threads and copper crosses', layers: [L('feather', 5, ['#d8b878', '#c8a060'], 'up', 55, 25, 1, 4, 6), L('star', 4, ['#d87a3a', '#f09a5a'], 'up', 70, 120, 0.6, 2.4)] },
+  ashanti: { name: 'Gold dust and kente threads', layers: [L('square', 8, ['#f0c43a', '#e0a526'], 'up', 75, 160, 0.75, 1.6), L('feather', 4, ['#1a8a3a', '#c8243a', '#f0c43a'], 'up', 55, 25, 1, 4, 6)] },
+  mapuche: { name: 'Silver trapelakucha and copihue petals', layers: [L('coin', 4, ['#e0e4e8', '#b8bcc4'], 'up', 70, 250, 0.6, 2.4), L('petal', 5, ['#d01a3a', '#f05a6a'], 'up', 50, 30, 1, 3.2, 5)] },
+  georgia: { name: 'Grapes and wine drops', layers: [L('drop', 6, ['#7a1a3a', '#a02a5a'], 'up', 70, 280, 0.6, 2), L('petal', 4, ['#6a9a3a', '#8aba4a'], 'up', 50, 30, 1, 3.2, 5)] },
+  nepal: { name: 'Rhododendron petals and prayer-flag scraps', layers: [L('petal', 6, ['#d0203a', '#f05a7a'], 'up', 50, 30, 1, 3.2, 5), L('square', 5, ['#2d6cdf', '#ffffff', '#ffd34a', '#2aa84a'], 'up', 55, 30, 1.1, 3, 6)] },
+  cree: { name: 'Beadwork flowers', layers: [L('petal', 6, ['#c8243a', '#2a7ad0', '#f0c43a', '#ffffff'], 'up', 50, 30, 1, 3.2, 5)] },
   beast: { name: 'An ink splash', layers: [L('ring', 1, ['rgba(30,24,50,0.8)'], 'ground', 0, 0, 0.7, 5), L('puff', 7, ['#1c1830', '#2e2848'], 'round', 34, -4, 0.9, 4.4), L('drop', 7, ['#14101f', '#3a2f5c'], 'up', 95, 300, 0.6, 2.4)] },
   rebel: { name: 'Torn banners and smoke', layers: [L('square', 5, ['#6b2a2a', '#3a3a3a'], 'up', 60, 60, 0.9, 3.2), L('puff', 4, ['#8a857c'], 'up', 20, -30, 0.9, 3.6)] },
   captive: { name: 'Led away on a rope', layers: [L('petal', 4, ['#ff9f1c', '#ffc233'], 'up', 40, 30, 0.8, 2.8, 4)] },
 };
 
-/** Every theme with a death effect (36 empires, then the neutral ones). */
+/** Every theme with a death effect (51 empires, then the neutral ones). */
 export const DEATH_THEMES = [...TRIBE_IDS, 'beast', 'rebel', 'captive'] as DeathTheme[];
 
 /**

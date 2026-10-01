@@ -106,6 +106,21 @@ export const TRADERS: Record<TribeId, TraderDef> = {
   majapahit: { land: 'Shoulder-pole Porter', landLook: 'porter', sea: 'Spice Jong', seaLook: 'junk' },
   spain: { land: 'Mule Train', landLook: 'mule', sea: 'Treasure Galleon', seaLook: 'roundship' },
   haudenosaunee: { land: 'Forest Porter', landLook: 'porter', sea: 'Elm-bark Canoe', seaLook: 'canoe' },
+  assyria: { land: 'Donkey Caravan', landLook: 'mule', sea: 'River Raft', seaLook: 'raft' },
+  poland: { land: 'Grain Wagon', landLook: 'oxcart', sea: 'Vistula Barge', seaLook: 'raft' },
+  scotland: { land: 'Drover’s Herd', landLook: 'packhorse', sea: 'Herring Buss', seaLook: 'knarr' },
+  england: { land: 'Wool Wagon', landLook: 'oxcart', sea: 'Wool Cog', seaLook: 'roundship' },
+  france: { land: 'Wine Cart', landLook: 'oxcart', sea: 'River Barge', seaLook: 'roundship' },
+  germany: { land: 'Hanse Wagon', landLook: 'oxcart', sea: 'Hanse Cog', seaLook: 'roundship' },
+  sweden: { land: 'Copper Sledge', landLook: 'dogsled', sea: 'Baltic Fluyt', seaLook: 'knarr' },
+  portugal: { land: 'Cork Cart', landLook: 'oxcart', sea: 'Spice Carrack', seaLook: 'roundship' },
+  venice: { land: 'Pack Mule', landLook: 'mule', sea: 'Merchant Galley', seaLook: 'roundship' },
+  kongo: { land: 'Head Porter', landLook: 'porter', sea: 'River Canoe', seaLook: 'canoe' },
+  ashanti: { land: 'Kola Porter', landLook: 'porter', sea: 'Surf Canoe', seaLook: 'canoe' },
+  mapuche: { land: 'Llama Train', landLook: 'llama', sea: 'Dalca Canoe', seaLook: 'canoe' },
+  georgia: { land: 'Wine Mule', landLook: 'mule', sea: 'Black Sea Boat', seaLook: 'roundship' },
+  nepal: { land: 'Porter Train', landLook: 'porter', sea: 'River Raft', seaLook: 'raft' },
+  cree: { land: 'Toboggan', landLook: 'dogsled', sea: 'Birch-bark Canoe', seaLook: 'canoe' },
 };
 
 /** The name an empire gives its merchant of this kind. */

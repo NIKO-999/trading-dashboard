@@ -49,7 +49,7 @@ export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) =
 export const tileOwnerPlayer = (s: GameState, t: Tile) => (t.owner === null ? null : (cityById(s, t.owner)?.owner ?? null));
 export const isExplored = (s: GameState, pid: number, x: number, y: number) => s.players[pid].explored[y * s.size + x];
 export const citiesOf = (s: GameState, pid: number) => s.cities.filter((c) => c.owner === pid);
-const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract', 'camelrider', 'druzhina', 'conquistador'];
+const MOUNTED: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract', 'camelrider', 'druzhina', 'conquistador', 'wingedhussar', 'condottiere', 'malon'];
 
 /** What a unit costs this empire to train (Mongols' Steppe Riders pay 1★ less for mounted units). */
 const perkCost = (s: GameState, pid: number, k: UnitKind) => {

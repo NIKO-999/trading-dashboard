@@ -133,6 +133,21 @@ export const SPECIALITY: Record<TribeId, Speciality> = {
   majapahit: { kind: 'orchard', start: false, name: 'Spice Groves', why: 'Cloves, nutmeg and pepper: orchard upgrades cost a third less and need no tech.' },
   spain: { kind: 'port', start: false, name: 'Galleon Yards', why: 'The shipyards of Seville: port upgrades cost a third less and Harbours need no tech.' },
   haudenosaunee: { kind: 'farm', start: false, name: 'Three Sisters Fields', why: 'Maize, beans and squash on one mound: farm upgrades cost a third less and Estates need no tech.' },
+  assyria: { kind: 'mine', start: false, name: 'Iron Arsenals', why: 'The arsenals of Nineveh: mine upgrades cost a third less and Deep Mines need no tech.' },
+  poland: { kind: 'pasture', start: false, name: 'Stud Farms', why: 'Horses for the hussar banners: pastures cost a third less and need no tech.' },
+  scotland: { kind: 'pasture', start: false, name: 'Highland Cattle', why: 'Shaggy cattle on the moors: pastures cost a third less and need no tech.' },
+  england: { kind: 'pasture', start: false, name: 'Sheep Walks', why: 'Wool made England rich: pastures cost a third less and need no tech.' },
+  france: { kind: 'farm', start: false, name: 'Vineyards', why: 'Wine country: farm upgrades cost a third less and Estates need no tech.' },
+  germany: { kind: 'mine', start: false, name: 'Silver Mines', why: 'The silver of the Harz and Bohemia: mine upgrades cost a third less and Deep Mines need no tech.' },
+  sweden: { kind: 'mine', start: false, name: 'Copper Mines', why: 'The copper mountain of Falun: mine upgrades cost a third less and Deep Mines need no tech.' },
+  portugal: { kind: 'port', start: false, name: 'Feitorias', why: 'Trading posts on every shore: port upgrades cost a third less and Harbours need no tech.' },
+  venice: { kind: 'market', start: false, name: 'Rialto Markets', why: 'The markets of the Rialto: market upgrades cost a third less and Bazaars need no tech.' },
+  kongo: { kind: 'orchard', start: false, name: 'Palm Groves', why: 'Oil palms and raffia: orchard upgrades cost a third less and need no tech.' },
+  ashanti: { kind: 'mine', start: false, name: 'Gold Fields', why: 'The gold of the forest: mine upgrades cost a third less and Deep Mines need no tech.' },
+  mapuche: { kind: 'pasture', start: false, name: 'Horse Herds', why: 'Horses taken from the invaders: pastures cost a third less and need no tech.' },
+  georgia: { kind: 'orchard', start: false, name: 'Vineyards', why: 'Eight thousand years of wine: orchard upgrades cost a third less and need no tech.' },
+  nepal: { kind: 'farm', start: false, name: 'Hill Terraces', why: 'Rice on the mountain terraces: farm upgrades cost a third less and Estates need no tech.' },
+  cree: { kind: 'lumber', start: false, name: 'Trapline Camps', why: 'Camps on the traplines: lumber upgrades cost a third less and need no tech.' },
 };
 
 /** A line about an empire's speciality for the empire screens. */
