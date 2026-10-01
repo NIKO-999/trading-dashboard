@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.46',
+    items: [
+      '⚔️ Formation doctrines: Military empires\' units in formation attack +0.5 (Drilled Ranks); Economy empires\' defend +0.5 on their own land (Hometown Guard); Naval empires\' warships side by side form a Line of Battle (+0.5 attack and defence).',
+      '🛡 Rome\'s Testudo: Roman shield walls rise to +1.5 defence and hold +1 more against arrows and stones.',
+    ],
+  },
+  {
     version: '0.45',
     items: [
       '🏰 Barracks: build one beside a city: it supports 1 more unit and can raise new units right on the yard. Move a unit onto it and tap Train: It upgrades for free (Warrior → Swordsman, Rider → Knight) or drills into a Veteran, but it takes turns and defends at half strength meanwhile. Naval empires refit ships at their ports.',

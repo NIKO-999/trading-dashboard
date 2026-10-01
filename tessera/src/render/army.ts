@@ -10,7 +10,7 @@ import { tileCenter, WATER_DROP } from './camera';
 import { isWaterTile } from './common';
 import { ellipse, line, poly, shade, type Ctx } from './prims';
 
-const GLYPH: Record<FormationKind, string> = { shield: '#e9eef5', volley: '#f0c43a', charge: '#ff9a3c' };
+const GLYPH: Record<FormationKind, string> = { shield: '#e9eef5', volley: '#f0c43a', charge: '#ff9a3c', fleet: '#7fd6ff' };
 const AMBER = '#e8a23a';
 const DARK = '#2a2118';
 
@@ -44,7 +44,11 @@ function formationCord(ctx: Ctx, a: { x: number; y: number }, b: { x: number; y:
   ellipse(ctx, mx, my, 4.6, 4.2, DARK);
   const g = GLYPH[kind];
   if (kind === 'shield') poly(ctx, [mx - 2.6, my - 2.8, mx + 2.6, my - 2.8, mx + 2.6, my + 0.2, mx, my + 3, mx - 2.6, my + 0.2], g);
-  else if (kind === 'volley') poly(ctx, [mx, my - 3.2, mx + 2.6, my + 1.8, mx, my + 0.6, mx - 2.6, my + 1.8], g);
+  else if (kind === 'fleet') { // a little anchor: Line of Battle
+    line(ctx, mx, my - 2.8, mx, my + 2.2, g, 1.2);
+    line(ctx, mx - 1.6, my - 1.6, mx + 1.6, my - 1.6, g, 1);
+    ctx.strokeStyle = g; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(mx, my + 0.4, 2.4, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  } else if (kind === 'volley') poly(ctx, [mx, my - 3.2, mx + 2.6, my + 1.8, mx, my + 0.6, mx - 2.6, my + 1.8], g);
   else { poly(ctx, [mx - 2.8, my - 2.6, mx + 0.4, my, mx - 2.8, my + 2.6, mx - 1.6, my], g); poly(ctx, [mx - 0.2, my - 2.6, mx + 3, my, mx - 0.2, my + 2.6, mx + 1, my], g); }
 }
 

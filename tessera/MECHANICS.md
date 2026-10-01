@@ -139,6 +139,12 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 
 ## 4a. Army: formations, upgrades and supply
 
+**Doctrines** (on top of the formation bonuses below), by empire type, for a unit standing beside a friendly unit of its own line:
+- ⚔️ **Military — Drilled Ranks:** +0.5 attack.
+- 💰 **Economy — Hometown Guard:** +0.5 defence while on your own land.
+- ⚓ **Naval — Line of Battle:** warships form their own line: two side by side get +0.5 attack and +0.5 defence.
+- 🛡 **Rome — Testudo:** Roman shield walls rise to +1.5 (not +1) and hold +1 defence more against ranged attacks.
+
 *(game/army.ts; drawn by render/army.ts on the map's ground layer, so the marks are part of the photographed resting map.)*
 
 **Formations.** Friendly units of one line standing side by side (on any of the eight tiles around) help each other. The bonus is added to the attack or defence stat before the combat formula, and the unit panel's attack preview names it ("Your Archer would deal 5, taking 0 (Volley +0.5).").

@@ -1,5 +1,6 @@
 import { MECH_UI } from './mech';
 import { barracksName, trainingNote } from '../game/barracks';
+import { doctrineLine, inFormation } from '../game/army';
 import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
 import { monopoliesOf, MONOPOLY_AT } from '../game/goods';
@@ -953,7 +954,8 @@ export class GameView {
       const stats = h('span', { class: 'stat-line' },
         h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0)))),
         h('span', {}, 'Defence ', h('b', {}, String(d.def)), naturalDefence(this.s, u) ? h('span', { class: 'bonus' }, ` +${naturalDefence(this.s, u)}`) : null, defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
-          shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} shield wall`) : null), // formations (see game/army)
+          shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} ${owner.tribe === 'rome' ? 'testudo' : 'shield wall'}`) : null), // formations (see game/army)
+        u.owner === this.me && inFormation(this.s, u) ? h('span', { class: 'bonus' }, doctrineLine(this.s, u)) : null, // the empire type's doctrine
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range + perkRange(this.s, u)))) : null,

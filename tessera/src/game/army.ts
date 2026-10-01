@@ -16,7 +16,8 @@
 //    exempt, as are Pirates on the water and their platforms, and the peoples who lived off the land (LIVES_OFF_LAND).
 //
 // All state is the `oos` flag on a unit's `data` (JSON-safe; older saves simply have none).
-import { TRIBES, unitFor } from '../data/tribes';
+import { categoryOf, TRIBES, unitFor } from '../data/tribes';
+import { isTraderKind } from './trade';
 import { UNITS } from '../data/units';
 import { allies } from './diplomacy';
 import { emit } from './events';
@@ -32,7 +33,20 @@ export const SHIELD_MAX = 1;
 export const VOLLEY = 0.5;
 export const CHARGE = 0.5;
 
-export type FormationKind = 'shield' | 'volley' | 'charge';
+/**
+ * Doctrines: what standing in formation adds, by empire type (and Rome's own), on top of the line's bonus.
+ *  - Military, Drilled Ranks: a unit in formation also attacks +DRILLED.
+ *  - Economy, Hometown Guard: a unit in formation on its own land also defends +HOMETOWN.
+ *  - Naval, Line of Battle: warships form a 'fleet' line of their own (two side by side: +FLEET attack and defence).
+ *  - Rome, Testudo: a Roman shield wall rises to +TESTUDO_MAX, and holds +TESTUDO_RANGED more against arrows and stones.
+ */
+export const DRILLED = 0.5;
+export const HOMETOWN = 0.5;
+export const FLEET = 0.5;
+export const TESTUDO_MAX = 1.5;
+export const TESTUDO_RANGED = 1;
+
+export type FormationKind = 'shield' | 'volley' | 'charge' | 'fleet';
 
 /** A shield unit: holds the line on foot behind a big shield (fortify, defence 3 or more, melee, not mounted). */
 export function isShieldKind(k: UnitKind): boolean {
@@ -44,6 +58,7 @@ const isMounted = (u: Unit) => MOUNTED_KINDS.includes(u.kind);
 /** Which formation line a unit stands in, if any. */
 export function formationOf(s: GameState, u: Unit): FormationKind | null {
   if (s.players[u.owner]?.neutral || u.carrying) return null;
+  if (def(u).naval) return categoryOf(s.players[u.owner].tribe).id === 'naval' && def(u).atk > 0 && !isTraderKind(u.kind) ? 'fleet' : null; // Line of Battle
   if (isShieldKind(u.kind)) return 'shield';
   if (isMounted(u)) return 'charge';
   if (isRanged(s, u)) return 'volley';
@@ -57,7 +72,24 @@ const mates = (s: GameState, u: Unit, kind: FormationKind, x: number, y: number)
 /** The shield wall's defence bonus for `u` where it stands. */
 export function shieldWall(s: GameState, u: Unit): number {
   if (formationOf(s, u) !== 'shield') return 0;
-  return Math.min(SHIELD_MAX, SHIELD_STEP * mates(s, u, 'shield', u.x, u.y).length);
+  const max = s.players[u.owner].tribe === 'rome' ? TESTUDO_MAX : SHIELD_MAX; // Testudo
+  return Math.min(max, SHIELD_STEP * mates(s, u, 'shield', u.x, u.y).length);
+}
+
+/** Is `u` standing in formation: beside a friendly unit of its own line? */
+export const inFormation = (s: GameState, u: Unit) => { const k = formationOf(s, u); return !!k && mates(s, u, k, u.x, u.y).length > 0; };
+const doctrine = (s: GameState, u: Unit) => categoryOf(s.players[u.owner].tribe).id;
+
+/** What the unit's empire gains from standing in formation, in words (the unit panel). */
+export function doctrineLine(s: GameState, u: Unit): string {
+  const k = formationOf(s, u);
+  if (k === 'fleet') return `⚓ Line of Battle: +${FLEET} attack and defence`;
+  const rome = s.players[u.owner].tribe === 'rome' && k === 'shield' ? ` · Testudo: walls up to +${TESTUDO_MAX}, +${TESTUDO_RANGED} vs missiles` : '';
+  switch (doctrine(s, u)) {
+    case 'military': return `⚔️ Drilled Ranks: +${DRILLED} attack${rome}`;
+    case 'economy': return `💰 Hometown Guard: +${HOMETOWN} defence on your land${rome}`;
+    default: return `In formation${rome}`;
+  }
 }
 
 /** The formation bonuses of one attack: `atk` for the attacker (volley, charge), `def` for the defender (shield wall). */
@@ -67,9 +99,14 @@ export function formation(s: GameState, a: Unit, d: Unit): { atk: number; def: n
   const line = formationOf(s, a);
   if (line === 'volley' && mates(s, a, 'volley', a.x, a.y).length) { atk += VOLLEY; notes.push(`Volley +${VOLLEY}`); }
   if (line === 'charge' && mates(s, a, 'charge', d.x, d.y).length) { atk += CHARGE; notes.push(`Charge +${CHARGE}`); }
-  const wall = shieldWall(s, d);
-  if (wall) notes.push(`Shield wall +${wall} def`);
-  return { atk, def: wall, notes };
+  if (line === 'fleet' && mates(s, a, 'fleet', a.x, a.y).length) { atk += FLEET; notes.push(`Line of Battle +${FLEET}`); }
+  if (doctrine(s, a) === 'military' && inFormation(s, a)) { atk += DRILLED; notes.push(`Drilled Ranks +${DRILLED}`); }
+  let df = shieldWall(s, d);
+  if (df) notes.push(`${s.players[d.owner].tribe === 'rome' ? 'Testudo' : 'Shield wall'} +${df} def`);
+  if (df && s.players[d.owner].tribe === 'rome' && Math.max(Math.abs(a.x - d.x), Math.abs(a.y - d.y)) > 1) { df += TESTUDO_RANGED; notes.push(`Testudo vs missiles +${TESTUDO_RANGED} def`); }
+  if (formationOf(s, d) === 'fleet' && mates(s, d, 'fleet', d.x, d.y).length) { df += FLEET; notes.push(`Line of Battle +${FLEET} def`); }
+  if (doctrine(s, d) === 'economy' && inFormation(s, d) && tileOwnerPlayer(s, tileAt(s, d.x, d.y)!) === d.owner) { df += HOMETOWN; notes.push(`Hometown Guard +${HOMETOWN} def`); }
+  return { atk, def: df, notes };
 }
 
 /** Pairs of friendly units standing in formation, for the map (each pair once). */
