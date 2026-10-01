@@ -2061,6 +2061,28 @@ function drawImprovement(ctx: Ctx, s: GameState, t: Tile, x: number, y: number) 
         roof(ctx, ox, 0, 12, 7, col);
       }
       break;
+    case 'barracks': { // a training yard: packed earth, a palisade, a straw dummy and the owner's flag; bigger as it is expanded (see game/barracks)
+      const lvl = Number(t.data?.blvl ?? 1);
+      ellipse(ctx, 0, 6, 15, 6.5, '#b49a6c');
+      ellipse(ctx, 0, 6, 12, 5, '#c9b07e');
+      for (let i = 0; i < 9; i++) { // the palisade round the back
+        const a = Math.PI * (1.05 + i * 0.11);
+        const px = Math.cos(a) * 15, py = 6 + Math.sin(a) * 6.5;
+        line(ctx, px, py, px, py - 6, '#6b4a2b', 2);
+        line(ctx, px, py - 6, px, py - 7.2, '#3e2a16', 2);
+      }
+      box(ctx, -7, 4, 9, 5, '#8a6a45'); // the hall
+      roof(ctx, -7, -1, 11, 6, tribe.color);
+      line(ctx, 6, 9, 6, -1, '#6b4a2b', 1.6); // the straw dummy
+      line(ctx, 2.5, 2, 9.5, 2, '#6b4a2b', 1.4);
+      ellipse(ctx, 6, 3, 2.6, 3.4, '#d9b85a');
+      ellipse(ctx, 6, -2.5, 2, 2, '#e6c96c');
+      line(ctx, 11, 8, 11, -9, '#4a3420', 1.2); // the flag
+      poly(ctx, [11, -9, 17, -7, 11, -5], tribe.color);
+      if (lvl >= 2) { box(ctx, 1, 11, 6, 2.5, '#9a7a50'); line(ctx, -2, 9.5, 4, 12, '#5a3a20', 1); } // weapon racks
+      if (lvl >= 3) { box(ctx, -13, 3, 5, 9, '#7a5a3a'); roof(ctx, -13, -6.5, 6, 4, tribe.color); } // a watchtower
+      break;
+    }
   }
   ctx.restore();
 }
@@ -5354,7 +5376,8 @@ export function drawIcon(ctx: Ctx, icon: string, tribe: TribeId, x: number, y: n
     case 'lumber':
     case 'temple':
     case 'market':
-      return drawImprovement(ctx, { players: [] } as unknown as GameState, fake({ improvement: icon }), x, y + 2);
+    case 'barracks':
+      return drawImprovement(ctx, { players: [] } as unknown as GameState, fake({ improvement: icon as 'market' | 'barracks' }), x, y + 2);
     case 'port':
       return drawImprovement(ctx, { players: [] } as unknown as GameState, fake({ improvement: 'port' }), x, y - 5);
     case 'axe':

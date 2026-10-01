@@ -2,6 +2,7 @@ import { emit } from './events';
 import { goodsTurnStart } from './goods';
 import { checkSparks } from './sparks';
 import { eraCheck } from './eras';
+import { barracksTurnStart } from './barracks';
 import { govTurnStart } from './governors';
 import { govTurnStart as policyTurnStart } from './government';
 import { revealAround } from './mapgen';
@@ -48,6 +49,7 @@ export function startTurn(s: GameState) {
       emit({ type: 'damage', unitId: u.id, x: u.x, y: u.y, amount: 1 });
     }
   }
+  barracksTurnStart(s, p.id); // units in training stay put, or come out upgraded (see game/barracks)
   supplyTurnStart(s, p.id); // units far beyond the borders run short of supplies (see game/army)
   const heal = perkSum(s, p.id, 'heal'); // healing perks of the skill line
   if (heal > 0) {

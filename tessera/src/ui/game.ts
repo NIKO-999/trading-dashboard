@@ -1,4 +1,5 @@
 import { MECH_UI } from './mech';
+import { barracksName, trainingNote } from '../game/barracks';
 import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
 import { monopoliesOf, MONOPOLY_AT } from '../game/goods';
@@ -939,13 +940,13 @@ export class GameView {
     if (sel.mode === 'unit' && u) {
       const d = def(u);
       const owner = this.s.players[u.owner];
-      const status = u.owner === this.me
+      const status = trainingNote(this.s, u) ?? (u.owner === this.me
         ? u.moved && u.attacked ? 'Done for this turn.' : this.ov.attacks.length ? `Tap a red ring to attack${attackRange(this.s, u) > 1 ? ` (it shoots up to ${attackRange(this.s, u)} tiles)` : ''}${!u.moved && this.ov.moves.length ? ', or a blue ring to move' : ''}.` : !u.moved ? (this.ov.moves.length ? 'Tap a blue ring to move.' : 'Ready to move.') : 'Can still attack.'
         : isRogueUnit(this.s, u) ? `A rebel of the Rogue State of ${cityById(this.s, u.data!.rogue as number)?.name ?? 'a lost city'}. It holds its ground and strikes any unit next to it at the end of each round.`
         : isRaider(this.s, u) ? raiderLine(this.s, u, this.me) // an outlaw of a Raider Clan (see game/clans)
         : isFreeUnit(this.s, u) ? `${freeUnitLine(this.s, u)} Tap again, or its name, for the city.` // a Free City's guard (see game/citystates)
         : isNeutral(this.s, u.owner) ? `A wild beast that belongs to no one. It attacks any ship beside it at the end of each round; slay it for ${BEASTS[u.kind] ?? 0}★.`
-          : `${TRIBES[owner.tribe].people} unit.`;
+          : `${TRIBES[owner.tribe].people} unit.`);
       const preview = this.previewLine(u);
       const hero = isHero(this.s, u) ? heroDef(this.s, u.owner) : null;
       const hs = hero ? owner.hero! : null;
@@ -1746,7 +1747,7 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
     whale: ['Whales', 'Hunt with Whaling.'],
     ...Object.fromEntries(LUXURY_IDS.map((l) => [l, [LUXURIES[l].name, `Luxury. ${LUXURIES[l].blurb} Build a ${LUXURIES[l].works} with ${TECH_BY_ID[LUXURIES[l].tech].name}: +1 population and +${LUX_FIRST}★ a turn (+${LUX_EXTRA}★ for extra copies).`]])),
   };
-  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra' };
+  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra', barracks: barracksName(t) };
   // the role units' works (see game/roles): a Sappers' fort, a Master Builder's grand work, a bridge
   if (isSapperFort(t)) return { title: 'Fort', desc: `Raised by ${TRIBES[s.players[t.data!.sfort as number].tribe].people} sappers: their units here defend +1. ${where}` };
   // a raised tile (see game/levels): its level, and what the next one gives, for what and when

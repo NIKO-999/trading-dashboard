@@ -1,6 +1,7 @@
 import { TECH_BY_ID } from '../data/techs';
 import { LINE_PARENT } from '../data/uniqueTechs';
 import { festivalAi } from './festival';
+import { barracksAi } from './barracks';
 import { govAi } from './governors';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
@@ -35,7 +36,7 @@ let memoState: GameState | null = null; // a new or loaded game starts a fresh m
 const done = new Set<number>();
 let economyDone = false;
 
-const HARVEST_IDS = ['harvest', 'farm', 'mine', 'lumber', 'port', 'shrine', 'temple', 'market', 'luxury'];
+const HARVEST_IDS = ['harvest', 'farm', 'mine', 'lumber', 'port', 'shrine', 'temple', 'market', 'luxury', 'homestead'];
 
 /** Performs one AI action for the current player. Returns false once the AI has nothing left to do. */
 export function aiStep(s: GameState): boolean {
@@ -57,6 +58,7 @@ export function aiStep(s: GameState): boolean {
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
   if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
+  if (barracksAi(s, pid, (x, y) => s.units.some((u) => hostile(s, pid, u.owner) && dist(x, y, u.x, u.y) <= 3))) return true; // Barracks (see game/barracks)
   if (govAi(s, pid, (c) => s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && dist(c.x, c.y, u.x, u.y) <= 3))) return true; // governors (see game/governors)
   if (policyAi(s, pid)) return true; // a government to suit war or peace, and its policy cards (see game/government)
 
@@ -195,12 +197,13 @@ function economyStep(s: GameState, pid: number): boolean {
   for (const t of s.tiles) {
     if (tileOwnerPlayer(s, t) !== pid) continue;
     for (const a of tileActions(s, pid, t)) {
-      if (!a.enabled || !HARVEST_IDS.includes(a.id)) continue;
+      if (!a.enabled || (!HARVEST_IDS.includes(a.id) && !a.id.startsWith('cultivate:'))) continue;
+      if ((a.id === 'homestead' || a.id.startsWith('cultivate:')) && p.stars < a.cost + 6) continue; // made land: only with Stars to spare
       if (a.id === 'market' && p.stars < 14) continue;
       if ((a.id === 'temple' || a.id === 'shrine') && p.stars < 16) continue;
       // one port is enough for most empires; pirates' ports also pay income, so they build more
       if (a.id === 'port' && p.tribe !== 'pirates' && s.tiles.some((x) => x.improvement === 'port' && tileOwnerPlayer(s, x) === pid)) continue;
-      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' || a.id === 'luxury' ? 4 : a.id === 'port' && abroad ? 6 : 2;
+      const value = a.id === 'harvest' ? (t.resource === 'whale' ? 5 : 3) : a.id === 'farm' || a.id === 'mine' || a.id === 'luxury' || a.id === 'homestead' || a.id.startsWith('cultivate:') ? 4 : a.id === 'port' && abroad ? 6 : 2;
       harvests.push({ t, id: a.id, cost: a.cost, value: value / Math.max(1, a.cost) });
     }
   }

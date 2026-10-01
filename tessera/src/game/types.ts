@@ -12,6 +12,8 @@ export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'mark
   | 'pasture' | 'orchard'
   // a developed luxury: silk farm, vineyard, pearl beds... (see game/goods)
   | 'estate'
+  // a training yard (see game/barracks)
+  | 'barracks'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
@@ -122,6 +124,8 @@ export interface Player {
   stock?: { iron: number; horses: number };
   /** Techs made cheaper by a Eureka (see game/sparks; missing in older saves). */
   sparks?: string[];
+  /** Sources raised by Cultivate so far (see game/homestead; missing in older saves). */
+  cultivated?: number;
   /** The era reached and the Age it brought (see game/eras; missing in older saves). */
   era?: import('./eras').EraState;
   /** Its government and the policy cards slotted into it (see game/government; missing in older saves: a Chiefdom with empty slots). */

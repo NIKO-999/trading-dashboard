@@ -191,6 +191,19 @@ A tech that an empire you have **met** already knows costs **20% less** (it stac
 ### Eras and Ages
 Empires move through four eras as they learn techs: **Ancient → Classical (6 techs) → Medieval (12) → Renaissance (20)**. Entering an era grows every city (+1, +1, +2), pays 5 / 10 / 15★ and 150 score, and is announced to every empire that has met you. Your **Era Score** during the era just ended (Eurekas, battles won up to 4, city levels gained, wonders ×3) sets the next 5 turns: **7+ → Golden Age** (+1★ in every city), **2 or less → Dark Age** (techs 25% cheaper while you rebuild). The 🏛 chip shows the era, the Age and the score.
 
+### Barracks, Homesteads and Cultivation
+Prices depend on the **empire type** (Military / Economy / Naval):
+
+| | Barracks | Homestead | Train up | Drill |
+|---|---|---|---|---|
+| ⚔️ Military | 4★ | 9★ | 2 turns | 1 turn |
+| 💰 Economy | 12★ | 3★ | 4 turns | 3 turns |
+| ⚓ Naval | 8★ | 6★ | 3 turns | 2 turns |
+
+- **Barracks** (Tactics): one per city, on a free field in its land. A unit standing on it can **Train** for free: it becomes the next unit of its line (Warrior → Swordsman, Rider → Knight, using Iron or Horses as usual) or, with no next unit, **Drills** into a Veteran. While training it can't move or attack and defends at half strength. Expand to a **Drill Yard** (6★: every training 1 turn shorter) and a **War College** (10★: trained units also come out Veterans). **Naval empires** refit ships the same way at any of their Ports (Boat → Galley → Trireme).
+- **Homestead** (Farming): an empty field, desert or tundra in your land becomes a Farm from nothing, +2 population. Each one in the same city costs 1★ more.
+- **Cultivate:** once an empire you have met has developed a resource, raise your own on suitable empty land with the usual tech: a luxury (built straight as its works), Iron (a Mine) or Horses (a Pasture). **8★, +2★ for each you have cultivated.**
+
 ### City Festivals
 Any city may hold **one festival a turn** from its tile menu: **+1 population and +30 score**. It costs **12★, +8★ for each festival that city has held**, so it is a place for spare Stars, not a shortcut. The computer holds festivals when it has nothing better to buy.
 
