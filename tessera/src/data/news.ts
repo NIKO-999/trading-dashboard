@@ -4,6 +4,16 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.53',
+    items: [
+      '🌍 Twenty new empires, 51 in all, each with its own unique unit, mechanic, hero, music and hand-drawn look:',
+      '🏛 Babylon (Ziggurats that speed research), Kush (Pyramids that lift your archers), Majapahit (spice-trading jongs), Spain (Conquest plunder and Missions), the Haudenosaunee (the Great League of Peace).',
+      '🦁 Assyria (deportations and the Royal Library), Poland (elect a King every 8 turns; Winged Hussars), Scotland (Highland Games), England (Letters of Marque and the Royal Navy), France (Salons and the Grand Tour).',
+      '⚔ The Holy Roman Empire (Hanse and the Imperial Diet), Sweden (Winter March, Falun copper, veterans after 2 kills), Portugal (padrões on far coasts), Venice (the Arsenal and treasury interest), Kongo (nkisi guardians and raffia savings).',
+      '🪶 Asante (gold dust and the Golden Stool), the Mapuche (elect a Toqui; Malón raids), Georgia (qvevri wine that ages), the Gorkha (rope bridges and Gurkha levies), the Cree (trading posts and the Winter Count).',
+    ],
+  },
+  {
     version: '0.52',
     items: [
       '🌍 Five new empires, 31 in all, each with its own unique unit, mechanic, hero, music and art.',

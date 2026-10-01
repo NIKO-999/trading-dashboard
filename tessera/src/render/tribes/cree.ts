@@ -1037,6 +1037,7 @@ function tree(ctx: Ctx, x: number, y: number, k: number, Pal: BiomePalette, vari
 // ---------------------------------------------------------------- registration
 
 registerArt('cree', {
+  cape: () => null, // no European-style cloak behind the heavy ranks
   unit(ctx, kind, x, y) {
     switch (kind) {
       case 'okihtcitaw': case 'warrior': case 'archer': case 'defender': case 'swordsman': case 'explorer':

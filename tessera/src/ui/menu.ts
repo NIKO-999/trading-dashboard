@@ -284,7 +284,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
             },
           },
             h('span', { class: 'portrait' }, unitPortrait(portraitKind(id), id, 70)),
-            h('span', { class: 'tc-name' }, t.people),
+            h('span', { class: t.people.length > 11 ? 'tc-name long' : 'tc-name' }, t.people),
             choice.hotseat ? h('span', { class: `seat ${seat}` }, SEAT_LABEL[seat]) : null,
           ),
         );
@@ -375,7 +375,7 @@ function showScores(handlers: MenuHandlers) {
 function showEmpires(handlers: MenuHandlers) {
   screen(
     'empires',
-    backBar('The Twenty-Six Empires', () => showTitle(handlers)),
+    backBar(`The ${TRIBE_IDS.length} Empires`, () => showTitle(handlers)),
     h('div', { class: 'scroll' },
       ...byType().flatMap(({ c, ids }) => [typeHead(c), ...ids.map((id) => {
         const t = TRIBES[id];

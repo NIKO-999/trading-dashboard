@@ -15,6 +15,8 @@ export interface Body { hand: { x: number; y: number }; off: { x: number; y: num
 export interface TribeArt {
   unit?(ctx: Ctx, kind: UnitKind, x: number, y: number): boolean;
   dress?(kind: UnitKind, armoured: boolean): [torso: string, legs: string, sleeves: string] | null;
+  /** The cloak behind the tallest ranks: a colour, null for none, or undefined for the default. */
+  cape?(kind: UnitKind): string | null | undefined;
   torso?(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number): void;
   face?(ctx: Ctx, kind: UnitKind, x: number, y: number, w: number, h: number): void;
   head?(ctx: Ctx, kind: UnitKind, x: number, top: number, k: number, hw: number): void;

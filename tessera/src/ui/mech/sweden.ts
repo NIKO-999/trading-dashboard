@@ -18,10 +18,10 @@ export const ui: MechUi = {
   hud(v) {
     const n = counts(v);
     return h('div', { class: 'karma', title: `Carolean Drill: veterans after ${VETERAN_KILLS} kills. Winter March: land units starting on tundra or ice move +${WINTER_MOVE}. Falun Copper (${COPPER_COST}★ in a city with a Mine, every ${COPPER_EVERY} turns): +${COPPER_IRON} Iron and +${COPPER_STARS}★.` },
-      `🇸🇪 Copper ready in ${n.ready} cit${n.ready === 1 ? 'y' : 'ies'} · ⛏ ${n.iron}/${STOCK_CAP} · ❄ ${n.marching} on the winter march`);
+      `👑 Copper ready in ${n.ready} cit${n.ready === 1 ? 'y' : 'ies'} · ⛏ ${n.iron}/${STOCK_CAP} · ❄ ${n.marching} on the winter march`);
   },
   chip(v) {
     const n = counts(v);
-    return { icon: '🇸🇪', text: `⛏${n.ready} · ❄${n.marching}` };
+    return { icon: '👑', text: n.marching ? `${n.ready} copper · ❄${n.marching}` : `${n.ready} copper` };
   },
 };

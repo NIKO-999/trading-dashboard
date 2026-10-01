@@ -863,6 +863,7 @@ function tree(ctx: Ctx, x: number, y: number, k: number, Pal: BiomePalette, vari
 // ---------------------------------------------------------------- registration
 
 registerArt('mapuche', {
+  cape: () => null, // no European-style cloak behind the heavy ranks
   unit(ctx, kind, x, y) {
     switch (kind) {
       case 'warrior': case 'archer': case 'defender': case 'swordsman': case 'explorer':

@@ -963,6 +963,7 @@ function tree(ctx: Ctx, x: number, y: number, k: number, P_: BiomePalette, varia
 }
 
 registerArt('kongo', {
+  cape: () => null, // no European-style cloak behind the heavy ranks
   unit,
   dress: (kind) => dress(kind),
   torso,

@@ -13,9 +13,10 @@ export const ui: MechUi = {
   hud(v) {
     const off = enlightenmentTechOff(v.s, v.me), r = ready(v);
     return h('div', { class: 'karma', title: `Scottish Enlightenment: each city of level ${ENLIGHT_LEVEL}+ makes techs 1★ cheaper (at most ${ENLIGHT_MAX}★). Highland Games (${GAMES_COST}★ in a city, every ${GAMES_EVERY} turns): units within ${GAMES_RANGE} gain a kill toward veteran, the city +1 pop. Units on or beside mountains defend +${MOUNTAIN_DEF}; each one fallen in battle sends +${MOURN_STARS}★.` },
-      `🏴󠁧󠁢󠁳󠁣󠁴󠁿 Techs −${off}★ · games ready in ${r.n}/${r.of} cities`);
+      `🏰 Techs −${off}★ · games ready in ${r.n}/${r.of} cities`);
   },
   chip(v) {
-    return { icon: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', text: `−${enlightenmentTechOff(v.s, v.me)}★ · ${ready(v).n}` };
+    const off = enlightenmentTechOff(v.s, v.me), n = ready(v).n;
+    return { icon: '🏰', text: off ? `−${off}★ · ${n} games` : `${n} games` };
   },
 };

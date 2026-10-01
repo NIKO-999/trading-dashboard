@@ -3,7 +3,7 @@
 A turn-based 4X strategy game for phones, built as an installable, offline-capable PWA.
 It is separate from the rest of this repo, with its own `package.json` and build.
 
-Lead one of thirty-one empires, each with its own biome, starting tech, unique unit and bonus:
+Lead one of fifty-one empires, each with its own biome, starting tech, unique unit and bonus:
 
 | Empire | Biome | Starts with | Unique unit | Bonus |
 |---|---|---|---|---|
@@ -38,10 +38,30 @@ Lead one of thirty-one empires, each with its own biome, starting tech, unique u
 | Arab | dunes and palm oases | Riding | Camel Rider (replaces Rider) | Techs known to a met empire cost 40% less |
 | Rus | birch forest and snow | Hunting | Druzhina (replaces Knight) | Every hunt pays +1★ |
 | Vietnamese | rice deltas and karsts | Gathering | Rattan Guard (replaces Warrior) | Units in forest or swamp defend +1 |
+| Babylonian | two great rivers | Gathering | Sabum Kibittum (replaces Warrior) | a Eureka makes its tech 60% cheaper (not 40%). |
+| Nubian | the nile cataracts | Hunting | Pitati Archer (replaces Archer) | archers and other ranged units cost 1★ less. |
+| Javanese | volcanic islands | Fishing | Kris Warrior (replaces Swordsman) | every fish and fruit harvest pays +1★. |
+| Spanish | a dry high plateau and olive groves | Riding | Conquistador (replaces Knight) | every ship and warship you have pays +1★ a turn. |
+| Haudenosaunee | deep hardwood forests and lakes | Hunting | Mohawk Warrior (replaces Warrior) | every crop harvest grows the city by 1 more. |
+| Assyrian | rolling hills on the upper tigris | Hunting | Siege Tower (replaces Catapult) | siege engines cost 2★ less. |
+| Polish | wide plains and birch woods | Riding | Winged Hussar (replaces Knight) | every city of level 3 or more pays +1★ a turn. |
+| Scottish | heather moors and lochs | Hunting | Highlander (replaces Swordsman) | every city of level 3 or more makes techs 1★ cheaper (at most 3★). |
+| English | green fields and hedgerows | Fishing | Longbowman (replaces Archer) | your ships and warships attack +0.5. |
+| French | vineyards and wheat fields | Gathering | Royal Guard (replaces Defender) | every developed luxury pays +1★ a turn. |
+| German | dark forests and river valleys | Hunting | Landsknecht (replaces Swordsman) | every market pays +1★ a turn, +1★ more if it is next to a port. |
+| Swedish | pine forests and a thousand lakes | Fishing | Carolean (replaces Defender) | your units become veterans after 2 kills (not 3). |
+| Portuguese | cork oaks and vineyards above the atlantic | Fishing | Caçador (replaces Archer) | every port pays +1★ a turn. |
+| Venetian | a lagoon of islands and canals | Fishing | Condottiere (replaces Knight) | +1★ a turn for every 10★ in your treasury (at most +4★). |
+| Kongolese | rainforest and river savannah | Hunting | Ngao Shieldbearer (replaces Warrior) | every orchard pays +1★ a turn. |
+| Asante | rainforest and gold fields | Gathering | Asafo Company (replaces Defender) | units in your capital defend +2. |
+| Mapuche | araucaria forests and volcanoes | Hunting | Malón Rider (replaces Rider) | your units inside your borders defend +0.5. |
+| Georgian | high caucasus valleys | Climbing | Khevsur Knight (replaces Swordsman) | while no enemy unit stands in your borders, every city pays +1★ a turn. |
+| Nepali | terraced hillsides below the highest peaks | Climbing | Gurkha (replaces Warrior) | your units on or next to a mountain attack +0.5. |
+| Cree | boreal forest | Hunting | Okihtcitaw (replaces Warrior) | your units outside your borders heal 2 HP a turn. |
 
 Every empire has **historical strengths and weaknesses** on top of its signature bonus: for example the Aztecs take captives (+1★ per kill) but had no horses (riders cost 2★ more) and no iron (Smithing costs 2★ more), Rome's legions defend better but its Senate slows research and it was a reluctant sea power, and the Inuit hunt for extra stars but have no agriculture and no metal. Each is listed with its history on the empire screens.
 
-Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 31.
+Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 51.
 
 Features:
 - Three climate terrains beyond field, forest and mountain: **desert** (no farms; ore and oases; irrigate it into a field), **swamp** (units entering stop, but it gives cover; drain it into a field) and **tundra** (reindeer and ore; units left in the cold outside your borders lose 1 HP a turn). Each empire's homeland carries its own mix (Egypt and the Aboriginal nations are half desert, the Inuit mostly tundra, the Maya and Khmer boggy), and the Terrain option can make a whole world of Deserts, Wetlands or Frozen land.

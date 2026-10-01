@@ -208,8 +208,9 @@ export function figure(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: number, y: n
   const tw = 10 * k, th = 8.5 * k;
 
   // A cloak hangs behind the tallest ranks, in the empire's colour with a darker lining.
-  if (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal' || kind === 'shotelai') {
-    const cape = isLk(tribe) ? LK_FUR : tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : isAbo(tribe) ? (kind === 'giant' ? '#7a5a3c' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' && tribe !== 'india' && tribe !== 'khmer' ? GOLD : T.color;
+  const artCape = TRIBE_ART[tribe]?.cape?.(kind); // a newer empire may recolour the cloak or leave it off (null)
+  if (artCape !== null && (kind === 'knight' || kind === 'giant' || kind === 'samurai' || kind === 'swordsman' || kind === 'immortal' || kind === 'shotelai')) {
+    const cape = artCape ?? isLk(tribe) ? LK_FUR : tribe === 'inuit' ? (kind === 'giant' ? '#eef3f6' : '#6a4a34') : isAbo(tribe) ? (kind === 'giant' ? '#7a5a3c' : '#6a4a34') : kind === 'giant' && tribe !== 'inca' && tribe !== 'india' && tribe !== 'khmer' ? GOLD : T.color;
     const top = hip - th + 1 * k;
     poly(ctx, [x - 4 * k, top, x + 1 * k, top - 0.5 * k, x - 2 * k, hip + 8.5 * k, x - 9.5 * k, hip + 6.5 * k], shade(cape, -0.22));
     poly(ctx, [x - 4 * k, top, x - 6.5 * k, top + 3 * k, x - 9.5 * k, hip + 6.5 * k, x - 7 * k, hip + 2 * k], shade(cape, 0.02));

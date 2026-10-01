@@ -4,7 +4,7 @@
 
 ## 1. The basics
 
-- A turn-based tile strategy game on an isometric square grid. You play one of **31 empires** against 1–30 computer or hot-seat opponents.
+- A turn-based tile strategy game on an isometric square grid. You play one of **51 empires** against 1–50 computer or hot-seat opponents.
 - **Three empire types** (§15): ⚔️ **Military**, 💰 **Economy** and ⚓ **Naval**. Each type trains two role units of its own; the New Game picker and the Twenty-Six Empires screen list the empires by type.
 - **Three modes:** *Perfection* — the game ends after a turn limit (default **30 turns**) and the highest **score** wins. *Domination* — no turn limit; last empire standing (or last human alive → best score) wins; with Diplomacy on, survivors who are all allied win together (§12). *One City Challenge* — every empire keeps only its capital: no villages, no outposts, Great Wakas or sea-cities; capturing a rival's city razes it (+1,000 score) and knocks that empire out. No turn limit: conquer every empire to win.
 - **Difficulty** (easy / normal / hard): computer players get **+0 / +1 / +2 free Stars each turn**.
@@ -126,6 +126,26 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 | Camel Rider | Rider | 3★ 13/2.5/1.5, move 2 | **Ship of the desert** — Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert. |
 | Druzhina | Knight | 8★ 13/4/1.5, move 3 | **Winter host** — Forest never stops it; +1 attack and defence on tundra and ice. |
 | Rattan Guard | Warrior | 2★ 12/2.5/2.5, move 1 | **Jungle guerrilla** — Moves freely through forest and swamp, and attacks +1 from them. |
+| Sabum Kibittum | Warrior | 2★ 12/2.5/2.5, move 1 | **Royal levy** — +1 attack against mounted units. |
+| Pitati Archer | Archer | 3★ 12/3/1, move 1, range 2 | **Eye-shooter** — +1 attack against wounded units. |
+| Kris Warrior | Swordsman | 5★ 16/4/3, move 1 | **Island raider** — Wades through shallows; +1 attack from a tile beside water. |
+| Conquistador | Knight | 8★ 14/4/2, move 3 | **Conquest** — +1 attack against units in a city or fort. |
+| Mohawk Warrior | Warrior | 2★ 12/2.5/2.5, move 1 | **Great Law** — Forest never stops it, and it heals 2 HP at the start of every turn inside your borders. |
+| Siege Tower | Catapult | 8★ 14/4/1, move 1, range 2 | **Archers aloft** — +1 attack against units in a city or fort. |
+| Winged Hussar | Knight | 8★ 14/4.5/1.5, move 3 | **Wings of terror** — +1 attack against foot soldiers. |
+| Highlander | Swordsman | 5★ 16/4/3, move 1 | **Highland charge** — +1 attack while at full health. |
+| Longbowman | Archer | 3★ 12/2.5/1, move 1, range 3 | **Longbow** — Shoots 3 tiles; +1 attack against mounted units. |
+| Royal Guard | Defender | 3★ 16/2.5/3.5, move 1 | **Esprit de corps** — +1 defence while next to another of your units. |
+| Landsknecht | Swordsman | 5★ 16/4.5/2.5, move 1 | **Doppelsöldner** — +1.5 attack against shield units. |
+| Carolean | Defender | 3★ 16/2/3, move 1 | **Gå-på** — Charges home: +1.5 attack in melee. |
+| Caçador | Archer | 3★ 12/3/1, move 1, range 2 | **Skirmisher** — +1 attack from forest or a mountain. |
+| Condottiere | Knight | 8★ 14/4/2, move 3 | **Paid in gold** — +1 attack and defence while you hold 20★ or more. |
+| Ngao Shieldbearer | Warrior | 2★ 12/2.5/2.5, move 1 | **Mbeba shield** — +1 defence against ranged attacks and in forest. |
+| Asafo Company | Defender | 3★ 16/2.5/3, move 1 | **Asafo company** — +1 attack and defence inside your borders. |
+| Malón Rider | Rider | 3★ 13/2.5/1.5, move 2 | **Malón raid** — +2★ for every enemy it defeats. |
+| Khevsur Knight | Swordsman | 5★ 16/4/3, move 1 | **Mountain knight** — +1 attack and defence on or next to a mountain. |
+| Gurkha | Warrior | 2★ 12/3/2, move 1 | **Kukri** — Mountains never stop it; +1 attack from a mountain or forest. |
+| Okihtcitaw | Warrior | 2★ 12/2/1.5, move 2 | **Forest runner** — Moves 2 tiles, and forest never stops it. |
 
 Every unique is a clearly better unit than the one it replaces, about a point and a half of stats ahead (attack, defence, HP) at the same or nearly the same cost, on top of its ability. Only the Berserker trades a little defence (for +1.5 attack) and the War Elephant trades speed for bulk.
 
@@ -337,6 +357,26 @@ Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus
 | Arab | **Date Palm Oases** | Gardens in the desert: orchard upgrades cost a third less and need no tech. |
 | Rus | **Forest Lodges** | Timber, fur and honey of the great forest: lumber upgrades cost a third less and need no tech. |
 | Vietnamese | **Wet-rice Paddies** | Two harvests a year from the delta: farm upgrades cost a third less and Estates need no tech. |
+| Babylonian | **Canal Farms** | Fields watered by the two rivers: farm upgrades cost a third less and Estates need no tech. |
+| Nubian | **Iron Furnaces** | The furnaces of Meroë: mine upgrades cost a third less and Deep Mines need no tech. |
+| Javanese | **Spice Groves** | Cloves, nutmeg and pepper: orchard upgrades cost a third less and need no tech. |
+| Spanish | **Galleon Yards** | The shipyards of Seville: port upgrades cost a third less and Harbours need no tech. |
+| Haudenosaunee | **Three Sisters Fields** | Maize, beans and squash on one mound: farm upgrades cost a third less and Estates need no tech. |
+| Assyrian | **Iron Arsenals** | The arsenals of Nineveh: mine upgrades cost a third less and Deep Mines need no tech. |
+| Polish | **Stud Farms** | Horses for the hussar banners: pastures cost a third less and need no tech. |
+| Scottish | **Highland Cattle** | Shaggy cattle on the moors: pastures cost a third less and need no tech. |
+| English | **Sheep Walks** | Wool made England rich: pastures cost a third less and need no tech. |
+| French | **Vineyards** | Wine country: farm upgrades cost a third less and Estates need no tech. |
+| German | **Silver Mines** | The silver of the Harz and Bohemia: mine upgrades cost a third less and Deep Mines need no tech. |
+| Swedish | **Copper Mines** | The copper mountain of Falun: mine upgrades cost a third less and Deep Mines need no tech. |
+| Portuguese | **Feitorias** | Trading posts on every shore: port upgrades cost a third less and Harbours need no tech. |
+| Venetian | **Rialto Markets** | The markets of the Rialto: market upgrades cost a third less and Bazaars need no tech. |
+| Kongolese | **Palm Groves** | Oil palms and raffia: orchard upgrades cost a third less and need no tech. |
+| Asante | **Gold Fields** | The gold of the forest: mine upgrades cost a third less and Deep Mines need no tech. |
+| Mapuche | **Horse Herds** | Horses taken from the invaders: pastures cost a third less and need no tech. |
+| Georgian | **Vineyards** | Eight thousand years of wine: orchard upgrades cost a third less and need no tech. |
+| Nepali | **Hill Terraces** | Rice on the mountain terraces: farm upgrades cost a third less and Estates need no tech. |
+| Cree | **Trapline Camps** | Camps on the traplines: lumber upgrades cost a third less and need no tech. |
 
 **Computer players** upgrade when they have Stars to spare (keeping 8★ + 2★ a city back), preferring their speciality, the best Stars for the price, and a level 3 beside other level-3 tiles of the kind (a District in the making). Their Master Builders raise tiles too.
 
@@ -425,10 +465,30 @@ Every empire has one named champion (see `game/heroes`).
 | Arab | **Saladin**, Sultan of Egypt and Syria | **Chivalrous Truce** (every 4 turns): Every one of your units inside your borders heals 4 HP, and you gain 3★. |
 | Rus | **Alexander Nevsky**, Prince of Novgorod | **Battle on the Ice** (every 5 turns): Enemies within 2 cannot move on their next turn. |
 | Vietnamese | **Trần Hưng Đạo**, Grand Prince, victor of Bạch Đằng | **Stakes of Bạch Đằng** (every 5 turns): Every enemy within 2 takes 3 damage, and your units within 2 get +1 defence until your next turn. |
+| Babylonian | **Hammurabi**, King of Babylon, Giver of Laws | **Code of Laws** (every 5 turns): Order in every city: +5★ and +1 population in the capital. |
+| Nubian | **Amanirenas**, Kandake of Kush | **Eye of the Kandake** (every 4 turns): Every enemy within 2 takes 2 damage, and your units within 2 attack +1 until your next turn. |
+| Javanese | **Gajah Mada**, Mahapatih of Majapahit | **Palapa Oath** (every 5 turns): Your units within 2 get +1 attack and +1 movement until your next turn. |
+| Spanish | **El Cid**, Campeador of Castile | **Legend of the Cid** (every 5 turns): All your units attack +0.5 until your next turn. |
+| Haudenosaunee | **Hiawatha**, Co-founder of the Great Law | **Condolence** (every 4 turns): Every one of your units inside your borders heals 4 HP, and the capital grows by 1. |
+| Assyrian | **Ashurbanipal**, King of the World, King of Assyria | **Lion Hunt** (every 4 turns): Every enemy within 2 takes 2 damage, and your units within 2 attack +1 until your next turn. |
+| Polish | **Jan III Sobieski**, King of Poland, victor at Vienna | **Relief of Vienna** (every 5 turns): Your units within 2 get +1 attack and +1 movement until your next turn. |
+| Scottish | **Robert the Bruce**, King of Scots | **Bannockburn** (every 5 turns): Enemies within 2 lose 1 defence, and your units within 2 get +1 defence, until your next turn. |
+| English | **Elizabeth I**, Queen of England | **Gloriana** (every 5 turns): Your units within 2 get +1 attack and +1 defence until your next turn. |
+| French | **Joan of Arc**, The Maid of Orléans | **Relief of Orléans** (every 4 turns): Every one of your units inside your borders heals 4 HP, and your units within 2 attack +1 until your next turn. |
+| German | **Frederick Barbarossa**, Holy Roman Emperor | **Imperial Ban** (every 5 turns): Enemies within 2 lose 1 defence, and your units within 2 attack +1, until your next turn. |
+| Swedish | **Gustavus Adolphus**, Lion of the North | **Lion of the North** (every 4 turns): Your units within 2 get +1 attack and +1 defence until your next turn. |
+| Portuguese | **Henry the Navigator**, Infante of Portugal | **School of Sagres** (every 4 turns): Reveal the land and sea within 5 tiles of the hero and gain 4★. |
+| Venetian | **Enrico Dandolo**, Doge of Venice | **Sack of Constantinople** (every 5 turns): Trade comes home: +2★ for each of your ports and ships (4★ to 14★). |
+| Kongolese | **Nzinga a Mbande**, Queen of Ndongo and Matamba | **Queen’s Gambit** (every 5 turns): Enemies within 2 lose 1 defence, and your units within 2 attack +1, until your next turn. |
+| Asante | **Osei Tutu**, First Asantehene | **Golden Stool** (every 5 turns): Every one of your units inside your borders heals 4 HP, and you gain 4★. |
+| Mapuche | **Lautaro**, Toqui of the Mapuche | **Battle of Tucapel** (every 4 turns): Your units within 2 get +1 attack and +1 movement until your next turn. |
+| Georgian | **Queen Tamar**, King of Kings of Georgia | **Golden Age** (every 5 turns): Every one of your units inside your borders heals 4 HP, and you gain 4★. |
+| Nepali | **Prithvi Narayan Shah**, Unifier of Nepal | **Unification** (every 5 turns): Your units within 2 get +1 attack and +1 defence until your next turn. |
+| Cree | **Mistahi-maskwa**, Chief of the Plains Cree | **Big Bear** (every 4 turns): Your units within 2 get +1 defence and heal 4 HP. |
 
-## 10. The 31 empires
+## 10. The 51 empires
 
-Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota, Rus, Vietnamese; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite, Byzantine, Arab; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean, Carthaginian.
+Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota, Rus, Vietnamese, Kushite, Assyrian, Polish, German, Swedish, Kongolese, Mapuche, Nepali; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite, Byzantine, Arab, Babylonian, Haudenosaunee, Scottish, French, Asante, Georgian, Cree; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean, Carthaginian, Javanese, Spanish, English, Portuguese, Venetian.
 
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.
@@ -681,6 +741,166 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Strengths:** Rice Bowl (+1★ a turn for every 2 farms.)
 - **Weaknesses:** Few Horses (Mounted units cost 1★ more.); Northern Shadow (See 1 tile less around every unit and city.)
 - **Skill line** (branches off Gathering): T1 Dyke Builders: +1★ a turn for every 2 farms. → T2 Bronze Drums: Foot soldiers hit 0.5 harder. → T3 Fire Arrows: Ranged units and siege engines hit 0.5 harder.
+
+### Babylonian (babylon)
+- **Signature bonus:** Clay Tablets — a Eureka makes its tech 60% cheaper (not 40%).
+- **Unique unit — Sabum Kibittum** (replaces the Warrior): **Royal levy** — +1 attack against mounted units.
+- **Unique mechanic — Ziggurats & Star-Gazers:** Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 3★). Clay Tablets: a Eureka makes its tech 60% cheaper, not 40%.
+- **Strengths:** Irrigation Canals (+1★ a turn for every 2 farms.)
+- **Weaknesses:** Open Floodplain (Foot soldiers defend 0.5 worse.); Clay, not Stone (Buildings cost 1★ more.)
+- **Skill line** (branches off Gathering): T1 Cuneiform: Research cost 1★ less. → T2 Ziggurat of Marduk: +1★ a turn for every temple. +2★ whenever a city levels up. → T3 Star Charts: See 1 tile further around every unit and city. +1★ a turn from your capital.
+
+### Nubian (nubia)
+- **Signature bonus:** Land of the Bow — archers and other ranged units cost 1★ less.
+- **Unique unit — Pitati Archer** (replaces the Archer): **Eye-shooter** — +1 attack against wounded units.
+- **Unique mechanic — Pyramids of Meroë:** Raise steep pyramids on desert or field: each pays +1★ a turn, and your archers on or beside one shoot 1 tile further. Land of the Bow: archers and other ranged units cost 1★ less.
+- **Strengths:** Furnaces of Meroë (+1 Iron a turn.)
+- **Weaknesses:** The Cataracts (Boats and ships move 1 less.); Desert Frontier (Every farm grows the city by 1 less.)
+- **Skill line** (branches off Archery): T1 Ta-Seti: Ranged units hit 0.5 harder. → T2 Iron of Meroë: +1 Iron a turn. +1★ a turn for every mine. → T3 Pyramids of Meroë: +1★ a turn for every temple. +2★ whenever a city levels up.
+
+### Javanese (majapahit)
+- **Signature bonus:** Spice Islands — every fish and fruit harvest pays +1★.
+- **Unique unit — Kris Warrior** (replaces the Swordsman): **Island raider** — Wades through shallows; +1 attack from a tile beside water.
+- **Unique mechanic — Spice Trade Jongs:** Your jongs (galleys and warships) that start your turn beside another empire's coastal city trade there for 2★, one ship per port; at war it is a raid and the owner also loses 1★. Mandala tribute at the capital (5★): +1★ a turn per visited port for 5 turns. Spice Islands: fish and fruit harvests pay +1★.
+- **Strengths:** Monsoon Sailors (+1★ a turn for every port.)
+- **Weaknesses:** Island Kingdoms (Mounted units cost 1★ more.); Court Intrigue (Foot soldiers defend 0.5 worse.)
+- **Skill line** (branches off Fishing): T1 Jong Shipyards: Boats and ships defend 1 better. → T2 Subak Terraces: +1★ a turn for every 2 farms. → T3 Palapa Oath: Boats and ships hit 0.5 harder. Boats and ships move 1 further.
+
+### Spanish (spain)
+- **Signature bonus:** Treasure Fleets — every ship and warship you have pays +1★ a turn.
+- **Unique unit — Conquistador** (replaces the Knight): **Conquest** — +1 attack against units in a city or fort.
+- **Unique mechanic — Conquest & Missions:** Each ship and warship pays +1★ a turn. Taking a city plunders 3★ per level. Found a Mission beside each city (6★): +1★ a turn, +2★ beside a conquered city, and your wounded on or beside it heal 2 HP more.
+- **Strengths:** Reconquista Veterans (+1★ for every enemy you defeat.)
+- **Weaknesses:** Silver Inflation (Buildings cost 1★ more.); Overstretched Empire (Units outside your borders defend 0.5 worse.)
+- **Skill line** (branches off Sailing): T1 Tercio: Foot soldiers defend 0.5 better. → T2 Treasure Galleons: +1★ a turn for every port. → T3 Armada: Boats and ships hit 0.5 harder. Boats and ships defend 0.5 better.
+
+### Haudenosaunee (haudenosaunee)
+- **Signature bonus:** Three Sisters — every crop harvest grows the city by 1 more.
+- **Unique unit — Mohawk Warrior** (replaces the Warrior): **Great Law** — Forest never stops it, and it heals 2 HP at the start of every turn inside your borders.
+- **Unique mechanic — Great League of Peace:** Cities within 4 tiles of the League join it, growing out from your capital (at most 5): +1★ a turn for each member beyond the first, and your units defend +0.5 inside League borders. Condolence Council (4★, every 5 turns): every unit heals to full. Three Sisters: every crop harvest grows the city by 1 more.
+- **Strengths:** Forest Warfare (Units in forests defend 0.5 better.)
+- **Weaknesses:** No Iron (Smithing costs 2★ more to research.); No Horses (Mounted units cost 1★ more.)
+- **Skill line** (branches off Farming): T1 Three Sisters: +1★ a turn for every 2 farms. → T2 Longhouse: A city that levels up gains 1 extra population. → T3 Great Law of Peace: +1★ a turn from every city.
+
+### Assyrian (assyria)
+- **Signature bonus:** Siege Masters — siege engines cost 2★ less.
+- **Unique unit — Siege Tower** (replaces the Catapult): **Archers aloft** — +1 attack against units in a city or fort.
+- **Unique mechanic — Deportations & the Library:** Each city you capture loses 1 population to your capital, and its tablets teach you one tech its owner knew. Terror Tribute at the capital (free, every 6 turns): every enemy city within 4 tiles of your army pays 1★, up to 6★. Siege Masters: siege engines cost 2★ less.
+- **Strengths:** Royal Road Couriers (Scouts and voyagers move 1 further.)
+- **Weaknesses:** Hated Overlords (Units outside your borders defend 0.5 worse.); Few Ships (Boats and ships move 1 less.)
+- **Skill line** (branches off Engineering): T1 Iron Weapons: Foot soldiers hit 0.5 harder. → T2 Siege Engineers: Siege engines hit 1 harder. → T3 Library of Ashurbanipal: Research cost 1★ less. +2★ whenever a city levels up.
+
+### Polish (poland)
+- **Signature bonus:** Golden Liberty — every city of level 3 or more pays +1★ a turn.
+- **Unique unit — Winged Hussar** (replaces the Knight): **Wings of terror** — +1 attack against foot soldiers.
+- **Unique mechanic — Royal Election:** Golden Liberty: every city of level 3+ pays +1★ a turn. At the capital the Sejm elects a king for 8 turns (first election free, then 3★): the Hussar King (mounted units +1 attack), the Merchant King (+1★ a turn per city) or the Scholar King (techs 2★ cheaper). Each reign ends in a 2-turn interregnum.
+- **Strengths:** Szlachta Cavalry (Mounted units hit 0.5 harder.)
+- **Weaknesses:** Liberum Veto (Research cost 1★ more.); Open Plains (Units on your own land defend 0.5 worse.)
+- **Skill line** (branches off Riding): T1 Sejm: +1★ a turn from every city of level 3 or more. → T2 Hussar Banners: Mounted units hit 0.5 harder. Mounted units cost 1★ less. → T3 Constitution of May: A city that levels up gains 1 extra population.
+
+### Scottish (scotland)
+- **Signature bonus:** Scottish Enlightenment — every city of level 3 or more makes techs 1★ cheaper (at most 3★).
+- **Unique unit — Highlander** (replaces the Swordsman): **Highland charge** — +1 attack while at full health.
+- **Unique mechanic — Highland Games & Clan Gatherings:** Highland Games (4★ in a city, once every 6 turns): every unit within 2 tiles gains a kill toward veteran and the city grows by 1. Clan Gathering: your units on or beside a mountain defend +0.5, and each one that falls in battle sends +1★ from the nearest city. Scottish Enlightenment: each city of level 3+ makes techs 1★ cheaper (at most 3★).
+- **Strengths:** Clan Loyalty (Units on your land heal 1 HP every turn.)
+- **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Feuding Clans (See 1 tile less around every unit and city.)
+- **Skill line** (branches off Hunting): T1 Clan Tartans: Foot soldiers defend 0.5 better. → T2 Distilleries: +1★ a turn for every 2 farms. +1★ a turn for every market. → T3 Universities: Research cost 1★ less.
+
+### English (england)
+- **Signature bonus:** Royal Navy — your ships and warships attack +0.5.
+- **Unique unit — Longbowman** (replaces the Archer): **Longbow** — Shoots 3 tiles; +1 attack against mounted units.
+- **Unique mechanic — Letters of Marque & Royal Dockyards:** Royal Navy: ships and warships attack +0.5. Sinking an enemy vessel pays 3★ prize money, and ships that start your turn in or beside your port are repaired to full. From the capital, sign Letters of Marque (5★, every 8 turns): for 4 turns each enemy ship your ships damage loses 1★ of cargo to you.
+- **Strengths:** Island Fortress (Units in your cities defend 0.5 better.)
+- **Weaknesses:** Wars of the Roses (Foot soldiers defend 0.5 worse.); Rainy Isles (Roads costs 2★ more to research.)
+- **Skill line** (branches off Sailing): T1 Magna Carta: +2★ whenever a city levels up. → T2 Wool Trade: +1★ a turn for every port. → T3 Ships of the Line: Boats and ships defend 1 better. Ships cost 1★ less.
+
+### French (france)
+- **Signature bonus:** Haute Couture — every developed luxury pays +1★ a turn.
+- **Unique unit — Royal Guard** (replaces the Defender): **Esprit de corps** — +1 defence while next to another of your units.
+- **Unique mechanic — Salons & the Grand Tour:** Haute Couture: every developed luxury pays +1★ a turn. A city of level 3+ may open a Salon (6★, once): each makes every tech 1★ cheaper (up to 3★). Grand Tour: every unit of an empire at peace with France inside its borders pays it 1★ a turn (up to 3★).
+- **Strengths:** Grande Armée (Every unit costs 1★ less.)
+- **Weaknesses:** Court of Versailles (Buildings cost 1★ more.); Hundred Years’ War (Units on your land heal -1 HP every turn.)
+- **Skill line** (branches off Gathering): T1 Vineyards: +1★ a turn for every 2 farms. → T2 Gothic Cathedrals: +1★ a turn for every temple. +1★ whenever a city levels up. → T3 Salons: Research cost 1★ less.
+
+### German (germany)
+- **Signature bonus:** Hanseatic League — every market pays +1★ a turn, +1★ more if it is next to a port.
+- **Unique unit — Landsknecht** (replaces the Swordsman): **Doppelsöldner** — +1.5 attack against shield units.
+- **Unique mechanic — Imperial Diet & Free Cities:** Hanseatic League: every market pays +1★ a turn, +1★ more beside a port. Free Imperial Cities: every city but the capital with a market pays +1★ more. Cities of level 4+ are Electors; with 3 of them the capital may call a free Imperial Diet every 10 turns: the Imperial Levy (a free veteran of your best melee unit), the Reichstag Tax (+2★ per Elector) or the Landfrieden (your units heal +2 HP at home for 5 turns).
+- **Strengths:** Guild Masters (Buildings cost 1★ less.)
+- **Weaknesses:** Three Hundred States (See 1 tile less around every unit and city.); Landlocked Heartland (Boats and ships move 1 less.)
+- **Skill line** (branches off Mining): T1 Printing Press: Research cost 1★ less. → T2 Hanse Kontors: +1★ a turn for every market. Trade routes pay 25% more. → T3 Imperial Diet: +1★ a turn from every city of level 3 or more. Foot soldiers defend 0.5 better.
+
+### Swedish (sweden)
+- **Signature bonus:** Carolean Drill — your units become veterans after 2 kills (not 3).
+- **Unique unit — Carolean** (replaces the Defender): **Gå-på** — Charges home: +1.5 attack in melee.
+- **Unique mechanic — Winter March & Falun Copper:** Carolean Drill: your units become veterans after 2 kills (not 3). Winter March: land units that start on tundra or ice move +1, and ice is open road to them. Falun Copper (3★ in a city with a Mine, once every 5 turns): +1 Iron to the stockpile and +3★ for the red copper roofs sold abroad.
+- **Strengths:** Copper Mountain (+1★ a turn for every 2 mines.)
+- **Weaknesses:** Long Winters (Every farm grows the city by 1 less.); Thin Population (Buildings cost 1★ more.)
+- **Skill line** (branches off Mining): T1 Falun Copper: +1★ a turn for every mine. → T2 Leather Cannon: Siege engines hit 0.5 harder. Siege engines move 1 further. → T3 Indelningsverket: Every unit costs 1★ less.
+
+### Portuguese (portugal)
+- **Signature bonus:** Feitorias — every port pays +1★ a turn.
+- **Unique unit — Caçador** (replaces the Archer): **Skirmisher** — +1 attack from forest or a mountain.
+- **Unique mechanic — Padrões of Discovery:** Feitorias: every port pays +1★ a turn. A boat or ship beside unclaimed land at least 5 tiles from your cities may raise a stone padrão there (3★, one per city): +1★ a turn, +1★ more on the coast, and you see 2 tiles around it for good.
+- **Strengths:** Navigators (See 1 tile further around every unit and city.)
+- **Weaknesses:** Small Kingdom (Every unit costs 1★ more.); Spanish Shadow (Units on your own land defend 0.5 worse.)
+- **Skill line** (branches off Sailing): T1 Caravels: Boats and ships move 1 further. → T2 Spice Route: Trade routes pay 50% more. → T3 Azulejos: +2★ whenever a city levels up. +1★ a turn for every temple.
+
+### Venetian (venice)
+- **Signature bonus:** Merchant Republic — +1★ a turn for every 10★ in your treasury (at most +4★).
+- **Unique unit — Condottiere** (replaces the Knight): **Paid in gold** — +1 attack and defence while you hold 20★ or more.
+- **Unique mechanic — Merchant Republic & The Arsenal:** Every 10★ in the treasury earns +1★ a turn (at most +4★). A city with a Port launches a warship from the Arsenal at half price, once every 4 turns. Ships beside your cities unload +1★ each (at most +3★).
+- **Strengths:** The Arsenal (Ships cost 1★ less.)
+- **Weaknesses:** Few Fields (Every farm grows the city by 1 less.); Hired Swords (Foot soldiers defend 0.5 worse.)
+- **Skill line** (branches off Fishing): T1 Glassworks of Murano: +1★ a turn for every market. → T2 The Doge: +2★ a turn from your capital. → T3 Galleys of the Arsenal: Boats and ships hit 0.5 harder. Trade routes pay 25% more.
+
+### Kongolese (kongo)
+- **Signature bonus:** Kingdom of Cloth — every orchard pays +1★ a turn.
+- **Unique unit — Ngao Shieldbearer** (replaces the Warrior): **Mbeba shield** — +1 defence against ranged attacks and in forest.
+- **Unique mechanic — Nkisi Guardians & the Raffia Treasury:** Raise an nkisi nkondi in a city (5★, once per city): enemies on or beside it attack −1. At the capital, weave 5★ into a bolt of raffia cloth (up to 5): each bolt pays +1★ a turn and can't be stolen, but all are lost if the capital falls. Kingdom of Cloth: every orchard pays +1★ a turn.
+- **Strengths:** Copper and Raffia (+1★ a turn for every market.)
+- **Weaknesses:** Coastal Raiders (Sailing costs 2★ more to research.); River Rapids (Boats and ships move 1 less.)
+- **Skill line** (branches off Forestry): T1 Raffia Looms: +1★ a turn for every lumber hut. → T2 Nkisi: Foot soldiers defend 0.5 better. → T3 Mani Kongo: +2★ a turn from your capital. +1★ whenever a city levels up.
+
+### Asante (ashanti)
+- **Signature bonus:** Golden Stool — units in your capital defend +2.
+- **Unique unit — Asafo Company** (replaces the Defender): **Asafo company** — +1 attack and defence inside your borders.
+- **Unique mechanic — Gold Dust & the Great Roads:** Every mine also yields 1 gold dust a turn (up to 20). At the capital, weigh it out: 5 dust for +8★, 8 to heal every unit 5 HP, or 10 for +1 population in every city. Great Roads: each city joined to the capital by an unbroken road pays +1★ a turn. Golden Stool: units in your capital defend +2.
+- **Strengths:** Gold Weights (+1★ a turn for every 2 mines.)
+- **Weaknesses:** Forest Paths (Roads costs 2★ more to research.); Few Horses (Mounted units cost 1★ more.)
+- **Skill line** (branches off Gathering): T1 Kente Looms: +1★ a turn for every market. → T2 Golden Stool: Units in your capital defend 1 better. → T3 Great Roads: +1★ a turn for every 4 road tiles in your borders. Trade routes pay 25% more.
+
+### Mapuche (mapuche)
+- **Signature bonus:** Unconquered — your units inside your borders defend +0.5.
+- **Unique unit — Malón Rider** (replaces the Rider): **Malón raid** — +2★ for every enemy it defeats.
+- **Unique mechanic — The Toqui & the Parlamento:** In war, elect a Toqui at the capital (6★, every 10 turns): for 3 turns every unit moves +1 and attacks +0.5. Hold a Parlamento (4★, every 8 turns): with diplomacy, every enemy warms to you (+15) and is offered peace; otherwise your units heal 4 HP and the next Toqui is free. Unconquered: your units inside your borders defend +0.5.
+- **Strengths:** Guerrilla Toquis (Units in forests defend 0.5 better.)
+- **Weaknesses:** No Cities (Buildings cost 1★ more.); Scattered Lof (See 1 tile less around every unit and city.)
+- **Skill line** (branches off Riding): T1 Lautaro’s Lesson: Mounted units hit 0.5 harder. → T2 Koyang Councils: Units on your land heal 1 HP every turn. → T3 Araucaria Groves: +1★ a turn for every lumber hut.
+
+### Georgian (georgia)
+- **Signature bonus:** Golden Age of Tamar — while no enemy unit stands in your borders, every city pays +1★ a turn.
+- **Unique unit — Khevsur Knight** (replaces the Swordsman): **Mountain knight** — +1 attack and defence on or next to a mountain.
+- **Unique mechanic — Qvevri Cellars:** Bury a qvevri of wine in an empty field in your borders (4★, +1★ for each you hold; not next to another): +1★ a turn, +2★ after 5 turns, +3★ after 10. Hold a supra at the capital (3★, every 6 turns): every unit heals 3 HP and each city with a qvevri grows +1. Golden Age of Tamar: while no enemy stands in your borders, every city pays +1★.
+- **Strengths:** Mountain Watchtowers (Units in the mountains defend 0.5 better.)
+- **Weaknesses:** Between Empires (Units outside your borders defend 0.5 worse.); Narrow Valleys (Every farm grows the city by 1 less.)
+- **Skill line** (branches off Climbing): T1 Qvevri Wine: +1★ a turn for every 2 farms. → T2 Svan Towers: Units in your cities defend 0.5 better. → T3 Knight in the Panther’s Skin: +2★ whenever a city levels up. +1★ a turn for every temple.
+
+### Nepali (nepal)
+- **Signature bonus:** Himalayan Kingdom — your units on or next to a mountain attack +0.5.
+- **Unique unit — Gurkha** (replaces the Warrior): **Kukri** — Mountains never stop it; +1 attack from a mountain or forest.
+- **Unique mechanic — Rope Bridges & Gurkha Recruits:** Sling a rope bridge across a mountain in your borders (3★): your units cross it at road speed without stopping, and you climb mountains without Climbing. A city on or beside a mountain may raise a veteran Gurkha for the normal price once every 4 turns. Himalayan Kingdom: your units on or next to a mountain attack +0.5.
+- **Strengths:** Born Climbers (Units in the mountains defend 0.5 better.)
+- **Weaknesses:** Landlocked (Boats and ships move 1 less.); Steep Fields (Every farm grows the city by 1 less.)
+- **Skill line** (branches off Climbing): T1 Terraced Fields: +1★ a turn for every 2 farms. → T2 Pagoda Temples: +1★ a turn for every temple. → T3 Gurkha Regiments: Foot soldiers hit 0.5 harder. Foot soldiers defend 0.5 better.
+
+### Cree (cree)
+- **Signature bonus:** Pemmican — your units outside your borders heal 2 HP a turn.
+- **Unique unit — Okihtcitaw** (replaces the Warrior): **Forest runner** — Moves 2 tiles, and forest never stops it.
+- **Unique mechanic — Trading Posts & the Winter Count:** Pemmican: your units outside your borders heal 2 HP a turn. Build Trading Posts on forest or shore (5★, +1★ each): +1★ a turn, +1★ per animal beside it (at most 3★), and foreign units or traders beside a post pay +1★ each (at most 3★). Every 10 turns the Winter Count: if no city was lost, every city grows by 1.
+- **Strengths:** Fur Trappers (+1★ whenever you harvest a resource.)
+- **Weaknesses:** Short Summers (Every farm grows the city by 1 less.); Scattered Bands (Temples and shrines cost 1★ more.)
+- **Skill line** (branches off Hunting): T1 Birch-bark Canoes: Boats and ships move 1 further. → T2 Trading Posts: Trade routes pay 25% more. +1★ a turn for every port. → T3 Pemmican Stores: Units on your land heal 1 HP every turn. Every animal harvest grows the city by 1 more.
 
 ## 10. Culture Blending (traditions of the conquered)
 

@@ -10,6 +10,7 @@ export const ui: MechUi = {
     return h('div', { class: 'karma' }, `🔭 Ziggurats ${n}/${cities} · +${zigguratIncome(v.s, v.me)}★ a turn · techs −${zigguratTechOff(v.s, v.me)}★ (max ${TECH_OFF_MAX}) · next ${ZIGGURAT_COST}★ · Clay Tablets: Eurekas 60% off`);
   },
   chip(v) {
-    return { icon: '🔭', text: `${ziggurats(v.s, v.me).length} · −${zigguratTechOff(v.s, v.me)}★` };
+    const n = ziggurats(v.s, v.me).length, off = zigguratTechOff(v.s, v.me);
+    return { icon: '🔭', text: off ? `${n} · −${off}★` : `${n} built` };
   },
 };
