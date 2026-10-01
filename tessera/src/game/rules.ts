@@ -80,8 +80,8 @@ export const trainCost = (s: GameState, pid: number, k: UnitKind) => {
 };
 
 /** Pirates' Sea Raiders bonus: their boats and ships move one tile further and hit harder. */
-/** Tibetans scale mountains without Climbing. */
-const canClimb = (s: GameState, pid: number) => hasTech(s, pid, 'climbing') || s.players[pid].tribe === 'tibet';
+/** Tibetans and Nepalis scale mountains without Climbing. */
+const canClimb = (s: GameState, pid: number) => hasTech(s, pid, 'climbing') || s.players[pid].tribe === 'tibet' || s.players[pid].tribe === 'nepal';
 
 export const seaBonus = (s: GameState, u: Unit) => (def(u).naval && s.players[u.owner].tribe === 'pirates' ? 1 : 0);
 const PORT_COST = (s: GameState, pid: number) => (s.players[pid].tribe === 'pirates' ? 4 : 7);
