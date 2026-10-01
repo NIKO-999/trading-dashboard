@@ -46,6 +46,8 @@ import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 export const hasTech = (s: GameState, pid: number, tech: string | null) => tech === null || s.players[pid].techs.includes(tech);
 export const def = (u: Unit): UnitDef => UNITS[u.kind];
 /** Full health. A boat carrying a unit has that unit's health, as in Polytopia. */
+/** Kills a unit needs to become a veteran: 3, or 2 for Sweden (Carolean Drill, see mech/sweden). */
+export const veteranAt = (s: GameState, pid: number) => (s.players[pid]?.tribe === 'sweden' ? 2 : 3);
 export const maxHp = (u: Unit) => UNITS[u.carrying ?? u.kind].hp + (u.veteran ? 5 : 0) + heroHp(u) + Number(u.data?.hpBonus ?? 0); // hpBonus: e.g. a Golden Guardian raised by wonders
 export const cityById = (s: GameState, id: number | null) => (id === null ? undefined : s.cities.find((c) => c.id === id));
 export const unitAt = (s: GameState, x: number, y: number) => s.units.find((u) => u.x === x && u.y === y);
@@ -1112,7 +1114,7 @@ export function attack(s: GameState, a: Unit, d: Unit): boolean {
       emit({ type: 'stars', player: a.owner, x: d.x, y: d.y, amount: 2 });
     }
     a.veteranKills++;
-    if (a.veteranKills >= 3 && !a.veteran && (a.carrying ?? a.kind) !== 'hero') { // heroes level up instead (see game/heroes)
+    if (a.veteranKills >= veteranAt(s, a.owner) && !a.veteran && (a.carrying ?? a.kind) !== 'hero') { // heroes level up instead (see game/heroes)
       a.veteran = true;
       a.hp = maxHp(a);
     } else if (pa.tribe === 'vikings' && a.hp < maxHp(a) && !outOfSupply(a)) {
