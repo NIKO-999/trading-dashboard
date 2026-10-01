@@ -24,6 +24,7 @@ import { formation, outOfSupply, supplyAfterMove, upgradeCost, upgradeTarget, up
 import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutRuin } from './auxiliaries';
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
+import { TABLET_OFF, zigguratTechOff } from './mech/babylon'; // Clay Tablets and ziggurats (see mech/babylon)
 import { festivalActions, festivalDo } from './festival';
 import { troopEdge } from './troops';
 import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from './barracks';
@@ -64,7 +65,7 @@ export const inflationOf = (s: GameState, pid: number): { until: number; pauseUn
   return i && s.turn <= i.until ? i : null;
 };
 export const trainCost = (s: GameState, pid: number, k: UnitKind) => {
-  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
+  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - (s.players[pid].tribe === 'nubia' && unitMatches('nubia', k, 'ranged') ? 1 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
   if (s.players[pid].techs.length) { // the Trade/Markets fork: Caravan Monopoly surcharges, Mercenary Contracts discount
     cost = Math.max(1, cost + perkSum(s, pid, 'unitcost')); // Conscription (a policy card) takes 1★ off, never below 1★
     const pct = perkSum(s, pid, 'unitpct');
@@ -144,9 +145,9 @@ export function techCost(s: GameState, pid: number, tech: string) {
   const n = Math.max(1, citiesOf(s, pid).length);
   const base = t.tier * n + 4;
   // a Eureka (game/sparks), a met rival who already knows it, and a Dark Age (game/eras) each take a share off
-  const mult = (sparked(s, pid, tech) ? 1 - EUREKA_OFF : 1) * (knownByContact(s, pid, tech) ? 1 - (s.players[pid].tribe === 'arabia' ? WISDOM_OFF : CONTACT_OFF) : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
+  const mult = (sparked(s, pid, tech) ? 1 - (s.players[pid].tribe === 'babylon' ? TABLET_OFF : EUREKA_OFF) : 1) * (knownByContact(s, pid, tech) ? 1 - (s.players[pid].tribe === 'arabia' ? WISDOM_OFF : CONTACT_OFF) : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
   const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) - freeTechOff(s, pid) // a Scholar (see game/governors) and Science cities (see game/citystates)
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) - freeTechOff(s, pid) - zigguratTechOff(s, pid) // a Scholar (see game/governors) and Science cities (see game/citystates)
     - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech)
     - naturalTechOff(s, pid, base)); // the Glimmerdeep Grotto (see game/naturals)
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
@@ -541,11 +542,11 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
   const tribe = p.tribe;
   // a resource can be developed once: a farm or mine keeps its crop or ore but can't be rebuilt
   if (!t.improvement) switch (t.resource) {
-    case 'fruit': add('harvest', 'Harvest Fruit', '+1 population.', 2, 'gathering', 'fruit'); break;
+    case 'fruit': add('harvest', 'Harvest Fruit', `+1 population.${tribe === 'majapahit' ? ' Spice Islands pays +1★.' : ''}`, 2, 'gathering', 'fruit'); break;
     case 'animal': add('harvest', 'Hunt', `+${tribe === 'zulu' ? 2 : 1} population.${tribe === 'aztec' ? ' Sacred Hunt refunds 1★.' : tribe === 'rus' ? ' Fur Trade pays +1★.' : ''}`, 2, 'hunting', 'animal'); break;
-    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.`, 2, 'fishing', 'fish'); break;
+    case 'fish': add('harvest', 'Fish', `+${hasTech(s, pid, 'aquaculture') ? 2 : 1} population.${tribe === 'majapahit' ? ' Spice Islands pays +1★.' : ''}`, 2, 'fishing', 'fish'); break;
     case 'whale': add('harvest', 'Whaling', 'Gain 10★.', 2, 'whaling', 'whale'); break;
-    case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' ? 3 : 2} population.`, 5, 'farming', 'farm'); break;
+    case 'crop': add('farm', 'Build Farm', `+${tribe === 'egypt' || tribe === 'haudenosaunee' ? 3 : 2} population.`, 5, 'farming', 'farm'); break; // Three Sisters
     case 'ore': add('mine', 'Build Mine', '+2 population and 1 Iron a turn.', 5, 'mining', 'mine'); break;
     default:
       if (isLuxury(t.resource)) { // a luxury deposit (see game/goods)
@@ -686,6 +687,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       if (r === 'whale') { p.stars += 10; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 10 }); return true; }
       if (r === 'animal' && p.tribe === 'aztec') p.stars += 1;
       if (r === 'animal' && p.tribe === 'rus') { p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); } // Fur Trade
+      if ((r === 'fish' || r === 'fruit') && p.tribe === 'majapahit') { p.stars += 1; emit({ type: 'stars', player: pid, x: t.x, y: t.y, amount: 1 }); } // Spice Islands
       if (r === 'animal' && p.tribe === 'zulu') return grow(2, 'harvest', 'animal'); // Great Hunt
       return grow(r === 'fish' ? (hasTech(s, pid, 'aquaculture') ? 2 : 1) + (p.tribe === 'inuit' ? 1 : 0) : 1, 'harvest', r ?? ''); // Sea Hunters
     }
@@ -696,7 +698,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
       if (luxuriesOf(s, pid)[kind] === MONOPOLY_AT) emit({ type: 'toast', player: pid, text: `👑 ${LUXURIES[kind].name} Monopoly! Every ${LUXURIES[kind].name} tile now pays ${LUX_FIRST}★, and your trade routes pay +1★ each (up to ${MONOPOLY_ROUTES_MAX}).` });
       return grow(1, 'luxury');
     }
-    case 'farm': t.improvement = 'farm'; specialStart(s, pid, t); return grow(p.tribe === 'egypt' ? 3 : 2, 'farm');
+    case 'farm': t.improvement = 'farm'; specialStart(s, pid, t); return grow(p.tribe === 'egypt' ? 3 : 2 + (p.tribe === 'haudenosaunee' ? 1 : 0), 'farm'); // Three Sisters
     case 'mine': t.improvement = 'mine'; specialStart(s, pid, t); return grow(p.tribe === 'inca' ? 3 : 2, 'mine'); // Terraces
     case 'lumber': { const b = clusterBonus(s, t, 'lumber'); t.improvement = 'lumber'; specialStart(s, pid, t); return grow(1 + b, 'lumber'); }
     case 'clear': { // Clear Cutting pays more for the timber
