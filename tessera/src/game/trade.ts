@@ -101,6 +101,11 @@ export const TRADERS: Record<TribeId, TraderDef> = {
   arabia: { land: 'Camel Caravan', landLook: 'camel', sea: 'Ocean Dhow', seaLook: 'dhow' },
   rus: { land: 'Fur Sledge', landLook: 'dogsled', sea: 'River Lodya', seaLook: 'knarr' },
   vietnam: { land: 'Buffalo Cart', landLook: 'oxcart', sea: 'Basket-boat Junk', seaLook: 'junk' },
+  babylon: { land: 'Donkey Caravan', landLook: 'mule', sea: 'Reed Boat', seaLook: 'raft' },
+  nubia: { land: 'Desert Caravan', landLook: 'camel', sea: 'Nile Barge', seaLook: 'felucca' },
+  majapahit: { land: 'Shoulder-pole Porter', landLook: 'porter', sea: 'Spice Jong', seaLook: 'junk' },
+  spain: { land: 'Mule Train', landLook: 'mule', sea: 'Treasure Galleon', seaLook: 'roundship' },
+  haudenosaunee: { land: 'Forest Porter', landLook: 'porter', sea: 'Elm-bark Canoe', seaLook: 'canoe' },
 };
 
 /** The name an empire gives its merchant of this kind. */

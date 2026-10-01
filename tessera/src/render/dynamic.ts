@@ -274,6 +274,11 @@ export const FISH: Record<TribeId, [string, string]> = {
   arabia: ['#9af0e0', '#1a70b0'],
   rus: ['#b0dce8', '#2a5a90'],
   vietnam: ['#8ae8d0', '#1a7aa8'],
+  babylon: ['#9ae0d0', '#1a6aa8'],
+  nubia: ['#9ae0d0', '#1a6aa0'],
+  majapahit: ['#8af0d8', '#127ab0'],
+  spain: ['#9ae0f0', '#1a5ca8'],
+  haudenosaunee: ['#a8dce8', '#2a62a0'],
 };
 
 /** Fish, whales and glints, drawn between the ground and scenery layers. */

@@ -131,6 +131,16 @@ export const HEROES: Record<TribeId, HeroDef> = {
     desc: 'The ice cracks under the enemy: enemies within 2 cannot move on their next turn.', fx: [{ k: 'freeze', r: 2 }] },
   vietnam: { name: 'Trần Hưng Đạo', title: 'Grand Prince, victor of Bạch Đằng', ability: 'Stakes of Bạch Đằng', cd: 5,
     desc: 'Every enemy within 2 takes 3 damage, and your units within 2 get +1 defence until your next turn.', fx: [{ k: 'strike', r: 2, n: 3 }, { k: 'buff', r: 2, def: 1 }] },
+  babylon: { name: 'Hammurabi', title: 'King of Babylon, Giver of Laws', ability: 'Code of Laws', cd: 5,
+    desc: 'Order in every city: +5★ and +1 population in the capital.', fx: [{ k: 'stars', n: 5 }, { k: 'pop', n: 1 }] },
+  nubia: { name: 'Amanirenas', title: 'Kandake of Kush', ability: 'Eye of the Kandake', cd: 4,
+    desc: 'Every enemy within 2 takes 2 damage, and your units within 2 attack +1 until your next turn.', fx: [{ k: 'strike', r: 2, n: 2 }, { k: 'buff', r: 2, atk: 1 }] },
+  majapahit: { name: 'Gajah Mada', title: 'Mahapatih of Majapahit', ability: 'Palapa Oath', cd: 5,
+    desc: 'Your units within 2 get +1 attack and +1 movement until your next turn.', fx: [{ k: 'buff', r: 2, atk: 1, move: 1 }] },
+  spain: { name: 'El Cid', title: 'Campeador of Castile', ability: 'Legend of the Cid', cd: 5,
+    desc: 'All your units attack +0.5 until your next turn.', fx: [{ k: 'buff', r: 'all', atk: 0.5 }] },
+  haudenosaunee: { name: 'Hiawatha', title: 'Co-founder of the Great Law', ability: 'Condolence', cd: 4,
+    desc: 'Every one of your units inside your borders heals 4 HP, and the capital grows by 1.', fx: [{ k: 'heal', r: 'land', n: 4 }, { k: 'pop', n: 1 }] },
 };
 
 // ---------------------------------------------------------------- state

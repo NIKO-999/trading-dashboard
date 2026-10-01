@@ -323,6 +323,49 @@ const THEMES: Record<ThemeId, Theme> = {
     drone: { voice: 'gong', degrees: [0], oct: -1, vol: 0.06, every: 4 },
     perc: [{ voice: 'wood', pat: 'X...x...x.x.x...', vol: 0.12 }, { voice: 'gongperc', pat: '........o.......', vol: 0.08 }],
   },
+  // ------------------------------------------------------------------ Babylon: a lyre and reed pipe over a frame drum, an old diatonic mode
+  babylon: {
+    gain: 1.2,
+    name: 'Gate of Ishtar', bpm: 88, steps: 12, perBeat: 3, root: 50, scale: [0, 200, 300, 500, 700, 800, 1000], reverb: 0.55,
+    melody: { voice: 'aulos', oct: 1, vol: 0.14, density: 0.75, rhythms: R12, contour: 'arch', lo: -2, hi: 5, orn: 0.2, hold: 6 },
+    arp: { voice: 'lyre', oct: 0, vol: 0.14, pattern: [0, 2, 4, 2, 0, 4], rhythms: [[0, 2, 4, 6, 8, 10]], density: 0.9, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0, 4], oct: -1, vol: 0.08 },
+    perc: [{ voice: 'frame', pat: 'X..x..x..x..', vol: 0.18 }, { voice: 'tek', pat: '...x.....x.o', vol: 0.08 }],
+  },
+  // ------------------------------------------------------------------ Kush: a bowl lyre and handclaps over deep drums, pentatonic
+  nubia: {
+    name: 'Land of the Bow', bpm: 108, steps: 16, perBeat: 4, root: 52, scale: [0, 200, 500, 700, 900], reverb: 0.4,
+    melody: { voice: 'voice', oct: 1, vol: 0.13, density: 0.8, rhythms: R16, contour: 'wave', lo: -2, hi: 5, hold: 5 },
+    arp: { voice: 'harp', oct: 0, vol: 0.14, pattern: [0, 2, 4, 2, 0, 2, 3, 2], rhythms: [[0, 2, 4, 6, 8, 10, 12, 14]], density: 0.9, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0], oct: -1, vol: 0.07 },
+    perc: [{ voice: 'doum', pat: 'X..x..X.x..x..x.', vol: 0.25 }, { voice: 'clap', pat: '....x.......x...', vol: 0.1 }, { voice: 'shaker', pat: 'x.x.x.x.x.x.x.x.', vol: 0.05 }],
+  },
+  // ------------------------------------------------------------------ Majapahit: a gamelan of gongs and metallophones in pelog
+  majapahit: {
+    gain: 1.3,
+    name: 'Gamelan of Trowulan', bpm: 72, steps: 16, perBeat: 4, root: 51, scale: [0, 120, 270, 540, 670, 790, 950], reverb: 0.55,
+    melody: { voice: 'roneat', oct: 1, vol: 0.14, density: 0.85, rhythms: [[0, 2, 4, 6, 8, 10, 12, 14], [0, 4, 8, 12], [0, 2, 6, 8, 10, 14]], contour: 'wave', lo: -1, hi: 5, hold: 4 },
+    arp: { voice: 'roneat', oct: 0, vol: 0.1, pattern: [0, 1, 2, 4, 2, 1], rhythms: [[0, 4, 8, 12]], density: 1, contour: 'flat' },
+    drone: { voice: 'gong', degrees: [0], oct: -1, vol: 0.1, every: 2 },
+    perc: [{ voice: 'gongperc', pat: 'X.......o.......', vol: 0.14 }, { voice: 'wood', pat: '..x...x...x...x.', vol: 0.08 }],
+  },
+  // ------------------------------------------------------------------ Spain: a plucked oud-guitar in the Phrygian mode with handclaps
+  spain: {
+    name: 'Castile', bpm: 112, steps: 12, perBeat: 3, root: 52, scale: [0, 100, 400, 500, 700, 800, 1000], reverb: 0.4,
+    melody: { voice: 'fiddle', oct: 1, vol: 0.13, density: 0.85, rhythms: R12, contour: 'descend', lo: -2, hi: 6, orn: 0.3, hold: 4 },
+    arp: { voice: 'oud', oct: 0, vol: 0.15, pattern: [0, 2, 4, 2, 0, 1], rhythms: [[0, 2, 4, 6, 8, 10]], density: 1, contour: 'flat' },
+    drone: { voice: 'drone', degrees: [0, 4], oct: -1, vol: 0.06 },
+    perc: [{ voice: 'clap', pat: 'x..x..x.x.x.', vol: 0.14 }, { voice: 'frame', pat: 'X.....X.....', vol: 0.14 }],
+  },
+  // ------------------------------------------------------------------ Haudenosaunee: a water drum and horn rattles under a call-and-answer song
+  haudenosaunee: {
+    gain: 1.3,
+    name: 'Longhouse', bpm: 96, steps: 8, perBeat: 2, root: 48, scale: [0, 300, 500, 700, 1000], reverb: 0.45,
+    melody: { voice: 'voice', oct: 1, vol: 0.13, density: 0.85, rhythms: [[0, 2, 4, 6], [0, 1, 2, 4, 6], [0, 4]], contour: 'descend', lo: -2, hi: 4, hold: 4 },
+    echo: { voice: 'natflute', oct: 1, vol: 0.08, density: 0.4, rhythms: [[0, 4]], contour: 'flat', lo: 0, hi: 4, hold: 6 },
+    drone: { voice: 'drone', degrees: [0], oct: -2, vol: 0.06 },
+    perc: [{ voice: 'frame', pat: 'X.x.X.x.', vol: 0.2 }, { voice: 'rattle', pat: 'x.x.x.x.', vol: 0.1 }],
+  },
 };
 
 // ---------------------------------------------------------------------------------------------- the engine

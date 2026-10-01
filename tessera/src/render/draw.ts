@@ -1936,6 +1936,7 @@ const FRUIT: Record<TribeId, string> = {
   china: '#e8423a', india: '#e8a02a', mali: '#f2b33a', lakota: '#8a2a4a', ottoman: '#c8244a',
   maya: '#f2b33a', korea: '#e8423a', khmer: '#f28a2a', swahili: '#e8423a', tibet: '#d8402a',
   carthage: '#7a2a6a', byzantium: '#3a2a4a', arabia: '#8a5a2a', rus: '#c8243a', vietnam: '#f2c53a',
+  babylon: '#7a3a2a', nubia: '#c8642a', majapahit: '#e86a2a', spain: '#f0882a', haudenosaunee: '#5a2a6a',
 };
 
 /** A round, softly lit fruit with a stalk and a leaf. */
@@ -2381,6 +2382,7 @@ function drawBuilding(ctx: Ctx, tribe: TribeId, x: number, y: number, big: boole
       tbBuilding(ctx, x, y, big, capital);
       break;
     case 'carthage': case 'byzantium': case 'arabia': case 'rus': case 'vietnam':
+    case 'babylon': case 'nubia': case 'majapahit': case 'spain': case 'haudenosaunee':
       if (TRIBE_ART[tribe]?.building) { TRIBE_ART[tribe]!.building!(ctx, x, y, big, roofC, capital); break; }
       box(ctx, x, y, w, h, '#ece4d0');
       roof(ctx, x, y - h, w + 2, 6, roofC);

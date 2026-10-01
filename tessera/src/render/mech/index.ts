@@ -30,7 +30,12 @@ import { render as byzantium } from './byzantium';
 import { render as arabia } from './arabia';
 import { render as rus } from './rus';
 import { render as vietnam } from './vietnam';
+import { render as babylon } from './babylon';
+import { render as nubia } from './nubia';
+import { render as majapahit } from './majapahit';
+import { render as spain } from './spain';
+import { render as haudenosaunee } from './haudenosaunee';
 import { render as vikings } from './vikings';
 import { render as zulu } from './zulu';
 
-export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, lakota, mali, maya, mongols, ottoman, persia, pirates, polynesia, rome, swahili, tibet, vikings, zulu, carthage, byzantium, arabia, rus, vietnam };
+export const MECH_RENDER: MechRenderRegistry = { aboriginal, aztec, celts, china, egypt, ethiopia, greeks, inca, inuit, japan, khmer, korea, lakota, mali, maya, mongols, ottoman, persia, pirates, polynesia, rome, swahili, tibet, vikings, zulu, carthage, byzantium, arabia, rus, vietnam, babylon, nubia, majapahit, spain, haudenosaunee };

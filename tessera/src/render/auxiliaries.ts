@@ -64,6 +64,11 @@ const SPEAR: Record<TribeId, SpearLook> = {
   arabia: { head: 'leaf', metal: STEEL, tassel: '#f0ead8', shield: 'round', face: '#2a5a10', mark: '#f0ead8' },
   rus: { head: 'winged', metal: STEEL, tassel: '#e0b030', shield: 'tall', face: '#a83228', mark: '#e0b030' },
   vietnam: { head: 'leaf', metal: BRONZE, tassel: '#f08aa8', shield: 'wicker', face: '#b03a2a', mark: '#f2d06a' },
+  babylon: { head: 'broad', metal: BRONZE, tassel: '#2a3fd0', shield: 'tall', face: '#2a3fd0', mark: '#e8c060' },
+  nubia: { head: 'leaf', metal: STEEL, tassel: '#b07a10', shield: 'hide', face: '#b07a10', mark: '#f4efe0' },
+  majapahit: { head: 'crescent', metal: BRONZE, tassel: '#e05010', shield: 'oval', face: '#7a2804', mark: GOLD },
+  spain: { head: 'pike', metal: STEEL, tassel: '#f0c43a', shield: 'none', face: '#7a0a14', mark: '#f0c43a', long: true },
+  haudenosaunee: { head: 'bone', metal: BONE, tassel: '#4a3a8a', shield: 'hide', face: '#4a3a8a', mark: '#f4efe0' },
 };
 
 /** What a Scout carries: a horn, a spyglass, a walking staff, a knotted message cord, a rolled map or a feathered lance. */
@@ -103,6 +108,11 @@ const SCOUT: Record<TribeId, ScoutLook> = {
   arabia: { gear: 'spyglass', pack: '#d8c4a0', hat: 'wide', hatC: '#f0ead8' },
   rus: { gear: 'horn', pack: '#6a4a30', hat: 'cap', hatC: '#5a3a2a' },
   vietnam: { gear: 'cord', pack: '#c9a45a', hat: 'wide', hatC: '#e8d8a0' },
+  babylon: { gear: 'staff', pack: '#d8c4a0', hat: 'band', hatC: '#2a3fd0' },
+  nubia: { gear: 'cord', pack: '#c8a070', hat: 'band', hatC: '#b07a10' },
+  majapahit: { gear: 'horn', pack: '#c8a070', hat: 'wide', hatC: '#c8a050' },
+  spain: { gear: 'spyglass', pack: '#6a4a30', hat: 'wide', hatC: '#1a1a1e' },
+  haudenosaunee: { gear: 'feather', pack: '#8a6a4a', hat: 'none', hatC: '#4a3a8a' },
 };
 
 /** What a Healer holds: a staff with a snake, a smoking censer, a bowl of medicine, a rattle, a prayer wheel, a scroll
@@ -141,6 +151,11 @@ const HEALER: Record<TribeId, HealerLook> = {
   arabia: { tool: 'scroll', robe: '#f0ead8', trim: '#2a5a10' },
   rus: { tool: 'herbs', robe: '#5a3a2a', trim: '#a83228' },
   vietnam: { tool: 'herbs', robe: '#3a3a3a', trim: '#f08aa8' },
+  babylon: { tool: 'censer', robe: '#f0e8d0', trim: '#2a3fd0' },
+  nubia: { tool: 'herbs', robe: '#f4efe0', trim: '#b07a10' },
+  majapahit: { tool: 'herbs', robe: '#2a5a3a', trim: '#e05010' },
+  spain: { tool: 'bag', robe: '#1a1a1e', trim: '#f4efe0', hood: true },
+  haudenosaunee: { tool: 'rattle', robe: '#6a4a30', trim: '#4a3a8a' },
 };
 
 // ---------------------------------------------------------------- people

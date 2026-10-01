@@ -177,6 +177,31 @@ const LINES: Record<TribeId, [Row, Row, Row]> = {
     ['Bronze Drums', 'Their thunder called every village to war.', [{ k: 'atk', n: 0.5, who: 'melee' }]],
     ['Fire Arrows', 'Rockets and fire-lances of the Tây Sơn.', [{ k: 'atk', n: 0.5, who: 'ranged' }, { k: 'atk', n: 0.5, who: 'siege' }]],
   ],
+  babylon: [
+    ['Cuneiform', 'Wedges pressed into wet clay.', [{ k: 'cost', of: 'tech', n: 1 }]],
+    ['Ziggurat of Marduk', 'A stepped mountain of brick at the heart of the city.', [{ k: 'income', per: 'temple', n: 1 }, { k: 'levelstar', n: 2 }]],
+    ['Star Charts', 'Priests who tracked every planet across the sky.', [{ k: 'vision', n: 1 }, { k: 'income', per: 'capital', n: 1 }]],
+  ],
+  nubia: [
+    ['Ta-Seti', 'The Land of the Bow.', [{ k: 'atk', n: 0.5, who: 'ranged' }]],
+    ['Iron of Meroë', 'Furnaces that smoked for centuries.', [{ k: 'stock', of: 'iron', n: 1 }, { k: 'income', per: 'mine', n: 1 }]],
+    ['Pyramids of Meroë', 'A hundred steep tombs of kings and queens.', [{ k: 'income', per: 'temple', n: 1 }, { k: 'levelstar', n: 2 }]],
+  ],
+  majapahit: [
+    ['Jong Shipyards', 'Ships as big as castles.', [{ k: 'def', n: 1, who: 'naval' }]],
+    ['Subak Terraces', 'Water temples share out the rice water.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Palapa Oath', 'Gajah Mada swore to unite the archipelago.', [{ k: 'atk', n: 0.5, who: 'naval' }, { k: 'move', n: 1, who: 'naval' }]],
+  ],
+  spain: [
+    ['Tercio', 'Pike and shot drawn up in a square.', [{ k: 'def', n: 0.5, who: 'melee' }]],
+    ['Treasure Galleons', 'Silver from across the ocean.', [{ k: 'income', per: 'port', n: 1 }]],
+    ['Armada', 'The greatest fleet of its age.', [{ k: 'atk', n: 0.5, who: 'naval' }, { k: 'def', n: 0.5, who: 'naval' }]],
+  ],
+  haudenosaunee: [
+    ['Three Sisters', 'Maize, beans and squash grown together.', [{ k: 'income', per: 'farm', n: 0.5 }]],
+    ['Longhouse', 'Many families under one roof.', [{ k: 'levelpop', n: 1 }]],
+    ['Great Law of Peace', 'Five nations bound by one law.', [{ k: 'income', per: 'city', n: 1 }]],
+  ],
 };
 
 /** The base tech each empire's line branches off (tied to what the line and the empire's mechanic are about). */
@@ -186,7 +211,7 @@ export const LINE_PARENT: Record<TribeId, string> = {
   inuit: 'sailing', inca: 'climbing', ethiopia: 'climbing', aboriginal: 'gathering', china: 'gathering', india: 'gathering',
   mali: 'riding', lakota: 'hunting', ottoman: 'gathering', maya: 'gathering', korea: 'fishing', khmer: 'gathering',
   swahili: 'fishing', tibet: 'climbing', carthage: 'fishing', byzantium: 'gathering', arabia: 'riding', rus: 'hunting',
-  vietnam: 'gathering',
+  vietnam: 'gathering', babylon: 'gathering', nubia: 'archery', majapahit: 'fishing', spain: 'sailing', haudenosaunee: 'farming',
 };
 
 export const UNIQUE_TECHS: UniqueTech[] = (Object.keys(LINES) as TribeId[]).flatMap((tribe) =>

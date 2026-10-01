@@ -8,7 +8,7 @@
 // fights (the AI ranks its attacks with previewCombat, which includes all of it).
 import { emit } from './events';
 import { dist, isWater, neighbors, tileAt } from './grid';
-import { def, maxHp, removeUnit } from './rules';
+import { def, maxHp, removeUnit, tileOwnerPlayer } from './rules';
 import { hostile } from './diplomacy';
 import { isBeast } from './wild';
 import { MOUNTED_KINDS } from './perks';
@@ -50,6 +50,11 @@ export const UNIQUE_ABILITY: Partial<Record<UnitKind, UniqueAbility>> = {
   camelrider: { name: 'Ship of the desert', desc: 'Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert.' },
   druzhina: { name: 'Winter host', desc: 'Forest never stops it; +1 attack and defence on tundra and ice.' },
   rattan: { name: 'Jungle guerrilla', desc: 'Moves freely through forest and swamp, and attacks +1 from them.' },
+  sabum: { name: 'Royal levy', desc: '+1 attack against mounted units.' },
+  pitati: { name: 'Eye-shooter', desc: '+1 attack against wounded units.' },
+  kris: { name: 'Island raider', desc: 'Wades through shallows; +1 attack from a tile beside water.' },
+  conquistador: { name: 'Conquest', desc: '+1 attack against units in a city or fort.' },
+  mohawk: { name: 'Great Law', desc: 'Forest never stops it, and it heals 2 HP at the start of every turn inside your borders.' },
 };
 
 /** Tunables. */
@@ -61,6 +66,7 @@ export const SPLASH = 0.5; // share of the damage that splashes (hwacha) or tram
 export const WARD = 1 / 3; // share of an adjacent friend's damage a temple guardian takes on
 export const VARANGIAN_HEAL = 2;
 export const CAMEL_SHY = 1.5;
+export const MOHAWK_HEAL = 2;
 
 const OPEN = ['field', 'desert', 'tundra'];
 const tileOf = (s: GameState, u: Unit) => tileAt(s, u.x, u.y)!;
@@ -86,6 +92,9 @@ export function uniqueEdge(s: GameState, a: Unit, d: Unit) {
   if (a.kind === 'crossbowman' && fortified(s, d)) atk += 1;
   if (a.kind === 'janissary' && isMelee(d)) atk += 1;
   if (d.kind === 'camelrider' && isMounted(a)) dd += CAMEL_SHY; // horses shy from camels
+  if (a.kind === 'sabum' && isMounted(d)) atk += 1;
+  if (a.kind === 'pitati' && d.hp < maxHp(d)) atk += 1;
+  if (a.kind === 'conquistador' && fortified(s, d)) atk += 1;
   return { atk, def: dd, fury: a.kind === 'berserker', pierce: a.kind === 'shotelai', steadfast: d.kind === 'sacredband' };
 }
 
@@ -148,6 +157,7 @@ export const UNIQUE_MECH: Mechanic = {
       case 'camelrider': return stat === 'atk' && tileOf(s, u).terrain === 'desert' ? 1 : 0;
       case 'druzhina': return (stat === 'atk' || stat === 'def') && ['tundra', 'ice'].includes(tileOf(s, u).terrain) ? 1 : 0;
       case 'rattan': return stat === 'atk' && ['forest', 'swamp'].includes(tileOf(s, u).terrain) ? 1 : 0;
+      case 'kris': return stat === 'atk' && coastal(s, tileOf(s, u)) ? 1 : 0;
       default: return 0;
     }
   },
@@ -210,6 +220,11 @@ export const UNIQUE_MECH: Mechanic = {
       if (u.kind === 'immortal' && u.hp < maxHp(u)) { // undying
         const before = u.hp;
         u.hp = Math.min(maxHp(u), u.hp + IMMORTAL_HEAL);
+        emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
+      }
+      if (u.kind === 'mohawk' && u.hp < maxHp(u) && tileOwnerPlayer(s, tileOf(s, u)) === owner) { // the great law
+        const before = u.hp;
+        u.hp = Math.min(maxHp(u), u.hp + MOHAWK_HEAL);
         emit({ type: 'heal', unitId: u.id, x: u.x, y: u.y, amount: u.hp - before });
       }
       if (u.kind === 'varangian' && u.hp < maxHp(u) && byOwnCity(s, u)) { // the emperor's guard

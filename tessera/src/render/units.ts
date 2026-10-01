@@ -47,6 +47,11 @@ const LOOK: Record<TribeId, Look> = {
   arabia: { skin: '#c48c58', hair: '#140e0a' },
   rus: { skin: '#f0caa6', hair: '#8a5a2a' },
   vietnam: { skin: '#d8a874', hair: '#100c0c' },
+  babylon: { skin: '#c99060', hair: '#120c08' },
+  nubia: { skin: '#5a3820', hair: '#100a06' },
+  majapahit: { skin: '#b87a48', hair: '#120c0a' },
+  spain: { skin: '#e2b48a', hair: '#2a1a10' },
+  haudenosaunee: { skin: '#b07648', hair: '#100c0a' },
 };
 
 const GOLD = '#f0c43a';
@@ -1538,6 +1543,11 @@ const HERO_LOOK: Record<TribeId, { base: UnitKind; regalia: Regalia; trim: strin
   arabia: { base: 'swordsman', regalia: 'band', trim: '#f0ead8' },
   rus: { base: 'swordsman', regalia: 'crown', trim: '#e0b030' },
   vietnam: { base: 'rattan', regalia: 'band', trim: '#f2d06a' },
+  babylon: { base: 'sabum', regalia: 'crown', trim: '#e8c060' },
+  nubia: { base: 'pitati', regalia: 'crown', trim: '#f0c43a' },
+  majapahit: { base: 'kris', regalia: 'crown', trim: '#f0c43a' },
+  spain: { base: 'swordsman', regalia: 'crown', trim: '#f0c43a' },
+  haudenosaunee: { base: 'mohawk', regalia: 'plumes', trim: '#4a3a8a', plume: ['#f4efe0', '#4a3a8a', '#f4efe0'] },
 };
 
 /**
@@ -14859,6 +14869,11 @@ const CRITTER: Record<TribeId, { body: string; feature: 'hump' | 'antlers' | 'sn
   arabia: { body: '#d8b06a', feature: 'hump' }, // a dromedary
   rus: { body: '#5a3a24', feature: 'antlers' }, // an elk of the northern forest
   vietnam: { body: '#5a5654', feature: 'buffalo' }, // a water buffalo of the paddies
+  babylon: { body: '#4a3a2a', feature: 'horns' }, // an aurochs, as on the Ishtar Gate
+  nubia: { body: '#8a5a3a', feature: 'zebu' }, // long-horned Kerma cattle
+  majapahit: { body: '#d8862a', feature: 'tiger' }, // a Javan tiger
+  spain: { body: '#1a1a1e', feature: 'horns' }, // a black bull of the meseta
+  haudenosaunee: { body: '#9a6a40', feature: 'antlers' }, // a white-tailed deer
 };
 
 export function drawCritter(ctx: Ctx, x: number, y: number, biome: TribeId, k = 1) {

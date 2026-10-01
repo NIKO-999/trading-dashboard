@@ -230,4 +230,39 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
       T('Northern Shadow', 'A giant neighbour always watched the border.', { k: 'vision', n: -1 }),
     ],
   },
+  babylon: {
+    pros: [T('Irrigation Canals', 'Canals from the Euphrates watered every field.', { k: 'income', per: 'farm', n: 0.5 })],
+    cons: [
+      T('Open Floodplain', 'Flat river land with nowhere to hide.', { k: 'def', n: -0.5, who: 'melee' }),
+      T('Clay, not Stone', 'Every wall and temple was built of mud brick.', { k: 'cost', of: 'build', n: -1 }),
+    ],
+  },
+  nubia: {
+    pros: [T('Furnaces of Meroë', 'Mounds of iron slag still ring the city.', { k: 'stock', of: 'iron', n: 1 })],
+    cons: [
+      T('The Cataracts', 'Rocky rapids broke the river into pieces.', { k: 'move', n: -1, who: 'naval' }),
+      T('Desert Frontier', 'Only a narrow strip along the Nile could be farmed.', { k: 'grow', on: 'farm', n: -1 }),
+    ],
+  },
+  majapahit: {
+    pros: [T('Monsoon Sailors', 'Spice ships sailed with the seasonal winds.', { k: 'income', per: 'port', n: 1 })],
+    cons: [
+      T('Island Kingdoms', 'Few horses ever crossed the straits.', { k: 'cost', of: 'mounted', n: -1 }),
+      T('Court Intrigue', 'Princes and ministers plotted against each other.', { k: 'def', n: -0.5, who: 'melee' }),
+    ],
+  },
+  spain: {
+    pros: [T('Reconquista Veterans', 'Seven centuries of frontier war.', { k: 'kill', n: 1 })],
+    cons: [
+      T('Silver Inflation', 'So much silver arrived that prices soared.', { k: 'cost', of: 'build', n: -1 }),
+      T('Overstretched Empire', 'Armies on every continent, and never enough of them.', { k: 'terrain', on: 'away', n: -0.5 }),
+    ],
+  },
+  haudenosaunee: {
+    pros: [T('Forest Warfare', 'Warriors who moved unseen through the woods.', { k: 'terrain', on: 'forest', n: 0.5 })],
+    cons: [
+      T('No Iron', 'Stone, bone and wood until traders brought metal.', { k: 'techcost', tech: 'smithing', n: 2 }),
+      T('No Horses', 'The Americas had no war-horses.', { k: 'cost', of: 'mounted', n: -1 }),
+    ],
+  },
 };

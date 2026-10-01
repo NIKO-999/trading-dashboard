@@ -41,8 +41,13 @@ import { mech as byzantium } from './byzantium';
 import { mech as arabia } from './arabia';
 import { mech as rus } from './rus';
 import { mech as vietnam } from './vietnam';
+import { mech as babylon } from './babylon';
+import { mech as nubia } from './nubia';
+import { mech as majapahit } from './majapahit';
+import { mech as spain } from './spain';
+import { mech as haudenosaunee } from './haudenosaunee';
 
-export const MECH: MechRegistry = { egypt, aztec, polynesia, rome, pirates, vikings, japan, mongols, greeks, zulu, persia, celts, inuit, inca, ethiopia, aboriginal, china, india, mali, lakota, ottoman, maya, korea, khmer, swahili, tibet, carthage, byzantium, arabia, rus, vietnam };
+export const MECH: MechRegistry = { egypt, aztec, polynesia, rome, pirates, vikings, japan, mongols, greeks, zulu, persia, celts, inuit, inca, ethiopia, aboriginal, china, india, mali, lakota, ottoman, maya, korea, khmer, swahili, tibet, carthage, byzantium, arabia, rus, vietnam, babylon, nubia, majapahit, spain, haudenosaunee };
 export type { Mechanic, MoveCtx, CombatCtx, AttackInfo } from './types';
 
 const NONE: Mechanic = { name: '', blurb: '' };

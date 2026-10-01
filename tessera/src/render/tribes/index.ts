@@ -4,3 +4,8 @@ import './byzantium';
 import './arabia';
 import './rus';
 import './vietnam';
+import './babylon';
+import './nubia';
+import './majapahit';
+import './spain';
+import './haudenosaunee';

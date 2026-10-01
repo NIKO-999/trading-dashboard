@@ -103,6 +103,11 @@ export const AUX_NAMES: Record<TribeId, Record<'spearman' | 'scout' | 'healer', 
   arabia: { spearman: 'Bedouin Spearman', scout: 'Camel Scout', healer: 'Bimaristan Physician' },
   rus: { spearman: 'Opolchenie Spearman', scout: 'Forest Tracker', healer: 'Znakhar Healer' },
   vietnam: { spearman: 'Village Militia', scout: 'Jungle Runner', healer: 'Herbal Doctor' },
+  babylon: { spearman: 'Akkadian Spearman', scout: 'Canal Runner', healer: 'Asipu Healer' },
+  nubia: { spearman: 'Medjay Spearman', scout: 'Medjay Scout', healer: 'Temple Healer' },
+  majapahit: { spearman: 'Bhayangkara Spearman', scout: 'Island Scout', healer: 'Jamu Healer' },
+  spain: { spearman: 'Almogávar', scout: 'Explorador', healer: 'Hospitaller' },
+  haudenosaunee: { spearman: 'Wolf Clan Spearman', scout: 'Forest Runner', healer: 'Medicine Keeper' },
 };
 /** The name an empire gives its auxiliary of this kind. */
 export const auxName = (tribe: TribeId, kind: UnitKind) => AUX_NAMES[tribe]?.[kind as 'spearman'] ?? UNITS[kind].name;

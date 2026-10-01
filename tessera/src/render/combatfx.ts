@@ -52,12 +52,17 @@ export const DEATH_STYLES: Record<DeathTheme, DeathStyle> = {
   arabia: { name: 'Sand and rose petals', layers: [L('puff', 6, ['#e6cf96', '#d8b878'], 'ground', 30, -8, 0.7, 3.4), L('petal', 4, ['#e85a7a', '#f7c6d0'], 'up', 50, 30, 1, 3.2, 5)] },
   rus: { name: 'Snow and birch bark', layers: [L('puff', 6, ['#ffffff', '#e4eef6'], 'round', 40, -10, 0.9, 3.2), L('shard', 4, ['#f4f0e6', '#2a2a2a'], 'up', 70, 260, 0.6, 2.6)] },
   vietnam: { name: 'Lotus petals and bamboo leaves', layers: [L('petal', 6, ['#f08aa8', '#ffd1e0'], 'up', 50, 30, 1, 3.2, 5), L('feather', 4, ['#6ab04a', '#3a8a3a'], 'up', 55, 25, 1, 4, 6)] },
+  babylon: { name: 'Lapis tiles and clay shards', layers: [L('square', 8, ['#2a3fd0', '#4a6af0', '#e8c060'], 'up', 80, 260, 0.65, 2.2), L('shard', 4, ['#c8a070', '#a8845a'], 'up', 70, 260, 0.6, 2.6)] },
+  nubia: { name: 'Iron sparks and red sand', layers: [L('star', 6, ['#ffb03a', '#ff7a1a'], 'round', 80, 120, 0.5, 2.4), L('puff', 4, ['#c8784a', '#b0603a'], 'ground', 26, -8, 0.7, 3.2)] },
+  majapahit: { name: 'Cloves and frangipani', layers: [L('petal', 6, ['#fff6e0', '#ffd34a'], 'up', 50, 30, 1, 3.2, 5), L('square', 5, ['#6a3a1a', '#8a4a20'], 'up', 70, 240, 0.6, 2.2)] },
+  spain: { name: 'Silver reales and carnations', layers: [L('coin', 5, ['#e0e4e8', '#b8bcc4'], 'up', 75, 260, 0.6, 2.6), L('petal', 5, ['#d7263d', '#ff5a6a'], 'up', 50, 30, 1, 3.2, 5)] },
+  haudenosaunee: { name: 'Wampum beads and maple leaves', layers: [L('coin', 5, ['#f4f0e6', '#4a3a8a'], 'up', 70, 250, 0.6, 2.4), L('petal', 5, ['#d84a1a', '#f0a030'], 'up', 50, 30, 1.1, 3.6, 6)] },
   beast: { name: 'An ink splash', layers: [L('ring', 1, ['rgba(30,24,50,0.8)'], 'ground', 0, 0, 0.7, 5), L('puff', 7, ['#1c1830', '#2e2848'], 'round', 34, -4, 0.9, 4.4), L('drop', 7, ['#14101f', '#3a2f5c'], 'up', 95, 300, 0.6, 2.4)] },
   rebel: { name: 'Torn banners and smoke', layers: [L('square', 5, ['#6b2a2a', '#3a3a3a'], 'up', 60, 60, 0.9, 3.2), L('puff', 4, ['#8a857c'], 'up', 20, -30, 0.9, 3.6)] },
   captive: { name: 'Led away on a rope', layers: [L('petal', 4, ['#ff9f1c', '#ffc233'], 'up', 40, 30, 0.8, 2.8, 4)] },
 };
 
-/** Every theme with a death effect (31 empires, then the neutral ones). */
+/** Every theme with a death effect (36 empires, then the neutral ones). */
 export const DEATH_THEMES = [...TRIBE_IDS, 'beast', 'rebel', 'captive'] as DeathTheme[];
 
 /**
