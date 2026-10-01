@@ -29,6 +29,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // the game bundle is over 2 MB with 51 empires' art
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
       },
     }),
