@@ -49,7 +49,8 @@ test('shield wall: +0.5 defence for each shield unit beside it, up to +1, and it
   const walled = previewCombat(s, foe, d);
   assert.ok(walled.dmg < alone.dmg, `${walled.dmg} < ${alone.dmg}`);
   assert.ok(walled.ret > alone.ret, 'the wall hits back harder too');
-  assert.deepEqual(walled.formation, ['Shield wall +1 def']);
+  assert.ok(walled.formation.includes('Shield wall +1 def'));
+  assert.ok(walled.formation.some((n) => /Iron Wall/.test(n)), 'three of the Defender family also form an Iron Wall trio (see game/troops)');
   // another empire's shields beside it don't count, nor does a warrior
   const s2 = sandbox(['greeks', 'japan']);
   const d2 = unit(s2, 0, 'hoplite', 5, 5);

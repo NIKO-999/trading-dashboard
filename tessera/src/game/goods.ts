@@ -50,6 +50,9 @@ export const NEEDS: Partial<Record<UnitKind, Partial<Record<Strategic, number>>>
   lancer: { horses: 1 },
   horsebow: { horses: 1 },
   cataphract: { iron: 1, horses: 2 },
+  axeman: { iron: 1 },
+  musketeer: { iron: 1 },
+  cannon: { iron: 2 },
 };
 export const STRATEGIC_NAME: Record<Strategic, string> = { iron: 'Iron', horses: 'Horses' };
 export const STRATEGIC_ICON: Record<Strategic, string> = { iron: '⛏', horses: '🐎' };

@@ -131,6 +131,9 @@ export function formationLinks(s: GameState): { a: Unit; b: Unit; kind: Formatio
 export const UPGRADE_LINE: Partial<Record<UnitKind, UnitKind>> = {
   warrior: 'swordsman',
   rider: 'knight',
+  spearman: 'pikeman', // Medieval era
+  archer: 'musketeer', // Renaissance era
+  catapult: 'cannon', // Renaissance era
 };
 /** Stars paid on top of the difference in training cost. */
 export const UPGRADE_FEE = 1;
@@ -148,6 +151,8 @@ export function upgradeTarget(s: GameState, u: Unit): UnitKind | null {
   const next = UPGRADE_LINE[lineBase(u.kind)];
   if (!next) return null;
   const to = unitFor(s.players[u.owner].tribe, next);
+  const era = UNITS[to].era ?? 0;
+  if (era && (s.players[u.owner].era?.n ?? 0) < era) return null; // not before its era (game/eras)
   return to !== u.kind && UNITS[to].trainable ? to : null;
 }
 

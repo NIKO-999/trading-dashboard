@@ -49,7 +49,7 @@ export type Perk =
   | { k: 'raidheal'; n: number }; // HP a unit heals when it pillages
 
 export const MOUNTED_KINDS: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract'];
-const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha'];
+const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha', 'ballista', 'cannon', 'ram'];
 
 /** All perks an empire has earned so far. */
 export function perksOf(s: GameState, pid: number): Perk[] {

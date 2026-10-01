@@ -40,7 +40,9 @@ export type UnitKind =
   // neutral Great Beasts (see game/wild)
   | 'kraken'
   // every empire's extra cavalry, drawn in each empire's own style (see data/units, render/units)
-  | 'horsebow' | 'lancer' | 'cataphract';
+  | 'horsebow' | 'lancer' | 'cataphract'
+  // every empire's extra ground troops and siege engines (see data/units, data/troops, render/troops)
+  | 'axeman' | 'javelineer' | 'ranger' | 'pikeman' | 'musketeer' | 'ram' | 'ballista' | 'cannon';
 
 export interface Tile {
   x: number;

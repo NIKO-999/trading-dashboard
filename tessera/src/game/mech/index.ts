@@ -113,7 +113,9 @@ export function unitVisibleTo(s: GameState, viewer: number, u: Unit): boolean {
 }
 /** Sacred Canopy: a unit in forest is hidden from any enemy without a unit or city right beside it. */
 function canopyHidden(s: GameState, viewer: number, u: Unit): boolean {
-  if (s.tiles[u.y * s.size + u.x]?.terrain !== 'forest' || !s.players[u.owner].techs.includes('fork:canopy') || perkSum(s, u.owner, 'canopy') <= 0) return false;
+  if (s.tiles[u.y * s.size + u.x]?.terrain !== 'forest') return false;
+  // a Ranger always hides in forest (see data/troops); other units only with the Sacred Canopy
+  if (u.kind !== 'ranger' && (!s.players[u.owner].techs.includes('fork:canopy') || perkSum(s, u.owner, 'canopy') <= 0)) return false;
   const near = (x: number, y: number) => Math.max(Math.abs(x - u.x), Math.abs(y - u.y)) <= 1;
   return !s.units.some((e) => e.owner === viewer && near(e.x, e.y)) && !s.cities.some((c) => c.owner === viewer && near(c.x, c.y));
 }

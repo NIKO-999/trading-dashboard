@@ -3,6 +3,7 @@ import { actionRank, groupActions, pickTab, TAB_THRESHOLD, type ActGroup } from 
 import { forgeBonus, forgeTier, ROMAN } from '../data/forge';
 import { barracksName, trainingNote } from '../game/barracks';
 import { doctrineLine, inFormation } from '../game/army';
+import { roleLine, trioOf } from '../game/troops';
 import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
 import { goodsYield, monopoliesOf, MONOPOLY_AT, reqPrice } from '../game/goods';
@@ -960,6 +961,7 @@ export class GameView {
         h('span', {}, 'Defence ', h('b', {}, String(d.def)), naturalDefence(this.s, u) ? h('span', { class: 'bonus' }, ` +${naturalDefence(this.s, u)}`) : null, defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
           shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} ${owner.tribe === 'rome' ? 'testudo' : 'shield wall'}`) : null), // formations (see game/army)
         u.owner === this.me && inFormation(this.s, u) ? h('span', { class: 'bonus' }, doctrineLine(this.s, u)) : null, // the empire type's doctrine
+        u.owner === this.me && roleLine(this.s, u) ? h('span', { class: trioOf(this.s, u) ? 'bonus' : 'muted' }, roleLine(this.s, u)) : null, // its trio formation (see game/troops)
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
         forgeTier(owner, u.kind) ? h('span', { class: 'bonus' }, `⚒ ${ROMAN[forgeTier(owner, u.kind)]}`) : null, // the Armoury (see game/forge)
         h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u) + forgeBonus(owner, u.kind, 'move')))),

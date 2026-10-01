@@ -17,6 +17,8 @@ export interface UnitDef {
   /** Sees this far around it (units see 1 tile, 2 from a mountain, unless they have more). */
   vision?: number;
   trainable: boolean; // can be trained in cities
+  /** The era (game/eras index) an empire must have reached to train it: 2 Medieval, 3 Renaissance. */
+  era?: number;
   blurb: string;
 }
 
@@ -42,8 +44,17 @@ export const UNITS: Record<UnitKind, UnitDef> = {
 
   // every empire's extra cavalry (drawn in its own style by render/units drawRider)
   horsebow: U({ kind: 'horsebow', name: 'Mounted Archer', cost: 5, hp: 10, atk: 2, def: 1, move: 2, range: 2, skills: ['dash', 'escape'], tech: 'horsemanship', blurb: 'Shoots from 2 tiles and rides on after shooting. Uses 1 Horse.' }),
-  lancer: U({ kind: 'lancer', name: 'Lancer', cost: 4, hp: 10, atk: 2.5, def: 1, move: 3, range: 1, skills: ['dash', 'escape'], tech: 'roads', blurb: 'Light lance cavalry: the fastest raider on land. Uses 1 Horse.' }),
-  cataphract: U({ kind: 'cataphract', name: 'Cataphract', cost: 9, hp: 18, atk: 3.5, def: 3, move: 2, range: 1, skills: ['dash', 'fortify'], tech: 'smithing', blurb: 'Rider and horse in scale armour: slow for cavalry, but a wall that charges. Uses 1 Iron and 2 Horses.' }),
+  lancer: U({ kind: 'lancer', name: 'Lancer', cost: 4, hp: 10, atk: 2.5, def: 1, move: 3, range: 1, skills: ['dash', 'escape'], tech: 'roads', blurb: 'Fastest on land; +1 attack against archers and siege engines. Fragile: defence 1. Uses 1 Horse.' }),
+  cataphract: U({ kind: 'cataphract', name: 'Cataphract', cost: 9, hp: 18, atk: 3.5, def: 3, move: 2, range: 1, skills: ['dash', 'fortify'], tech: 'smithing', blurb: 'Armoured heavy cavalry, a wall that charges. Bogged down in forest and swamp (−1 defence there); Pikemen stop it. Uses 1 Iron and 2 Horses.' }),
+  // every empire's extra ground troops: each has a job and a weakness (see data/troops)
+  axeman: U({ kind: 'axeman', name: 'Axeman', cost: 4, hp: 12, atk: 3, def: 1, move: 1, range: 1, skills: ['dash'], tech: 'smithing', blurb: 'Shield-breaker: +1.5 attack against shield units (Defenders, Pikemen, Spearmen, shield walls). Fragile: defence 1. Uses 1 Iron.' }),
+  javelineer: U({ kind: 'javelineer', name: 'Javelineer', cost: 3, hp: 8, atk: 1.5, def: 1, move: 1, range: 2, skills: ['dash', 'escape'], tech: 'hunting', blurb: 'Cheap skirmisher: throws from 2 tiles and can move on after throwing. Light: 8 health.' }),
+  ranger: U({ kind: 'ranger', name: 'Ranger', cost: 4, hp: 10, atk: 2, def: 1.5, move: 2, range: 1, skills: ['dash', 'fortify', 'forestwalk'], tech: 'forestry', blurb: 'Woodsman: walks through forest freely, hidden there, and +1 attack and defence in forest. Ordinary in the open.' }),
+  pikeman: U({ kind: 'pikeman', name: 'Pikeman', cost: 5, hp: 15, atk: 1.5, def: 3, move: 1, range: 1, skills: ['fortify'], tech: 'tactics', era: 2, blurb: 'Cavalry-stopper: defence doubled against mounted attackers. Weak attack. Medieval era.' }),
+  musketeer: U({ kind: 'musketeer', name: 'Musketeer', cost: 8, hp: 15, atk: 4, def: 3, move: 1, range: 2, skills: ['fortify'], tech: 'smithing', era: 3, blurb: 'Gunpowder: shoots 2 tiles and ignores the defence bonus of walls, forest and hills. Cannot shoot after moving. Renaissance era; uses 1 Iron.' }),
+  ram: U({ kind: 'ram', name: 'Battering Ram', cost: 6, hp: 14, atk: 1.5, def: 0.5, move: 1, range: 1, skills: [], tech: 'engineering', blurb: 'Triple attack against units in a city. Nearly useless in the open; cannot attack after moving.' }),
+  ballista: U({ kind: 'ballista', name: 'Ballista', cost: 7, hp: 8, atk: 3, def: 0, move: 1, range: 4, skills: [], tech: 'carpentry', blurb: 'The longest shot: 4 tiles. Cannot shoot after moving, and has no defence of its own.' }),
+  cannon: U({ kind: 'cannon', name: 'Cannon', cost: 12, hp: 12, atk: 5, def: 0.5, move: 1, range: 3, skills: [], tech: 'engineering', era: 3, blurb: '+50% damage against units in a city. Slow and costly; cannot shoot after moving. Renaissance era; uses 2 Iron.' }),
 
   // Tribe-unique units
   legionary: U({ kind: 'legionary', name: 'Legionary', cost: 2, hp: 10, atk: 2, def: 3, move: 1, range: 1, skills: ['dash', 'fortify'], tech: null, blurb: 'Testudo: locks shields against missiles, +1 defence against ranged attacks.' }),

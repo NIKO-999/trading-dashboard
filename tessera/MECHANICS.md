@@ -147,6 +147,23 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 | Mounted Archer | Horsemanship | 5★ | 2 | 1 | 10 | 2 | 2 | 1 Horse |
 | Cataphract | Smithing | 9★ | 3.5 | 3 | 18 | 2 | 1 | 1 Iron, 2 Horses |
 
+**Ground troops for every empire** (each has a job and a weakness):
+
+| Unit | Tech / era | Cost | ⚔ | 🛡 | ❤ | ➜ | Range | Strength | Weakness |
+|---|---|---|---|---|---|---|---|---|---|
+| Axeman | Smithing | 4★ + 1 Iron | 3 | 1 | 12 | 1 | 1 | +1.5 attack vs shield units | defence 1 |
+| Javelineer | Hunting | 3★ | 1.5 | 1 | 8 | 1 | 2 | cheap; moves after throwing | 8 health |
+| Ranger | Forestry | 4★ | 2 | 1.5 | 10 | 2 | 1 | free in forest, hidden there, +1 atk/def in forest | ordinary in the open |
+| Pikeman | Tactics, Medieval | 5★ | 1.5 | 3 | 15 | 1 | 1 | defence ×2 vs cavalry | weak attack |
+| Musketeer | Smithing, Renaissance | 8★ + 1 Iron | 4 | 3 | 15 | 1 | 2 | ignores terrain and wall defence | can't shoot after moving |
+| Battering Ram | Engineering | 6★ | 1.5 | 0.5 | 14 | 1 | 1 | ×3 attack vs a unit in a city | useless in the open |
+| Ballista | Carpentry | 7★ | 3 | 0 | 8 | 1 | 4 | longest range | no defence; can't shoot after moving |
+| Cannon | Engineering, Renaissance | 12★ + 2 Iron | 5 | 0.5 | 12 | 1 | 3 | +50% vs a unit in a city | costly; can't shoot after moving |
+
+Lancers get +1 attack against archers and siege engines; Cataphracts lose 1 defence in forest and swamp. Upgrades: Spearman → Pikeman (Medieval), Archer → Musketeer and Catapult → Cannon (Renaissance).
+
+**Trio formations:** a unit with **two or more friendly units of its own family beside it** (an empire's unique counts as the unit it replaces) fights in its family's formation, on top of everything else: Warband (Warriors, +1 atk), Blade Wall (Swordsmen, +1 def), Iron Wall (Defenders, +1 def), Spear Hedge (+1 def), Hedgehog (Pikemen, +1.5 def vs cavalry), Shield-Breakers (Axemen, +1 atk), Arrow Storm (Archers, +1 atk), Skirmish Screen (Javelineers, +0.5/+0.5), Ambush (Rangers, +1.5 atk from forest), Volley Fire (Musketeers, +1.5 atk), Raiding Party (Riders), Wedge (Lancers), Parthian Circle (Mounted Archers), Lance Charge (Knights) (+1 atk each), Iron Avalanche (Cataphracts, +0.5/+0.5), Grand Battery (Catapults, Ballistae, Cannon, +1 atk), Siege Train (Rams, +1 def), Squadron (Galleys, +1 def), Battle Fleet (Triremes, +1 atk).
+
 **Doctrines** (on top of the formation bonuses below), by empire type, for a unit standing beside a friendly unit of its own line:
 - ⚔️ **Military — Drilled Ranks:** +0.5 attack.
 - 💰 **Economy — Hometown Guard:** +0.5 defence while on your own land.

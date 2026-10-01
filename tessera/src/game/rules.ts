@@ -25,13 +25,14 @@ import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutR
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
 import { festivalActions, festivalDo } from './festival';
+import { troopEdge } from './troops';
 import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from './barracks';
 import { homesteadActions, homesteadDoAction } from './homestead';
 import { frontierActions, frontierDoAction } from './frontier';
 import { forgeActions, forgeDoAction } from './forge';
 import { requisitionActions, requisitionDo } from './requisition';
 import { govActions, govCityIncome, govDefense, govDiscount, govDoAction, govTechOff } from './governors';
-import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
+import { ageCityIncome, ageOf, DARK_OFF, eraCheck, ERAS } from './eras';
 import { lootSpoils, MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
 import { isLuxury, LUX_COST, LUX_EXTRA, LUX_FIRST, LUXURIES, luxuriesOf, luxuryIncome, needNote, needWhy, spendNeeds } from './goods';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
@@ -376,6 +377,12 @@ function freeSpotNear(s: GameState, x: number, y: number, water: boolean) {
 }
 
 /** Units a city supports: one more than its level, and one more with a Recruiter stationed there (see game/roles). */
+/** Why `pid` can't field `k` yet for want of an era (Pikemen: Medieval; Musketeers and Cannon: Renaissance), or undefined. */
+export function eraWhy(s: GameState, pid: number, k: UnitKind): string | undefined {
+  const need = UNITS[k]?.era;
+  return need && (s.players[pid].era?.n ?? 0) < need ? `Needs the ${ERAS[need].name} era` : undefined;
+}
+
 export const unitCap = (c: City) => c.level + 1 + (c.data?.recruiter ? RECRUIT_CAP : 0) + (c.data?.barracks ? 1 : 0); // a Barracks houses one more (see game/barracks)
 
 /** Where a city afloat (`city.data.waka`) puts a newly trained unit: a free land tile beside it, else a free water tile. */
@@ -411,7 +418,7 @@ export interface Action {
   needs?: string;
 }
 
-const TRAIN_BASE: UnitKind[] = ['warrior', 'rider', 'archer', 'defender', 'swordsman', 'catapult', 'knight', 'lancer', 'horsebow', 'cataphract'];
+const TRAIN_BASE: UnitKind[] = ['warrior', 'rider', 'archer', 'defender', 'swordsman', 'catapult', 'knight', 'lancer', 'horsebow', 'cataphract', 'axeman', 'javelineer', 'ranger', 'pikeman', 'musketeer', 'ram', 'ballista', 'cannon'];
 
 export function trainableKinds(s: GameState, pid: number): UnitKind[] {
   const tribe = s.players[pid].tribe;
@@ -499,7 +506,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     for (const k of trainableKinds(s, pid)) {
       const d = UNITS[k];
       add(`train:${k}`, d.name, `${d.blurb} ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}${needNote(k)}`, cost(k), d.tech, k,
-        land ?? (full ? `City supports ${unitCap(city)} units` : needWhy(s, pid, k))); // Iron and Horses (see game/goods)
+        land ?? (full ? `City supports ${unitCap(city)} units` : eraWhy(s, pid, k) ?? needWhy(s, pid, k))); // an era (game/eras); Iron and Horses (see game/goods)
     }
     for (const k of AUX_KINDS) { // every empire's Spearman, Scout and Healer, in its own name (see game/auxiliaries)
       const d = UNITS[k];
@@ -1042,10 +1049,12 @@ export function attackOptions(s: GameState, u: Unit): Unit[] {
 export function previewCombat(s: GameState, a: Unit, d: Unit) {
   const f = formation(s, a, d); // volley, charge and shield wall (see game/army)
   const edge = uniqueEdge(s, a, d); // unique units' matchup bonuses (see game/uniques)
-  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk + edge.atk);
-  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def + edge.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
+  const tr = troopEdge(s, a, d, def(a).atk, unitDef(s, d)); // roles and trios (see game/troops)
+  f.notes.push(...tr.notes);
+  const atk = Math.max(0.5, def(a).atk + seaBonus(s, a) + perkUnit(s, a, 'atk') + hookStat(s, a, 'atk') + f.atk + edge.atk + tr.atk);
+  const dd = Math.max(0, unitDef(s, d) + perkUnit(s, d, 'def') + hookStat(s, d, 'def') + f.def + edge.def + tr.def) * braceOf(s, a, d); // a Spearman braced against horse (see game/auxiliaries)
   const aForce = atk * (edge.fury ? 1 : a.hp / maxHp(a));
-  const dForce = dd * (d.hp / maxHp(d)) * (edge.pierce ? Math.min(1, defenseBonus(s, d)) : defenseBonus(s, d));
+  const dForce = dd * (d.hp / maxHp(d)) * (edge.pierce || tr.pierce ? Math.min(1, defenseBonus(s, d)) : defenseBonus(s, d));
   const total = aForce + dForce || 1;
   const ranged = dist(a.x, a.y, d.x, d.y) > 1;
   let dmg = Math.round((aForce / total) * atk * 4.5);

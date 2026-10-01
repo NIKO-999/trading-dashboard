@@ -4,6 +4,14 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.50',
+    items: [
+      '🪓 Eight new troops for every empire, each with a job and a weakness: Axeman (breaks shields, fragile), Javelineer (cheap skirmisher), Ranger (hidden and strong in forest), Pikeman (stops cavalry, Medieval), Musketeer (ignores cover, Renaissance), Battering Ram (×3 vs cities), Ballista (4 tiles) and Cannon (+50% vs cities, Renaissance).',
+      '✦ Trio formations: three of the same unit side by side unlock their own formation: Warband, Arrow Storm, Hedgehog, Volley Fire, Wedge, Grand Battery, Battle Fleet and more. Your unique unit counts as the one it replaces.',
+      '⬆ New upgrade paths: Spearman → Pikeman, Archer → Musketeer, Catapult → Cannon, once you reach their era.',
+    ],
+  },
+  {
     version: '0.49',
     items: [
       '⛏🐎 Easier Iron and Horses: your capital adds 1 of each every 2 turns from the Classical era (every turn from the Medieval); a level-3 city or market town can Buy 1 (5★, +2★ each time, easing a step a turn); defeated iron and horse units leave 1 behind; from the Medieval era you can Cultivate mines and pastures anywhere.',

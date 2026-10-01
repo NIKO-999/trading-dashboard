@@ -1,6 +1,7 @@
 // Voxel-style unit figures: chunky big-headed people whose outfit, headgear and weapons
 // come from their empire, and whose silhouette comes from their class.
 import { TRIBES } from '../data/tribes';
+import { drawTroop } from './troops';
 import { UNITS } from '../data/units';
 import type { TribeId, UnitKind } from '../game/types';
 import { drawKraken } from './wild';
@@ -70,6 +71,8 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
     case 'horsebow': return drawRider(ctx, 'horsearcher', tribe, x, y);
     case 'lancer': drawRider(ctx, 'rider', tribe, x, y); return lancePennant(ctx, tribe, x, y);
     case 'cataphract': drawRider(ctx, 'knight', tribe, x, y); return scaleBarding(ctx, tribe, x, y);
+    // every empire's extra ground troops and siege engines (see render/troops)
+    case 'axeman': case 'javelineer': case 'ranger': case 'pikeman': case 'musketeer': case 'ram': case 'ballista': case 'cannon': return drawTroop(ctx, kind, tribe, x, y);
     case 'chariot': return drawChariot(ctx, tribe, x, y);
     case 'hero': return drawHero(ctx, tribe, x, y);
     default: return void drawFootUnit(ctx, kind, tribe, x, y, kind === 'giant' ? 1.4 : 1);

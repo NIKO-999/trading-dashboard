@@ -18,7 +18,7 @@ import {
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, transmute, transmuteCost, unitCap, unitAt,
   hasTech,
 } from './rules';
-import type { GameState, Tile, Unit } from './types';
+import type { GameState, Tile, Unit, UnitKind } from './types';
 import { holdsPost, rebelAi } from './rebels';
 import { isNeutral, nearBeast, wildAi } from './wild';
 import { campTargets, clanAi, raidThreats } from './clans';
@@ -292,6 +292,16 @@ function economyStep(s: GameState, pid: number): boolean {
   return false;
 }
 
+/** The AI's mix of specialists: at most 2 siege engines, a Ram only with an enemy city within 6 tiles, Pikemen when enemy cavalry is near. */
+function troopWanted(s: GameState, pid: number, k: UnitKind, c: { x: number; y: number }): boolean {
+  const siege: UnitKind[] = ['catapult', 'ballista', 'cannon', 'ram', 'hwacha'];
+  if (siege.includes(k) && s.units.filter((u) => u.owner === pid && siege.includes(u.kind)).length >= 2) return false;
+  if (k === 'ram') return s.cities.some((x) => x.owner !== pid && hostile(s, pid, x.owner) && dist(x.x, x.y, c.x, c.y) <= 6);
+  if (k === 'pikeman') return s.units.some((u) => hostile(s, pid, u.owner) && MOUNTED_KINDS.includes(u.kind) && dist(u.x, u.y, c.x, c.y) <= 5);
+  if (k === 'javelineer') return s.turn < 12; // cheap early harassers
+  return true;
+}
+
 function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
   const p = s.players[pid];
   for (const c of citiesOf(s, pid).sort((a, b) => b.level - a.level)) {
@@ -302,6 +312,7 @@ function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
     if (!t) continue;
     const kinds = trainableKinds(s, pid)
       .filter((k) => trainCost(s, pid, k) <= p.stars && (UNITS[k].tech === null || p.techs.includes(UNITS[k].tech!)))
+      .filter((k) => troopWanted(s, pid, k, c)) // a sensible mix: few siege engines, rams only near an enemy city (see game/troops)
       .sort((a, b) => {
         const va = defensive ? UNITS[a].def * 2 + UNITS[a].atk : UNITS[a].atk * 2 + UNITS[a].move;
         const vb = defensive ? UNITS[b].def * 2 + UNITS[b].atk : UNITS[b].atk * 2 + UNITS[b].move;
