@@ -139,6 +139,14 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 
 ## 4a. Army: formations, upgrades and supply
 
+**Cavalry for every empire** (drawn in each empire's own style; all count as mounted for charges, Spearmen and mounted bonuses):
+
+| Unit | Tech | Cost | ⚔ | 🛡 | ❤ | ➜ | Range | Uses |
+|---|---|---|---|---|---|---|---|---|
+| Lancer | Roads | 4★ | 2.5 | 1 | 10 | 3 | 1 | 1 Horse |
+| Mounted Archer | Horsemanship | 5★ | 2 | 1 | 10 | 2 | 2 | 1 Horse |
+| Cataphract | Smithing | 9★ | 3.5 | 3 | 18 | 2 | 1 | 1 Iron, 2 Horses |
+
 **Doctrines** (on top of the formation bonuses below), by empire type, for a unit standing beside a friendly unit of its own line:
 - ⚔️ **Military — Drilled Ranks:** +0.5 attack.
 - 💰 **Economy — Hometown Guard:** +0.5 defence while on your own land.

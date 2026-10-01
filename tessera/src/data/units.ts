@@ -40,6 +40,11 @@ export const UNITS: Record<UnitKind, UnitDef> = {
   ship: U({ kind: 'ship', name: 'Galley', cost: 5, hp: 10, atk: 2, def: 2, move: 3, range: 2, naval: true, skills: ['dash', 'carry'], tech: 'sailing', trainable: false, blurb: 'Sturdier boat that can cross the open ocean.' }),
   warship: U({ kind: 'warship', name: 'Trireme', cost: 15, hp: 15, atk: 4, def: 3, move: 3, range: 2, naval: true, skills: ['dash', 'carry'], tech: 'navigation', trainable: false, blurb: 'Rules the waves.' }),
 
+  // every empire's extra cavalry (drawn in its own style by render/units drawRider)
+  horsebow: U({ kind: 'horsebow', name: 'Mounted Archer', cost: 5, hp: 10, atk: 2, def: 1, move: 2, range: 2, skills: ['dash', 'escape'], tech: 'horsemanship', blurb: 'Shoots from 2 tiles and rides on after shooting. Uses 1 Horse.' }),
+  lancer: U({ kind: 'lancer', name: 'Lancer', cost: 4, hp: 10, atk: 2.5, def: 1, move: 3, range: 1, skills: ['dash', 'escape'], tech: 'roads', blurb: 'Light lance cavalry: the fastest raider on land. Uses 1 Horse.' }),
+  cataphract: U({ kind: 'cataphract', name: 'Cataphract', cost: 9, hp: 18, atk: 3.5, def: 3, move: 2, range: 1, skills: ['dash', 'fortify'], tech: 'smithing', blurb: 'Rider and horse in scale armour: slow for cavalry, but a wall that charges. Uses 1 Iron and 2 Horses.' }),
+
   // Tribe-unique units
   legionary: U({ kind: 'legionary', name: 'Legionary', cost: 2, hp: 10, atk: 2, def: 3, move: 1, range: 1, skills: ['dash', 'fortify'], tech: null, blurb: 'Testudo: locks shields against missiles, +1 defence against ranged attacks.' }),
   chariot: U({ kind: 'chariot', name: 'Chariot', cost: 4, hp: 10, atk: 2.5, def: 1, move: 2, range: 2, skills: ['dash', 'escape'], tech: 'riding', blurb: 'Archer chariot: shoots from 2 tiles and can drive on after shooting.' }),

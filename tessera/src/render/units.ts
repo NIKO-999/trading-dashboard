@@ -66,6 +66,10 @@ export function drawUnitSprite(ctx: Ctx, kind: UnitKind, tribe: TribeId, x: numb
     case 'elephant':
     case 'khampa':
     case 'knight': return drawRider(ctx, kind, tribe, x, y);
+    // every empire's extra cavalry, built on its own rider (see data/units)
+    case 'horsebow': return drawRider(ctx, 'horsearcher', tribe, x, y);
+    case 'lancer': drawRider(ctx, 'rider', tribe, x, y); return lancePennant(ctx, tribe, x, y);
+    case 'cataphract': drawRider(ctx, 'knight', tribe, x, y); return scaleBarding(ctx, tribe, x, y);
     case 'chariot': return drawChariot(ctx, tribe, x, y);
     case 'hero': return drawHero(ctx, tribe, x, y);
     default: return void drawFootUnit(ctx, kind, tribe, x, y, kind === 'giant' ? 1.4 : 1);
@@ -4525,6 +4529,29 @@ function lance(ctx: Ctx, hx: number, hy: number, color: string, thick: number, p
   if (pennant) {
     poly(ctx, [tx - 0.4, ty + 1.6, tx + 7, ty + 2.6, tx + 4.6, ty + 4.4, tx + 7, ty + 6.4, tx - 0.8, ty + 5.4], color);
     poly(ctx, [tx - 0.4, ty + 1.6, tx + 7, ty + 2.6, tx + 6.2, ty + 3.4, tx - 0.5, ty + 3], shade(color, 0.35));
+  }
+}
+
+/** A Lancer's long lance couched for the charge, level past the horse's head, with a swallow-tailed pennant and a sash. */
+function lancePennant(ctx: Ctx, tribe: TribeId, x: number, y: number) {
+  const T = TRIBES[tribe];
+  const hx = x + 1, hy = y - 12; // the rider's hand
+  line(ctx, hx - 9, hy + 3, hx + 20, hy - 3, 'rgba(20,14,8,0.35)', 2.6);
+  line(ctx, hx - 9, hy + 3, hx + 20, hy - 3, '#7a5432', 1.6);
+  poly(ctx, [hx + 20, hy - 4.2, hx + 25, hy - 4, hx + 20, hy - 1.8], '#e3e7ec'); // the steel point
+  poly(ctx, [hx + 12, hy - 1.6, hx + 15, hy + 4, hx + 13.2, hy + 2.6, hx + 12.4, hy + 5, hx + 10.4, hy - 1.2], T.color); // the pennant
+  line(ctx, x - 3, y - 13, x + 2, y - 8, shade(T.color, -0.15), 1.4); // a sash across the chest
+}
+
+/** A Cataphract's horse in a skirt of scale armour, a few rows of small plates down its flank. */
+function scaleBarding(ctx: Ctx, tribe: TribeId, x: number, y: number) {
+  const metal = metalOf(tribe);
+  for (let row = 0; row < 3; row++) {
+    for (let i = 0; i < 5; i++) {
+      const px = x - 7 + i * 3.4 + (row % 2) * 1.7, py = y - 9 + row * 2.3;
+      ellipse(ctx, px, py, 1.9, 1.4, row % 2 ? shade(metal, -0.12) : metal);
+      ellipse(ctx, px - 0.4, py - 0.4, 0.8, 0.5, shade(metal, 0.35));
+    }
   }
 }
 

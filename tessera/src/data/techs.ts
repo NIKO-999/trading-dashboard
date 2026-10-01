@@ -54,14 +54,14 @@ export const TECHS: TechDef[] = [
   T('aquaculture', 'Aquaculture', 3, 'whaling', 0, 'Fish harvests grant +2 pop.'),
 
   T('riding', 'Riding', 1, null, 0, 'Train Riders.'),
-  T('roads', 'Roads', 2, 'riding', 0, 'Build roads: faster travel. Roads joined to cities grow them.'),
+  T('roads', 'Roads', 2, 'riding', 0, 'Build roads: faster travel. Roads joined to cities grow them. Train Lancers.'),
   T('trade', 'Trade', 3, 'roads', 0, 'Cities earn +1★ each turn.'),
-  T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence. Tame herds into Pastures, which breed Horses.'),
+  T('horsemanship', 'Horsemanship', 2, 'riding', 0, 'All mounted units +1 defence. Train Mounted Archers. Tame herds into Pastures, which breed Horses.'),
   T('chivalry', 'Chivalry', 3, 'horsemanship', 0, 'Train Knights (2 Horses each).'),
 
   T('climbing', 'Climbing', 1, null, 0, 'Move onto mountains. Units on a mountain defend at ×2.'),
   T('mining', 'Mining', 2, 'climbing', 0, 'Build mines on ore (+2 pop and 1 Iron a turn).'),
-  T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen (2 Iron each).'),
+  T('smithing', 'Smithing', 3, 'mining', 0, 'Train Swordsmen (2 Iron each) and Cataphracts (1 Iron, 2 Horses).'),
   T('meditation', 'Meditation', 2, 'climbing', 0, 'Mountain shrines (+1 pop). Train Healers.'),
   T('philosophy', 'Philosophy', 3, 'meditation', 0, 'All future techs cost 33% less.'),
 ];

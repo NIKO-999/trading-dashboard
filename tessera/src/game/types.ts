@@ -38,7 +38,9 @@ export type UnitKind =
   // every empire's auxiliaries: anti-cavalry spearmen, scouts and healers, drawn in each empire's own style (see game/auxiliaries)
   | 'spearman' | 'scout' | 'healer'
   // neutral Great Beasts (see game/wild)
-  | 'kraken';
+  | 'kraken'
+  // every empire's extra cavalry, drawn in each empire's own style (see data/units, render/units)
+  | 'horsebow' | 'lancer' | 'cataphract';
 
 export interface Tile {
   x: number;

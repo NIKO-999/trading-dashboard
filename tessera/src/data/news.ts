@@ -4,6 +4,12 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.49',
+    items: [
+      '🐎 New cavalry for every empire, each drawn in its own style: the Lancer (Roads: fastest on land, 3 moves), the Mounted Archer (Horsemanship: shoots from 2 tiles and rides on) and the Cataphract (Smithing: horse and rider in scale armour, 18 health, defence 3).',
+    ],
+  },
+  {
     version: '0.48',
     items: [
       '⚒ The Armoury: at your Barracks, upgrade a whole unit type for the rest of the game: 5 tiers each (attack, +1 movement, attack, +1 range for archers and siege, attack). Paid in Stars and luxury goods 💎; tiers 4 and 5 need a Drill Yard and a War College.',
