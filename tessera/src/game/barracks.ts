@@ -90,7 +90,7 @@ export function barracksActions(s: GameState, pid: number, t: Tile): Action[] {
     const tt = TRAIN_TURNS[cat(s, pid)];
     out.push({
       id: 'barracks', label: 'Build Barracks', cost, icon: 'barracks', enabled: !why, reason: why, needs: has ? undefined : BARRACKS_TECH,
-      desc: `A training yard: a unit standing on it can Train to the next unit of its line for free in ${tt.up} turns, or Drill into a Veteran in ${tt.drill}. One per city.`,
+      desc: `A training yard: its city supports 1 more unit and can raise new units right here; a unit standing on it can Train to the next unit of its line for free in ${tt.up} turns, or Drill into a Veteran in ${tt.drill}. One per city.`,
     });
   }
   const lvl = barracksLevel(t);
@@ -119,6 +119,8 @@ export function barracksDoAction(s: GameState, pid: number, t: Tile, id: string)
   if (id === 'barracks') {
     t.improvement = 'barracks';
     t.data = { ...(t.data ?? {}), blvl: 1 };
+    const c = cityById(s, t.owner);
+    if (c) c.data = { ...(c.data ?? {}), barracks: true };
     emit({ type: 'toast', player: pid, text: 'Barracks built: move a unit onto it and tap Train.' });
     return true;
   }
@@ -137,6 +139,12 @@ export function barracksDoAction(s: GameState, pid: number, t: Tile, id: string)
 
 /** Start of `pid`'s turn: training units stay put; those whose time is up come out changed. */
 export function barracksTurnStart(s: GameState, pid: number) {
+  // the extra unit slot follows the yard: lost with it if it is pillaged or the land changes hands
+  for (const c of s.cities) {
+    if (c.owner !== pid) continue;
+    const has = !!barracksOf(s, c.id);
+    if (has !== !!c.data?.barracks) c.data = { ...(c.data ?? {}), barracks: has };
+  }
   for (const u of s.units) {
     if (u.owner !== pid) continue;
     const tr = trainingOf(u);

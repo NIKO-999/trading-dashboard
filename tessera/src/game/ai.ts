@@ -288,8 +288,11 @@ function economyStep(s: GameState, pid: number): boolean {
 function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
   const p = s.players[pid];
   for (const c of citiesOf(s, pid).sort((a, b) => b.level - a.level)) {
-    if (c.units >= unitCap(c) || (unitAt(s, c.x, c.y) && !postAt(s, c))) continue; // a stationed unit lets recruits step out beside it
-    const t = tileAt(s, c.x, c.y)!;
+    if (c.units >= unitCap(c)) continue;
+    // a stationed unit lets recruits step out beside it; a blocked city can still raise them on its Barracks yard (see game/barracks)
+    const yard = s.tiles.find((x) => x.owner === c.id && x.improvement === 'barracks' && !unitAt(s, x.x, x.y));
+    const t = unitAt(s, c.x, c.y) && !postAt(s, c) ? yard : tileAt(s, c.x, c.y)!;
+    if (!t) continue;
     const kinds = trainableKinds(s, pid)
       .filter((k) => trainCost(s, pid, k) <= p.stars && (UNITS[k].tech === null || p.techs.includes(UNITS[k].tech!)))
       .sort((a, b) => {

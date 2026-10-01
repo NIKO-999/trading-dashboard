@@ -6,7 +6,7 @@ export const NEWS: News[] = [
   {
     version: '0.45',
     items: [
-      '🏰 Barracks: build one beside a city, move a unit onto it and tap Train. It upgrades for free (Warrior → Swordsman, Rider → Knight) or drills into a Veteran, but it takes turns and defends at half strength meanwhile. Naval empires refit ships at their ports.',
+      '🏰 Barracks: build one beside a city: it supports 1 more unit and can raise new units right on the yard. Move a unit onto it and tap Train: It upgrades for free (Warrior → Swordsman, Rider → Knight) or drills into a Veteran, but it takes turns and defends at half strength meanwhile. Naval empires refit ships at their ports.',
       '🌾 Homestead: make a Farm out of empty land. Cheap for Economy empires, dear for Military ones (Barracks are the other way round).',
       '🌱 Cultivate: once an empire you have met has a resource, grow your own: plant a luxury, sink an iron mine or start a horse pasture (8★, dearer each time).',
     ],

@@ -25,7 +25,7 @@ import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutR
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
 import { festivalActions, festivalDo } from './festival';
-import { barracksActions, barracksDoAction, trainingDefense } from './barracks';
+import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from './barracks';
 import { homesteadActions, homesteadDoAction } from './homestead';
 import { govActions, govCityIncome, govDefense, govDiscount, govDoAction, govTechOff } from './governors';
 import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
@@ -373,7 +373,7 @@ function freeSpotNear(s: GameState, x: number, y: number, water: boolean) {
 }
 
 /** Units a city supports: one more than its level, and one more with a Recruiter stationed there (see game/roles). */
-export const unitCap = (c: City) => c.level + 1 + (c.data?.recruiter ? RECRUIT_CAP : 0);
+export const unitCap = (c: City) => c.level + 1 + (c.data?.recruiter ? RECRUIT_CAP : 0) + (c.data?.barracks ? 1 : 0); // a Barracks houses one more (see game/barracks)
 
 /** Where a city afloat (`city.data.waka`) puts a newly trained unit: a free land tile beside it, else a free water tile. */
 export function wakaSpawn(s: GameState, c: City): Tile | undefined {
@@ -482,13 +482,15 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
     }
   }
 
-  if (t.cityId !== null && city && city.owner === pid && t.cityId === city.id) {
+  // a city trains on its own tile, and also on its Barracks yard (see game/barracks)
+  const yard = !!city && isBarracks(t) && t.cityId === null;
+  if (city && city.owner === pid && ((t.cityId !== null && t.cityId === city.id) || yard)) {
     const full = city.units >= unitCap(city);
-    const afloat = !!city.data?.waka; // a Great Waka trains onto a free tile beside it, so a unit on the city tile does not block it
+    const afloat = !yard && !!city.data?.waka; // a Great Waka trains onto a free tile beside it, so a unit on the city tile does not block it
     const room = afloat ? wakaSpawn(s, city) : undefined;
     // a Recruiter or Tax Collector stationed on the city does not block it either: new units step out beside it (see game/roles)
-    const posted = !!u && !afloat && postedCity(s, u) === city;
-    const land = u && !afloat ? (posted ? (!postSpawn(s, city) ? 'No free tile beside the city' : undefined) : 'City tile is occupied') : afloat && !room ? 'No free tile beside the Great Waka' : undefined;
+    const posted = !!u && !afloat && !yard && postedCity(s, u) === city;
+    const land = yard ? (u ? 'The Barracks yard is occupied' : undefined) : u && !afloat ? (posted ? (!postSpawn(s, city) ? 'No free tile beside the city' : undefined) : 'City tile is occupied') : afloat && !room ? 'No free tile beside the Great Waka' : undefined;
     // a Foundry, Timberworks and some Districts make units trained here cheaper (see game/levels)
     const cost = (k: UnitKind) => { const c = trainCost(s, pid, k); return c > 1 ? Math.max(1, c - levelTrainDiscount(s, city, k)) : c; };
     for (const k of trainableKinds(s, pid)) {
@@ -636,6 +638,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
     const kind = id.slice(6) as UnitKind;
     spendNeeds(s, pid, kind); // Iron and Horses (see game/goods)
     if (kind === 'tradeship' || isRoleShip(kind)) { const w = shipSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; }
+    if (t.cityId === null) { spawnUnit(s, kind, pid, t.x, t.y, city!.id); return true; } // raised on the city's Barracks yard (see game/barracks)
     if (city?.data?.waka) return trainAfloat(s, city, kind);
     if (u && postedCity(s, u) === city) { const w = postSpawn(s, city!)!; spawnUnit(s, kind, pid, w.x, w.y, city!.id); return true; } // steps out beside a stationed unit
     spawnUnit(s, kind, pid, t.x, t.y, t.cityId);

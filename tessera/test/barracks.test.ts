@@ -7,7 +7,7 @@ import { drain } from '../src/game/events';
 import { stockOf } from '../src/game/goods';
 import { CULTIVATE_BASE, CULTIVATE_STEP, HOMESTEAD_COST } from '../src/game/homestead';
 import { createGame, spawnUnit } from '../src/game/mapgen';
-import { defenseBonus, doAction, tileActions } from '../src/game/rules';
+import { defenseBonus, doAction, tileActions, unitCap } from '../src/game/rules';
 import { endTurn, startTurn } from '../src/game/turn';
 import type { GameState, Tile, TribeId } from '../src/game/types';
 
@@ -135,3 +135,22 @@ test('AI games build barracks, train units and homestead', () => {
   assert.ok(homes > 0, 'homesteads made');
 });
 
+
+test('a Barracks gives its city one more unit slot and a second place to raise units', () => {
+  const s = game('rome');
+  const c = s.cities.find((k) => k.owner === 0)!;
+  const cap = unitCap(c);
+  const t = field(s);
+  assert.ok(doAction(s, 0, t, 'barracks'));
+  assert.equal(unitCap(c), cap + 1);
+  // the city tile is occupied, but the yard still trains
+  const city = s.tiles.find((x) => x.cityId === c.id)!;
+  if (!s.units.some((u) => u.x === city.x && u.y === city.y)) spawnUnit(s, 'warrior', 0, city.x, city.y, null);
+  const a = tileActions(s, 0, t).find((x) => x.id === 'train:warrior' || x.id.startsWith('train:'))!;
+  assert.ok(a.enabled, a.reason ?? '');
+  const before = c.units;
+  assert.ok(doAction(s, 0, t, a.id));
+  const u = s.units.find((x) => x.x === t.x && x.y === t.y)!;
+  assert.equal(u.homeCity, c.id);
+  assert.equal(c.units, before + 1);
+});
