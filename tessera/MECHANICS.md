@@ -4,7 +4,7 @@
 
 ## 1. The basics
 
-- A turn-based tile strategy game on an isometric square grid. You play one of **26 empires** against 1–25 computer or hot-seat opponents.
+- A turn-based tile strategy game on an isometric square grid. You play one of **31 empires** against 1–30 computer or hot-seat opponents.
 - **Three empire types** (§15): ⚔️ **Military**, 💰 **Economy** and ⚓ **Naval**. Each type trains two role units of its own; the New Game picker and the Twenty-Six Empires screen list the empires by type.
 - **Three modes:** *Perfection* — the game ends after a turn limit (default **30 turns**) and the highest **score** wins. *Domination* — no turn limit; last empire standing (or last human alive → best score) wins; with Diplomacy on, survivors who are all allied win together (§12). *One City Challenge* — every empire keeps only its capital: no villages, no outposts, Great Wakas or sea-cities; capturing a rival's city razes it (+1,000 score) and knocks that empire out. No turn limit: conquer every empire to win.
 - **Difficulty** (easy / normal / hard): computer players get **+0 / +1 / +2 free Stars each turn**.
@@ -121,6 +121,11 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 | Temple Guardian | Defender | 3★ 18/1.5/3.5, move 1 | **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead. |
 | Askari | Warrior | 2★ 12/2/3, move 1 | **Coast guard** — +1 defence on land beside water. |
 | Khampa Rider | Rider | 3★ 14/2.5/1.5, move 2 | **Highlander** — Mountains never stop its move; it rides over them like open ground. |
+| Sacred Band | Defender | 3★ 16/2/3.5, move 1 | **Sacred oath** — Defends at full strength however wounded. |
+| Varangian Guard | Swordsman | 5★ 16/4/3, move 1 | **Emperor's guard** — In or beside one of your cities: +1 defence, and it heals 2 HP at the start of every turn. |
+| Camel Rider | Rider | 3★ 13/2.5/1.5, move 2 | **Ship of the desert** — Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert. |
+| Druzhina | Knight | 8★ 13/4/1.5, move 3 | **Winter host** — Forest never stops it; +1 attack and defence on tundra and ice. |
+| Rattan Guard | Warrior | 2★ 12/2.5/2.5, move 1 | **Jungle guerrilla** — Moves freely through forest and swamp, and attacks +1 from them. |
 
 Every unique is a clearly better unit than the one it replaces, about a point and a half of stats ahead (attack, defence, HP) at the same or nearly the same cost, on top of its ability. Only the Berserker trades a little defence (for +1.5 attack) and the War Elephant trades speed for bulk.
 
@@ -327,6 +332,11 @@ Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus
 | Khmer | **Temple Mountains** | Angkor’s temple mountains: temple upgrades cost a third less and Great Temples need no tech. |
 | Swahili | **Coral Harbours** | Stone ports of the monsoon trade: port upgrades cost a third less and Harbours need no tech. |
 | Tibetan | **Yak Herds** | Yak herds of the high plateau: pastures cost a third less and need no tech. |
+| Carthaginian | **Cothon Harbours** | The round harbours of Carthage: port upgrades cost a third less and Harbours need no tech. |
+| Byzantine | **Silk Workshops** | Smuggled silkworms and imperial looms: market upgrades cost a third less and Bazaars need no tech. |
+| Arab | **Date Palm Oases** | Gardens in the desert: orchard upgrades cost a third less and need no tech. |
+| Rus | **Forest Lodges** | Timber, fur and honey of the great forest: lumber upgrades cost a third less and need no tech. |
+| Vietnamese | **Wet-rice Paddies** | Two harvests a year from the delta: farm upgrades cost a third less and Estates need no tech. |
 
 **Computer players** upgrade when they have Stars to spare (keeping 8★ + 2★ a city back), preferring their speciality, the best Stars for the price, and a level 3 beside other level-3 tiles of the kind (a District in the making). Their Master Builders raise tiles too.
 
@@ -410,10 +420,15 @@ Every empire has one named champion (see `game/heroes`).
 | Khmer | **Jayavarman VII**, Builder King of Angkor | **Houses of Healing** (every 4 turns): Every one of your units inside your borders heals 5 HP. |
 | Swahili | **al-Hasan ibn Sulaiman**, Sultan of Kilwa | **Monsoon Fortune** (every 5 turns): Trade comes in on the wind: +2★ for each of your ports and ships (4★ to 14★). |
 | Tibetan | **Songtsen Gampo**, Emperor of the Plateau | **Mountain Mist** (every 4 turns): Your units within 2 vanish into the mist (unseen by enemies) and get +1 defence until your next turn. |
+| Carthaginian | **Hannibal Barca**, Strategos of Carthage | **Cannae** (every 5 turns): Enemies within 2 lose 1 defence, and your units within 2 attack +1, until your next turn. |
+| Byzantine | **Belisarius**, Magister Militum of the East | **Reconquest** (every 4 turns): Your units within 2 get +1 attack and +1 defence until your next turn. |
+| Arab | **Saladin**, Sultan of Egypt and Syria | **Chivalrous Truce** (every 4 turns): Every one of your units inside your borders heals 4 HP, and you gain 3★. |
+| Rus | **Alexander Nevsky**, Prince of Novgorod | **Battle on the Ice** (every 5 turns): Enemies within 2 cannot move on their next turn. |
+| Vietnamese | **Trần Hưng Đạo**, Grand Prince, victor of Bạch Đằng | **Stakes of Bạch Đằng** (every 5 turns): Every enemy within 2 takes 3 damage, and your units within 2 get +1 defence until your next turn. |
 
-## 10. The 26 empires
+## 10. The 31 empires
 
-Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean.
+Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota, Rus, Vietnamese; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite, Byzantine, Arab; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean, Carthaginian.
 
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.
@@ -627,6 +642,46 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Landlocked Plateau (Boats and ships move 1 less.)
 - **Skill line** (branches off Climbing): T1 Mani Walls: Units in the mountains defend 0.5 better. → T2 Yak Herds: Every animal harvest grows the city by 1 more. Mounted units cost 1★ less. → T3 Monasteries: +1★ a turn for every temple. Units on your land heal 2 HP every turn.
 
+### Carthaginian (carthage)
+- **Signature bonus:** Purple Dye — every port and every market earns +1★ a turn.
+- **Unique unit — Sacred Band** (replaces the Defender): **Sacred oath** — Defends at full strength however wounded.
+- **Unique mechanic — Mercenary Contracts:** any city may hire one veteran mercenary a turn (a warrior, archer, rider, swordsman, knight or Sacred Band Carthage could train) for 1.5× the training price (rounded up). It takes no unit slot, but costs 1★ a turn; when the treasury can't pay, the newest mercenary deserts. At most as many mercenaries as cities. Mercenaries fly a purple pennant, and Carthaginian ports show their round cothon.
+- **Strengths:** Merchant Princes (Trade routes pay 25% more.)
+- **Weaknesses:** Hired Armies (Foot soldiers defend 0.5 worse.); Borrowed Horsemen (Riding costs 2★ more.)
+- **Skill line** (branches off Fishing): T1 Cothon: +1★ a turn for every port. → T2 Tyrian Purple: Trade routes pay 25% more. +1★ a turn for every market. → T3 Elephants over the Alps: Mounted units hit 0.5 harder and cost 1★ less.
+
+### Byzantine (byzantium)
+- **Signature bonus:** Theodosian Walls — your units in your cities defend +1.
+- **Unique unit — Varangian Guard** (replaces the Swordsman): **Emperor's guard** — In or beside one of your cities: +1 defence, and it heals 2 HP at the start of every turn.
+- **Unique mechanic — Greek Fire:** a Byzantine boat or ship that attacks sets its target ablaze, and so do the siphons of a coastal Byzantine city on any enemy that attacks a unit inside it: a burning unit takes 2 damage at the start of each Byzantine turn, twice (it can die of it). **Imperial tribute** (at a city, once every 5 turns): pay 5★ + 2★ for each enemy unit within 3 tiles, and their blows land empty (0 damage) on their next turn.
+- **Strengths:** Imperial Bureaucracy (+2★ whenever a city levels up.)
+- **Weaknesses:** Endless Frontiers (Units outside your borders defend 0.5 worse.); Iconoclasm (Temples cost 2★ more.)
+- **Skill line** (branches off Gathering): T1 Hagia Sophia: +1★ a turn for every temple. → T2 Theme Armies: Units on your land defend 0.5 better. → T3 Golden Solidus: +1★ a turn for every market, +1★ a turn from your capital.
+
+### Arab (arabia)
+- **Signature bonus:** House of Wisdom — a tech that an empire you have met already knows costs 40% less (not 20%).
+- **Unique unit — Camel Rider** (replaces the Rider): **Ship of the desert** — Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert.
+- **Unique mechanic — Caravanserais & Desert Roads:** build a Caravanserai on an empty desert or field tile in your land, not beside another (6★, +2★ for each one you have): +1★ a turn, +1★ more with a road or a trade route on or beside it. Your camel riders, traders and camel scouts cross desert at half a move a tile, like a road.
+- **Strengths:** Desert Caravans (Trade routes pay 25% more.)
+- **Weaknesses:** Few Forests (Boats and ships cost 1★ more.); Tribal Rivalries (Foot soldiers defend 0.5 worse.)
+- **Skill line** (branches off Riding): T1 House of Wisdom: Every tech costs 1★ less. → T2 Caravanserai: Trade routes pay 25% more. +1★ a turn for every 4 road tiles. → T3 Algebra and Astrolabes: See 1 tile further. +2★ whenever a city levels up.
+
+### Rus (rus)
+- **Signature bonus:** Fur Trade — every hunt pays +1★.
+- **Unique unit — Druzhina** (replaces the Knight): **Winter host** — Forest never stops it; +1 attack and defence on tundra and ice.
+- **Unique mechanic — General Winter:** from turn 10, every 10 turns winter falls for 3 turns (turns 10–12, 20–22...). Then enemy units inside Rus borders lose 2 HP at the start of each Rus turn (never below 1) and move 1 less, and Rus units defend +0.5 anywhere in their land. Once an era the capital can call an **early winter** (8★, 2 turns). Snow falls over Rus land while it lasts.
+- **Strengths:** Stubborn Defenders (Foot soldiers defend 0.5 better.)
+- **Weaknesses:** Frozen Ports (Boats and ships move 1 less.); Rasputitsa (Roads cost 2★ more.)
+- **Skill line** (branches off Hunting): T1 Veche Bell: A city that levels up gains 1 extra population. → T2 Kremlin Walls: Units in your cities defend 0.5 better. → T3 Cossack Hosts: Mounted units hit 0.5 harder and cost 1★ less.
+
+### Vietnamese (vietnam)
+- **Signature bonus:** Guerrilla War — your units in forest or swamp defend +1.
+- **Unique unit — Rattan Guard** (replaces the Warrior): **Jungle guerrilla** — Moves freely through forest and swamp, and attacks +1 from them.
+- **Unique mechanic — Stakes of Bạch Đằng:** plant hidden stakes in a shallow water tile in or beside your land (4★; 2 per city). An enemy ship that sails onto them must stop and takes 4 damage (it can sink); the stakes are then spent. Only you see them.
+- **Strengths:** Rice Bowl (+1★ a turn for every 2 farms.)
+- **Weaknesses:** Few Horses (Mounted units cost 1★ more.); Northern Shadow (See 1 tile less around every unit and city.)
+- **Skill line** (branches off Gathering): T1 Dyke Builders: +1★ a turn for every 2 farms. → T2 Bronze Drums: Foot soldiers hit 0.5 harder. → T3 Fire Arrows: Ranged units and siege engines hit 0.5 harder.
+
 ## 10. Culture Blending (traditions of the conquered)
 
 - Every city remembers its **origin**: the people who first held it (`city.data.origin`, recorded on capture and kept through later captures).
@@ -713,7 +768,7 @@ An option on the new-game screen (**Diplomacy**, on by default). Older saves and
 - **Trade deal** (on top of peace or alliance): both sides earn **1–3★ a turn** (+1 per 8 tiles between capitals, +1 per 6 cities between them); all your deals together pay at most **4★ a turn**. It ends if war is declared.
 - **Tribute:** a **gift of 5★** (always accepted; warms them to you), a **demand of 10★** now, or **2★ a turn for 5 turns** (paid at the payer's turn start). A paid demand angers the payer; a refused one angers the demander. The computer pays when the demander is more than twice as strong and close (a raider, the aggressive empires, only 1.6 times as strong).
 - **Breaking a treaty** needs a **declaration**: not in the first **3 rounds** of a treaty, and the war only begins at the declarer's **next turn** (a round's warning). It costs **25 trust** with every empire (15 for the aggressive, from whom no one expected better) (healing a point a round) and the victim remembers. After a war begins, peace can't be proposed for 3 rounds.
-- **Opinion** (how they feel about you, −100..100): personality (Mongols, Vikings, Zulu, Aztecs, Pirates aggressive; Romans, Ottomans, Japanese, Persians, Lakota, Celts proud; Swahili, Malians, Chinese, Māori, Greeks traders; Tibetans, Indians, Inuit, Aboriginal peoples peaceful; the rest steady), broken treaties, remembered deeds (gifts, demands, betrayals, refusals; fading a point a round), **shared enemies** (both fought someone in the last 6 rounds, +8 each), **touching borders** (−8, not between allies), a recent attack by you (−20), being **too powerful** (the top scorer, 30% above the average of 3+ living empires, from turn 8: −15), and treaties in force (peace +10, alliance +20, trade +6–12). Words: Hostile / Cold / Wary / Warm / Friendly.
+- **Opinion** (how they feel about you, −100..100): personality (Mongols, Vikings, Zulu, Aztecs, Pirates aggressive; Romans, Ottomans, Japanese, Persians, Lakota, Celts, Rus, Vietnamese proud; Swahili, Malians, Chinese, Māori, Greeks, Carthaginians, Arabs traders; Tibetans, Indians, Inuit, Aboriginal peoples peaceful; the rest steady), broken treaties, remembered deeds (gifts, demands, betrayals, refusals; fading a point a round), **shared enemies** (both fought someone in the last 6 rounds, +8 each), **touching borders** (−8, not between allies), a recent attack by you (−20), being **too powerful** (the top scorer, 30% above the average of 3+ living empires, from turn 8: −15), and treaties in force (peace +10, alliance +20, trade +6–12). Words: Hostile / Cold / Wary / Warm / Friendly.
 - **Computer players** answer offers by opinion, strength and personality (afraid of the stronger, the warlike keep wars they are winning), and take one initiative a turn: peace with those they like, fear or are far from; trade with those they don't dislike; an alliance at opinion 35+; a gift when weak and threatened; tribute demands and **treaty-breaking** when much stronger than a close neighbour (the warlike need less of an edge), or against a too-powerful leader they are at least as strong as. The aggressive pick their fights: peace with everyone who is not easy prey, never peace for a weaker close neighbour, tribute from it while at peace, and war on it once 15% stronger. The same offer to the same empire waits 4 rounds. They never attack or march on treaty partners.
 - **Human flow:** Empires screen → **Diplomacy**: every empire met, the relation, how they feel about you and why, trade and tribute, news, and buttons (propose peace / alliance / trade, gift, demand, declare war). Computer answers arrive at once as toasts. Offers to a human (from the computer, or from another human in pass & play) wait and are shown at the start of that human's turn as an envoy card with Accept / Decline; unanswered offers lapse after 2 rounds.
 - **Where you see it:** allies' border fences are capped in **gold**, peace partners' in **white**; the tile panel says "Peace treaty: closed to your units" / "Allied: open to your units"; the Stars readout includes trade and tribute; toasts and log entries announce treaties, deals, tribute and wars (the latest are listed on the Diplomacy screen).

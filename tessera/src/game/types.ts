@@ -17,7 +17,7 @@ export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'mark
   // a frontier camp that claims land outside the borders (see game/frontier)
   | 'frontier'
   // built by empire mechanics (see game/mech)
-  | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
+  | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline' | 'caravanserai';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet' | 'carthage' | 'byzantium' | 'arabia' | 'rus' | 'vietnam';
 export type Biome = TribeId;
 export type UnitKind =

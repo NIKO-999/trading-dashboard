@@ -57,7 +57,7 @@ export const DEATH_STYLES: Record<DeathTheme, DeathStyle> = {
   captive: { name: 'Led away on a rope', layers: [L('petal', 4, ['#ff9f1c', '#ffc233'], 'up', 40, 30, 0.8, 2.8, 4)] },
 };
 
-/** Every theme with a death effect (26 empires, then the neutral ones). */
+/** Every theme with a death effect (31 empires, then the neutral ones). */
 export const DEATH_THEMES = [...TRIBE_IDS, 'beast', 'rebel', 'captive'] as DeathTheme[];
 
 /**

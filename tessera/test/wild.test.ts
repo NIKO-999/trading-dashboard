@@ -271,11 +271,11 @@ test('a 30-turn all-AI game with wild events plays cleanly', () => {
   JSON.parse(JSON.stringify(s));
 });
 
-test('a 26-empire game keeps its neutral player out of the way', () => {
+test('an every-empire game keeps its neutral player out of the way', () => {
   const s = createGame({ seed: 5, human: null, opponents: [...TRIBE_IDS], mode: 'perfection', wild: true });
-  assert.equal(s.players.length, 27);
-  assert.equal(empires(s).length, 26);
+  assert.equal(s.players.length, TRIBE_IDS.length + 1);
+  assert.equal(empires(s).length, TRIBE_IDS.length);
   startTurn(s);
-  for (let i = 0; i < 26 * 3 && !s.over; i++) { aiTurn(s); endTurn(s); }
+  for (let i = 0; i < TRIBE_IDS.length * 3 && !s.over; i++) { aiTurn(s); endTurn(s); }
   assert.ok(!s.over || !isNeutral(s, s.winner ?? 0));
 });

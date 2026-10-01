@@ -3,7 +3,7 @@
 A turn-based 4X strategy game for phones, built as an installable, offline-capable PWA.
 It is separate from the rest of this repo, with its own `package.json` and build.
 
-Lead one of twenty-six empires, each with its own biome, starting tech, unique unit and bonus:
+Lead one of thirty-one empires, each with its own biome, starting tech, unique unit and bonus:
 
 | Empire | Biome | Starts with | Unique unit | Bonus |
 |---|---|---|---|---|
@@ -33,10 +33,15 @@ Lead one of twenty-six empires, each with its own biome, starting tech, unique u
 | Khmer | flooded paddies and temple-mountains | Fishing | Temple Guardian (replaces Defender) | Every farm earns +1★ a turn |
 | Swahili | coral coast and dhows | Fishing | Askari (replaces Warrior) | Boats and ships move 1 further |
 | Tibetan | high plateau | Climbing | Khampa Rider (replaces Rider) | Cross mountains without Climbing |
+| Carthaginian | sunny headlands and harbours | Fishing | Sacred Band (replaces Defender) | Every port and market earns +1★ a turn |
+| Byzantine | olive hills between two seas | Gathering | Varangian Guard (replaces Swordsman) | Units in your cities defend +1 |
+| Arab | dunes and palm oases | Riding | Camel Rider (replaces Rider) | Techs known to a met empire cost 40% less |
+| Rus | birch forest and snow | Hunting | Druzhina (replaces Knight) | Every hunt pays +1★ |
+| Vietnamese | rice deltas and karsts | Gathering | Rattan Guard (replaces Warrior) | Units in forest or swamp defend +1 |
 
 Every empire has **historical strengths and weaknesses** on top of its signature bonus: for example the Aztecs take captives (+1★ per kill) but had no horses (riders cost 2★ more) and no iron (Smithing costs 2★ more), Rome's legions defend better but its Senate slows research and it was a reluctant sea power, and the Inuit hunt for extra stars but have no agriculture and no metal. Each is listed with its history on the empire screens.
 
-Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 26.
+Every empire also has its own **skill line**: three techs in a chain (a gold dashed spoke on the tech tree) that only that people can research, each giving lasting perks: Egypt's Nilometer → Chariot Corps → Temples of Ra, Rome's Roman Roads → Legion Discipline → Aqueducts, the Inuit's Harpoon Craft → Kayak Hunters → Whale Feast, and so on for all 31.
 
 Features:
 - Three climate terrains beyond field, forest and mountain: **desert** (no farms; ore and oases; irrigate it into a field), **swamp** (units entering stop, but it gives cover; drain it into a field) and **tundra** (reindeer and ore; units left in the cold outside your borders lose 1 HP a turn). Each empire's homeland carries its own mix (Egypt and the Aboriginal nations are half desert, the Inuit mostly tundra, the Maya and Khmer boggy), and the Terrain option can make a whole world of Deserts, Wetlands or Frozen land.

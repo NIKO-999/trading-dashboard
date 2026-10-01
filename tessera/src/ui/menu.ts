@@ -400,7 +400,7 @@ function showAbout(handlers: MenuHandlers) {
     'about',
     backBar('About', () => showTitle(handlers)),
     h('div', { class: 'scroll prose' },
-      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of twenty-six empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
+      h('p', {}, 'Tessera is a pocket-sized turn-based strategy game. Lead one of thirty-one empires across a tiled world: explore the fog, harvest what the land offers, grow your cities, research new skills and outlast your rivals.'),
       h('h3', {}, 'How to play'),
       h('ul', {},
         h('li', {}, 'Stars (★) are your currency. Every city pays out each turn.'),

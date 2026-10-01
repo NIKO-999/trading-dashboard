@@ -4,6 +4,17 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.52',
+    items: [
+      '🌍 Five new empires, 31 in all, each with its own unique unit, mechanic, hero, music and art.',
+      '🟣 Carthage (naval): Purple Dye pays for every port and market; hire veteran Mercenaries that need no unit slot. Unique: the Sacred Band, which defends at full strength however wounded.',
+      '🔥 Byzantium (economy): Greek Fire sets enemy ships and attackers ablaze; Theodosian Walls (+1 defence in your cities); pay tribute to blunt an attack. Unique: the Varangian Guard.',
+      '🐪 Arabia (economy): House of Wisdom (techs others know cost 40% less), Caravanserais in the desert and camels that cross the sand like a road. Unique: the Camel Rider, whom horses fear.',
+      '❄ Rus (military): General Winter freezes invaders every 10 turns, and once an era you can call it early; furs pay for every hunt. Unique: the Druzhina.',
+      '🪵 Vietnam (military): hidden Stakes of Bạch Đằng wreck enemy ships; Guerrilla War (+1 defence in forest and swamp). Unique: the Rattan Guard.',
+    ],
+  },
+  {
     version: '0.51',
     items: [
       '⭐ Stronger unique units: every empire\'s unique is now clearly better than the unit it replaces (about +1.5 in attack, defence and health combined), on top of its ability. Samurai and Buccaneer cost the same as the unit they replace; Impi, Clansman and Holcan no longer give up defence.',

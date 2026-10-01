@@ -1,6 +1,6 @@
 import { prereqs, TECH_BY_ID, techsFor, type TechDef } from '../data/techs';
 import { ageOf, DARK_OFF } from '../game/eras';
-import { CONTACT_OFF, knownByContact } from '../game/rules';
+import { CONTACT_OFF, knownByContact, WISDOM_OFF } from '../game/rules';
 import { EUREKA_OFF, EUREKAS, sparked } from '../game/sparks';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { portraitKind, TRIBES } from '../data/tribes';
@@ -174,7 +174,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     if (t.flavor) body.push(h('p', { class: 'muted' }, t.flavor));
     if (!t.tribe || UNIQUE_BY_ID[t.id].perks.length) body.push(h('p', {}, unlocks));
     const known = st !== 'owned' ? knownByContact(s, pid, id) : undefined; // a met rival knows it (see game/rules)
-    if (known) body.push(h('p', { class: 'tt-eureka on' }, `🤝 Known to the ${TRIBES[known.tribe].people}s: ${Math.round(CONTACT_OFF * 100)}% cheaper.`));
+    if (known) body.push(h('p', { class: 'tt-eureka on' }, `🤝 Known to the ${TRIBES[known.tribe].people}s: ${Math.round((s.players[pid].tribe === 'arabia' ? WISDOM_OFF : CONTACT_OFF) * 100)}% cheaper${s.players[pid].tribe === 'arabia' ? ' (House of Wisdom)' : ''}.`));
     if (st !== 'owned' && ageOf(s, pid) === 'dark') body.push(h('p', { class: 'tt-eureka' }, `🌑 Dark Age: ${Math.round(DARK_OFF * 100)}% cheaper while it lasts.`));
     if (EUREKAS[id] && st !== 'owned') { // Eurekas (see game/sparks)
       body.push(sparked(s, pid, id)
