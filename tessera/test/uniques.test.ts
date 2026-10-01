@@ -172,6 +172,13 @@ test('Clansman (oak-grove warband): attacks +1 from forest', () => {
   assert.ok(previewCombat(s, c, foe).dmg > open);
 });
 
+/** Runs `f` with base unit `k` given the stats of unique `like`, so a test sees only the unique's ability. */
+function withStats<T>(k: UnitKind, like: UnitKind, f: () => T): T {
+  const d = UNITS[k], o = { atk: d.atk, def: d.def, hp: d.hp };
+  Object.assign(d, { atk: UNITS[like].atk, def: UNITS[like].def, hp: UNITS[like].hp });
+  try { return f(); } finally { Object.assign(d, o); }
+}
+
 test('Harpooner (harpoon): double damage to boats and Great Beasts', () => {
   const s = arena('inuit');
   ground(s, 8, 10, 'shallow');
@@ -179,7 +186,7 @@ test('Harpooner (harpoon): double damage to boats and Great Beasts', () => {
   const boat = put(s, 'boat', 1, 8, 10);
   const p = previewCombat(s, h, boat);
   h.kind = 'archer';
-  const plain = previewCombat(s, h, boat).dmg;
+  const plain = withStats('archer', 'harpooner', () => previewCombat(s, h, boat).dmg);
   assert.equal(p.dmg, plain * 2);
   assert.equal(p.tag, 'Harpoon!');
 });
@@ -199,11 +206,11 @@ test('Shotelai (hooked blade): ignores the defender\'s fortify and terrain bonus
   const foe = put(s, 'warrior', 1, 9, 8);
   ground(s, 9, 8, 'mountain');
   const cut = previewCombat(s, sh, foe).dmg;
-  sh.kind = 'swordsman'; // same stats, no hooked blade
-  const plain = previewCombat(s, sh, foe).dmg;
+  sh.kind = 'swordsman'; // given the same stats, no hooked blade
+  const plain = withStats('swordsman', 'shotelai', () => previewCombat(s, sh, foe).dmg);
   assert.ok(cut > plain, `${cut} > ${plain}`);
   ground(s, 9, 8, 'field');
-  const flat = previewCombat(s, sh, foe).dmg;
+  const flat = withStats('swordsman', 'shotelai', () => previewCombat(s, sh, foe).dmg);
   sh.kind = 'shotelai';
   assert.equal(previewCombat(s, sh, foe).dmg, flat, 'no edge on open ground');
 });
@@ -366,4 +373,12 @@ test('startTurn leaves the impi charge flag behind', () => {
   s.current = 0;
   startTurn(s);
   assert.equal(i.data?.horns, undefined);
+});
+
+test('every unique beats the unit it replaces in at least one stat', () => {
+  for (const t of TRIBE_IDS) {
+    const u = UNITS[TRIBES[t].unique], b = UNITS[TRIBES[t].replaces];
+    const better = u.atk > b.atk || u.def > b.def || u.hp > b.hp || u.move > b.move || u.range > b.range;
+    assert.ok(better, `${t}: ${u.name} has no stat edge over ${b.name}`);
+  }
 });

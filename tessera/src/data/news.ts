@@ -4,6 +4,12 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.51',
+    items: [
+      '⭐ Every unique unit now out-stats the unit it replaces, on top of its ability: Samurai and Shotelai +0.5 attack, Immortal and Askari +0.5 defence, Harpooner and Hwacha +0.5 attack, Buccaneer and Horse Warrior +2 health.',
+    ],
+  },
+  {
     version: '0.50',
     items: [
       '🪓 Eight new troops for every empire, each with a job and a weakness: Axeman (breaks shields, fragile), Javelineer (cheap skirmisher), Ranger (hidden and strong in forest), Pikeman (stops cavalry, Medieval), Musketeer (ignores cover, Renaissance), Battering Ram (×3 vs cities), Ballista (4 tiles) and Cannon (+50% vs cities, Renaissance).',
