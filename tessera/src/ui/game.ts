@@ -1749,7 +1749,7 @@ function describePlainTile(s: GameState, t: Tile, viewer: number): { title: stri
     whale: ['Whales', 'Hunt with Whaling.'],
     ...Object.fromEntries(LUXURY_IDS.map((l) => [l, [LUXURIES[l].name, `Luxury. ${LUXURIES[l].blurb} Build a ${LUXURIES[l].works} with ${TECH_BY_ID[LUXURIES[l].tech].name}: +1 population and +${LUX_FIRST}★ a turn (+${LUX_EXTRA}★ for extra copies).`]])),
   };
-  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra', barracks: barracksName(t) };
+  const imp: Record<string, string> = { farm: 'Farm', mine: 'Mine', lumber: 'Lumber Hut', port: 'Port', temple: 'Shrine', market: 'Market', songline: 'Songline Track', fort: 'Castra', barracks: barracksName(t), frontier: 'Frontier Camp' };
   // the role units' works (see game/roles): a Sappers' fort, a Master Builder's grand work, a bridge
   if (isSapperFort(t)) return { title: 'Fort', desc: `Raised by ${TRIBES[s.players[t.data!.sfort as number].tribe].people} sappers: their units here defend +1. ${where}` };
   // a raised tile (see game/levels): its level, and what the next one gives, for what and when

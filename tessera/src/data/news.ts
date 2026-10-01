@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.47',
+    items: [
+      '🏕 Frontier Camps: hemmed in? A soldier on unclaimed land near your border can Pitch a Camp: that tile and the free land around it join your nearest city. 5★, +2★ for each camp; up to 2 per city. Works in One City too.',
+      '🌾 Homestead needs no tech any more, so every city always has a way to grow.',
+    ],
+  },
+  {
     version: '0.46',
     items: [
       '⚔️ Formation doctrines: Military empires\' units in formation attack +0.5 (Drilled Ranks); Economy empires\' defend +0.5 on their own land (Hometown Guard); Naval empires\' warships side by side form a Line of Battle (+0.5 attack and defence).',

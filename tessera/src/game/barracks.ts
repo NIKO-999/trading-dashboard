@@ -12,7 +12,7 @@ import { categoryOf } from '../data/tribes';
 import { NAVAL_UPGRADE, UNITS } from '../data/units';
 import { upgradeTarget } from './army';
 import { emit } from './events';
-import { dist, tileAt } from './grid';
+import { dist, isLand, tileAt } from './grid';
 import { needWhy, spendNeeds } from './goods';
 import { cityById, def, doAction, hasTech, maxHp, moveOptions, moveUnit, tileOwnerPlayer, unitAt, type Action } from './rules';
 import type { Category } from '../data/tribes';
@@ -44,7 +44,7 @@ export const trainLeft = (s: GameState, u: Unit) => { const t = trainingOf(u); r
 function yard(s: GameState, u: Unit): Tile | null {
   const t = tileAt(s, u.x, u.y)!;
   if (tileOwnerPlayer(s, t) !== u.owner) return null;
-  if (isBarracks(t) && !def(u).naval) return t;
+  if (isBarracks(t) && !def(u).naval && isLand(t)) return t;
   if (t.improvement === 'port' && def(u).naval && cat(s, u.owner) === 'naval') return t;
   return null;
 }

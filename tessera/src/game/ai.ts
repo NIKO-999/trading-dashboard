@@ -2,6 +2,7 @@ import { TECH_BY_ID } from '../data/techs';
 import { LINE_PARENT } from '../data/uniqueTechs';
 import { festivalAi } from './festival';
 import { barracksAi } from './barracks';
+import { frontierAi } from './frontier';
 import { govAi } from './governors';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
@@ -58,6 +59,7 @@ export function aiStep(s: GameState): boolean {
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
   if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
+  if (frontierAi(s, pid)) return true; // a hemmed-in empire claims room to grow (see game/frontier)
   if (barracksAi(s, pid, (x, y) => s.units.some((u) => hostile(s, pid, u.owner) && dist(x, y, u.x, u.y) <= 3))) return true; // Barracks (see game/barracks)
   if (govAi(s, pid, (c) => s.units.some((u) => hostile(s, pid, u.owner) && !isNeutral(s, u.owner) && dist(c.x, c.y, u.x, u.y) <= 3))) return true; // governors (see game/governors)
   if (policyAi(s, pid)) return true; // a government to suit war or peace, and its policy cards (see game/government)
@@ -290,7 +292,7 @@ function trainBest(s: GameState, pid: number, defensive: boolean): boolean {
   for (const c of citiesOf(s, pid).sort((a, b) => b.level - a.level)) {
     if (c.units >= unitCap(c)) continue;
     // a stationed unit lets recruits step out beside it; a blocked city can still raise them on its Barracks yard (see game/barracks)
-    const yard = s.tiles.find((x) => x.owner === c.id && x.improvement === 'barracks' && !unitAt(s, x.x, x.y));
+    const yard = s.tiles.find((x) => x.owner === c.id && x.improvement === 'barracks' && isLand(x) && !unitAt(s, x.x, x.y));
     const t = unitAt(s, c.x, c.y) && !postAt(s, c) ? yard : tileAt(s, c.x, c.y)!;
     if (!t) continue;
     const kinds = trainableKinds(s, pid)

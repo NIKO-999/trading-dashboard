@@ -27,6 +27,7 @@ import { EUREKA_OFF, sparked } from './sparks';
 import { festivalActions, festivalDo } from './festival';
 import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from './barracks';
 import { homesteadActions, homesteadDoAction } from './homestead';
+import { frontierActions, frontierDoAction } from './frontier';
 import { govActions, govCityIncome, govDefense, govDiscount, govDoAction, govTechOff } from './governors';
 import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
 import { MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
@@ -425,7 +426,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
   govDiscount(s, pid, t, base); // a Marshal (see game/governors)
   specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
-  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t), ...freeActions(s, pid, t), ...barracksActions(s, pid, t), ...homesteadActions(s, pid, t)]; // envoys to a Free City (see game/citystates)
+  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t), ...freeActions(s, pid, t), ...barracksActions(s, pid, t), ...homesteadActions(s, pid, t), ...frontierActions(s, pid, t)]; // envoys to a Free City (see game/citystates)
   // a mercenary camp, an outlaw camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/clans, game/wonders)
   if (campAt(s, t.x, t.y) || clanCampAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain', 'luxury'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -483,7 +484,7 @@ function baseTileActions(s: GameState, pid: number, t: Tile): Action[] {
   }
 
   // a city trains on its own tile, and also on its Barracks yard (see game/barracks)
-  const yard = !!city && isBarracks(t) && t.cityId === null;
+  const yard = !!city && isBarracks(t) && t.cityId === null && isLand(t); // a yard under water (a Khmer flood) trains nothing
   if (city && city.owner === pid && ((t.cityId !== null && t.cityId === city.id) || yard)) {
     const full = city.units >= unitCap(city);
     const afloat = !yard && !!city.data?.waka; // a Great Waka trains onto a free tile beside it, so a unit on the city tile does not block it
@@ -632,6 +633,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('gov:')) return govDoAction(s, pid, t, id);
   if (id === 'fest') return festivalDo(s, pid, t); // a City Festival (see game/festival)
   if (id.startsWith('barracks')) return barracksDoAction(s, pid, t, id); // (see game/barracks)
+  if (id === 'frontier') return frontierDoAction(s, pid, t); // (see game/frontier)
   if (id === 'homestead' || id.startsWith('cultivate:')) return homesteadDoAction(s, pid, t, id); // (see game/homestead)
   if (id.startsWith('free:')) return freeDoAction(s, pid, id); // (see game/citystates)
   if (id.startsWith('train:')) {

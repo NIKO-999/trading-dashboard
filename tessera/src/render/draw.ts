@@ -2083,6 +2083,15 @@ function drawImprovement(ctx: Ctx, s: GameState, t: Tile, x: number, y: number) 
       if (lvl >= 3) { box(ctx, -13, 3, 5, 9, '#7a5a3a'); roof(ctx, -13, -6.5, 6, 4, tribe.color); } // a watchtower
       break;
     }
+    case 'frontier': // a frontier camp: a canvas tent, a cold fire ring and a tall pole with the owner's pennant (see game/frontier)
+      ellipse(ctx, 0, 6, 11, 4.5, 'rgba(90,70,40,0.28)');
+      poly(ctx, [-8, 7, -1, -6, 2, 7], '#e8dcc0');
+      poly(ctx, [2, 7, -1, -6, 7, 5], '#c9b894');
+      poly(ctx, [-1, 7, -1, 0, 1.2, 7], '#5a4630');
+      for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; ellipse(ctx, 6 + Math.cos(a) * 2.6, 9 + Math.sin(a) * 1.2, 0.9, 0.7, '#8c8478'); }
+      line(ctx, -9, 9, -9, -12, '#4a3420', 1.2);
+      poly(ctx, [-9, -12, -2, -10, -9, -8], tribe.color);
+      break;
   }
   ctx.restore();
 }

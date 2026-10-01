@@ -1,5 +1,5 @@
 // Making land work without luck.
-//  - HOMESTEAD: turn an empty field (or desert or tundra) in your borders into a working Farm from nothing (Farming):
+//  - HOMESTEAD: turn an empty field (or desert or tundra) in your borders into a working Farm from nothing (no tech):
 //    crops are sown and the farm built in one go, +2 population. Cheap for Economy empires, dear for Military ones
 //    (HOMESTEAD_COST), and each one in the same city costs 1★ more.
 //  - CULTIVATE: once an empire you have met has developed a resource, you can raise your own source of it on suitable
@@ -53,10 +53,9 @@ export function homesteadActions(s: GameState, pid: number, t: Tile): Action[] {
   const out: Action[] = [];
   if (t.terrain === 'field' || t.terrain === 'desert' || t.terrain === 'tundra') {
     const cost = homesteadCost(s, pid, t);
-    const has = hasTech(s, pid, 'farming');
-    out.push({
-      id: 'homestead', label: 'Homestead', cost, icon: 'farm', enabled: has && p.stars >= cost,
-      reason: !has ? 'Needs Farming' : p.stars < cost ? 'Not enough stars' : undefined, needs: has ? undefined : 'farming',
+        out.push({
+      id: 'homestead', label: 'Homestead', cost, icon: 'farm', enabled: p.stars >= cost,
+      reason: p.stars < cost ? 'Not enough stars' : undefined,
       desc: `Sow crops and build a Farm here from nothing: +${HOMESTEAD_POP} population. Each homestead in this city costs 1★ more.`,
     });
   }

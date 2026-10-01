@@ -14,6 +14,8 @@ export type Improvement = 'farm' | 'mine' | 'lumber' | 'port' | 'temple' | 'mark
   | 'estate'
   // a training yard (see game/barracks)
   | 'barracks'
+  // a frontier camp that claims land outside the borders (see game/frontier)
+  | 'frontier'
   // built by empire mechanics (see game/mech)
   | 'altar' | 'monolith' | 'stele' | 'chaski' | 'lighthouse' | 'baray' | 'dam' | 'grove' | 'stupa' | 'wall' | 'fort' | 'songline';
 export type TribeId = 'egypt' | 'aztec' | 'polynesia' | 'rome' | 'pirates' | 'vikings' | 'japan' | 'mongols' | 'greeks' | 'zulu' | 'persia' | 'celts' | 'inuit' | 'inca' | 'ethiopia' | 'aboriginal' | 'china' | 'india' | 'mali' | 'lakota' | 'ottoman' | 'maya' | 'korea' | 'khmer' | 'swahili' | 'tibet';
