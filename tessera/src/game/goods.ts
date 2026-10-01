@@ -57,7 +57,7 @@ export function needsOf(k: UnitKind): Partial<Record<Strategic, number>> | undef
   return undefined;
 }
 
-export function stockOf(p: Player): Record<Strategic, number> {
+export function stockOf(p: Player): Record<Strategic, number> & { goods?: number } {
   return (p.stock ??= { iron: 0, horses: 0 });
 }
 
@@ -115,7 +115,12 @@ export function goodsTurnStart(s: GameState, pid: number) {
   const y = stockYield(s, pid);
   const have = stockOf(p);
   for (const r of ['iron', 'horses'] as Strategic[]) have[r] = Math.min(STOCK_CAP, have[r] + y[r]);
+  have.goods = Math.min(STOCK_CAP, (have.goods ?? 0) + goodsYield(s, pid)); // luxury goods for the Armoury (see game/forge)
 }
+
+/** Luxury goods a turn: 1 for every developed luxury held. They buy the Armoury's upgrades (see game/forge). */
+export const goodsYield = (s: GameState, pid: number) => Object.values(luxuriesOf(s, pid)).reduce((a, n) => a + n, 0);
+export const goodsOf = (p: Player) => stockOf(p).goods ?? 0;
 
 /** Developed luxuries held, by kind. */
 export function luxuriesOf(s: GameState, pid: number): Partial<Record<Luxury, number>> {

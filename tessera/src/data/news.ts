@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.48',
+    items: [
+      '⚒ The Armoury: at your Barracks, upgrade a whole unit type for the rest of the game: 5 tiers each (attack, +1 movement, attack, +1 range for archers and siege, attack). Paid in Stars and luxury goods 💎; tiers 4 and 5 need a Drill Yard and a War College.',
+      '💎 Every developed luxury now also makes 1 luxury good a turn (see the 🏺 chip).',
+    ],
+  },
+  {
     version: '0.47',
     items: [
       '🏕 Frontier Camps: hemmed in? A soldier on unclaimed land near your border can Pitch a Camp: that tile and the free land around it join your nearest city. 5★, +2★ for each camp; up to 2 per city. Works in One City too.',

@@ -9,6 +9,7 @@ import { TRIBES } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { WONDER_BY_ID, wondersHeldBy } from '../data/wonders';
 import { naturalPerks } from '../data/naturals';
+import { forgeBonus } from '../data/forge';
 import type { GameState, Unit, UnitKind } from './types';
 
 export type PerkWho = 'all' | 'ranged' | 'mounted' | 'naval' | 'melee' | 'siege' | 'unique' | 'recon';
@@ -88,8 +89,9 @@ export function unitMatches(tribe: keyof typeof TRIBES, kind: UnitKind, who: Per
 /** The bonus a unit gets to attack, defence or movement from its empire's perks. */
 export function perkUnit(s: GameState, u: Unit, stat: 'atk' | 'def' | 'move'): number {
   const p = s.players[u.owner];
-  if (!p.techs.length) return 0;
-  let n = 0;
+  const forged = stat === 'def' || u.carrying ? 0 : forgeBonus(p, u.kind, stat); // the Armoury (see game/forge)
+  if (!p.techs.length) return forged;
+  let n = forged;
   for (const pk of perksOf(s, u.owner)) if (pk.k === stat && unitMatches(p.tribe, u.kind, pk.who)) n += pk.n;
   return n;
 }
@@ -103,9 +105,10 @@ export function perkSum<K extends Perk['k']>(s: GameState, pid: number, k: K, ma
 /** Extra attack range from perks (Naval Bombardment, Highland Snipers on a mountain). */
 export function perkRange(s: GameState, u: Unit): number {
   const p = s.players[u.owner];
-  if (!p.techs.length) return 0;
+  const forged = u.carrying ? 0 : forgeBonus(p, u.kind, 'range'); // the Armoury (see game/forge)
+  if (!p.techs.length) return forged;
   const mountain = s.tiles[u.y * s.size + u.x]?.terrain === 'mountain';
-  let n = 0;
+  let n = forged;
   for (const pk of perksOf(s, u.owner)) if (pk.k === 'range' && (!pk.on || mountain) && unitMatches(p.tribe, u.kind, pk.who)) n += pk.n;
   return n;
 }

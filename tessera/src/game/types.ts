@@ -123,7 +123,9 @@ export interface Player {
   /** Tiles this empire has raised a level so far (see game/levels; missing in older saves): each makes the next dearer. */
   raised?: number;
   /** Stockpiled strategic resources (see game/goods; missing in older saves). */
-  stock?: { iron: number; horses: number };
+  stock?: { iron: number; horses: number; goods?: number };
+  /** The Armoury: tiers bought for each unit type, for the rest of the game (see game/forge; missing in older saves). */
+  forge?: Partial<Record<UnitKind, number>>;
   /** Techs made cheaper by a Eureka (see game/sparks; missing in older saves). */
   sparks?: string[];
   /** Sources raised by Cultivate so far (see game/homestead; missing in older saves). */

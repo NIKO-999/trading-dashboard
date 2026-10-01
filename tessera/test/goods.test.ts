@@ -78,7 +78,7 @@ test('iron and horses: mines and pastures fill the stockpile, capped', () => {
   s.current = 0; s.turn = 1;
   startTurn(s);
   drain();
-  assert.deepEqual(stockOf(s.players[0]), { iron: 2, horses: 1 });
+  assert.deepEqual({ iron: stockOf(s.players[0]).iron, horses: stockOf(s.players[0]).horses }, { iron: 2, horses: 1 });
   for (let i = 0; i < 20; i++) startTurn(s);
   drain();
   assert.equal(stockOf(s.players[0]).iron, STOCK_CAP);

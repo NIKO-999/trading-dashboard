@@ -1,9 +1,10 @@
 import { MECH_UI } from './mech';
+import { forgeBonus, forgeTier, ROMAN } from '../data/forge';
 import { barracksName, trainingNote } from '../game/barracks';
 import { doctrineLine, inFormation } from '../game/army';
 import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
-import { monopoliesOf, MONOPOLY_AT } from '../game/goods';
+import { goodsYield, monopoliesOf, MONOPOLY_AT } from '../game/goods';
 import { isLuxury, LUX_EXTRA, LUX_FIRST, LUXURIES, LUXURY_IDS, luxuriesOf, luxuryIncome, STOCK_CAP, stockOf, stockYield, type Luxury } from '../game/goods';
 import { checkSparks } from '../game/sparks';
 import type { MechView } from './mech/types';
@@ -825,13 +826,14 @@ export class GameView {
     const s = this.s, me = this.me;
     const have = stockOf(s.players[me]), y = stockYield(s, me), lux = luxuriesOf(s, me), pay = luxuryIncome(s, me);
     if (!have.iron && !have.horses && !y.iron && !y.horses && !pay) return null;
-    const bits = [have.iron || y.iron ? `⛏${have.iron}` : '', have.horses || y.horses ? `🐎${have.horses}` : '', pay ? `+${pay}★` : ''].filter(Boolean);
+    const bits = [have.iron || y.iron ? `⛏${have.iron}` : '', have.horses || y.horses ? `🐎${have.horses}` : '', have.goods ? `💎${have.goods}` : '', pay ? `+${pay}★` : ''].filter(Boolean);
     const kinds = (Object.keys(lux) as Luxury[]).map((l) => `${LUXURIES[l].name}${lux[l]! > 1 ? ` ×${lux[l]}` : ''}`);
     return {
       key: 'goods', icon: '🏺', text: bits.join(' '),
       full: h('div', { class: 'skill-hud' },
         h('div', {}, h('b', {}, 'Iron: '), `${have.iron}/${STOCK_CAP} (+${y.iron} a turn from Mines). Swordsmen use 2, Catapults 1.`),
         h('div', {}, h('b', {}, 'Horses: '), `${have.horses}/${STOCK_CAP} (+${y.horses} a turn from Pastures). Knights use 2.`),
+        h('div', {}, h('b', {}, 'Luxury goods 💎: '), `${have.goods ?? 0}/${STOCK_CAP} (+${goodsYield(s, me)} a turn, 1 per developed luxury). They buy the Armoury's upgrades at a Barracks.`),
         h('div', {}, h('b', {}, 'Luxuries: '), kinds.length ? `${kinds.join(', ')}: +${pay}★ a turn.` : `none yet. Each different one pays ${LUX_FIRST}★ a turn.`),
         h('div', {}, h('b', {}, 'Monopolies: '), monopoliesOf(s, me).length ? `${monopoliesOf(s, me).map((l) => LUXURIES[l].name).join(', ')}: every copy pays ${LUX_FIRST}★ and trade routes +1★ each.` : `hold ${MONOPOLY_AT} of one luxury for a Monopoly.`)),
     };
@@ -952,12 +954,13 @@ export class GameView {
       const hero = isHero(this.s, u) ? heroDef(this.s, u.owner) : null;
       const hs = hero ? owner.hero! : null;
       const stats = h('span', { class: 'stat-line' },
-        h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0)))),
+        h('span', {}, 'Attack ', h('b', {}, String(d.atk + seaBonus(this.s, u) + (hs ? HERO_ATK_PER_LEVEL * (hs.lvl - 1) : 0) + forgeBonus(owner, u.kind, 'atk')))),
         h('span', {}, 'Defence ', h('b', {}, String(d.def)), naturalDefence(this.s, u) ? h('span', { class: 'bonus' }, ` +${naturalDefence(this.s, u)}`) : null, defenseBonus(this.s, u) > 1 && u.owner === this.me ? h('span', { class: 'bonus' }, ` ×${defenseBonus(this.s, u)}`) : null,
           shieldWall(this.s, u) ? h('span', { class: 'bonus' }, ` +${shieldWall(this.s, u)} ${owner.tribe === 'rome' ? 'testudo' : 'shield wall'}`) : null), // formations (see game/army)
         u.owner === this.me && inFormation(this.s, u) ? h('span', { class: 'bonus' }, doctrineLine(this.s, u)) : null, // the empire type's doctrine
         h('span', {}, 'Health ', h('b', {}, `${Math.ceil(u.hp)}/${maxHp(u)}`)),
-        h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u)))),
+        forgeTier(owner, u.kind) ? h('span', { class: 'bonus' }, `⚒ ${ROMAN[forgeTier(owner, u.kind)]}`) : null, // the Armoury (see game/forge)
+        h('span', {}, 'Move ', h('b', {}, String(d.move + seaBonus(this.s, u) + forgeBonus(owner, u.kind, 'move')))),
         d.range > 1 ? h('span', {}, 'Range ', h('b', {}, String(d.range + perkRange(this.s, u)))) : null,
       );
       this.panel.append(close, h('div', { class: 'sheet-head' },

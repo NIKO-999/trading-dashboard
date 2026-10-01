@@ -207,6 +207,15 @@ Prices depend on the **empire type** (Military / Economy / Naval):
 | ⚓ Naval | 8★ | 6★ | 3 turns | 2 turns |
 
 - **Barracks** (Tactics): one per city, on a free field in its land. Its city **supports 1 more unit**, and new units can be **trained right on the yard** (tap it while it is empty), so a unit on the city tile no longer blocks training. A unit standing on it can **Train** for free: it becomes the next unit of its line (Warrior → Swordsman, Rider → Knight, using Iron or Horses as usual) or, with no next unit, **Drills** into a Veteran. While training it can't move or attack and defends at half strength. Expand to a **Drill Yard** (6★: every training 1 turn shorter) and a **War College** (10★: trained units also come out Veterans). **Naval empires** refit ships the same way at any of their Ports (Boat → Galley → Trireme).
+- **The Armoury** (at a Barracks): upgrade a whole unit type **for the rest of the game**, every unit of it now and later. Five tiers per type, paid in Stars and **luxury goods 💎** (every developed luxury makes 1 a turn, stockpiled up to 12):
+
+  | Tier | Name | Cost | Gives | Needs |
+  |---|---|---|---|---|
+  | I | Tempered Blades | 5★ + 1💎 | +0.5 attack | Barracks |
+  | II | Forced Marches | 8★ + 2💎 | +1 movement | Barracks |
+  | III | Battle Drill | 12★ + 3💎 | +0.5 attack | Barracks |
+  | IV | Long Reach | 16★ + 4💎 | +1 range (archers, siege); +0.5 attack (others) | Drill Yard |
+  | V | Masterwork Arms | 20★ + 5💎 | +0.5 attack | War College |
 - **Homestead** (no tech needed): an empty field, desert or tundra in your land becomes a Farm from nothing, +2 population. Each one in the same city costs 1★ more.
 - **Frontier Camp:** a soldier (not a ship, merchant, role unit, scout or healer) standing on unclaimed land within 2 tiles of your borders may **Pitch a Camp**: that tile and the free land around it join your nearest city. **5★, +2★ for each camp you hold; at most 2 per city.** A camp is not a city, so it works in the One City Challenge.
 - **Cultivate:** once an empire you have met has developed a resource, raise your own on suitable empty land with the usual tech: a luxury (built straight as its works), Iron (a Mine) or Horses (a Pasture). **8★, +2★ for each you have cultivated.**
