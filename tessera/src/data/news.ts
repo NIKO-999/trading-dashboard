@@ -6,6 +6,7 @@ export const NEWS: News[] = [
   {
     version: '0.49',
     items: [
+      '🗂 Tidier city menu: units and actions sit in tabs (Ground, Ranged, Mounted, Support, Ships, Economy, City, Armoury, Build), ready ones first; units still locked behind a tech fold into one button.',
       '🐎 New cavalry for every empire, each drawn in its own style: the Lancer (Roads: fastest on land, 3 moves), the Mounted Archer (Horsemanship: shoots from 2 tiles and rides on) and the Cataphract (Smithing: horse and rider in scale armour, 18 health, defence 3).',
     ],
   },

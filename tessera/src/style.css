@@ -168,6 +168,15 @@ button:disabled { opacity: 0.45; cursor: default; }
 .stat-line b { font-weight: 700; }
 .sheet-actions { display: flex; gap: 10px; justify-content: safe center; overflow-x: auto; padding: 16px 4px 2px; touch-action: pan-x; scrollbar-width: none; }
 .sheet-actions::-webkit-scrollbar { display: none; }
+/* a long menu's tabs (see ui/actiongroups) */
+.act-groups { margin-top: 8px; }
+.act-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 2px 4px 4px; scrollbar-width: none; touch-action: pan-x; }
+.act-tabs::-webkit-scrollbar { display: none; }
+.act-tab { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px 5px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.06); color: #fff; font: inherit; font-size: 0.92rem; font-weight: 600; white-space: nowrap; }
+.act-tab.on { background: #2f8cff; border-color: #fff; }
+.act-tab.dim:not(.on) { opacity: 0.55; }
+.act-tab-n { min-width: 18px; padding: 1px 5px 0; border-radius: 999px; background: rgba(0,0,0,0.35); font-size: 0.75rem; text-align: center; }
+.locked-toggle .rbtn-circle { background: radial-gradient(circle at 38% 28%, #34363f 0%, #16171d 60%, #07070a 100%); border-color: #5b5e69; }
 .mini-btn { margin-top: 8px; padding: 8px 14px 5px; border-radius: 12px; background: var(--gold); color: #3a2a00; font-weight: 700; }
 
 .rbtn { flex: none; width: 84px; display: flex; flex-direction: column; align-items: center; gap: 6px; }

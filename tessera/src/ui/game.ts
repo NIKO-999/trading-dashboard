@@ -1,4 +1,5 @@
 import { MECH_UI } from './mech';
+import { actionRank, groupActions, pickTab, TAB_THRESHOLD, type ActGroup } from './actiongroups';
 import { forgeBonus, forgeTier, ROMAN } from '../data/forge';
 import { barracksName, trainingNote } from '../game/barracks';
 import { doctrineLine, inFormation } from '../game/army';
@@ -1075,8 +1076,57 @@ export class GameView {
     return parts.length ? h('div', { class: 'small role-line' }, parts.join(' · ')) : null;
   }
 
+  /** The tab a long menu last showed (see ui/actiongroups), and whether its locked actions are unfolded. */
+  private actTab: ActGroup | null = null;
+  private showLocked = false;
+
+  /**
+   * The selection's actions. A long menu (a city's) is sorted into tabs by kind (Ground, Ranged, Mounted, Support,
+   * Ships, Economy, City...), each listing what is ready first; actions locked behind a tech fold into one "N locked"
+   * button. A short menu is one row, ready-first.
+   */
   private renderActions(acts: Action[], tribe: GameState['players'][number]['tribe']) {
     if (!acts.length) return;
+    if (acts.length < TAB_THRESHOLD) {
+      this.panel.append(this.actionRow([...acts].sort((a, b) => actionRank(a) - actionRank(b)), tribe));
+      return;
+    }
+    const tabs = groupActions(acts);
+    const wrap = h('div', { class: 'act-groups' });
+    const bar = h('div', { class: 'act-tabs' });
+    const body = h('div', {});
+    const show = (id: ActGroup) => {
+      this.actTab = id;
+      for (const b of Array.from(bar.children)) {
+        const on = (b as HTMLElement).dataset.tab === id;
+        b.classList.toggle('on', on);
+        if (on) (b as HTMLElement).scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+      }
+      const tab = tabs.find((t) => t.id === id)!;
+      const open = tab.acts.filter((a) => !a.needs);
+      const locked = tab.acts.filter((a) => a.needs);
+      const list = this.showLocked ? [...open, ...locked] : open;
+      const row = this.actionRow(list, tribe);
+      if (locked.length) {
+        row.append(h('button', {
+          class: 'rbtn locked-toggle',
+          onclick: () => { this.showLocked = !this.showLocked; show(id); },
+        }, h('span', { class: 'rbtn-circle' }, iconEl('lock')), h('span', { class: 'rbtn-label' }, this.showLocked ? 'Hide locked' : `${locked.length} locked`)));
+      }
+      body.replaceChildren(row);
+    };
+    for (const t of tabs) {
+      bar.append(h('button', {
+        class: `act-tab${t.ready ? '' : ' dim'}`, 'data-tab': t.id,
+        onclick: () => { sfx.play('tap'); show(t.id); },
+      }, `${t.icon} ${t.label}`, t.ready ? h('span', { class: 'act-tab-n' }, String(t.ready)) : null));
+    }
+    wrap.append(bar, body);
+    this.panel.append(wrap);
+    show(pickTab(tabs, this.actTab)!);
+  }
+
+  private actionRow(acts: Action[], tribe: GameState['players'][number]['tribe']): HTMLElement {
     const row = h('div', { class: 'sheet-actions' });
     for (const a of acts) {
       const icon = paint(54, 54, (ctx) => drawIcon(ctx, a.icon, tribe, 27, 26), `icon:${a.icon}:${tribe}:54`);
@@ -1112,7 +1162,7 @@ export class GameView {
         a.needs ? h('span', { class: 'rbtn-need' }, TECH_BY_ID[a.needs].name) : null,
       ));
     }
-    this.panel.append(row);
+    return row;
   }
 
   // ------------------------------------------------------------ events & rewards
