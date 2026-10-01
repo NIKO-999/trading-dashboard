@@ -25,6 +25,9 @@ import { AUX_KINDS, auxActions, auxDoAction, auxName, braceOf, isSupport, scoutR
 import { levelActions, levelBoatDiscount, levelCityIncome, levelDoAction, levelGrowOnLevelUp, levelScore, levelTrainDiscount, specialNote, specialStart } from './levels';
 import { EUREKA_OFF, sparked } from './sparks';
 import { TABLET_OFF, zigguratTechOff } from './mech/babylon'; // Clay Tablets and ziggurats (see mech/babylon)
+import { scholarTechOff } from './mech/poland'; // the Scholar King (see mech/poland)
+import { enlightenmentTechOff } from './mech/scotland'; // Scottish Enlightenment (see mech/scotland)
+import { salonTechOff } from './mech/france'; // Salons (see mech/france)
 import { festivalActions, festivalDo } from './festival';
 import { troopEdge } from './troops';
 import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from './barracks';
@@ -65,7 +68,7 @@ export const inflationOf = (s: GameState, pid: number): { until: number; pauseUn
   return i && s.turn <= i.until ? i : null;
 };
 export const trainCost = (s: GameState, pid: number, k: UnitKind) => {
-  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - (s.players[pid].tribe === 'nubia' && unitMatches('nubia', k, 'ranged') ? 1 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
+  let cost = UNITS[k].cost - (s.players[pid].tribe === 'mongols' && MOUNTED.includes(k) ? 1 : 0) - (s.players[pid].tribe === 'ottoman' && k === 'catapult' ? 3 : 0) - (s.players[pid].tribe === 'nubia' && unitMatches('nubia', k, 'ranged') ? 1 : 0) - (s.players[pid].tribe === 'assyria' && unitMatches('assyria', k, 'siege') ? 2 : 0) - perkCost(s, pid, k) - traderDiscount(s, pid, k);
   if (s.players[pid].techs.length) { // the Trade/Markets fork: Caravan Monopoly surcharges, Mercenary Contracts discount
     cost = Math.max(1, cost + perkSum(s, pid, 'unitcost')); // Conscription (a policy card) takes 1★ off, never below 1★
     const pct = perkSum(s, pid, 'unitpct');
@@ -147,7 +150,7 @@ export function techCost(s: GameState, pid: number, tech: string) {
   // a Eureka (game/sparks), a met rival who already knows it, and a Dark Age (game/eras) each take a share off
   const mult = (sparked(s, pid, tech) ? 1 - (s.players[pid].tribe === 'babylon' ? TABLET_OFF : EUREKA_OFF) : 1) * (knownByContact(s, pid, tech) ? 1 - (s.players[pid].tribe === 'arabia' ? WISDOM_OFF : CONTACT_OFF) : 1) * (ageOf(s, pid) === 'dark' ? 1 - DARK_OFF : 1);
   const sparkedBase = mult < 1 ? Math.ceil(base * mult) : base;
-  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) - freeTechOff(s, pid) - zigguratTechOff(s, pid) // a Scholar (see game/governors) and Science cities (see game/citystates)
+  const cost = Math.max(1, (hasTech(s, pid, 'philosophy') ? Math.ceil(sparkedBase * 0.67) : sparkedBase) - govTechOff(s, pid) - freeTechOff(s, pid) - zigguratTechOff(s, pid) - scholarTechOff(s, pid) - enlightenmentTechOff(s, pid) - salonTechOff(s, pid) // a Scholar (see game/governors) and Science cities (see game/citystates)
     - perkSum(s, pid, 'cost', (p) => p.of === 'tech') + perkSum(s, pid, 'techcost', (p) => p.tech === tech)
     - naturalTechOff(s, pid, base)); // the Glimmerdeep Grotto (see game/naturals)
   return s.players[pid].tribe === 'greeks' ? Math.max(1, cost - 1) : cost; // Academy
