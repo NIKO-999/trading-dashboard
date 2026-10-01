@@ -6,7 +6,7 @@ export const NEWS: News[] = [
   {
     version: '0.51',
     items: [
-      '⭐ Every unique unit now out-stats the unit it replaces, on top of its ability: Samurai and Shotelai +0.5 attack, Immortal and Askari +0.5 defence, Harpooner and Hwacha +0.5 attack, Buccaneer and Horse Warrior +2 health.',
+      '⭐ Stronger unique units: every empire\'s unique is now clearly better than the unit it replaces (about +1.5 in attack, defence and health combined), on top of its ability. Samurai and Buccaneer cost the same as the unit they replace; Impi, Clansman and Holcan no longer give up defence.',
     ],
   },
   {

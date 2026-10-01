@@ -881,6 +881,7 @@ export function moveOptions(s: GameState, u: Unit): MoveOption[] {
       if (naval) {
         if (isLand(to)) {
           if (u.kind === 'tradeship' || isRoleShip(u.kind)) continue; // a Trade Ship (see game/trade) and the role ships (see game/roles) carry no one ashore
+          if (!u.carrying && s.players[pid].tribe !== 'vikings') continue; // an empty hull (a Swahili dhow) has no one to land; longships beach (see mech/vikings)
           if (to.terrain === 'mountain' && !canClimb(s, pid)) continue;
           opt = { ...opt, disembark: true }; // landing ends the move
           stop = true;

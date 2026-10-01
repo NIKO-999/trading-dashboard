@@ -95,34 +95,34 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 
 | Unit | Replaces | Stats | Ability |
 |---|---|---|---|
-| Chariot | Rider | 4★ 10/2.5/1, move 2, range 2 | **Archer chariot** — Shoots from 2 tiles and can drive on after shooting. |
-| Jaguar Warrior | Rider | 3★ 10/2.5/1, move 2 | **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow. |
-| Waka Taua | Canoe | 0★ 10/2/1, move 3, range 2 | **Ramming prow** — The fastest boat (carries a unit); rams adjacent ships for +50% damage. |
-| Legionary | Warrior | 2★ 10/2/3, move 1 | **Testudo** — Locks shields against missiles, +1 defence against ranged attacks. |
-| Buccaneer | Archer | 4★ 12/2/1, move 1, range 2 | **Plunder** — Wades through shallows and loots +2★ from every kill. |
-| Berserker | Swordsman | 4★ 15/4/2.5, move 1 | **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows. |
-| Samurai | Swordsman | 6★ 15/3.5/3, move 1 | **Bushidō** — Strikes again after every kill. |
-| Horse Archer | Archer | 4★ 10/2/1, move 2, range 2 | **Mounted archer** — Shoots from 2 tiles and can ride on after shooting. |
-| Hoplite | Defender | 3★ 15/2/3, move 1 | **Phalanx** — Its spear wall hits back 50% harder when attacked. |
-| Impi | Warrior | 2★ 10/2.5/1.5, move 1 | **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe. |
-| Immortal | Swordsman | 5★ 15/3/3.5, move 1 | **Undying** — Heals 3 HP at the start of every turn, wherever it stands. |
-| Clansman | Warrior | 2★ 12/2/1.5, move 1 | **Oak-grove warband** — Moves freely through forest and attacks +1 from forest. |
-| Harpooner | Archer | 3★ 10/2.5/1, move 1, range 2 | **Harpoon** — Double damage to ships, boats and Great Beasts. |
-| Slinger | Archer | 3★ 10/2.5/1, move 1, range 2 | **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain. |
-| Shotelai | Swordsman | 5★ 15/3.5/3, move 1 | **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus. |
-| Woomera Hunter | Archer | 3★ 10/2.5/1, move 1, range 3 | **Spear-thrower** — Throws 3 tiles, further than any archer; moves freely through forest. |
-| Crossbowman | Archer | 4★ 10/2.5/1, move 1, range 2 | **Siege bolts** — Shoots from 2 tiles; +1 attack against units in a city or fort. |
-| War Elephant | Knight | 8★ 20/3/1.5, move 2 | **Trample** — A melee blow carries through, and the enemy behind the target takes half the damage. |
-| Sofa | Warrior | 3★ 12/2.5/2, move 1 | **Mansa's guard** — +2 defence in its own cities. |
-| Horse Warrior | Rider | 3★ 12/2/1, move 2 | **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra). |
-| Janissary | Archer | 4★ 10/2.5/1, move 1, range 2 | **Musket volley** — Fires from 2 tiles; +1 attack against melee units. |
-| Holcan | Warrior | 2★ 10/2.5/1.5, move 1 | **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it. |
-| Hwacha | Catapult | 8★ 10/4.5/0, move 1, range 3 | **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too. |
-| Temple Guardian | Defender | 3★ 15/1.5/3, move 1 | **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead. |
-| Askari | Warrior | 2★ 10/2/2.5, move 1 | **Coast guard** — +1 defence on land beside water. |
-| Khampa Rider | Rider | 3★ 12/2/1.5, move 2 | **Highlander** — Mountains never stop its move; it rides over them like open ground. |
+| Chariot | Rider | 4★ 12/3/1, move 2, range 2 | **Archer chariot** — Shoots from 2 tiles and can drive on after shooting. |
+| Jaguar Warrior | Rider | 3★ 12/3/1.5, move 2 | **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow. |
+| Waka Taua | Canoe | 0★ 12/2/1, move 3, range 2 | **Ramming prow** — The fastest boat (carries a unit); rams adjacent ships for +50% damage. |
+| Legionary | Warrior | 2★ 12/2.5/3, move 1 | **Testudo** — Locks shields against missiles, +1 defence against ranged attacks. |
+| Buccaneer | Archer | 3★ 12/2.5/1.5, move 1, range 2 | **Plunder** — Wades through shallows and loots +2★ from every kill. |
+| Berserker | Swordsman | 4★ 15/4.5/2.5, move 1 | **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows. |
+| Samurai | Swordsman | 5★ 15/4/3.5, move 1 | **Bushidō** — Strikes again after every kill. |
+| Horse Archer | Archer | 3★ 12/2.5/1, move 2, range 2 | **Mounted archer** — Shoots from 2 tiles and can ride on after shooting. |
+| Hoplite | Defender | 3★ 15/2/3.5, move 1 | **Phalanx** — Its spear wall hits back 50% harder when attacked. |
+| Impi | Warrior | 2★ 12/3/2, move 1 | **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe. |
+| Immortal | Swordsman | 5★ 18/3.5/3.5, move 1 | **Undying** — Heals 3 HP at the start of every turn, wherever it stands. |
+| Clansman | Warrior | 2★ 14/2.5/2, move 1 | **Oak-grove warband** — Moves freely through forest and attacks +1 from forest. |
+| Harpooner | Archer | 3★ 12/2.5/1.5, move 1, range 2 | **Harpoon** — Double damage to ships, boats and Great Beasts. |
+| Slinger | Archer | 3★ 12/3/1, move 1, range 2 | **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain. |
+| Shotelai | Swordsman | 5★ 16/4/3, move 1 | **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus. |
+| Woomera Hunter | Archer | 3★ 12/2.5/1, move 1, range 3 | **Spear-thrower** — Throws 3 tiles, further than any archer; moves freely through forest. |
+| Crossbowman | Archer | 4★ 12/3/1.5, move 1, range 2 | **Siege bolts** — Shoots from 2 tiles; +1 attack against units in a city or fort. |
+| War Elephant | Knight | 8★ 22/4/2, move 2 | **Trample** — A melee blow carries through, and the enemy behind the target takes half the damage. |
+| Sofa | Warrior | 3★ 14/2.5/2.5, move 1 | **Mansa's guard** — +2 defence in its own cities. |
+| Horse Warrior | Rider | 3★ 13/2.5/1.5, move 2 | **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra). |
+| Janissary | Archer | 4★ 12/3/1.5, move 1, range 2 | **Musket volley** — Fires from 2 tiles; +1 attack against melee units. |
+| Holcan | Warrior | 2★ 12/3/2, move 1 | **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it. |
+| Hwacha | Catapult | 8★ 12/5/0.5, move 1, range 3 | **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too. |
+| Temple Guardian | Defender | 3★ 18/1.5/3.5, move 1 | **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead. |
+| Askari | Warrior | 2★ 12/2/3, move 1 | **Coast guard** — +1 defence on land beside water. |
+| Khampa Rider | Rider | 3★ 14/2.5/1.5, move 2 | **Highlander** — Mountains never stop its move; it rides over them like open ground. |
 
-Every unique beats the unit it replaces in at least one stat (attack, defence, HP, movement or range) as well as having its ability; a few trade a little defence for it (Berserker, Impi, Clansman, Holcan) or speed for bulk (War Elephant).
+Every unique is a clearly better unit than the one it replaces, about a point and a half of stats ahead (attack, defence, HP) at the same or nearly the same cost, on top of its ability. Only the Berserker trades a little defence (for +1.5 attack) and the War Elephant trades speed for bulk.
 
 Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossbowman) means on a city tile or a fort/wall tile. *Open ground* (Horse Warrior) is field, desert or tundra. The Temple Guardian only shields a land unit beside it and never drops below 1 HP doing so. The Hwacha's splash also follows a Korean rocket salvo, hits only enemies and can kill; the War Elephant's trample hits the one enemy straight behind the target (seen from where the elephant struck). The impi's extra tile is spent by its next move and lapses at the start of Zulu's next turn. The Holcan is hidden like a unit under the Sacred Canopy: an enemy unit or city right beside it sees it.
 

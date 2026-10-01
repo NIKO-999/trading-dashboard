@@ -134,7 +134,7 @@ test('Hoplite (phalanx): hits back 50% harder than a defender', () => {
   const foe = put(s, 'warrior', 1, 9, 8);
   const ret = previewCombat(s, foe, h).ret;
   h.kind = 'defender';
-  const plain = previewCombat(s, foe, h).ret;
+  const plain = withStats('defender', 'hoplite', () => previewCombat(s, foe, h).ret);
   assert.ok(plain > 0);
   assert.equal(ret, Math.round(plain * HOPLITE_COUNTER));
 });

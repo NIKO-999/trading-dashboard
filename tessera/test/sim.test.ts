@@ -95,7 +95,7 @@ test('the new empires\' bonuses', () => {
   // Mongols: mounted units cost 1★ less
   const m = createGame({ seed: 3, human: 'mongols', opponents: ['rome'], mode: 'domination' });
   assert.equal(trainCost(m, 0, 'rider'), 2);
-  assert.equal(trainCost(m, 0, 'horsearcher'), 3);
+  assert.equal(trainCost(m, 0, 'horsearcher'), 2);
   assert.equal(trainCost(m, 0, 'warrior'), 2);
   // Zulu: hunting grows the city by 2
   const z = createGame({ seed: 3, human: 'zulu', opponents: ['rome'], mode: 'domination' });
