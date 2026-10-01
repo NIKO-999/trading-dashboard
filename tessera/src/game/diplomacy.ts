@@ -59,6 +59,10 @@ function aiSpare(s: GameState, pid: number, r: Strategic): number {
   return Math.max(0, have - (uses ? 4 : 0));
 }
 
+/** Rounds between declaring war and the first blow: a broken alliance takes longer, so an ally can't be ambushed from inside. */
+export const WAR_NOTICE = { peace: 1, alliance: 2 } as const;
+export const warNotice = (p: DiploPact) => WAR_NOTICE[p.kind];
+
 /** Rounds an offer to a human waits for an answer before it lapses. */
 export const OFFER_LIFE = 2;
 /** Rounds before an AI repeats the same offer to the same empire. */
@@ -125,7 +129,8 @@ export function mayStep(s: GameState, pid: number, from: Tile | null, to: Tile):
   const owner = tileOwnerPlayer(s, to);
   if (owner === null || owner === pid || hostile(s, pid, owner)) return true;
   if (to.cityId !== null) return false;
-  if (relation(s, pid, owner) === 'alliance') return true;
+  // an alliance under a declaration of war opens no more borders: armies may only walk out (see WAR_NOTICE)
+  if (relation(s, pid, owner) === 'alliance' && pactOf(s, pid, owner)?.declared === undefined) return true;
   return !!from && tileOwnerPlayer(s, from) === owner;
 }
 
@@ -297,8 +302,10 @@ export function declareWar(s: GameState, a: number, b: number, honour = false): 
     s.diplo!.rep[a] = (s.diplo!.rep[a] ?? 0) - betrayalCost(s, a);
     moodAdd(s, b, a, -40);
   }
-  announce(s, `The ${people(s, a)}s declare war on the ${people(s, b)}s${honour ? ' to stand by their ally' : ''}! It begins on their next turn.`, [a, b], true,
-    { [b]: `The ${people(s, a)}s declare war on you! Their armies march on their next turn.` });
+  const wait = warNotice(p);
+  const when = wait === 1 ? 'on their next turn' : `in ${wait} turns`;
+  announce(s, `The ${people(s, a)}s declare war on the ${people(s, b)}s${honour ? ' to stand by their ally' : ''}! It begins ${when}.`, [a, b], true,
+    { [b]: `The ${people(s, a)}s declare war on you! Their armies march ${when}${p.kind === 'alliance' ? '; until then their units can only leave your land' : ''}.` });
   return true;
 }
 
@@ -575,7 +582,7 @@ export function diploTurnStart(s: GameState, pid: number) {
   // treaties with fallen empires lapse
   d.pacts = d.pacts.filter((p) => s.players[p.a].alive && s.players[p.b].alive);
   d.tribute = d.tribute.filter((t) => s.players[t.from].alive && s.players[t.to].alive && s.turn < t.until);
-  for (const p of [...d.pacts]) if (p.by === pid && p.declared !== undefined) startWar(s, p);
+  for (const p of [...d.pacts]) if (p.by === pid && p.declared !== undefined && s.turn >= p.declared + warNotice(p)) startWar(s, p); // after the notice (WAR_NOTICE)
   const me = s.players[pid];
   if (s.turn > 0) {
     const trade = tradeIncome(s, pid);

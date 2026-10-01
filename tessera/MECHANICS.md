@@ -683,6 +683,8 @@ An option on the new-game screen (**Diplomacy**, on by default). Older saves and
 - **Where you see it:** allies' border fences are capped in **gold**, peace partners' in **white**; the tile panel says "Peace treaty: closed to your units" / "Allied: open to your units"; the Stars readout includes trade and tribute; toasts and log entries announce treaties, deals, tribute and wars (the latest are listed on the Diplomacy screen).
 - **Victory:** Perfection is unchanged (best score). In **Domination**, when every surviving empire is allied with every other the game ends and they **win together** (the best scorer among them is named winner; every ally's game-over card counts as a victory).
 
+**Breaking an alliance** takes **2 turns** (a peace treaty 1): the war only begins on the declarer's second turn after declaring, and meanwhile the alliance opens no borders, so the declarer's units can only walk out of the other's land.
+
 ## 14. Trade routes
 
 Every empire has merchants (see `game/trade`): one Trader kind and one Trade Ship kind, drawn in each empire's own style and named by it: an Egyptian Camel Caravan, a Malian Salt Camel, an Inca Llama Train, an Inuit Dog Sled, a Lakota Travois Pony, a Mongol Bactrian Camel, an Aztec Pochteca Merchant, a Roman Ox Cart, a Chinese Silk Porter, a Viking Knarr, a Swahili Mtepe Dhow, a Pirate Smuggler Sloop, a Māori Trading Waka, a Chinese Junk...

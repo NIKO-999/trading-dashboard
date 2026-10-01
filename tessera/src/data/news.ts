@@ -8,6 +8,7 @@ export const NEWS: News[] = [
     items: [
       '🏕 Frontier Camps: hemmed in? A soldier on unclaimed land near your border can Pitch a Camp: that tile and the free land around it join your nearest city. 5★, +2★ for each camp; up to 2 per city. Works in One City too.',
       '🌾 Homestead needs no tech any more, so every city always has a way to grow.',
+      '🤝 Breaking an alliance now takes 2 turns before any attack, and meanwhile the betrayer\'s armies can only walk out of your land: no more surprise attacks from inside.',
     ],
   },
   {

@@ -85,7 +85,7 @@ function row(v: DiploView, b: number, reopen: () => void): HTMLElement {
         if (why) return toast(`Declare war: ${why}`);
         modal({
           title: `War on the ${T.people}s?`,
-          body: [h('p', {}, `Breaking the ${rel === 'alliance' ? 'alliance' : 'treaty'} costs you trust with every empire, and the ${T.people}s will not forget. The war begins at your next turn.`)],
+          body: [h('p', {}, `Breaking the ${rel === 'alliance' ? 'alliance' : 'treaty'} costs you trust with every empire, and the ${T.people}s will not forget. ${rel === 'alliance' ? 'Breaking an alliance takes 2 turns: the war begins in 2 turns, and until then your units may only leave their land.' : 'The war begins at your next turn.'}`)],
           buttons: [
             { label: 'Declare war', primary: true, onClick: () => { v.act(() => declareWar(s, me, b)); reopen(); } },
             { label: 'Cancel', onClick: reopen },

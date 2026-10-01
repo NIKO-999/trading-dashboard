@@ -112,7 +112,7 @@ test('breaking a treaty: locked at first, then a declaration that bites a turn l
   // the war starts at player 0's next turn
   s.current = 1; startTurn(s);
   assert.equal(relation(s, 0, 1), 'peace');
-  s.current = 0; startTurn(s);
+  s.turn++; s.current = 0; startTurn(s);
   assert.equal(relation(s, 0, 1), 'war');
   assert.ok(s.log.some((l) => /War between the Romans and the Egyptians/.test(l.text)));
   assert.equal(propose(s, 0, 1, 'peace'), null, 'no peace straight after the war began');
@@ -290,4 +290,20 @@ test('barter: buy Iron from an empire at peace; an AI sells only what it can spa
   assert.equal(aiAnswer(s, ask), false);
   stockOf(s.players[2]).iron = 8;
   assert.equal(aiAnswer(s, ask), true);
+});
+
+test('breaking an alliance takes two turns, and allied armies may only walk out meanwhile', () => {
+  const s = hotseat();
+  sign(s, 0, 1, 'alliance');
+  s.turn += PACT_LOCK + 2;
+  assert.ok(declareWar(s, 0, 1));
+  assert.ok(toasts(1).some((t) => /in 2 turns/.test(t)));
+  // borders close: Rome may not step deeper into Egypt's land
+  const inside = s.tiles.find((t) => tileOwnerPlayer(s, t) === 1 && t.cityId === null)!;
+  const outside = s.tiles.find((t) => tileOwnerPlayer(s, t) === null)!;
+  assert.equal(mayStep(s, 0, outside, inside), false);
+  s.turn++; s.current = 0; startTurn(s);
+  assert.equal(relation(s, 0, 1), 'alliance', 'one turn on: still no war');
+  s.turn++; s.current = 0; startTurn(s);
+  assert.equal(relation(s, 0, 1), 'war', 'two turns on: war');
 });
