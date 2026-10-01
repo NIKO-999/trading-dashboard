@@ -6,6 +6,7 @@ export const NEWS: News[] = [
   {
     version: '0.49',
     items: [
+      '⛏🐎 Easier Iron and Horses: your capital adds 1 of each every 2 turns from the Classical era (every turn from the Medieval); a level-3 city or market town can Buy 1 (5★, +2★ each time, easing a step a turn); defeated iron and horse units leave 1 behind; from the Medieval era you can Cultivate mines and pastures anywhere.',
       '🗂 Tidier city menu: units and actions sit in tabs (Ground, Ranged, Mounted, Support, Ships, Economy, City, Armoury, Build), ready ones first; units still locked behind a tech fold into one button.',
       '🐎 New cavalry for every empire, each drawn in its own style: the Lancer (Roads: fastest on land, 3 moves), the Mounted Archer (Horsemanship: shoots from 2 tiles and rides on) and the Cataphract (Smithing: horse and rider in scale armour, 18 health, defence 3).',
     ],

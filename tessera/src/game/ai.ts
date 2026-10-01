@@ -4,6 +4,7 @@ import { festivalAi } from './festival';
 import { barracksAi } from './barracks';
 import { frontierAi } from './frontier';
 import { forgeAi } from './forge';
+import { requisitionAi } from './requisition';
 import { govAi } from './governors';
 import { UNITS } from '../data/units';
 import { aiAdopt } from './culture';
@@ -15,6 +16,7 @@ import { roadNetwork } from './network';
 import {
   applyReward, attack, attackOptions, citiesOf, def, doAction, isExplored, maxHp, moveOptions, moveUnit,
   previewCombat, research, researchable, rewardOptions, techCost, tileActions, tileOwnerPlayer, trainableKinds, trainCost, transmute, transmuteCost, unitCap, unitAt,
+  hasTech,
 } from './rules';
 import type { GameState, Tile, Unit } from './types';
 import { holdsPost, rebelAi } from './rebels';
@@ -60,6 +62,7 @@ export function aiStep(s: GameState): boolean {
   if (tradeAi(s, pid)) return true; // merchants open routes, soldiers pillage enemy trails (see game/trade)
   if (roleAi(s, pid)) return true; // recruiters, sappers, builders, tax collectors, fleets and voyagers (see game/roles)
   if (auxAi(s, pid)) return true; // scouts, healers and Convert; spearmen against cavalry (see game/auxiliaries)
+  if (requisitionAi(s, pid, (r) => r === 'iron' ? hasTech(s, pid, 'smithing') || hasTech(s, pid, 'engineering') : hasTech(s, pid, 'chivalry') || hasTech(s, pid, 'roads'))) return true; // a shortage of Iron or Horses (see game/requisition)
   if (forgeAi(s, pid)) return true; // the Armoury (see game/forge)
   if (frontierAi(s, pid)) return true; // a hemmed-in empire claims room to grow (see game/frontier)
   if (barracksAi(s, pid, (x, y) => s.units.some((u) => hostile(s, pid, u.owner) && dist(x, y, u.x, u.y) <= 3))) return true; // Barracks (see game/barracks)

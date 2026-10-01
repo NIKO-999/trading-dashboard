@@ -37,6 +37,7 @@ export const cropDef = (c: Crop): CropDef => (isLux(c)
 
 /** Has an empire `pid` has met (alive, not the wild) developed this resource somewhere? */
 function seenDeveloped(s: GameState, pid: number, c: Crop): boolean {
+  if (!isLux(c) && (s.players[pid].era?.n ?? 0) >= 2) return true; // from the Medieval era anyone can sink a mine or start a pasture
   const met = s.players[pid].met ?? [];
   return s.players.some((q) => q.id !== pid && q.alive && !q.neutral && met.includes(q.id) && (
     isLux(c) ? !!luxuriesOf(s, q.id)[c]

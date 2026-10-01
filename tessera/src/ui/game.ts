@@ -5,7 +5,7 @@ import { barracksName, trainingNote } from '../game/barracks';
 import { doctrineLine, inFormation } from '../game/army';
 import { govOf, govRank, GOVERNORS } from '../game/governors';
 import { ageOf, DARK_AT, DARK_OFF, eraScore, eraState, ERAS, GOLDEN_AT, GOLDEN_STARS } from '../game/eras';
-import { goodsYield, monopoliesOf, MONOPOLY_AT } from '../game/goods';
+import { goodsYield, monopoliesOf, MONOPOLY_AT, reqPrice } from '../game/goods';
 import { isLuxury, LUX_EXTRA, LUX_FIRST, LUXURIES, LUXURY_IDS, luxuriesOf, luxuryIncome, STOCK_CAP, stockOf, stockYield, type Luxury } from '../game/goods';
 import { checkSparks } from '../game/sparks';
 import type { MechView } from './mech/types';
@@ -834,6 +834,7 @@ export class GameView {
       full: h('div', { class: 'skill-hud' },
         h('div', {}, h('b', {}, 'Iron: '), `${have.iron}/${STOCK_CAP} (+${y.iron} a turn from Mines). Swordsmen use 2, Catapults 1.`),
         h('div', {}, h('b', {}, 'Horses: '), `${have.horses}/${STOCK_CAP} (+${y.horses} a turn from Pastures). Knights use 2.`),
+        h('div', { class: 'muted' }, `Short? From the Classical era your capital adds 1 of each every 2 turns (every turn from the Medieval); a level-3 city or market town can Buy 1 for ${reqPrice(s.players[me])}★ (dearer each time); defeated Swordsmen, Knights and other iron or horse units leave 1 behind; from the Medieval era you can Cultivate mines and pastures anywhere.`),
         h('div', {}, h('b', {}, 'Luxury goods 💎: '), `${have.goods ?? 0}/${STOCK_CAP} (+${goodsYield(s, me)} a turn, 1 per developed luxury). They buy the Armoury's upgrades at a Barracks.`),
         h('div', {}, h('b', {}, 'Luxuries: '), kinds.length ? `${kinds.join(', ')}: +${pay}★ a turn.` : `none yet. Each different one pays ${LUX_FIRST}★ a turn.`),
         h('div', {}, h('b', {}, 'Monopolies: '), monopoliesOf(s, me).length ? `${monopoliesOf(s, me).map((l) => LUXURIES[l].name).join(', ')}: every copy pays ${LUX_FIRST}★ and trade routes +1★ each.` : `hold ${MONOPOLY_AT} of one luxury for a Monopoly.`)),

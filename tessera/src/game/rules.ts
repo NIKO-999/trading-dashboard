@@ -29,9 +29,10 @@ import { barracksActions, barracksDoAction, isBarracks, trainingDefense } from '
 import { homesteadActions, homesteadDoAction } from './homestead';
 import { frontierActions, frontierDoAction } from './frontier';
 import { forgeActions, forgeDoAction } from './forge';
+import { requisitionActions, requisitionDo } from './requisition';
 import { govActions, govCityIncome, govDefense, govDiscount, govDoAction, govTechOff } from './governors';
 import { ageCityIncome, ageOf, DARK_OFF, eraCheck } from './eras';
-import { MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
+import { lootSpoils, MONOPOLY_AT, MONOPOLY_ROUTES_MAX, type Luxury } from './goods';
 import { isLuxury, LUX_COST, LUX_EXTRA, LUX_FIRST, LUXURIES, luxuriesOf, luxuryIncome, needNote, needWhy, spendNeeds } from './goods';
 import type { City, GameState, Player, Tile, Unit, UnitKind } from './types';
 
@@ -427,7 +428,7 @@ export function tileActions(s: GameState, pid: number, t: Tile): Action[] {
   roleDiscount(s, pid, t, base); // a stationed Recruiter (see game/roles)
   govDiscount(s, pid, t, base); // a Marshal (see game/governors)
   specialNote(s, pid, base); // an empire whose speciality is built straight at level 2 (see game/levels)
-  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t), ...freeActions(s, pid, t), ...barracksActions(s, pid, t), ...homesteadActions(s, pid, t), ...frontierActions(s, pid, t), ...forgeActions(s, pid, t)]; // envoys to a Free City (see game/citystates)
+  let acts = [...base, ...levelActions(s, pid, t), ...hookActions(s, pid, t), ...wildActions(s, pid, t), ...wonderActions(s, pid, t), ...tradeActions(s, pid, t), ...roleActions(s, pid, t), ...auxActions(s, pid, t), ...govActions(s, pid, t), ...festivalActions(s, pid, t), ...freeActions(s, pid, t), ...barracksActions(s, pid, t), ...homesteadActions(s, pid, t), ...frontierActions(s, pid, t), ...forgeActions(s, pid, t), ...requisitionActions(s, pid, t)]; // envoys to a Free City (see game/citystates)
   // a mercenary camp, an outlaw camp or a World Wonder stands on its tile: nothing can be built there but a road (see game/wild, game/clans, game/wonders)
   if (campAt(s, t.x, t.y) || clanCampAt(s, t.x, t.y) || wonderOn(s, t)) acts = acts.filter((a) => !['temple', 'shrine', 'market', 'farm', 'mine', 'lumber', 'harvest', 'port', 'clear', 'irrigate', 'drain', 'luxury'].includes(a.id) && !a.id.startsWith('level:'));
   // nor may an empire's own works reshape a wonder's tile (a unit standing there keeps its own actions)
@@ -636,6 +637,7 @@ export function doAction(s: GameState, pid: number, t: Tile, id: string): boolea
   if (id.startsWith('barracks')) return barracksDoAction(s, pid, t, id); // (see game/barracks)
   if (id === 'frontier') return frontierDoAction(s, pid, t); // (see game/frontier)
   if (id.startsWith('forge:')) return forgeDoAction(s, pid, id); // the Armoury (see game/forge)
+  if (id.startsWith('req:')) return requisitionDo(s, pid, id); // (see game/requisition)
   if (id === 'homestead' || id.startsWith('cultivate:')) return homesteadDoAction(s, pid, t, id); // (see game/homestead)
   if (id.startsWith('free:')) return freeDoAction(s, pid, id); // (see game/citystates)
   if (id.startsWith('train:')) {
@@ -1137,6 +1139,8 @@ export function removeUnit(s: GameState, u: Unit, killer: Unit | null = null) {
   hookUnitDied(s, u, killer);
   beastSlain(s, u, killer); // a Great Beast pays its bounty (see game/wild)
   raiderSlain(s, u, killer); // and a raider a small one (see game/clans)
+  const spoil = lootSpoils(s, u, killer?.owner ?? null); // Iron or Horses taken from the fallen (see game/goods)
+  if (spoil && killer) emit({ type: 'toast', player: killer.owner, text: `Spoils of war: +1 ${spoil === 'iron' ? 'Iron' : 'Horse'} from the fallen ${UNITS[u.kind].name}.` });
 }
 
 export const livingPlayers = (s: GameState): Player[] => s.players.filter((p) => p.alive);

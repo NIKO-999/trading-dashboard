@@ -128,6 +128,8 @@ export interface Player {
   stock?: { iron: number; horses: number; goods?: number };
   /** The Armoury: tiers bought for each unit type, for the rest of the game (see game/forge; missing in older saves). */
   forge?: Partial<Record<UnitKind, number>>;
+  /** Recent requisitions of Iron or Horses, raising the price; cools 1 a turn (see game/goods). */
+  req?: number;
   /** Techs made cheaper by a Eureka (see game/sparks; missing in older saves). */
   sparks?: string[];
   /** Sources raised by Cultivate so far (see game/homestead; missing in older saves). */

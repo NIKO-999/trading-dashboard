@@ -44,7 +44,7 @@ export function actionGroup(a: Action): ActGroup {
   if (id.startsWith('train:')) return unitGroup(id.slice(6) as UnitKind);
   if (id.startsWith('forge:') || id === 'barracks:expand') return 'armoury';
   if (id.startsWith('upgrade:') || id === 'recover' || id === 'capture' || id === 'barracks:train' || id.startsWith('aux:') || id.startsWith('role:') || id === 'frontier' || id.startsWith('hero:')) return 'unit';
-  if (id.startsWith('gov:') || id === 'fest' || id === 'barracks' || id.startsWith('wonder:') || id.startsWith('free:') || id.startsWith('mech:') || id.startsWith('trade:')) return 'city';
+  if (id.startsWith('gov:') || id.startsWith('req:') || id === 'fest' || id === 'barracks' || id.startsWith('wonder:') || id.startsWith('free:') || id.startsWith('mech:') || id.startsWith('trade:')) return 'city';
   return 'build';
 }
 

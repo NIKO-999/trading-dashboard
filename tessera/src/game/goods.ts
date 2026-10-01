@@ -117,8 +117,41 @@ export function goodsTurnStart(s: GameState, pid: number) {
   if (p.neutral) return;
   const y = stockYield(s, pid);
   const have = stockOf(p);
-  for (const r of ['iron', 'horses'] as Strategic[]) have[r] = Math.min(STOCK_CAP, have[r] + y[r]);
+  const royal = royalYield(s, pid); // the capital's own stables and forges, from the Classical era
+  for (const r of ['iron', 'horses'] as Strategic[]) have[r] = Math.min(STOCK_CAP, have[r] + y[r] + royal);
+  p.req = Math.max(0, (p.req ?? 0) - 1); // requisition prices cool off a step a turn
   have.goods = Math.min(STOCK_CAP, (have.goods ?? 0) + goodsYield(s, pid)); // luxury goods for the Armoury (see game/forge)
+}
+
+/** The capital's Royal Stables and Forges: +1 Iron and +1 Horse every 2 turns in the Classical era, every turn from the Medieval. */
+export function royalYield(s: GameState, pid: number): number {
+  const era = s.players[pid].era?.n ?? 0;
+  if (!s.cities.some((c) => c.owner === pid && c.capital)) return 0;
+  return era >= 2 ? 1 : era >= 1 && s.turn % 2 === 0 ? 1 : 0;
+}
+
+// ---------------------------------------------------------------- requisition and spoils
+
+/** Buying Iron or Horses in a big city or a market town: REQ_BASE★, +REQ_STEP★ for each recent purchase (cools 1 a turn). */
+export const REQ_BASE = 5;
+export const REQ_STEP = 2;
+export const reqPrice = (p: Player) => REQ_BASE + REQ_STEP * (p.req ?? 0);
+
+/** Can this city requisition? Level 3 or more, or a Market in its land. */
+export const canRequisition = (s: GameState, c: { id: number; level: number }) => c.level >= 3 || s.tiles.some((t) => t.owner === c.id && t.improvement === 'market');
+
+/** A defeated enemy that used Iron or Horses leaves 1 behind for the victor (the one it used most). */
+export function lootSpoils(s: GameState, dead: { kind: UnitKind; owner: number }, killerOwner: number | null): Strategic | null {
+  if (killerOwner === null || killerOwner === dead.owner) return null;
+  const p = s.players[killerOwner];
+  if (!p || p.neutral) return null;
+  const need = needsOf(dead.kind);
+  if (!need) return null;
+  const r = ((need.horses ?? 0) >= (need.iron ?? 0) ? 'horses' : 'iron') as Strategic;
+  const have = stockOf(p);
+  if (have[r] >= STOCK_CAP) return null;
+  have[r] += 1;
+  return r;
 }
 
 /** Luxury goods a turn: 1 for every developed luxury held. They buy the Armoury's upgrades (see game/forge). */
