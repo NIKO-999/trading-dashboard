@@ -61,7 +61,7 @@ test('Siege Masters: siege engines cost 2★ less for Assyria only', () => {
   const { s, me, foe } = setup();
   assert.equal(trainCost(s, me, 'siegetower'), UNITS.siegetower.cost - SIEGE_OFF);
   assert.equal(trainCost(s, me, 'catapult'), UNITS.catapult.cost - SIEGE_OFF);
-  assert.equal(trainCost(s, foe, 'catapult'), UNITS.catapult.cost, 'Rome pays full');
+  assert.equal(trainCost(s, foe, 'catapult'), UNITS.catapult.cost - 1, 'Rome gets only its own 1★ civilization bonus');
   for (const k of ['warrior', 'archer', 'rider', 'swordsman'] as const) assert.equal(trainCost(s, me, k), UNITS[k].cost, `${k}: no discount`);
 });
 

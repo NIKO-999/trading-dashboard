@@ -4,6 +4,15 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.57',
+    items: [
+      '📜 Civilization bonuses: every one of the 51 empires now has three always-on bonuses on top of its signature, like a real civ sheet. Tougher legions, cheaper research, richer ports, faster scouts, wonders built for less.',
+      '⏳ Some grow with the ages: the Aztecs, the Gorkha and Kush hit harder from the Medieval era, harder still in the Renaissance; Viking raids pay from the Classical era.',
+      '🤝 Alliance bonuses: each empire also has a bonus that it and all its allies enjoy, so who you ally with matters. Ally Egypt for cheaper temples, Rome for cheaper Masonry, Portugal for wider sight.',
+      '📖 See them all on the empire card’s Overview tab (New Game and The Empires).',
+    ],
+  },
+  {
     version: '0.56',
     items: [
       '🗂 A tidier empire card on New Game and in The Empires: the portrait, type, people and unique-unit stats sit up top, and the rest is split into Overview, Units, Hero and Traits tabs instead of one long wall of text.',

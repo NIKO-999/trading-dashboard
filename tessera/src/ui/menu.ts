@@ -6,6 +6,7 @@ import { UNIQUE_TECHS } from '../data/uniqueTechs';
 import { CATEGORIES, categoryOf, portraitKind, TRIBE_IDS, TRIBES, type CategoryDef } from '../data/tribes';
 import { UNITS } from '../data/units';
 import { TRAITS } from '../data/traits';
+import { CIV_BONUSES, type CivBonus } from '../data/bonuses';
 import { MECH } from '../game/mech';
 import { UNIQUE_ABILITY } from '../game/uniques';
 import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
@@ -200,6 +201,7 @@ let cardTab: CardTab = 'overview';
 
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 /** A small labelled block in an empire card: a title line and its text. */
+const bonusText = (b: CivBonus) => b.text ?? b.perks.map(describePerk).join(' ');
 const cardRow = (title: Node | string, text: string, cls = '') => h('div', { class: `ec-row ${cls}` }, h('div', { class: 'ec-row-title' }, title), h('div', { class: 'ec-row-text' }, text));
 
 /** An empire at a glance: its unique unit, type and stats on top, and the details in four tabs. */
@@ -217,7 +219,13 @@ function empireCard(id: TribeId, opts: { tabs?: 'shared' | 'own' } = {}) {
   const pane = (): Node[] => {
     switch (tab) {
       case 'overview': return [
-        cardRow(`⭐ ${t.bonus.split(' — ')[0]}`, cap(t.bonus.split(' — ')[1] ?? t.bonus), 'pro'),
+        h('div', { class: 'ec-civ' },
+          h('div', { class: 'ec-sub' }, 'Civilization bonuses'),
+          h('ul', {},
+            h('li', {}, h('b', {}, `${t.bonus.split(' — ')[0]}: `), cap(t.bonus.split(' — ')[1] ?? t.bonus)),
+            ...CIV_BONUSES[id].bonuses.map((b) => h('li', {}, bonusText(b)))),
+          h('div', { class: 'ec-sub' }, 'Alliance bonus ', h('span', { class: 'ec-sub-note' }, '· you and your allies')),
+          h('p', { class: 'ec-team' }, bonusText(CIV_BONUSES[id].team))),
         ...(m && m.name ? [cardRow(`✦ ${m.name}`, m.blurb, 'pro')] : []),
         cardRow(`🏗 ${SPECIALITY[id].name}`, SPECIALITY[id].why),
       ];

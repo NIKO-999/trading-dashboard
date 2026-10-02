@@ -2,7 +2,8 @@ import { TRIBES, unitFor } from '../data/tribes';
 import { CLIMATES, type ClimateTerrain } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { hookSetup } from './mech';
-import { perkRange, perkSum, unitMatches } from './perks';
+import { perkRange, perkSum, perksOf, unitMatches } from './perks';
+import { startStars } from '../data/bonuses';
 import { setupWild } from './wild';
 import { setupFreeCities } from './citystates';
 import { newDiplo } from './diplomacy';
@@ -95,7 +96,7 @@ export function createGame(opts: NewGameOptions): GameState {
     id: i,
     tribe,
     human: i < humanTribes.length,
-    stars: 5,
+    stars: 5 + startStars(tribe), // some civilization bonuses start richer (see data/bonuses)
     techs: [TRIBES[tribe].startTech],
     explored: new Array(size * size).fill(false),
     alive: true,
@@ -479,6 +480,12 @@ export function spawnUnit(state: GameState, kind: UnitKind, owner: number, x: nu
     carrying: null,
     fortified: false,
   };
+  const p = state.players[owner];
+  if (p && !p.neutral) { // health from civilization bonuses (see data/bonuses)
+    let extra = 0;
+    for (const pk of perksOf(state, owner)) if (pk.k === 'hp' && unitMatches(p.tribe, kind, pk.who)) extra += pk.n;
+    if (extra) { u.data = { ...u.data, hpBonus: Number(u.data?.hpBonus ?? 0) + extra }; u.hp += extra; }
+  }
   state.units.push(u);
   if (homeCity !== null) {
     const c = state.cities.find((k) => k.id === homeCity);

@@ -506,8 +506,12 @@ Every empire has one named champion (see `game/heroes`).
 
 Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Roman, Mongol, Zulu, Aztec, Japanese, Persian, Ottoman, Lakota, Rus, Vietnamese, Kushite, Assyrian, Polish, German, Swedish, Kongolese, Mapuche, Nepali; 💰 Economy — Egyptian, Malian, Chinese, Indian, Maya, Inca, Tibetan, Celtic, Aboriginal, Khmer, Aksumite, Byzantine, Arab, Babylonian, Haudenosaunee, Scottish, French, Asante, Georgian, Cree; ⚓ Naval — Māori, Pirate, Viking, Swahili, Inuit, Greek, Korean, Carthaginian, Javanese, Spanish, English, Portuguese, Venetian.
 
+Like a civilization sheet in Age of Empires, every empire has three **civilization bonuses** on top of its signature (always on; a few grow with the eras, e.g. +0.5 attack from the Medieval era and +1 in the Renaissance), and an **alliance bonus** that it and every empire allied with it enjoy (data/bonuses.ts). Health bonuses apply to units trained after the game starts and to the starting units; a starting-Star bonus is added to the usual 5★.
+
 ### Egyptian (egypt)
 - **Signature bonus:** Nile Floods — farms grant +1 extra population.
+- **Civilization bonuses:** Farming costs 3★ less to research. · Mounted units have +3 health. · +1★ a turn for every 2 mines.
+- **Alliance bonus** (it and its allies): Temples and shrines cost 1★ less.
 - **Unique unit — Chariot** (replaces the Rider): **Archer chariot** — Shoots from 2 tiles and can drive on after shooting.
 - **Unique mechanic — Dynastic Wonders & Afterlife:** Megaliths rise over fallen heroes and great souls return to the pyramids as Golden Guardians; fields beside water become free farms that flood every 4th turn with stars and +1 population.
 - **Strengths:** Pyramid Builders (Temples and shrines cost 2★ less.)
@@ -516,6 +520,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aztec (aztec)
 - **Signature bonus:** Sacred Hunt — hunting refunds 1★.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Every animal harvest grows the city by 1 more. · Foot soldiers hit 0.5 harder in the Medieval era, 1 harder in the Renaissance.
+- **Alliance bonus** (it and its allies): Units on your land heal 1 HP every turn.
 - **Unique unit — Jaguar Warrior** (replaces the Rider): **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow.
 - **Unique mechanic — Blood Altar Ascension:** Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.
 - **Strengths:** Warriors Take Captives (+1★ for every enemy you defeat.)
@@ -524,6 +530,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Māori (polynesia)
 - **Signature bonus:** Wayfinding — board boats from any coast, no port needed.
+- **Civilization bonuses:** Boats and ships have +2 health. · Every fish harvest grows the city by 1 more. · Scouts and voyagers move 1 further.
+- **Alliance bonus** (it and its allies): Sailing costs 2★ less to research.
 - **Unique unit — Waka Taua** (replaces the Canoe): **Ramming prow** — The fastest boat (carries a unit); rams adjacent ships for +50% damage.
 - **Unique mechanic — Tā Moko & Waka Surge:** The capital is a Great Waka afloat on the sea that sails each turn, drinks the fish and whales around it into its people, and can anchor on a coast; Tāne's Tapu bars farms, mines, huts and ports, paying stars for untouched wilds instead.
 - **Strengths:** Master Navigators (Boats and ships move 1 further.)
@@ -532,6 +540,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Roman (rome)
 - **Signature bonus:** All Roads — roads cost 1★ less.
+- **Civilization bonuses:** Foot soldiers have +2 health. · +1★ a turn for every 4 road tiles in your borders. · Siege engines cost 1★ less.
+- **Alliance bonus** (it and its allies): Masonry costs 2★ less to research.
 - **Unique unit — Legionary** (replaces the Warrior): **Testudo** — Locks shields against missiles, +1 defence against ranged attacks.
 - **Unique mechanic — Castra & Via Appia:** Soldiers pave roads as they march, and units on paved roads can dig in as mini-forts.
 - **Strengths:** Legion Discipline (Foot soldiers defend 0.5 better.)
@@ -540,6 +550,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Pirate (pirates)
 - **Signature bonus:** Sea Raiders — boats and ships move 1 extra tile and attack +1; ports cost 4★ and earn +1★ a turn.
+- **Civilization bonuses:** Boats and ships hit 0.5 harder. · Pillaging heals the raider 3 HP. · Start the game with +5★.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 ports.
 - **Needs no supply lines at sea** (§4a): their fleets carry their own stores, so Pirate units on the water or their platforms are never out of supply.
 - **Unique unit — Buccaneer** (replaces the Archer): **Plunder** — Wades through shallows and loots +2★ from every kill.
 - **Unique mechanic — Flotilla Republic & Black Market Havens:** No land at all: platforms stitch into sea-cities that tow across the waves, and boarded ships join the fleet. Stars come only from tolls and coastal raids, and are spent to recruit people into the platforms.
@@ -549,6 +561,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Viking (vikings)
 - **Signature bonus:** Victory Feast — a unit heals 3 HP whenever it wins a fight.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Boats and ships have +2 health. · From the Classical era, +1★ for every enemy you defeat.
+- **Alliance bonus** (it and its allies): Forestry costs 2★ less to research.
 - **Unique unit — Berserker** (replaces the Swordsman): **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows.
 - **Unique mechanic — Great Heathen Fleet & Raid Havens:** Longships beach on any shore and found Danelaw havens that siphon 20% of a city's gold; Vikings build no markets or temples, but raze enemy improvements for 3x their cost and carry off a citizen.
 - **Strengths:** Raiders of the Coast (Boats and ships move 1 further. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -557,6 +571,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Japanese (japan)
 - **Signature bonus:** Home Ground — units get +1 defence inside your borders.
+- **Civilization bonuses:** Your unique unit have +3 health. · Sailing costs 2★ less to research. · Every fish harvest grows the city by 1 more.
+- **Alliance bonus** (it and its allies): Meditation costs 2★ less to research.
 - **Unique unit — Samurai** (replaces the Swordsman): **Bushidō** — Strikes again after every kill.
 - **Unique mechanic — Way of the Blade (Kiai):** A critical strike takes no counter-blow and earns Stars in honour, and a dying warrior strikes with fourfold force.
 - **Strengths:** Way of the Warrior (Foot soldiers hit 0.5 harder.)
@@ -565,6 +581,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Mongol (mongols)
 - **Signature bonus:** Steppe Riders — mounted units cost 1★ less.
+- **Civilization bonuses:** Mounted units have +2 health. · Horsemanship costs 2★ less to research. · Every animal harvest grows the city by 1 more.
+- **Alliance bonus** (it and its allies): Scouts and voyagers move 1 further.
 - **Needs no supply lines** (§4a): their riders live off the steppe and their herds, so Mongol units are never out of supply.
 - **Unique unit — Horse Archer** (replaces the Archer): **Mounted archer** — Shoots from 2 tiles and can ride on after shooting.
 - **Unique mechanic — Feigned Retreat & Horde Steppe:** Riders strike, pull back and lure the enemy into an ambush set by waiting archers.
@@ -574,6 +592,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Greek (greeks)
 - **Signature bonus:** Academy — every tech costs 1★ less.
+- **Civilization bonuses:** Boats and ships move 1 further. · Philosophy costs 2★ less to research. · +1★ a turn for every 2 markets.
+- **Alliance bonus** (it and its allies): Trade routes pay 15% more.
 - **Unique unit — Hoplite** (replaces the Defender): **Phalanx** — Its spear wall hits back 50% harder when attacked.
 - **Unique mechanic — Oracle & Polis Democracy:** No permanent capital: the largest city is the seat and all cities vote a global Edict every few turns; equal-sized cities form an Amphictyony that pays +50% Stars on resource improvements.
 - **Strengths:** Phalanx Discipline (Foot soldiers defend 0.5 better.)
@@ -582,6 +602,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Zulu (zulu)
 - **Signature bonus:** Great Hunt — hunting grows a city by 2 instead of 1.
+- **Civilization bonuses:** Foot soldiers have +2 health. · +1★ for every enemy you defeat. · Units outside your borders defend 0.5 better.
+- **Alliance bonus** (it and its allies): Tactics costs 2★ less to research.
 - **Unique unit — Impi** (replaces the Warrior): **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe.
 - **Unique mechanic — Chest & Horns Formation:** Melee units in a V around an enemy trap it, stopping its counter-attack and dealing triple damage.
 - **Strengths:** Age-Regiments (Your unique unit move 1 further.)
@@ -590,6 +612,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Persian (persia)
 - **Signature bonus:** Royal Tribute — capturing a city pays 3★.
+- **Civilization bonuses:** Mounted units hit 0.5 harder. · Trade routes pay 25% more. · Units in your cities defend 0.5 better.
+- **Alliance bonus** (it and its allies): Riding costs 2★ less to research.
 - **Unique unit — Immortal** (replaces the Swordsman): **Undying** — Heals 3 HP at the start of every turn, wherever it stands.
 - **Unique mechanic — Royal Road Network & Satrap Extraction:** A fallen Immortal returns at the capital next turn while Stars flow; conquered cities pay double from their tiles but bleed Population unless garrisoned.
 - **Strengths:** The King’s Eyes and Ears (See 1 tile further around every unit and city.)
@@ -598,6 +622,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Celtic (celts)
 - **Signature bonus:** Sacred Groves — your units in a forest defend at ×1.75.
+- **Civilization bonuses:** Foot soldiers have +2 health. · +1★ a turn for every 2 lumber huts. · Siege engines cost 1★ less.
+- **Alliance bonus** (it and its allies): Forestry costs 2★ less to research.
 - **Unique unit — Clansman** (replaces the Warrior): **Oak-grove warband** — Moves freely through forest and attacks +1 from forest.
 - **Unique mechanic — Druidic Ley Lines:** Plant Sacred Groves that spread forest and root enemies who enter it; the Celts never cut trees, and uncut forest beside groves pays stars and slowly grows cities.
 - **Strengths:** Fierce in Battle (Foot soldiers hit 0.5 harder.)
@@ -606,6 +632,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Inuit (inuit)
 - **Signature bonus:** Sea Hunters — every fish harvest gives +1 extra pop.
+- **Civilization bonuses:** Whaling costs 2★ less to research. · Units on ice defend 0.5 better. · Ranged units have +2 health.
+- **Alliance bonus** (it and its allies): Units on your land heal 1 HP every turn.
 - **Unique unit — Harpooner** (replaces the Archer): **Harpoon** — Double damage to ships, boats and Great Beasts.
 - **Unique mechanic — Glacial Freeze:** Land units and cities freeze water into permanent ice bridges that chill enemies without fire techs; whale and fish nodes pay a huge lump of stars and population, then must re-freeze before reuse.
 - **Strengths:** Masters of the Hunt (+1★ whenever you harvest a resource.)
@@ -614,6 +642,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Inca (inca)
 - **Signature bonus:** Terraces — every mine adds +1 pop.
+- **Civilization bonuses:** Mining costs 2★ less to research. · Units in the mountains defend 0.5 better. · Ranged units hit 0.5 harder.
+- **Alliance bonus** (it and its allies): Roads cost 1★ less.
 - **Unique unit — Slinger** (replaces the Archer): **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain.
 - **Unique mechanic — Highland Terracing & Rope Bridges:** Chaski outposts on peaks sling land units by zipline to other outposts or across 4+ mountains, and mountains never block the Inca. Terrace farms on peaks and forest raise Star income x1.5 or x2 for each extra elevation (lowland, hill, peak) a city works.
 - **Strengths:** Qhapaq Ñan (Roads cost 1★ less.)
@@ -622,6 +652,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aksumite (ethiopia)
 - **Signature bonus:** Highland Fortress — your units on mountains defend at ×2.5.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Meditation costs 2★ less to research. · Trade routes pay 25% more.
+- **Alliance bonus** (it and its allies): Temples and shrines cost 1★ less.
 - **Unique unit — Shotelai** (replaces the Swordsman): **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus.
 - **Unique mechanic — Monolithic Spire Network:** Stone Stelae ray enemies within three tiles and link into a laser grid, while crossroad tariffs pay Stars for foreign traffic past your borders.
 - **Strengths:** Christian Kingdom (+1★ a turn for every temple. Units in the mountains defend 0.5 better.)
@@ -630,6 +662,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Aboriginal (aboriginal)
 - **Signature bonus:** Firestick Farming — clearing a forest also grows the city by 1.
+- **Civilization bonuses:** Ranged units have +2 health. · Clearing a forest pays 1★ more. · Scouts and voyagers move 1 further.
+- **Alliance bonus** (it and its allies): See 1 tile further around every unit and city.
 - **Needs no supply lines** (§4a): they know the Country and live off it, so Aboriginal units are never out of supply.
 - **Unique unit — Woomera Hunter** (replaces the Archer): **Spear-thrower** — Throws 3 tiles, further than any archer; moves freely through forest.
 - **Unique mechanic — Dreamtime Paths:** Paint invisible Songlines that let your units travel free and unseen; pilgrimages between distant landmarks pay Stars and grow your cities.
@@ -639,6 +673,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Chinese (china)
 - **Signature bonus:** Silk Road — every market earns +1★ more.
+- **Civilization bonuses:** Start the game with +5★. · Ranged units hit 0.5 harder. · Philosophy costs 2★ less to research.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 farms.
 - **Unique unit — Crossbowman** (replaces the Archer): **Siege bolts** — Shoots from 2 tiles; +1 attack against units in a city or fort.
 - **Unique mechanic — Dynastic Mandate & Great Wall:** Border walls stop every enemy but siege engines and improved tiles pay +1★ while the Mandate holds (no city lost, no invader). Losing a city brings a Dynastic Shift (a tech refund, then mourning), and invaders halve your income.
 - **Strengths:** Teeming Population (+1★ whenever a city levels up.)
@@ -647,6 +683,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Indian (india)
 - **Signature bonus:** Ahimsa — units heal 2 more HP when they rest.
+- **Civilization bonuses:** Mounted units have +3 health. · +1★ a turn for every 2 temples. · Meditation costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Units on your land heal 1 HP every turn.
 - **Unique unit — War Elephant** (replaces the Knight): **Trample** — A melee blow carries through, and the enemy behind the target takes half the damage.
 - **Unique mechanic — Karma & Sacred Beasts:** Defensive kills carry no penalty and turn neutral wildlife into fighting beasts.
 - **Strengths:** Fertile Ganges (Every farm grows the city by 1 more.)
@@ -655,6 +693,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Malian (mali)
 - **Signature bonus:** Gold of the Sahel — every mine earns +1★ a turn.
+- **Civilization bonuses:** +1★ a turn for every 2 markets. · Foot soldiers have +2 health. · Trade costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Mining costs 2★ less to research.
 - **Unique unit — Sofa** (replaces the Warrior): **Mansa's guard** — +2 defence in its own cities.
 - **Unique mechanic — Salt & Gold Inflation:** Flood a foreign city's markets with gold: its costs double and its production halts for 2 turns. Caravans earn Stars from every tile crossed through foreign or neutral lands, more when it is dangerous.
 - **Strengths:** Hajj Wealth (Trade routes pay 25% more.)
@@ -663,6 +703,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Lakota (lakota)
 - **Signature bonus:** Horse Nation — your mounted units move 1 further.
+- **Civilization bonuses:** Mounted units have +2 health. · See 1 tile further around every unit and city. · Horsemanship costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Scouts and voyagers move 1 further.
 - **Needs no supply lines** (§4a): the people follow the buffalo, so Lakota units are never out of supply.
 - **Unique unit — Horse Warrior** (replaces the Rider): **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra).
 - **Unique mechanic — Great Plains Migration:** Camps pack up, roll up to 3 tiles a turn and re-settle, leaving enriched soil behind; assign herders to Follow Herds that wander the plains for double Stars.
@@ -672,6 +714,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Ottoman (ottoman)
 - **Signature bonus:** Imperial Foundry — catapults cost 3★ less.
+- **Civilization bonuses:** Siege engines have +3 health. · Ranged units have +2 health. · Engineering costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Smithing costs 2★ less to research.
 - **Unique unit — Janissary** (replaces the Archer): **Musket volley** — Fires from 2 tiles; +1 attack against melee units.
 - **Unique mechanic — Sublime Porte & Great Bombards:** Conquered cities train their old peoples’ elite and Great Bombards ignore walls; each conquest pays Devshirme stars (capped) and levies +1 population.
 - **Strengths:** Janissary Corps (Ranged units hit 0.5 harder.)
@@ -680,6 +724,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Maya (maya)
 - **Signature bonus:** Sky Watchers — every temple earns +1★ a turn.
+- **Civilization bonuses:** Every temple grows the city by 1 more. · Foot soldiers have +2 health. · Spiritualism costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Farming costs 2★ less to research.
 - **Unique unit — Holcan** (replaces the Warrior): **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it.
 - **Unique mechanic — Long Count Prophecies & Katun Cycles:** Every 13 turns an Era rewrites the map (dry seas, storms, a golden age...) and you may pay to choose it; every 5 turns your improvements pay double, and every 20 your cities grow free.
 - **Strengths:** Sky Watchers (See 1 tile further around every unit and city.)
@@ -688,6 +734,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Korean (korea)
 - **Signature bonus:** Scholars — every tech you research grows your capital by 1.
+- **Civilization bonuses:** Siege engines cost 1★ less. · Boats and ships have +3 health. · Philosophy costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Units in your cities defend 0.5 better.
 - **Unique unit — Hwacha** (replaces the Catapult): **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too.
 - **Unique mechanic — Singijeon Rocket Fleets:** Rocket salvos arc over fog and cover, setting targets ablaze for turns.
 - **Strengths:** Turtle Ships (Boats and ships hit 1 harder.)
@@ -696,6 +744,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Khmer (khmer)
 - **Signature bonus:** Baray Reservoirs — every farm earns +1★ a turn.
+- **Civilization bonuses:** Mounted units have +3 health. · +1★ whenever a city levels up. · World Wonders cost 15% less.
+- **Alliance bonus** (it and its allies): Farming costs 2★ less to research.
 - **Unique unit — Temple Guardian** (replaces the Defender): **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead.
 - **Unique mechanic — Great Reservoir Flooding:** Build barays and dams, then blow a dam to flood enemy armies for 2 turns; water and barays pay +1★ per resource they touch, compounding across linked canals.
 - **Strengths:** Jungle Fighters (Units in forests defend 0.5 better.)
@@ -704,6 +754,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Swahili (swahili)
 - **Signature bonus:** Monsoon Traders — your boats and ships move 1 further.
+- **Civilization bonuses:** +1★ a turn for every 2 ports. · Trade routes pay 25% more. · Boats and ships have +2 health.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 markets.
 - **Unique unit — Askari** (replaces the Warrior): **Coast guard** — +1 defence on land beside water.
 - **Unique mechanic — Monsoon Trade Currents:** The sea wind turns each season: ships sail fast with it and slow against it, and Lighthouses call it. Ships that sail with the wind past fish, whale and port tiles earn double Stars (half against).
 - **Strengths:** Coastal Fortresses (Units in your cities defend 0.5 better.)
@@ -712,6 +764,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Tibetan (tibet)
 - **Signature bonus:** Roof of the World — your units cross mountains without Climbing.
+- **Civilization bonuses:** Mounted units have +2 health. · Meditation costs 2★ less to research. · +1★ a turn for every 2 temples.
+- **Alliance bonus** (it and its allies): Units in the mountains defend 0.5 better.
 - **Unique unit — Khampa Rider** (replaces the Rider): **Highlander** — Mountains never stop its move; it rides over them like open ground.
 - **Unique mechanic — Highland Stupa & Mist:** Sky Mist hides your cities until an enemy stands on an adjacent peak, and stupas extend it. Remote mountain and forest resources pay more Stars the farther they lie from any enemy.
 - **Strengths:** High-Altitude Endurance (Units on your land heal 1 HP every turn.)
@@ -720,6 +774,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Carthaginian (carthage)
 - **Signature bonus:** Purple Dye — every port and every market earns +1★ a turn.
+- **Civilization bonuses:** Boats and ships hit 0.5 harder. · Your unique unit have +3 health. · +1★ a turn from your capital.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 ports.
 - **Unique unit — Sacred Band** (replaces the Defender): **Sacred oath** — Defends at full strength however wounded.
 - **Unique mechanic — Mercenary Contracts:** any city may hire one veteran mercenary a turn (a warrior, archer, rider, swordsman, knight or Sacred Band Carthage could train) for 1.5× the training price (rounded up). It takes no unit slot, but costs 1★ a turn; when the treasury can't pay, the newest mercenary deserts. At most as many mercenaries as cities. Mercenaries fly a purple pennant, and Carthaginian ports show their round cothon.
 - **Strengths:** Merchant Princes (Trade routes pay 25% more.)
@@ -728,6 +784,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Byzantine (byzantium)
 - **Signature bonus:** Theodosian Walls — your units in your cities defend +1.
+- **Civilization bonuses:** Mounted units have +2 health. · +1★ a turn for every 2 temples. · Boats and ships hit 0.5 harder.
+- **Alliance bonus** (it and its allies): Philosophy costs 2★ less to research.
 - **Unique unit — Varangian Guard** (replaces the Swordsman): **Emperor's guard** — In or beside one of your cities: +1 defence, and it heals 2 HP at the start of every turn.
 - **Unique mechanic — Greek Fire:** a Byzantine boat or ship that attacks sets its target ablaze, and so do the siphons of a coastal Byzantine city on any enemy that attacks a unit inside it: a burning unit takes 2 damage at the start of each Byzantine turn, twice (it can die of it). **Imperial tribute** (at a city, once every 5 turns): pay 5★ + 2★ for each enemy unit within 3 tiles, and their blows land empty (0 damage) on their next turn.
 - **Strengths:** Imperial Bureaucracy (+2★ whenever a city levels up.)
@@ -736,6 +794,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Arab (arabia)
 - **Signature bonus:** House of Wisdom — a tech that an empire you have met already knows costs 40% less (not 20%).
+- **Civilization bonuses:** Mounted units have +2 health. · +1★ a turn for every 2 markets. · Trade costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Trade routes pay 15% more.
 - **Unique unit — Camel Rider** (replaces the Rider): **Ship of the desert** — Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert.
 - **Unique mechanic — Caravanserais & Desert Roads:** build a Caravanserai on an empty desert or field tile in your land, not beside another (6★, +2★ for each one you have): +1★ a turn, +1★ more with a road or a trade route on or beside it. Your camel riders, traders and camel scouts cross desert at half a move a tile, like a road.
 - **Strengths:** Desert Caravans (Trade routes pay 25% more. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -744,6 +804,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Rus (rus)
 - **Signature bonus:** Fur Trade — every hunt pays +1★.
+- **Civilization bonuses:** Mounted units hit 0.5 harder. · Units on your own land defend 0.5 better. · +1★ a turn for every 2 lumber huts.
+- **Alliance bonus** (it and its allies): Forestry costs 2★ less to research.
 - **Unique unit — Druzhina** (replaces the Knight): **Winter host** — Forest never stops it; +1 attack and defence on tundra and ice.
 - **Unique mechanic — General Winter:** from turn 10, every 10 turns winter falls for 3 turns (turns 10–12, 20–22...). Then enemy units inside Rus borders lose 2 HP at the start of each Rus turn (never below 1) and move 1 less, and Rus units defend +0.5 anywhere in their land. Once an era the capital can call an **early winter** (8★, 2 turns). Snow falls over Rus land while it lasts.
 - **Strengths:** Stubborn Defenders (Foot soldiers defend 0.5 better.)
@@ -752,6 +814,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Vietnamese (vietnam)
 - **Signature bonus:** Guerrilla War — your units in forest or swamp defend +1.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Ranged units hit 0.5 harder. · Units on your own land defend 0.5 better.
+- **Alliance bonus** (it and its allies): Units on your land heal 1 HP every turn.
 - **Unique unit — Rattan Guard** (replaces the Warrior): **Jungle guerrilla** — Moves freely through forest and swamp, and attacks +1 from them.
 - **Unique mechanic — Stakes of Bạch Đằng:** plant hidden stakes in a shallow water tile in or beside your land (4★; 2 per city). An enemy ship that sails onto them must stop and takes 4 damage (it can sink); the stakes are then spent. Only you see them.
 - **Strengths:** Rice Bowl (+1★ a turn for every 2 farms.)
@@ -760,6 +824,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Babylonian (babylon)
 - **Signature bonus:** Clay Tablets — a Eureka makes its tech 50% cheaper (not 40%).
+- **Civilization bonuses:** Masonry costs 2★ less to research. · Foot soldiers have +2 health. · World Wonders cost 15% less.
+- **Alliance bonus** (it and its allies): +1★ whenever a city levels up.
 - **Unique unit — Sabum Kibittum** (replaces the Warrior): **Royal levy** — +1 attack against mounted units.
 - **Unique mechanic — Ziggurats & Star-Gazers:** Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 2★). Clay Tablets: a Eureka makes its tech 50% cheaper, not 40%.
 - **Strengths:** Irrigation Canals (+1★ a turn for every 2 farms.)
@@ -768,6 +834,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Nubian (nubia)
 - **Signature bonus:** Land of the Bow — archers and other ranged units cost 1★ less.
+- **Civilization bonuses:** Ranged units have +2 health. · Ranged units hit 0.5 harder in the Medieval era, 1 harder in the Renaissance. · +1★ a turn from your capital.
+- **Alliance bonus** (it and its allies): Archery costs 2★ less to research.
 - **Unique unit — Pitati Archer** (replaces the Archer): **Eye-shooter** — +1 attack against wounded units.
 - **Unique mechanic — Pyramids of Meroë:** Raise steep pyramids on desert or field: each pays +1★ a turn, and your archers on or beside one shoot 1 tile further. Land of the Bow: archers and other ranged units cost 1★ less.
 - **Strengths:** Furnaces of Meroë (+1 Iron a turn. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -776,6 +844,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Javanese (majapahit)
 - **Signature bonus:** Spice Islands — every fish and fruit harvest pays +1★.
+- **Civilization bonuses:** Boats and ships have +2 health. · Every fruit harvest grows the city by 1 more. · Your unique unit have +3 health.
+- **Alliance bonus** (it and its allies): Trade routes pay 15% more.
 - **Unique unit — Kris Warrior** (replaces the Swordsman): **Island raider** — Wades through shallows; +1 attack from a tile beside water.
 - **Unique mechanic — Spice Trade Jongs:** Your jongs (galleys and warships) that start your turn beside another empire's coastal city trade there for 2★, one ship per port; at war it is a raid and the owner also loses 1★. Mandala tribute at the capital (5★): +1★ a turn per visited port for 5 turns. Spice Islands: fish and fruit harvests pay +1★.
 - **Strengths:** Monsoon Sailors (+1★ a turn for every port.)
@@ -784,6 +854,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Spanish (spain)
 - **Signature bonus:** Treasure Fleets — every ship and warship you have pays +1★ a turn.
+- **Civilization bonuses:** Mounted units have +2 health. · Navigation costs 2★ less to research. · +1★ a turn from your capital.
+- **Alliance bonus** (it and its allies): Scouts and voyagers move 1 further.
 - **Unique unit — Conquistador** (replaces the Knight): **Conquest** — +1 attack against units in a city or fort.
 - **Unique mechanic — Conquest & Missions:** Each ship and warship pays +1★ a turn. Taking a city plunders 3★ per level. Found a Mission beside each city (6★): +1★ a turn, +2★ beside a conquered city, and your wounded on or beside it heal 2 HP more.
 - **Strengths:** Reconquista Veterans (+1★ for every enemy you defeat. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -792,6 +864,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Haudenosaunee (haudenosaunee)
 - **Signature bonus:** Three Sisters — every crop harvest grows the city by 1 more.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Forestry costs 2★ less to research. · +1★ a turn for every 2 lumber huts.
+- **Alliance bonus** (it and its allies): Farming costs 2★ less to research.
 - **Unique unit — Mohawk Warrior** (replaces the Warrior): **Great Law** — Forest never stops it, and it heals 2 HP at the start of every turn inside your borders.
 - **Unique mechanic — Great League of Peace:** Cities within 4 tiles of the League join it, growing out from your capital (at most 5): +1★ a turn for each member beyond the first, and your units defend +0.5 inside League borders. Condolence Council (4★, every 5 turns): every unit heals to full. Three Sisters: every crop harvest grows the city by 1 more.
 - **Strengths:** Forest Warfare (Units in forests defend 0.5 better.)
@@ -800,6 +874,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Assyrian (assyria)
 - **Signature bonus:** Siege Masters — siege engines cost 2★ less.
+- **Civilization bonuses:** Siege engines have +3 health. · Siege engines hit 0.5 harder. · +1★ for every enemy you defeat.
+- **Alliance bonus** (it and its allies): Engineering costs 2★ less to research.
 - **Unique unit — Siege Tower** (replaces the Catapult): **Archers aloft** — +1 attack against units in a city or fort.
 - **Unique mechanic — Deportations & the Library:** Each city you capture loses 1 population to your capital, and its tablets teach you one tech its owner knew. Terror Tribute at the capital (free, every 6 turns): every enemy city within 4 tiles of your army pays 1★, up to 6★. Siege Masters: siege engines cost 2★ less.
 - **Strengths:** Royal Road Couriers (Scouts and voyagers move 1 further. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -808,6 +884,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Polish (poland)
 - **Signature bonus:** Golden Liberty — every city of level 3 or more pays +1★ a turn.
+- **Civilization bonuses:** Mounted units have +2 health. · +1★ a turn for every 2 farms. · Chivalry costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Horsemanship costs 2★ less to research.
 - **Unique unit — Winged Hussar** (replaces the Knight): **Wings of terror** — +1 attack against foot soldiers.
 - **Unique mechanic — Royal Election:** Golden Liberty: every city of level 3+ pays +1★ a turn. At the capital the Sejm elects a king for 8 turns (first election free, then 3★): the Hussar King (mounted units +1 attack), the Merchant King (+1★ a turn per city) or the Scholar King (techs 2★ cheaper). Each reign ends in a 2-turn interregnum.
 - **Strengths:** Szlachta Cavalry (Mounted units hit 0.5 harder.)
@@ -816,6 +894,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Scottish (scotland)
 - **Signature bonus:** Scottish Enlightenment — every city of level 3 or more makes techs 1★ cheaper (at most 3★).
+- **Civilization bonuses:** Foot soldiers have +2 health. · Units in the mountains defend 0.5 better. · Philosophy costs 2★ less to research.
+- **Alliance bonus** (it and its allies): Mining costs 2★ less to research.
 - **Unique unit — Highlander** (replaces the Swordsman): **Highland charge** — +1 attack while at full health.
 - **Unique mechanic — Highland Games & Clan Gatherings:** Highland Games (4★ in a city, once every 6 turns): every unit within 2 tiles gains a kill toward veteran and the city grows by 1. Clan Gathering: your units on or beside a mountain defend +0.5, and each one that falls in battle sends +1★ from the nearest city. Scottish Enlightenment: each city of level 3+ makes techs 1★ cheaper (at most 3★).
 - **Strengths:** Clan Loyalty (Units on your land heal 1 HP every turn.)
@@ -824,6 +904,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### English (england)
 - **Signature bonus:** Royal Navy — your ships and warships attack +0.5.
+- **Civilization bonuses:** Ranged units have +2 health. · Boats and ships have +2 health. · +1★ whenever a city levels up.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 ports.
 - **Unique unit — Longbowman** (replaces the Archer): **Longbow** — Shoots 3 tiles; +1 attack against mounted units.
 - **Unique mechanic — Letters of Marque & Royal Dockyards:** Royal Navy: ships and warships attack +0.5. Sinking an enemy vessel pays 3★ prize money, and ships that start your turn in or beside your port are repaired to full. From the capital, sign Letters of Marque (5★, every 8 turns): for 4 turns each enemy ship your ships damage loses 1★ of cargo to you.
 - **Strengths:** Island Fortress (Units in your cities defend 0.5 better. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -832,6 +914,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### French (france)
 - **Signature bonus:** Haute Couture — every developed luxury pays +1★ a turn.
+- **Civilization bonuses:** Mounted units have +2 health. · World Wonders cost 15% less. · +1★ a turn for every 2 markets.
+- **Alliance bonus** (it and its allies): Chivalry costs 2★ less to research.
 - **Unique unit — Royal Guard** (replaces the Defender): **Esprit de corps** — +1 defence while next to another of your units.
 - **Unique mechanic — Salons & the Grand Tour:** Haute Couture: every developed luxury pays +1★ a turn. A city of level 3+ may open a Salon (6★, once): each makes every tech 1★ cheaper (up to 2★). Grand Tour: every unit of an empire at peace with France inside its borders pays it 1★ a turn (up to 2★).
 - **Strengths:** Grande Armée (Every unit costs 1★ less.)
@@ -840,6 +924,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### German (germany)
 - **Signature bonus:** Hanseatic League — every market pays +1★ a turn, +1★ more if it is next to a port.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Smithing costs 2★ less to research. · Siege engines cost 1★ less.
+- **Alliance bonus** (it and its allies): Trade costs 2★ less to research.
 - **Unique unit — Landsknecht** (replaces the Swordsman): **Doppelsöldner** — +1.5 attack against shield units.
 - **Unique mechanic — Imperial Diet & Free Cities:** Hanseatic League: every market pays +1★ a turn, +1★ more beside a port. Free Imperial Cities: every city but the capital with a market pays +1★ more. Cities of level 4+ are Electors; with 3 of them the capital may call a free Imperial Diet every 10 turns: the Imperial Levy (a free veteran of your best melee unit), the Reichstag Tax (+2★ per Elector) or the Landfrieden (your units heal +2 HP at home for 5 turns).
 - **Strengths:** Guild Masters (Buildings cost 1★ less. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -848,6 +934,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Swedish (sweden)
 - **Signature bonus:** Carolean Drill — your units become veterans after 2 kills (not 3).
+- **Civilization bonuses:** Foot soldiers have +2 health. · +1★ whenever a city levels up. · Units on your own land defend 0.5 better.
+- **Alliance bonus** (it and its allies): Units on your land heal 1 HP every turn.
 - **Unique unit — Carolean** (replaces the Defender): **Gå-på** — Charges home: +1.5 attack in melee.
 - **Unique mechanic — Winter March & Falun Copper:** Carolean Drill: your units become veterans after 2 kills (not 3). Winter March: land units that start on tundra or ice move +1, and ice is open road to them. Falun Copper (3★ in a city with a Mine, once every 5 turns): +1 Iron to the stockpile and +3★ for the red copper roofs sold abroad.
 - **Strengths:** Copper Mountain (+1★ a turn for every 2 mines. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -856,6 +944,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Portuguese (portugal)
 - **Signature bonus:** Feitorias — every port pays +1★ a turn.
+- **Civilization bonuses:** Boats and ships have +2 health. · Navigation costs 2★ less to research. · +1★ a turn for every 2 ports.
+- **Alliance bonus** (it and its allies): See 1 tile further around every unit and city.
 - **Unique unit — Caçador** (replaces the Archer): **Skirmisher** — +1 attack from forest or a mountain.
 - **Unique mechanic — Padrões of Discovery:** Feitorias: every port pays +1★ a turn. A boat or ship beside unclaimed land at least 5 tiles from your cities may raise a stone padrão there (3★, one per city): +1★ a turn, +1★ more on the coast, and you see 2 tiles around it for good.
 - **Strengths:** Navigators (See 1 tile further around every unit and city.)
@@ -864,6 +954,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Venetian (venice)
 - **Signature bonus:** Merchant Republic — +1★ a turn for every 10★ in your treasury (at most +4★).
+- **Civilization bonuses:** Boats and ships hit 0.5 harder. · +1★ a turn for every 2 markets. · Trade routes pay 25% more.
+- **Alliance bonus** (it and its allies): Trade costs 2★ less to research.
 - **Unique unit — Condottiere** (replaces the Knight): **Paid in gold** — +1 attack and defence while you hold 20★ or more.
 - **Unique mechanic — Merchant Republic & The Arsenal:** Every 10★ in the treasury earns +1★ a turn (at most +4★). A city with a Port launches a warship from the Arsenal at half price, once every 4 turns. Ships beside your cities unload +1★ each (at most +3★).
 - **Strengths:** The Arsenal (Ships cost 1★ less. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -872,6 +964,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Kongolese (kongo)
 - **Signature bonus:** Kingdom of Cloth — every orchard pays +1★ a turn.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Every fruit harvest grows the city by 1 more. · Ranged units hit 0.5 harder.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 markets.
 - **Unique unit — Ngao Shieldbearer** (replaces the Warrior): **Mbeba shield** — +1 defence against ranged attacks and in forest.
 - **Unique mechanic — Nkisi Guardians & the Raffia Treasury:** Raise an nkisi nkondi in a city (5★, once per city): enemies on or beside it attack −1. At the capital, weave 5★ into a bolt of raffia cloth (up to 5): each bolt pays +1★ a turn and can't be stolen, but all are lost if the capital falls. Kingdom of Cloth: every orchard pays +1★ a turn.
 - **Strengths:** Copper and Raffia (+1★ a turn for every market.)
@@ -880,6 +974,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Asante (ashanti)
 - **Signature bonus:** Golden Stool — units in your capital defend +2.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Units in forests defend 0.5 better. · Mining costs 2★ less to research.
+- **Alliance bonus** (it and its allies): +1★ a turn for every 2 mines.
 - **Unique unit — Asafo Company** (replaces the Defender): **Asafo company** — +1 attack and defence inside your borders.
 - **Unique mechanic — Gold Dust & the Great Roads:** Every mine also yields 1 gold dust a turn (up to 20). At the capital, weigh it out: 5 dust for +8★, 8 to heal every unit 5 HP, or 10 for +1 population in every city. Great Roads: each city joined to the capital by an unbroken road pays +1★ a turn. Golden Stool: units in your capital defend +2.
 - **Strengths:** Gold Weights (+1★ a turn for every 2 mines.)
@@ -888,6 +984,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Mapuche (mapuche)
 - **Signature bonus:** Unconquered — your units inside your borders defend +0.5.
+- **Civilization bonuses:** Mounted units have +2 health. · Pillaging heals the raider 3 HP. · +1★ for every enemy you defeat.
+- **Alliance bonus** (it and its allies): Units in forests defend 0.5 better.
 - **Unique unit — Malón Rider** (replaces the Rider): **Malón raid** — +2★ for every enemy it defeats.
 - **Unique mechanic — The Toqui & the Parlamento:** In war, elect a Toqui at the capital (6★, every 10 turns): for 3 turns every unit moves +1 and attacks +0.5. Hold a Parlamento (4★, every 8 turns): with diplomacy, every enemy warms to you (+15) and is offered peace; otherwise your units heal 4 HP and the next Toqui is free. Unconquered: your units inside your borders defend +0.5.
 - **Strengths:** Guerrilla Toquis (Units in forests defend 0.5 better. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
@@ -896,6 +994,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Georgian (georgia)
 - **Signature bonus:** Golden Age of Tamar — while no enemy unit stands in your borders, every city pays +1★ a turn.
+- **Civilization bonuses:** Foot soldiers have +2 health. · +1★ a turn for every 2 temples. · Mounted units hit 0.5 harder.
+- **Alliance bonus** (it and its allies): Meditation costs 2★ less to research.
 - **Unique unit — Khevsur Knight** (replaces the Swordsman): **Mountain knight** — +1 attack and defence on or next to a mountain.
 - **Unique mechanic — Qvevri Cellars:** Bury a qvevri of wine in an empty field in your borders (4★, +1★ for each you hold; not next to another): +1★ a turn, +2★ after 5 turns, +3★ after 10. Hold a supra at the capital (3★, every 6 turns): every unit heals 3 HP and each city with a qvevri grows +1. Golden Age of Tamar: while no enemy stands in your borders, every city pays +1★.
 - **Strengths:** Mountain Watchtowers (Units in the mountains defend 0.5 better.)
@@ -904,6 +1004,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Nepali (nepal)
 - **Signature bonus:** Himalayan Kingdom — your units on or next to a mountain attack +0.5.
+- **Civilization bonuses:** Foot soldiers have +2 health. · Meditation costs 2★ less to research. · Foot soldiers hit 0.5 harder in the Medieval era, 1 harder in the Renaissance.
+- **Alliance bonus** (it and its allies): Units in the mountains defend 0.5 better.
 - **Unique unit — Gurkha** (replaces the Warrior): **Kukri** — Mountains never stop it; +1 attack from a mountain or forest.
 - **Unique mechanic — Rope Bridges & Gurkha Recruits:** Sling a rope bridge across a mountain in your borders (3★): your units cross it at road speed without stopping, and you climb mountains without Climbing. A city on or beside a mountain may raise a veteran Gurkha for the normal price once every 4 turns. Himalayan Kingdom: your units on or next to a mountain attack +0.5.
 - **Strengths:** Born Climbers (Units in the mountains defend 0.5 better.)
@@ -912,6 +1014,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 
 ### Cree (cree)
 - **Signature bonus:** Pemmican — your units outside your borders heal 2 HP a turn.
+- **Civilization bonuses:** Every animal harvest grows the city by 1 more. · Scouts and voyagers move 1 further. · Units outside your borders defend 0.5 better.
+- **Alliance bonus** (it and its allies): Forestry costs 2★ less to research.
 - **Unique unit — Okihtcitaw** (replaces the Warrior): **Forest runner** — Moves 2 tiles, and forest never stops it.
 - **Unique mechanic — Trading Posts & the Winter Count:** Pemmican: your units outside your borders heal 2 HP a turn. Build Trading Posts on forest or shore (5★, +1★ each): +1★ a turn, +1★ per animal beside it (at most 3★), and foreign units or traders beside a post pay +1★ each (at most 3★). Every 10 turns the Winter Count: if no city was lost, every city grows by 1.
 - **Strengths:** Fur Trappers (+1★ whenever you harvest a resource.)

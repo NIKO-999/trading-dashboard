@@ -4,7 +4,7 @@ import { aiStep } from '../src/game/ai';
 import { drain } from '../src/game/events';
 import { tileAt } from '../src/game/grid';
 import { createGame, foundCity, spawnUnit } from '../src/game/mapgen';
-import { doAction, attack, attackOptions, moveOptions, moveUnit, previewCombat, tileActions } from '../src/game/rules';
+import { doAction, attack, attackOptions, maxHp, moveOptions, moveUnit, previewCombat, tileActions } from '../src/game/rules';
 import { endTurn, startTurn } from '../src/game/turn';
 import { UNITS } from '../src/data/units';
 import { TRIBES, TRIBE_IDS } from '../src/data/tribes';
@@ -241,8 +241,8 @@ test('War Elephant (trample): the enemy behind the target takes half the damage'
   const side = put(s, 'warrior', 1, 8, 9);
   const { dmg } = previewCombat(s, e, foe);
   assert.ok(attack(s, e, foe));
-  assert.equal(behind.hp, UNITS.warrior.hp - Math.round(dmg / 2));
-  assert.equal(side.hp, UNITS.warrior.hp, 'only the one behind');
+  assert.equal(behind.hp, maxHp(behind) - Math.round(dmg / 2));
+  assert.equal(side.hp, maxHp(side), 'only the one behind');
 });
 
 test('Sofa (Mansa\'s guard): +2 defence in its own cities', () => {
@@ -295,8 +295,8 @@ test('Hwacha (rocket volley): enemies next to the target take half the damage, i
   const own = put(s, 'warrior', 0, 7, 11);
   const { dmg } = previewCombat(s, hw, foe);
   assert.ok(attack(s, hw, foe));
-  assert.equal(nb.hp, UNITS.warrior.hp - Math.round(dmg / 2));
-  assert.equal(own.hp, UNITS.warrior.hp, 'never its own side');
+  assert.equal(nb.hp, maxHp(nb) - Math.round(dmg / 2));
+  assert.equal(own.hp, maxHp(own), 'never its own side');
   // the Korean salvo (fired through the tile menu) spreads the same way
   const s2 = arena('korea');
   const h2 = put(s2, 'hwacha', 0, 8, 8);
@@ -305,7 +305,7 @@ test('Hwacha (rocket volley): enemies next to the target take half the damage, i
   const d2 = previewCombat(s2, h2, f2).dmg;
   assert.ok(tileActions(s2, 0, tileAt(s2, 8, 11)!).some((a) => a.id === 'mech:salvo' && a.enabled));
   assert.ok(doAction(s2, 0, tileAt(s2, 8, 11)!, 'mech:salvo'));
-  assert.equal(n2.hp, UNITS.warrior.hp - Math.round(d2 / 2));
+  assert.equal(n2.hp, maxHp(n2) - Math.round(d2 / 2));
 });
 
 test('Temple Guardian (temple ward): takes a third of an adjacent friend\'s damage', () => {

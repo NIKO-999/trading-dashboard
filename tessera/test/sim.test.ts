@@ -237,7 +237,7 @@ test('boarding and leaving a boat keeps a unit\'s health as it is', () => {
     u.moved = u.attacked = false;
     assert.ok(moveUnit(s, u, port.x, port.y), 'boards at the port');
     assert.equal(u.hp, 12);
-    assert.equal(maxHp(u), 15, 'a boat has its passenger\'s full health');
+    assert.equal(maxHp(u), 15 + 2, 'a boat has its passenger\'s full health (Rome: foot soldiers +2 health)');
     u.moved = u.attacked = false;
     assert.ok(moveUnit(s, u, land.x, land.y), 'lands again');
     assert.equal(u.kind, 'defender');
@@ -444,7 +444,7 @@ test('roads joined to a city pay milestones and stars, once each', () => {
   assert.equal(total() - base, 1, '6 connected roads: +1');
   for (let i = 6; i < 8; i++) assert.ok(doAction(s, 0, chain[i], 'road'));
   assert.equal(total() - base, 1, '8 roads: still just the first milestone');
-  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0), 0, 'no road income below 15 roads');
+  assert.equal(cityIncome(s, city) - inc0 - (city.level - level0) - Math.floor(8 / 4), 0, 'no road income below 15 roads (beyond Rome’s civilization bonus: +1★ per 4 roads)');
   payRoadBonuses(s, 0);
   assert.equal(total() - base, 1, 'nothing is paid twice');
 });
@@ -551,7 +551,7 @@ test('the five newest empires\' bonuses', () => {
 
 test('the last five empires\' bonuses', () => {
   const g = (tribe: 'china' | 'india' | 'mali' | 'lakota' | 'ottoman') => createGame({ seed: 21, human: tribe, opponents: ['rome'], mode: 'domination' });
-  const ref = createGame({ seed: 21, human: 'rome', opponents: ['greeks'], mode: 'domination' });
+  const ref = createGame({ seed: 21, human: 'greeks', opponents: ['rome'], mode: 'domination' }); // no siege discount of its own
   // Ottoman: catapults cost 3★ less
   assert.equal(trainCost(g('ottoman'), 0, 'catapult'), trainCost(ref, 0, 'catapult') - 3);
   // Lakota: mounted units move one further
@@ -708,7 +708,7 @@ test('every empire has historical strengths and weaknesses that change the game'
   // Egypt's Pyramid Builders: temples 3★ cheaper; Aztecs pay 2★ more for riders; Aboriginal farming costs 2★ more
   const eg = g('egypt'), ecity = eg.cities.find((c) => c.owner === 0)!, field = eg.tiles.find((t) => t.terrain === 'field' && t.owner === ecity.id && !t.improvement && !t.resource && !t.village && t.cityId === null && !t.ruin)!;
   eg.players[0].techs.push('masonry');
-  assert.equal(tileActions(eg, 0, field).find((a) => a.id === 'temple')!.cost, 8);
+  assert.equal(tileActions(eg, 0, field).find((a) => a.id === 'temple')!.cost, 7); // and 1★ off from its own alliance bonus
   assert.equal(trainCost(g('aztec'), 0, 'rider'), trainCost(ref, 0, 'rider') + 2);
   assert.equal(techCost(g('aboriginal'), 0, 'farming') - techCost(ref, 0, 'farming'), 3); // +2 for farming, +1 for the isolated continent
   // Ottoman tax-farming: markets pay less

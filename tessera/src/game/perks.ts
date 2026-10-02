@@ -4,6 +4,7 @@ import { TRAITS } from '../data/traits';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { SKILL_BY_ID } from '../data/skills';
 import { DOCTRINE_BY_ID } from '../data/doctrines';
+import { CIV_BONUSES, bonusPerks } from '../data/bonuses';
 import { govPerks } from '../data/governments';
 import { condActive } from './alignment';
 import { TRIBES } from '../data/tribes';
@@ -47,7 +48,10 @@ export type Perk =
   | { k: 'levelpop'; n: number } // extra population whenever a city levels up
   | { k: 'stock'; of: 'iron' | 'horses'; n: number } // strategic resources a turn on top of mines and pastures
   | { k: 'wonderpct'; n: number } // World Wonders cost this share less
-  | { k: 'raidheal'; n: number }; // HP a unit heals when it pillages
+  | { k: 'raidheal'; n: number } // HP a unit heals when it pillages
+  // civilization bonuses (data/bonuses.ts)
+  | { k: 'hp'; n: number; who?: PerkWho } // extra health for units trained from now on
+  | { k: 'start'; n: number }; // extra Stars at the start of the game (read once by createGame)
 
 export const MOUNTED_KINDS: UnitKind[] = ['rider', 'chariot', 'jaguar', 'knight', 'horsearcher', 'elephant', 'buffalorider', 'khampa', 'horsebow', 'lancer', 'cataphract', 'camelrider', 'druzhina', 'conquistador', 'wingedhussar', 'condottiere', 'malon'];
 const SIEGE_KINDS: UnitKind[] = ['catapult', 'hwacha', 'ballista', 'cannon', 'ram', 'siegetower'];
@@ -58,6 +62,14 @@ export function perksOf(s: GameState, pid: number): Perk[] {
   const out: Perk[] = [];
   if (s.players[pid].neutral) return out; // the neutral owner only borrows an empire's look (see game/wild)
   for (const t of [...TRAITS[tribe].pros, ...TRAITS[tribe].cons]) out.push(...t.perks); // the empire's historical strengths and weaknesses
+  const civ = CIV_BONUSES[tribe]; // its civilization bonuses, some growing with the eras (see data/bonuses)
+  for (const b of civ.bonuses) out.push(...bonusPerks(b, s.players[pid].techs.length));
+  out.push(...civ.team.perks); // its own Alliance bonus, and every ally's
+  for (const pact of s.diplo?.pacts ?? []) {
+    if (pact.kind !== 'alliance' || (pact.a !== pid && pact.b !== pid)) continue;
+    const ally = s.players[pact.a === pid ? pact.b : pact.a];
+    if (ally?.alive && !ally.neutral) out.push(...CIV_BONUSES[ally.tribe].team.perks);
+  }
   for (const id of s.players[pid].techs) {
     const t = UNIQUE_BY_ID[id];
     if (t) { out.push(...t.perks); continue; }
@@ -139,7 +151,7 @@ export function describePerk(p: Perk): string {
       const thing = ({ tech: 'Research', melee: 'Foot soldiers', ranged: 'Ranged units', mounted: 'Mounted units', naval: 'Ships', siege: 'Siege engines', build: 'Buildings', temple: 'Temples and shrines', road: 'Roads' })[p.of];
       return p.n >= 0 ? `${thing} cost ${p.n}★ less.` : `${thing} cost ${abs(p.n)}★ more.`;
     }
-    case 'techcost': return `${p.tech[0].toUpperCase()}${p.tech.slice(1)} costs ${p.n}★ more to research.`;
+    case 'techcost': return `${p.tech[0].toUpperCase()}${p.tech.slice(1)} costs ${abs(p.n)}★ ${p.n >= 0 ? 'more' : 'less'} to research.`;
     case 'terrain': {
       const where = p.on === 'city' ? 'in your cities' : p.on === 'capital' ? 'in your capital' : p.on === 'own' ? 'on your own land' : p.on === 'away' ? 'outside your borders' : p.on === 'forest' ? 'in forests' : p.on === 'ice' ? 'on ice' : 'in the mountains';
       return p.n >= 0 ? `Units ${where} defend ${p.n} better.` : `Units ${where} defend ${abs(p.n)} worse.`;
@@ -166,6 +178,8 @@ export function describePerk(p: Perk): string {
     case 'stock': return `+${p.n} ${p.of === 'iron' ? 'Iron' : 'Horse'}${p.n === 1 || p.of === 'iron' ? '' : 's'} a turn.`;
     case 'wonderpct': return `World Wonders cost ${Math.round(p.n * 100)}% less.`;
     case 'raidheal': return `Pillaging heals the raider ${p.n} HP.`;
+    case 'hp': return `${cap(who(p.who))} have +${p.n} health.`;
+    case 'start': return `Start the game with +${p.n}★.`;
     case 'pax': return `+${p.n}★ a turn for every road-linked city while you have not lost a city in the last 5 turns.`;
   }
 }

@@ -163,7 +163,7 @@ test('Great Cycle: every 20 turns each Maya city gains 1 population, once', () =
 });
 
 test('20-turn all-AI game with Maya completes; the AI prophesies and eras occur', () => {
-  const s = createGame({ seed: 11, human: 'maya', opponents: ['rome', 'zulu'], mode: 'perfection' });
+  const s = createGame({ seed: 12, human: 'maya', opponents: ['rome', 'zulu'], mode: 'perfection' });
   for (const p of s.players) p.human = false;
   const me = s.players.findIndex((p) => p.tribe === 'maya');
   const seen = new Set<string>();

@@ -51,7 +51,7 @@ test('Greek fire: a ship sets its target ablaze, the fire burns 2 a turn and goe
   coast(s, city.x, city.y);
   const ship = spawnUnit(s, 'warship', 0, city.x + 1, city.y, null);
   const e = spawnUnit(s, 'defender', 1, city.x + 1, city.y + 2, null);
-  e.hp = 15;
+  e.hp = 20; // sturdy enough to outlast Byzantium's sharper ships (a civilization bonus)
   s.current = 0;
   assert.ok(attack(s, ready(ship), e), 'ship attacks');
   assert.ok(s.units.includes(e), 'target survives the blow');

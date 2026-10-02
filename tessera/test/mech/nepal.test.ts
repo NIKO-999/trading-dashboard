@@ -136,7 +136,7 @@ test('Gurkha recruits: a hill city raises a veteran Gurkha for the normal price,
   assert.equal(g.kind, 'gurkha');
   assert.equal(g.veteran, true);
   assert.equal(g.hp, maxHp(g));
-  assert.equal(g.hp, 12 + 5);
+  assert.equal(g.hp, 12 + 5 + 2); // veteran, plus Nepal's +2 health for foot soldiers (a civilization bonus)
   assert.equal(cap.units, 1);
   // step the Gurkha off the city tile; the levy is still on cooldown
   g.x = cap.x; g.y = cap.y + 1;

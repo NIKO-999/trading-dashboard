@@ -516,5 +516,11 @@ ul.traits .effect { display: block; font-weight: 600; }
 .ec-unit { display: flex; gap: 10px; align-items: center; }
 .ec-unit > div { min-width: 0; }
 .ec-sub { margin-top: 4px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9fa6c0; }
+.ec-civ { display: flex; flex-direction: column; gap: 6px; padding: 2px 2px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 4px; }
+.ec-civ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; line-height: 1.35; }
+.ec-civ li::marker { color: #6fd38a; }
+.ec-civ b { font-weight: 700; }
+.ec-team { margin: 0; line-height: 1.35; }
+.ec-sub-note { text-transform: none; letter-spacing: 0; font-weight: 400; opacity: 0.8; }
 .muted.small, .small { font-size: 0.8rem; }
 .ec-row-title .muted.small { font-weight: 300; }
