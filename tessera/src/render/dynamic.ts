@@ -1105,9 +1105,16 @@ function drawScreenOverlay(ctx: Ctx, s: GameState, viewer: number, cam: Camera, 
 
 export type LabelDetail = 'full' | 'mid' | 'name';
 
+/** Perceived lightness of a #rrggbb colour, 0 (black) to 1 (white). */
+function lightness(hex: string): number {
+  const n = parseInt(hex.slice(1, 7), 16);
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+}
+
 function drawCityLabel(ctx: Ctx, s: GameState, c: City, x: number, y: number, k: number, snap: (v: number) => number, detail: LabelDetail, mine: boolean): { x0: number; y0: number; x1: number; y1: number } {
   const free = freeCityOf(s, c); // a Free City: verdigris and gold, its type badge and its suzerain's colour (see game/citystates)
-  const T = { color: isRogueCity(s, c) ? REBEL_COLOR : free ? FREE_COLOR : TRIBES[s.players[c.owner].tribe].color }; // Rogue States fly crimson
+  const base = isRogueCity(s, c) ? REBEL_COLOR : free ? FREE_COLOR : TRIBES[s.players[c.owner].tribe].color; // Rogue States fly crimson
+  const T = { color: lightness(base) > 0.68 ? shade(base, -0.38) : base }; // a pale empire colour is deepened so the white name stays readable
   const fs = 13 * k;
   ctx.font = `600 ${fs}px ${FONT}`;
   const nw = ctx.measureText(c.name).width;

@@ -4,6 +4,14 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.58',
+    items: [
+      '🌿 A fresh look for the Māori: golden flax cloaks and piupiu, red ochre, greenstone mere and a single huia feather in the topknot, instead of the heavy black.',
+      '🛶 Their waka are red-ochre hulls under woven flax sails, with carved prows and feather streamers trailing from the sternpost.',
+      '🏷 Pale empire colours get a deeper city label, so every city name stays easy to read.',
+    ],
+  },
+  {
     version: '0.57',
     items: [
       '📜 Civilization bonuses: every one of the 51 empires now has three always-on bonuses on top of its signature, like a real civ sheet. Tougher legions, cheaper research, richer ports, faster scouts, wonders built for less.',
