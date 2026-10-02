@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.56',
+    items: [
+      '🗂 A tidier empire card on New Game and in The Empires: the portrait, type, people and unique-unit stats sit up top, and the rest is split into Overview, Units, Hero and Traits tabs instead of one long wall of text.',
+      '✅ Strengths and weaknesses now read as clean green and red rows, each with what it does.',
+    ],
+  },
+  {
     version: '0.55',
     items: [
       '🌌 A bigger skill tree: every empire type now has its own Doctrine, nine new techs (the pentagons) only it can learn.',

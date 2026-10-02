@@ -193,50 +193,73 @@ function typeHead(c: CategoryDef) {
 /** The empires of each type, in menu order. */
 const byType = () => CATEGORIES.map((c) => ({ c, ids: TRIBE_IDS.filter((id) => TRIBES[id].category === c.id) }));
 
-/** An empire's type and the two role units it trains, each in the empire's own style (see game/roles). */
-function roleUnits(id: TribeId): Node[] {
+/** The tabs of an empire card, remembered while the menu is open. */
+type CardTab = 'overview' | 'units' | 'hero' | 'traits';
+const CARD_TABS: [CardTab, string][] = [['overview', 'Overview'], ['units', 'Units'], ['hero', 'Hero'], ['traits', 'Traits']];
+let cardTab: CardTab = 'overview';
+
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+/** A small labelled block in an empire card: a title line and its text. */
+const cardRow = (title: Node | string, text: string, cls = '') => h('div', { class: `ec-row ${cls}` }, h('div', { class: 'ec-row-title' }, title), h('div', { class: 'ec-row-text' }, text));
+
+/** An empire at a glance: its unique unit, type and stats on top, and the details in four tabs. */
+function empireCard(id: TribeId, opts: { tabs?: 'shared' | 'own' } = {}) {
+  const t = TRIBES[id];
   const c = categoryOf(id);
-  return [
-    h('h5', { class: 'pros' }, `${c.icon} ${c.name} empire: role units`),
-    h('div', { class: 'role-units' }, ...c.units.map((k) => h('div', { class: 'role-unit' }, unitPortrait(k, id, 48),
-      h('span', {}, h('b', {}, roleName(id, k)), ` (${UNITS[k].name}): ${UNITS[k].blurb}`)))),
-  ];
-}
-
-/** An empire's unique unit, what it replaces and its signature ability (see game/uniques), with its stats. */
-function uniqueLine(id: TribeId) {
-  const t = TRIBES[id];
-  const d = UNITS[t.unique];
+  const u = UNITS[t.unique];
   const a = UNIQUE_ABILITY[t.unique];
-  return h('p', { class: 'unique-line' },
-    h('b', {}, `Unique unit: ${d.name}`), ` (replaces ${UNITS[t.replaces].name}). `,
-    a ? h('b', {}, `${a.name}: `) : null, a ? a.desc : d.blurb,
-    h('span', { class: 'muted' }, ` ⚔${d.atk} 🛡${d.def} ❤${d.hp} ➜${d.move}${d.range > 1 ? ` ◎${d.range}` : ''}`));
-}
-
-/** An empire's strengths and weaknesses, each with the history behind it. */
-function traitLists(id: TribeId): Node[] {
-  const t = TRIBES[id];
-  const item = (cls: string, name: string, why: string, effect: string) => h('li', { class: cls }, h('b', {}, name), ' ', h('span', { class: 'why' }, why), h('span', { class: 'effect' }, effect));
   const m = MECH[id];
-  return [
-    ...roleUnits(id),
-    ...(m ? [h('h5', { class: 'pros' }, 'Unique mechanic'), h('ul', { class: 'traits' }, item('pro', m.name, '', m.blurb))] : []),
-    h('h5', { class: 'pros' }, 'Hero'),
-    h('div', { class: 'hero-row', style: { display: 'flex', alignItems: 'center', gap: '8px' } },
-      unitPortrait('hero', id, 56),
-      h('ul', { class: 'traits' }, item('pro', `${HEROES[id].name}, ${HEROES[id].title}`, `Joins when the capital reaches level ${HERO_JOIN_LEVEL}.`,
-        `${HEROES[id].ability}: ${HEROES[id].desc} Every ${HEROES[id].cd} turns.`))),
-    h('h5', { class: 'pros' }, 'Strengths'),
-    h('ul', { class: 'traits' },
-      item('pro', 'Signature', '', t.bonus),
-      ...(SUPPLY_NOTES[id] ? [item('pro', 'No supply lines', '', SUPPLY_NOTES[id]!)] : []), // exempt from supply (see game/army)
-      item('pro', `Speciality: ${SPECIALITY[id].name}`, '', SPECIALITY[id].why), // tile levels (see game/levels)
-      ...TRAITS[id].pros.map((p) => item('pro', p.name, p.why, p.perks.map(describePerk).join(' '))),
+  const hero = HEROES[id];
+  let tab: CardTab = opts.tabs === 'own' ? 'overview' : cardTab;
+  const stat = (icon: string, v: number | string) => h('span', { class: 'ec-stat' }, icon, ' ', String(v));
+  const body = h('div', { class: 'ec-body' });
+  const tabBar = h('div', { class: 'ec-tabs' });
+  const pane = (): Node[] => {
+    switch (tab) {
+      case 'overview': return [
+        cardRow(`⭐ ${t.bonus.split(' — ')[0]}`, cap(t.bonus.split(' — ')[1] ?? t.bonus), 'pro'),
+        ...(m && m.name ? [cardRow(`✦ ${m.name}`, m.blurb, 'pro')] : []),
+        cardRow(`🏗 ${SPECIALITY[id].name}`, SPECIALITY[id].why),
+      ];
+      case 'units': return [
+        h('div', { class: 'ec-unit' }, unitPortrait(t.unique, id, 52),
+          h('div', {}, h('div', { class: 'ec-row-title' }, `${u.name} `, h('span', { class: 'muted' }, `replaces ${UNITS[t.replaces].name}`)),
+            h('div', { class: 'ec-row-text' }, a ? `${a.name}: ${a.desc}` : u.blurb))),
+        h('div', { class: 'ec-sub' }, `${c.icon} ${c.name} role units`),
+        ...c.units.map((k) => h('div', { class: 'ec-unit' }, unitPortrait(k, id, 44),
+          h('div', {}, h('div', { class: 'ec-row-title' }, roleName(id, k), ' ', h('span', { class: 'muted' }, UNITS[k].name)), h('div', { class: 'ec-row-text' }, UNITS[k].blurb)))),
+      ];
+      case 'hero': return [
+        h('div', { class: 'ec-unit' }, unitPortrait('hero', id, 60),
+          h('div', {}, h('div', { class: 'ec-row-title' }, hero.name), h('div', { class: 'muted small' }, `${hero.title} · joins at capital level ${HERO_JOIN_LEVEL}`))),
+        cardRow(`${hero.ability} · every ${hero.cd} turns`, hero.desc, 'pro'),
+      ];
+      case 'traits': return [
+        ...TRAITS[id].pros.map((p) => cardRow(h('span', {}, p.name, ' ', h('span', { class: 'muted small' }, p.why)), p.perks.map(describePerk).join(' '), 'pro')),
+        ...(SUPPLY_NOTES[id] ? [cardRow('No supply lines', SUPPLY_NOTES[id]!, 'pro')] : []),
+        ...TRAITS[id].cons.map((p) => cardRow(h('span', {}, p.name, ' ', h('span', { class: 'muted small' }, p.why)), p.perks.map(describePerk).join(' '), 'con')),
+      ];
+    }
+  };
+  const draw = () => {
+    tabBar.replaceChildren(...CARD_TABS.map(([k, label]) => h('button', {
+      class: k === tab ? 'on' : '', onclick: () => { tab = k; if (opts.tabs !== 'own') cardTab = k; draw(); },
+    }, label)));
+    body.replaceChildren(...pane());
+  };
+  draw();
+  return h('div', { class: 'empire-card', style: { '--tc': t.color } as Record<string, string> },
+    h('div', { class: 'ec-head' },
+      h('div', { class: 'ec-portrait' }, unitPortrait(portraitKind(id), id, 64)),
+      h('div', { class: 'ec-title' },
+        h('div', { class: 'ec-name' }, t.name),
+        h('div', { class: 'ec-meta' }, h('span', { class: 'ec-badge' }, `${c.icon} ${c.name}`), h('span', { class: 'muted small' }, t.people)),
+        h('div', { class: 'ec-stats' }, h('b', {}, u.name), stat('⚔', u.atk), stat('🛡', u.def), stat('❤', u.hp), stat('➜', u.move), u.range > 1 ? stat('◎', u.range) : null)),
     ),
-    h('h5', { class: 'cons' }, 'Weaknesses'),
-    h('ul', { class: 'traits' }, ...TRAITS[id].cons.map((p) => item('con', p.name, p.why, p.perks.map(describePerk).join(' ')))),
-  ];
+    h('p', { class: 'ec-blurb' }, t.blurb),
+    tabBar,
+    body,
+  );
 }
 
 function showSetup(handlers: MenuHandlers, hotseat: boolean) {
@@ -290,13 +313,7 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         );
       }
     }
-    const t = TRIBES[choice.tribe];
-    const detail = h('div', { class: 'tribe-detail' },
-      h('h4', {}, t.name),
-      h('p', {}, t.blurb),
-      uniqueLine(choice.tribe),
-      ...traitLists(choice.tribe),
-    );
+    const detail = empireCard(choice.tribe);
     const start = h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START');
     if (problem) start.disabled = true;
 
@@ -380,14 +397,9 @@ function showEmpires(handlers: MenuHandlers) {
       ...byType().flatMap(({ c, ids }) => [typeHead(c), ...ids.map((id) => {
         const t = TRIBES[id];
         return h('div', { class: 'empire-row', style: { '--tc': t.color } as Record<string, string> },
-          unitPortrait(t.unique, id, 72),
-          h('div', {},
-            h('h3', {}, `${t.people} — ${t.name}`),
-            h('p', {}, t.blurb),
-            h('p', {}, h('b', {}, 'Starts with: '), t.startTech[0].toUpperCase() + t.startTech.slice(1)),
-            ...traitLists(id),
-            h('p', {}, h('b', {}, 'Skill line: '), UNIQUE_TECHS.filter((u) => u.tribe === id).map((u) => u.name).join(' → ')),
-            uniqueLine(id),
+          h('div', { style: { flex: '1', minWidth: '0' } },
+            empireCard(id, { tabs: 'own' }),
+            h('p', { class: 'muted small' }, h('b', {}, 'Starts with '), t.startTech[0].toUpperCase() + t.startTech.slice(1), ' · ', h('b', {}, 'Skill line '), UNIQUE_TECHS.filter((u) => u.tribe === id).map((u) => u.name).join(' → ')),
           ),
         );
       })]),

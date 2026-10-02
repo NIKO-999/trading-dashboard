@@ -114,7 +114,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 .score-list { padding-left: 1.4em; }
 .score-list li { margin: 8px 0; padding: 10px 12px 8px; background: #111; border-left: 5px solid var(--tc); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
 .score-list .sc { font-size: 1.3rem; font-weight: 600; }
-.empire-row { display: flex; gap: 12px; padding: 12px; margin-bottom: 10px; background: #111; border-left: 5px solid var(--tc); border-radius: 14px; }
+.empire-row { display: flex; margin-bottom: 14px; }
+.empire-row > div > p.muted { margin: 6px 4px 0; }
 .empire-row h3 { margin: 0 0 4px; font-size: 1.15rem; font-style: italic; }
 .empire-row p { margin: 3px 0; font-size: 0.95rem; font-weight: 300; line-height: 1.35; }
 .empire-row b { font-weight: 600; }
@@ -491,3 +492,29 @@ ul.traits .effect { display: block; font-weight: 600; }
 .free-you { font-weight: 600; }
 .free-quest { color: #9fe0c8; }
 .free-foe { font-weight: 700; color: #f0a850; }
+
+/* an empire card (new game and the Empires screen): header, stats and four tabs */
+.empire-card { background: #15151b; border-radius: 18px; padding: 14px; border-top: 4px solid var(--tc, #555); display: flex; flex-direction: column; gap: 10px; }
+.ec-head { display: flex; gap: 12px; align-items: center; }
+.ec-portrait { width: 64px; height: 64px; flex: none; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tc) 55%, #fff), var(--tc)); }
+.ec-title { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ec-name { font-weight: 700; font-style: italic; font-size: 1.2rem; line-height: 1.1; }
+.ec-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ec-badge { font-size: 0.78rem; font-weight: 700; padding: 2px 9px 1px; border-radius: 999px; background: #2a2a34; }
+.ec-stats { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 0.9rem; }
+.ec-stat { font-variant-numeric: tabular-nums; opacity: 0.9; }
+.ec-blurb { margin: 0; font-size: 0.92rem; opacity: 0.75; font-weight: 300; line-height: 1.3; }
+.ec-tabs { display: flex; background: #0e0e12; border-radius: 12px; padding: 3px; gap: 2px; }
+.ec-tabs button { flex: 1; border: 0; background: transparent; color: #aaa; font: inherit; font-size: 0.9rem; font-weight: 600; padding: 7px 4px 5px; border-radius: 9px; cursor: pointer; }
+.ec-tabs button.on { background: #2c2c38; color: #fff; }
+.ec-body { display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.ec-row { padding-left: 10px; border-left: 3px solid #555; }
+.ec-row.pro { border-left-color: #4fcf62; }
+.ec-row.con { border-left-color: #ff6a55; }
+.ec-row-title { font-weight: 700; font-size: 0.98rem; line-height: 1.25; }
+.ec-row-text { font-size: 0.92rem; line-height: 1.3; opacity: 0.9; }
+.ec-unit { display: flex; gap: 10px; align-items: center; }
+.ec-unit > div { min-width: 0; }
+.ec-sub { margin-top: 4px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9fa6c0; }
+.muted.small, .small { font-size: 0.8rem; }
+.ec-row-title .muted.small { font-weight: 300; }
