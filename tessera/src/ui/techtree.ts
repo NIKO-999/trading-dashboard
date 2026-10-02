@@ -71,7 +71,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const keep = layer.querySelector<HTMLElement>('.tt-wrap');
     const scroll = keep && !keep.classList.contains('whole') ? { x: keep.scrollLeft, y: keep.scrollTop } : null; // keep the view on a redraw
     layer.innerHTML = '';
-    const size = Math.max(720, Math.min(window.innerWidth - 8, 900));
+    const size = Math.max(1000, Math.min(window.innerWidth - 8, 1300)); // a wide sky, so the stars and their names have room
     if (sky?.size !== size) sky = skyLayout(p.tribe, size);
     const pos = new Map(sky.stars.map((st) => [st.id, st]));
     const status = new Map<string, ResearchStatus>(mine.map((t) => [t.id, researchStatus(s, pid, t.id)]));

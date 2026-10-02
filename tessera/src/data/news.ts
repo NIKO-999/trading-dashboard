@@ -4,6 +4,14 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.54',
+    items: [
+      '🌌 A wider skill tree: the sky is bigger and its rings spread out, so every tech and its name has room.',
+      '⚖ Balance from 2,000 simulated games: the weakest empires (Assyria, Spain, Kush, England, Sweden, the Holy Roman Empire, Arabia, Mapuche, Venice, the Vikings) get sturdier cities and +1★ from their capital, and lose their harshest weakness; Portugal, Poland, Scotland, the Ottomans and the Aztecs lose theirs too. Aggressive rulers start fewer hopeless wars.',
+      '⚖ The front-runners are trimmed: Babylon (Eureka 50%, ziggurats at most −2★), Mali (Deep Mines no longer free), the Cree (posts and visitors pay at most 2★), the Haudenosaunee (League of 4), the Celts (forests ×1.75), the Maya (temples dearer; Holcan 2.5 attack) and the Clansman (12 health).',
+    ],
+  },
+  {
     version: '0.53',
     items: [
       '🌍 Twenty new empires, 51 in all, each with its own unique unit, mechanic, hero, music and hand-drawn look:',

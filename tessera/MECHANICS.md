@@ -106,7 +106,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 | Hoplite | Defender | 3★ 15/2/3.5, move 1 | **Phalanx** — Its spear wall hits back 50% harder when attacked. |
 | Impi | Warrior | 2★ 12/3/2, move 1 | **Bull horns** — After attacking it may still run 1 tile to close the horns around the foe. |
 | Immortal | Swordsman | 5★ 18/3.5/3.5, move 1 | **Undying** — Heals 3 HP at the start of every turn, wherever it stands. |
-| Clansman | Warrior | 2★ 14/2.5/2, move 1 | **Oak-grove warband** — Moves freely through forest and attacks +1 from forest. |
+| Clansman | Warrior | 2★ 12/2.5/2, move 1 | **Oak-grove warband** — Moves freely through forest and attacks +1 from forest. |
 | Harpooner | Archer | 3★ 12/2.5/1.5, move 1, range 2 | **Harpoon** — Double damage to ships, boats and Great Beasts. |
 | Slinger | Archer | 3★ 12/3/1, move 1, range 2 | **Plunging stones** — Shoots from 2 tiles; +1 attack when it slings from a mountain. |
 | Shotelai | Swordsman | 5★ 16/4/3, move 1 | **Hooked blade** — Cuts around shields, so the defender gets no terrain, fortify or wall bonus. |
@@ -116,7 +116,7 @@ Tap a learned star (not a root) and choose **Transmute**: pay `24 + 3 × cities`
 | Sofa | Warrior | 3★ 14/2.5/2.5, move 1 | **Mansa's guard** — +2 defence in its own cities. |
 | Horse Warrior | Rider | 3★ 13/2.5/1.5, move 2 | **Plains charge** — +1 attack when it charges from open ground (field, desert or tundra). |
 | Janissary | Archer | 4★ 12/3/1.5, move 1, range 2 | **Musket volley** — Fires from 2 tiles; +1 attack against melee units. |
-| Holcan | Warrior | 2★ 12/3/2, move 1 | **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it. |
+| Holcan | Warrior | 2★ 12/2.5/2, move 1 | **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it. |
 | Hwacha | Catapult | 8★ 12/5/0.5, move 1, range 3 | **Rocket volley** — Fires 3 tiles; every enemy next to the target takes half the damage too. |
 | Temple Guardian | Defender | 3★ 18/1.5/3.5, move 1 | **Temple ward** — Friendly units next to it take a third less damage, and the guardian takes that share instead. |
 | Askari | Warrior | 2★ 12/2/3, move 1 | **Coast guard** — +1 defence on land beside water. |
@@ -344,7 +344,7 @@ Tap your city to **appoint a governor** (5★). You have **1 governor slot, plus
 | Aboriginal | **Stone Fish Traps** | Budj Bim’s weirs and traps: port upgrades cost a third less and Harbours need no tech. |
 | Chinese | **Silk Markets** | The Silk Road ends here: markets are built straight as Bazaars (and Silk Road doubles what their levels pay). |
 | Indian | **Temple Towns** | Great temple towns of the south: temple upgrades cost a third less and Great Temples need no tech. |
-| Malian | **Gold of Bambuk** | The richest gold fields known: mines are built straight as Deep Mines. |
+| Malian | **Gold of Bambuk** | The richest gold fields known: mine upgrades cost a third less and Deep Mines need no tech. |
 | Lakota | **Horse Herds** | The horse nation: pastures cost a third less and need no tech. |
 | Ottoman | **Imperial Foundries** | The cannon foundries of Tophane: mine upgrades cost a third less and Deep Mines need no tech. |
 | Maya | **Pyramid Temples** | Every city a temple city: temple upgrades cost a third less and Great Temples need no tech. |
@@ -503,7 +503,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Jaguar Warrior** (replaces the Rider): **Jungle pounce** — Moves freely through forest; a strike from forest takes no counter-blow.
 - **Unique mechanic — Blood Altar Ascension:** Warriors take beaten foes captive and drag them to city altars for a Sun Age (instant growth, full map vision, frenzy); they earn no XP, only Star bounties, and a captive offered in any city gives +1 Population.
 - **Strengths:** Warriors Take Captives (+1★ for every enemy you defeat.)
-- **Weaknesses:** No Horses (Mounted units cost 2★ more.); Stone-Age Weapons (Smithing costs 2★ more to research. Units in your cities defend 0.5 worse.)
+- **Weaknesses:** No Horses (Mounted units cost 2★ more.); Stone-Age Weapons (Smithing costs 2★ more to research.)
 - **Skill line** (branches off Hunting): T1 Sacrificial Rites: Every enemy you defeat (killed or taken captive) refunds 20% of its ★ cost. → T2 Sun Altars: +2★ a turn for every altar. +1★ whenever a city levels up. → T3 Solar Ascension: A Sun Age needs 2 captives instead of 3, and while it burns every city pays +1★ a turn.
 
 ### Māori (polynesia)
@@ -535,7 +535,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Victory Feast — a unit heals 3 HP whenever it wins a fight.
 - **Unique unit — Berserker** (replaces the Swordsman): **Battle fury** — Fights at full strength however wounded; its wounds never weaken its blows.
 - **Unique mechanic — Great Heathen Fleet & Raid Havens:** Longships beach on any shore and found Danelaw havens that siphon 20% of a city's gold; Vikings build no markets or temples, but raze enemy improvements for 3x their cost and carry off a citizen.
-- **Strengths:** Raiders of the Coast (Boats and ships move 1 further.)
+- **Strengths:** Raiders of the Coast (Boats and ships move 1 further. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
 - **Weaknesses:** Short Growing Season (Every farm grows the city by 1 less.); Oral Tradition (Research cost 1★ more.)
 - **Skill line** (branches off Fishing): T1 Longship Raiders: Boats and ships move 1 further. → T2 Shield Wall: Foot soldiers defend 0.5 better. Units in forests defend 0.5 better. → T3 Valhalla’s Call: +1★ for every enemy you defeat. Units on your land heal 2 HP every turn.
 
@@ -581,7 +581,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Skill line** (branches off Riding): T1 Royal Post: See 1 tile further around every unit and city. → T2 Immortal Guard: Your unique unit hit 0.5 harder. Your unique unit defend 0.5 better. → T3 Satrapies: +2★ a turn from your capital. +2★ whenever a city levels up.
 
 ### Celtic (celts)
-- **Signature bonus:** Sacred Groves — your units in a forest defend at ×2.
+- **Signature bonus:** Sacred Groves — your units in a forest defend at ×1.75.
 - **Unique unit — Clansman** (replaces the Warrior): **Oak-grove warband** — Moves freely through forest and attacks +1 from forest.
 - **Unique mechanic — Druidic Ley Lines:** Plant Sacred Groves that spread forest and root enemies who enter it; the Celts never cut trees, and uncut forest beside groves pays stars and slowly grows cities.
 - **Strengths:** Fierce in Battle (Foot soldiers hit 0.5 harder.)
@@ -641,7 +641,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Gold of the Sahel — every mine earns +1★ a turn.
 - **Unique unit — Sofa** (replaces the Warrior): **Mansa's guard** — +2 defence in its own cities.
 - **Unique mechanic — Salt & Gold Inflation:** Flood a foreign city's markets with gold: its costs double and its production halts for 2 turns. Caravans earn Stars from every tile crossed through foreign or neutral lands, more when it is dangerous.
-- **Strengths:** Hajj Wealth (+1★ whenever a city levels up.)
+- **Strengths:** Hajj Wealth (Trade routes pay 25% more.)
 - **Weaknesses:** Landlocked Sahel (Boats and ships move 1 less.); Fragile Union (See 1 tile less around every unit and city.)
 - **Skill line** (branches off Riding): T1 Gold-Salt Caravans: +1★ a turn for every market. → T2 Timbuktu Scholars: Research cost 1★ less. +1★ whenever a city levels up. → T3 Mansa’s Cavalry: Mounted units hit 0.5 harder. Mounted units move 1 further.
 
@@ -659,7 +659,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Janissary** (replaces the Archer): **Musket volley** — Fires from 2 tiles; +1 attack against melee units.
 - **Unique mechanic — Sublime Porte & Great Bombards:** Conquered cities train their old peoples’ elite and Great Bombards ignore walls; each conquest pays Devshirme stars (capped) and levies +1 population.
 - **Strengths:** Janissary Corps (Ranged units hit 0.5 harder.)
-- **Weaknesses:** Conservative Ulema (Research cost 1★ more.); Tax-Farming (−1★ a turn for every 2 markets.)
+- **Weaknesses:** Conservative Ulema (Philosophy costs 2★ more to research.); Tax-Farming (−1★ a turn for every 2 markets.)
 - **Skill line** (branches off Gathering): T1 Timar Fiefs: +1★ a turn for every 2 farms. → T2 Great Bombards: Siege engines hit 1 harder. Siege engines cost 1★ less. → T3 Devşirme: Your unique unit hit 0.5 harder. Ranged units cost 1★ less.
 
 ### Maya (maya)
@@ -667,7 +667,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Holcan** (replaces the Warrior): **Jungle ambush** — Moves freely through forest and is hidden there from enemies not right beside it.
 - **Unique mechanic — Long Count Prophecies & Katun Cycles:** Every 13 turns an Era rewrites the map (dry seas, storms, a golden age...) and you may pay to choose it; every 5 turns your improvements pay double, and every 20 your cities grow free.
 - **Strengths:** Sky Watchers (See 1 tile further around every unit and city.)
-- **Weaknesses:** No Horses or Iron (Mounted units cost 2★ more. Smithing costs 1★ more to research.); Warring City-States (Units in your cities defend 0.5 worse.)
+- **Weaknesses:** No Horses or Iron (Mounted units cost 2★ more. Smithing costs 1★ more to research.); Warring City-States (Units in your cities defend 0.5 worse. Temples and shrines cost 1★ more.)
 - **Skill line** (branches off Gathering): T1 Long Count Calendar: +1★ a turn for every temple. → T2 Observatory: See 1 tile further around every unit and city. Every temple grows the city by 1 more. → T3 Stelae of the Kings: +3★ whenever a city levels up. +1★ a turn from your capital.
 
 ### Korean (korea)
@@ -707,7 +707,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Sacred Band** (replaces the Defender): **Sacred oath** — Defends at full strength however wounded.
 - **Unique mechanic — Mercenary Contracts:** any city may hire one veteran mercenary a turn (a warrior, archer, rider, swordsman, knight or Sacred Band Carthage could train) for 1.5× the training price (rounded up). It takes no unit slot, but costs 1★ a turn; when the treasury can't pay, the newest mercenary deserts. At most as many mercenaries as cities. Mercenaries fly a purple pennant, and Carthaginian ports show their round cothon.
 - **Strengths:** Merchant Princes (Trade routes pay 25% more.)
-- **Weaknesses:** Hired Armies (Foot soldiers defend 0.5 worse.); Borrowed Horsemen (Riding costs 2★ more.)
+- **Weaknesses:** Hired Armies (Foot soldiers defend 0.5 worse.); Borrowed Horsemen (Riding costs 2★ more to research.)
 - **Skill line** (branches off Fishing): T1 Cothon: +1★ a turn for every port. → T2 Tyrian Purple: Trade routes pay 25% more. +1★ a turn for every market. → T3 Elephants over the Alps: Mounted units hit 0.5 harder and cost 1★ less.
 
 ### Byzantine (byzantium)
@@ -715,15 +715,15 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Varangian Guard** (replaces the Swordsman): **Emperor's guard** — In or beside one of your cities: +1 defence, and it heals 2 HP at the start of every turn.
 - **Unique mechanic — Greek Fire:** a Byzantine boat or ship that attacks sets its target ablaze, and so do the siphons of a coastal Byzantine city on any enemy that attacks a unit inside it: a burning unit takes 2 damage at the start of each Byzantine turn, twice (it can die of it). **Imperial tribute** (at a city, once every 5 turns): pay 5★ + 2★ for each enemy unit within 3 tiles, and their blows land empty (0 damage) on their next turn.
 - **Strengths:** Imperial Bureaucracy (+2★ whenever a city levels up.)
-- **Weaknesses:** Endless Frontiers (Units outside your borders defend 0.5 worse.); Iconoclasm (Temples cost 2★ more.)
+- **Weaknesses:** Endless Frontiers (Units outside your borders defend 0.5 worse.); Iconoclasm (Temples and shrines cost 2★ more.)
 - **Skill line** (branches off Gathering): T1 Hagia Sophia: +1★ a turn for every temple. → T2 Theme Armies: Units on your land defend 0.5 better. → T3 Golden Solidus: +1★ a turn for every market, +1★ a turn from your capital.
 
 ### Arab (arabia)
 - **Signature bonus:** House of Wisdom — a tech that an empire you have met already knows costs 40% less (not 20%).
 - **Unique unit — Camel Rider** (replaces the Rider): **Ship of the desert** — Horses shy from camels: +1.5 defence against mounted attackers; +1 attack from the desert.
 - **Unique mechanic — Caravanserais & Desert Roads:** build a Caravanserai on an empty desert or field tile in your land, not beside another (6★, +2★ for each one you have): +1★ a turn, +1★ more with a road or a trade route on or beside it. Your camel riders, traders and camel scouts cross desert at half a move a tile, like a road.
-- **Strengths:** Desert Caravans (Trade routes pay 25% more.)
-- **Weaknesses:** Few Forests (Boats and ships cost 1★ more.); Tribal Rivalries (Foot soldiers defend 0.5 worse.)
+- **Strengths:** Desert Caravans (Trade routes pay 25% more. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Few Forests (Ships cost 1★ more.); Tribal Rivalries (Philosophy costs 2★ more to research.)
 - **Skill line** (branches off Riding): T1 House of Wisdom: Every tech costs 1★ less. → T2 Caravanserai: Trade routes pay 25% more. +1★ a turn for every 4 road tiles. → T3 Algebra and Astrolabes: See 1 tile further. +2★ whenever a city levels up.
 
 ### Rus (rus)
@@ -731,7 +731,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Druzhina** (replaces the Knight): **Winter host** — Forest never stops it; +1 attack and defence on tundra and ice.
 - **Unique mechanic — General Winter:** from turn 10, every 10 turns winter falls for 3 turns (turns 10–12, 20–22...). Then enemy units inside Rus borders lose 2 HP at the start of each Rus turn (never below 1) and move 1 less, and Rus units defend +0.5 anywhere in their land. Once an era the capital can call an **early winter** (8★, 2 turns). Snow falls over Rus land while it lasts.
 - **Strengths:** Stubborn Defenders (Foot soldiers defend 0.5 better.)
-- **Weaknesses:** Frozen Ports (Boats and ships move 1 less.); Rasputitsa (Roads cost 2★ more.)
+- **Weaknesses:** Frozen Ports (Boats and ships move 1 less.); Rasputitsa (Roads costs 2★ more to research.)
 - **Skill line** (branches off Hunting): T1 Veche Bell: A city that levels up gains 1 extra population. → T2 Kremlin Walls: Units in your cities defend 0.5 better. → T3 Cossack Hosts: Mounted units hit 0.5 harder and cost 1★ less.
 
 ### Vietnamese (vietnam)
@@ -743,9 +743,9 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Skill line** (branches off Gathering): T1 Dyke Builders: +1★ a turn for every 2 farms. → T2 Bronze Drums: Foot soldiers hit 0.5 harder. → T3 Fire Arrows: Ranged units and siege engines hit 0.5 harder.
 
 ### Babylonian (babylon)
-- **Signature bonus:** Clay Tablets — a Eureka makes its tech 60% cheaper (not 40%).
+- **Signature bonus:** Clay Tablets — a Eureka makes its tech 50% cheaper (not 40%).
 - **Unique unit — Sabum Kibittum** (replaces the Warrior): **Royal levy** — +1 attack against mounted units.
-- **Unique mechanic — Ziggurats & Star-Gazers:** Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 3★). Clay Tablets: a Eureka makes its tech 60% cheaper, not 40%.
+- **Unique mechanic — Ziggurats & Star-Gazers:** Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 2★). Clay Tablets: a Eureka makes its tech 50% cheaper, not 40%.
 - **Strengths:** Irrigation Canals (+1★ a turn for every 2 farms.)
 - **Weaknesses:** Open Floodplain (Foot soldiers defend 0.5 worse.); Clay, not Stone (Buildings cost 1★ more.)
 - **Skill line** (branches off Gathering): T1 Cuneiform: Research cost 1★ less. → T2 Ziggurat of Marduk: +1★ a turn for every temple. +2★ whenever a city levels up. → T3 Star Charts: See 1 tile further around every unit and city. +1★ a turn from your capital.
@@ -754,8 +754,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Land of the Bow — archers and other ranged units cost 1★ less.
 - **Unique unit — Pitati Archer** (replaces the Archer): **Eye-shooter** — +1 attack against wounded units.
 - **Unique mechanic — Pyramids of Meroë:** Raise steep pyramids on desert or field: each pays +1★ a turn, and your archers on or beside one shoot 1 tile further. Land of the Bow: archers and other ranged units cost 1★ less.
-- **Strengths:** Furnaces of Meroë (+1 Iron a turn.)
-- **Weaknesses:** The Cataracts (Boats and ships move 1 less.); Desert Frontier (Every farm grows the city by 1 less.)
+- **Strengths:** Furnaces of Meroë (+1 Iron a turn. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** The Cataracts (Boats and ships move 1 less.); Desert Frontier (Farming costs 2★ more to research.)
 - **Skill line** (branches off Archery): T1 Ta-Seti: Ranged units hit 0.5 harder. → T2 Iron of Meroë: +1 Iron a turn. +1★ a turn for every mine. → T3 Pyramids of Meroë: +1★ a turn for every temple. +2★ whenever a city levels up.
 
 ### Javanese (majapahit)
@@ -770,8 +770,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Treasure Fleets — every ship and warship you have pays +1★ a turn.
 - **Unique unit — Conquistador** (replaces the Knight): **Conquest** — +1 attack against units in a city or fort.
 - **Unique mechanic — Conquest & Missions:** Each ship and warship pays +1★ a turn. Taking a city plunders 3★ per level. Found a Mission beside each city (6★): +1★ a turn, +2★ beside a conquered city, and your wounded on or beside it heal 2 HP more.
-- **Strengths:** Reconquista Veterans (+1★ for every enemy you defeat.)
-- **Weaknesses:** Silver Inflation (Buildings cost 1★ more.); Overstretched Empire (Units outside your borders defend 0.5 worse.)
+- **Strengths:** Reconquista Veterans (+1★ for every enemy you defeat. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Silver Inflation (Trade costs 2★ more to research.); Overstretched Empire (Units outside your borders defend 0.5 worse.)
 - **Skill line** (branches off Sailing): T1 Tercio: Foot soldiers defend 0.5 better. → T2 Treasure Galleons: +1★ a turn for every port. → T3 Armada: Boats and ships hit 0.5 harder. Boats and ships defend 0.5 better.
 
 ### Haudenosaunee (haudenosaunee)
@@ -786,8 +786,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Siege Masters — siege engines cost 2★ less.
 - **Unique unit — Siege Tower** (replaces the Catapult): **Archers aloft** — +1 attack against units in a city or fort.
 - **Unique mechanic — Deportations & the Library:** Each city you capture loses 1 population to your capital, and its tablets teach you one tech its owner knew. Terror Tribute at the capital (free, every 6 turns): every enemy city within 4 tiles of your army pays 1★, up to 6★. Siege Masters: siege engines cost 2★ less.
-- **Strengths:** Royal Road Couriers (Scouts and voyagers move 1 further.)
-- **Weaknesses:** Hated Overlords (Units outside your borders defend 0.5 worse.); Few Ships (Boats and ships move 1 less.)
+- **Strengths:** Royal Road Couriers (Scouts and voyagers move 1 further. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Hated Overlords (See 1 tile less around every unit and city.); Few Ships (Boats and ships move 1 less.)
 - **Skill line** (branches off Engineering): T1 Iron Weapons: Foot soldiers hit 0.5 harder. → T2 Siege Engineers: Siege engines hit 1 harder. → T3 Library of Ashurbanipal: Research cost 1★ less. +2★ whenever a city levels up.
 
 ### Polish (poland)
@@ -795,7 +795,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Winged Hussar** (replaces the Knight): **Wings of terror** — +1 attack against foot soldiers.
 - **Unique mechanic — Royal Election:** Golden Liberty: every city of level 3+ pays +1★ a turn. At the capital the Sejm elects a king for 8 turns (first election free, then 3★): the Hussar King (mounted units +1 attack), the Merchant King (+1★ a turn per city) or the Scholar King (techs 2★ cheaper). Each reign ends in a 2-turn interregnum.
 - **Strengths:** Szlachta Cavalry (Mounted units hit 0.5 harder.)
-- **Weaknesses:** Liberum Veto (Research cost 1★ more.); Open Plains (Units on your own land defend 0.5 worse.)
+- **Weaknesses:** Liberum Veto (Philosophy costs 2★ more to research.); Open Plains (Units on your own land defend 0.5 worse.)
 - **Skill line** (branches off Riding): T1 Sejm: +1★ a turn from every city of level 3 or more. → T2 Hussar Banners: Mounted units hit 0.5 harder. Mounted units cost 1★ less. → T3 Constitution of May: A city that levels up gains 1 extra population.
 
 ### Scottish (scotland)
@@ -803,21 +803,21 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Highlander** (replaces the Swordsman): **Highland charge** — +1 attack while at full health.
 - **Unique mechanic — Highland Games & Clan Gatherings:** Highland Games (4★ in a city, once every 6 turns): every unit within 2 tiles gains a kill toward veteran and the city grows by 1. Clan Gathering: your units on or beside a mountain defend +0.5, and each one that falls in battle sends +1★ from the nearest city. Scottish Enlightenment: each city of level 3+ makes techs 1★ cheaper (at most 3★).
 - **Strengths:** Clan Loyalty (Units on your land heal 1 HP every turn.)
-- **Weaknesses:** Thin Soil (Every farm grows the city by 1 less.); Feuding Clans (See 1 tile less around every unit and city.)
+- **Weaknesses:** Thin Soil (Farming costs 2★ more to research.); Feuding Clans (See 1 tile less around every unit and city.)
 - **Skill line** (branches off Hunting): T1 Clan Tartans: Foot soldiers defend 0.5 better. → T2 Distilleries: +1★ a turn for every 2 farms. +1★ a turn for every market. → T3 Universities: Research cost 1★ less.
 
 ### English (england)
 - **Signature bonus:** Royal Navy — your ships and warships attack +0.5.
 - **Unique unit — Longbowman** (replaces the Archer): **Longbow** — Shoots 3 tiles; +1 attack against mounted units.
 - **Unique mechanic — Letters of Marque & Royal Dockyards:** Royal Navy: ships and warships attack +0.5. Sinking an enemy vessel pays 3★ prize money, and ships that start your turn in or beside your port are repaired to full. From the capital, sign Letters of Marque (5★, every 8 turns): for 4 turns each enemy ship your ships damage loses 1★ of cargo to you.
-- **Strengths:** Island Fortress (Units in your cities defend 0.5 better.)
-- **Weaknesses:** Wars of the Roses (Foot soldiers defend 0.5 worse.); Rainy Isles (Roads costs 2★ more to research.)
+- **Strengths:** Island Fortress (Units in your cities defend 0.5 better. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Wars of the Roses (Riding costs 2★ more to research.); Rainy Isles (Roads costs 2★ more to research.)
 - **Skill line** (branches off Sailing): T1 Magna Carta: +2★ whenever a city levels up. → T2 Wool Trade: +1★ a turn for every port. → T3 Ships of the Line: Boats and ships defend 1 better. Ships cost 1★ less.
 
 ### French (france)
 - **Signature bonus:** Haute Couture — every developed luxury pays +1★ a turn.
 - **Unique unit — Royal Guard** (replaces the Defender): **Esprit de corps** — +1 defence while next to another of your units.
-- **Unique mechanic — Salons & the Grand Tour:** Haute Couture: every developed luxury pays +1★ a turn. A city of level 3+ may open a Salon (6★, once): each makes every tech 1★ cheaper (up to 3★). Grand Tour: every unit of an empire at peace with France inside its borders pays it 1★ a turn (up to 3★).
+- **Unique mechanic — Salons & the Grand Tour:** Haute Couture: every developed luxury pays +1★ a turn. A city of level 3+ may open a Salon (6★, once): each makes every tech 1★ cheaper (up to 2★). Grand Tour: every unit of an empire at peace with France inside its borders pays it 1★ a turn (up to 2★).
 - **Strengths:** Grande Armée (Every unit costs 1★ less.)
 - **Weaknesses:** Court of Versailles (Buildings cost 1★ more.); Hundred Years’ War (Units on your land heal -1 HP every turn.)
 - **Skill line** (branches off Gathering): T1 Vineyards: +1★ a turn for every 2 farms. → T2 Gothic Cathedrals: +1★ a turn for every temple. +1★ whenever a city levels up. → T3 Salons: Research cost 1★ less.
@@ -826,7 +826,7 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Hanseatic League — every market pays +1★ a turn, +1★ more if it is next to a port.
 - **Unique unit — Landsknecht** (replaces the Swordsman): **Doppelsöldner** — +1.5 attack against shield units.
 - **Unique mechanic — Imperial Diet & Free Cities:** Hanseatic League: every market pays +1★ a turn, +1★ more beside a port. Free Imperial Cities: every city but the capital with a market pays +1★ more. Cities of level 4+ are Electors; with 3 of them the capital may call a free Imperial Diet every 10 turns: the Imperial Levy (a free veteran of your best melee unit), the Reichstag Tax (+2★ per Elector) or the Landfrieden (your units heal +2 HP at home for 5 turns).
-- **Strengths:** Guild Masters (Buildings cost 1★ less.)
+- **Strengths:** Guild Masters (Buildings cost 1★ less. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
 - **Weaknesses:** Three Hundred States (See 1 tile less around every unit and city.); Landlocked Heartland (Boats and ships move 1 less.)
 - **Skill line** (branches off Mining): T1 Printing Press: Research cost 1★ less. → T2 Hanse Kontors: +1★ a turn for every market. Trade routes pay 25% more. → T3 Imperial Diet: +1★ a turn from every city of level 3 or more. Foot soldiers defend 0.5 better.
 
@@ -834,8 +834,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Carolean Drill — your units become veterans after 2 kills (not 3).
 - **Unique unit — Carolean** (replaces the Defender): **Gå-på** — Charges home: +1.5 attack in melee.
 - **Unique mechanic — Winter March & Falun Copper:** Carolean Drill: your units become veterans after 2 kills (not 3). Winter March: land units that start on tundra or ice move +1, and ice is open road to them. Falun Copper (3★ in a city with a Mine, once every 5 turns): +1 Iron to the stockpile and +3★ for the red copper roofs sold abroad.
-- **Strengths:** Copper Mountain (+1★ a turn for every 2 mines.)
-- **Weaknesses:** Long Winters (Every farm grows the city by 1 less.); Thin Population (Buildings cost 1★ more.)
+- **Strengths:** Copper Mountain (+1★ a turn for every 2 mines. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Long Winters (Farming costs 2★ more to research.); Thin Population (Buildings cost 1★ more.)
 - **Skill line** (branches off Mining): T1 Falun Copper: +1★ a turn for every mine. → T2 Leather Cannon: Siege engines hit 0.5 harder. Siege engines move 1 further. → T3 Indelningsverket: Every unit costs 1★ less.
 
 ### Portuguese (portugal)
@@ -843,15 +843,15 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Unique unit — Caçador** (replaces the Archer): **Skirmisher** — +1 attack from forest or a mountain.
 - **Unique mechanic — Padrões of Discovery:** Feitorias: every port pays +1★ a turn. A boat or ship beside unclaimed land at least 5 tiles from your cities may raise a stone padrão there (3★, one per city): +1★ a turn, +1★ more on the coast, and you see 2 tiles around it for good.
 - **Strengths:** Navigators (See 1 tile further around every unit and city.)
-- **Weaknesses:** Small Kingdom (Every unit costs 1★ more.); Spanish Shadow (Units on your own land defend 0.5 worse.)
+- **Weaknesses:** Small Kingdom (Riding costs 2★ more to research.); Spanish Shadow (Units on your own land defend 0.5 worse.)
 - **Skill line** (branches off Sailing): T1 Caravels: Boats and ships move 1 further. → T2 Spice Route: Trade routes pay 50% more. → T3 Azulejos: +2★ whenever a city levels up. +1★ a turn for every temple.
 
 ### Venetian (venice)
 - **Signature bonus:** Merchant Republic — +1★ a turn for every 10★ in your treasury (at most +4★).
 - **Unique unit — Condottiere** (replaces the Knight): **Paid in gold** — +1 attack and defence while you hold 20★ or more.
 - **Unique mechanic — Merchant Republic & The Arsenal:** Every 10★ in the treasury earns +1★ a turn (at most +4★). A city with a Port launches a warship from the Arsenal at half price, once every 4 turns. Ships beside your cities unload +1★ each (at most +3★).
-- **Strengths:** The Arsenal (Ships cost 1★ less.)
-- **Weaknesses:** Few Fields (Every farm grows the city by 1 less.); Hired Swords (Foot soldiers defend 0.5 worse.)
+- **Strengths:** The Arsenal (Ships cost 1★ less. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** Few Fields (Every farm grows the city by 1 less.); Hired Swords (Riding costs 2★ more to research.)
 - **Skill line** (branches off Fishing): T1 Glassworks of Murano: +1★ a turn for every market. → T2 The Doge: +2★ a turn from your capital. → T3 Galleys of the Arsenal: Boats and ships hit 0.5 harder. Trade routes pay 25% more.
 
 ### Kongolese (kongo)
@@ -874,8 +874,8 @@ Each empire's type (§15) is shown on the empire screens: ⚔️ Military — Ro
 - **Signature bonus:** Unconquered — your units inside your borders defend +0.5.
 - **Unique unit — Malón Rider** (replaces the Rider): **Malón raid** — +2★ for every enemy it defeats.
 - **Unique mechanic — The Toqui & the Parlamento:** In war, elect a Toqui at the capital (6★, every 10 turns): for 3 turns every unit moves +1 and attacks +0.5. Hold a Parlamento (4★, every 8 turns): with diplomacy, every enemy warms to you (+15) and is offered peace; otherwise your units heal 4 HP and the next Toqui is free. Unconquered: your units inside your borders defend +0.5.
-- **Strengths:** Guerrilla Toquis (Units in forests defend 0.5 better.)
-- **Weaknesses:** No Cities (Buildings cost 1★ more.); Scattered Lof (See 1 tile less around every unit and city.)
+- **Strengths:** Guerrilla Toquis (Units in forests defend 0.5 better. Units in your cities defend 0.5 better. +1★ a turn from your capital.)
+- **Weaknesses:** No Cities (Masonry costs 2★ more to research.); Scattered Lof (See 1 tile less around every unit and city.)
 - **Skill line** (branches off Riding): T1 Lautaro’s Lesson: Mounted units hit 0.5 harder. → T2 Koyang Councils: Units on your land heal 1 HP every turn. → T3 Araucaria Groves: +1★ a turn for every lumber hut.
 
 ### Georgian (georgia)

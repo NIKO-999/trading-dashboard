@@ -15,14 +15,14 @@ import type { Mechanic } from './types';
 //  - every ziggurat Babylon holds makes each tech 1★ cheaper, at most TECH_OFF_MAX (−3), never below 1★. That is a
 //    tribe check in rules `techCost` (zigguratTechOff below).
 //
-// Economy (Clay Tablets): a Eureka makes its tech TABLET_OFF (60%) cheaper for Babylon instead of the usual 40%. Also a
+// Economy (Clay Tablets): a Eureka makes its tech TABLET_OFF (50%) cheaper for Babylon instead of the usual 40%. Also a
 // tribe check in rules `techCost`; it has no hook here.
 
 export const ZIGGURAT_COST = 7;
 export const ZIGGURAT_STARS = 1;
 export const REVEAL_RANGE = 3;
-export const TECH_OFF_MAX = 3;
-export const TABLET_OFF = 0.6;
+export const TECH_OFF_MAX = 2;
+export const TABLET_OFF = 0.5;
 /** Stars the computer keeps in hand after paying for a ziggurat. */
 export const AI_RESERVE = 5;
 
@@ -62,7 +62,7 @@ export function stargaze(s: GameState, owner: number, t: Tile) {
 
 export const mech: Mechanic = {
   name: 'Ziggurats & Star-Gazers',
-  blurb: 'Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 3★). Clay Tablets: a Eureka makes its tech 60% cheaper, not 40%.',
+  blurb: 'Raise a ziggurat beside each city (7★): it pays +1★ a turn, its astronomers reveal every tile within 3, and each one makes every tech 1★ cheaper (up to 2★). Clay Tablets: a Eureka makes its tech 50% cheaper, not 40%.',
 
   income(s, owner) {
     return zigguratIncome(s, owner);

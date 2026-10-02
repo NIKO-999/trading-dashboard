@@ -23,7 +23,7 @@ import type { Mechanic } from './types';
 // hook, and the rules ask us not to graft one into shared code for this; the council is the heal alone.
 
 export const LEAGUE_RANGE = 4;
-export const LEAGUE_MAX = 5;
+export const LEAGUE_MAX = 4;
 export const LEAGUE_STAR = 1;
 export const LEAGUE_DEF = 0.5;
 export const COUNCIL_COST = 4;

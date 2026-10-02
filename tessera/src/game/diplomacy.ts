@@ -70,7 +70,7 @@ export const ASK_AGAIN = 4;
 
 /** How an empire tends to behave: a base liking for others, how warlike and how keen on trade it is (0..1). */
 interface Persona { base: number; war: number; trade: number; label: string }
-const AGGRESSIVE: Persona = { base: -4, war: 0.85, trade: 0.2, label: 'aggressive' };
+const AGGRESSIVE: Persona = { base: -3, war: 0.7, trade: 0.2, label: 'aggressive' };
 const MARTIAL: Persona = { base: -2, war: 0.6, trade: 0.4, label: 'proud' };
 const TRADERS: Persona = { base: 4, war: 0.3, trade: 1, label: 'traders' };
 const PEACEFUL: Persona = { base: 6, war: 0.1, trade: 0.6, label: 'peaceful' };
@@ -83,7 +83,7 @@ export const PERSONA: Record<TribeId, Persona> = {
   egypt: STEADY, inca: STEADY, ethiopia: STEADY, maya: STEADY, korea: STEADY, khmer: STEADY,
   carthage: TRADERS, arabia: TRADERS, byzantium: STEADY, rus: MARTIAL, vietnam: MARTIAL,
   babylon: STEADY, nubia: MARTIAL, majapahit: TRADERS, spain: MARTIAL, haudenosaunee: STEADY,
-  assyria: AGGRESSIVE, poland: MARTIAL, scotland: MARTIAL, england: MARTIAL, france: STEADY, germany: MARTIAL, sweden: MARTIAL, portugal: TRADERS, venice: TRADERS, kongo: MARTIAL, ashanti: STEADY, mapuche: MARTIAL, georgia: STEADY, nepal: MARTIAL, cree: PEACEFUL,
+  assyria: MARTIAL, poland: MARTIAL, scotland: MARTIAL, england: MARTIAL, france: STEADY, germany: MARTIAL, sweden: MARTIAL, portugal: TRADERS, venice: TRADERS, kongo: MARTIAL, ashanti: STEADY, mapuche: MARTIAL, georgia: STEADY, nepal: MARTIAL, cree: PEACEFUL,
 };
 
 // ---------------------------------------------------------------- state and relations

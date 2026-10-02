@@ -537,7 +537,7 @@ test('the five newest empires\' bonuses', () => {
     tileAt(s, u.x, u.y)!.terrain = terrain;
     return defenseBonus(s, u);
   };
-  assert.equal(place('celts', 'forest'), 2); // Sacred Groves, no Archery needed
+  assert.equal(place('celts', 'forest'), 1.75); // Sacred Groves, no Archery needed
   assert.equal(place('ethiopia', 'mountain'), 3); // Highland Fortress 2.5, plus the highland trait
   const r = createGame({ seed: 11, human: 'rome', opponents: ['celts'], mode: 'domination' });
   const ru = r.units.find((v) => v.owner === 0)!;

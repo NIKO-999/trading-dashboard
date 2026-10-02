@@ -23,7 +23,7 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     pros: [T('Warriors Take Captives', 'Aztec wars sought prisoners and glory.', { k: 'kill', n: 1 })],
     cons: [
       T('No Horses', 'The Americas had no draft animals or war-horses.', { k: 'cost', of: 'mounted', n: -2 }),
-      T('Stone-Age Weapons', 'Obsidian, not iron, edged their clubs.', { k: 'techcost', tech: 'smithing', n: 2 }, { k: 'terrain', on: 'city', n: -0.5 }),
+      T('Stone-Age Weapons', 'Obsidian, not iron, edged their clubs.', { k: 'techcost', tech: 'smithing', n: 2 }),
     ],
   },
   polynesia: {
@@ -48,7 +48,7 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   vikings: {
-    pros: [T('Raiders of the Coast', 'Longships struck from the sea, and struck again.', { k: 'move', n: 1, who: 'naval' })],
+    pros: [T('Raiders of the Coast', 'Longships struck from the sea, and struck again.', { k: 'move', n: 1, who: 'naval' }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
       T('Short Growing Season', 'Greenland and Norway grew thin crops.', { k: 'grow', on: 'farm', n: -1 }),
       T('Oral Tradition', 'Sagas were spoken, not written; learning spread slowly.', { k: 'cost', of: 'tech', n: -1 }),
@@ -140,7 +140,7 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   mali: {
-    pros: [T('Hajj Wealth', 'Mansa Musa’s pilgrimage flooded Cairo with gold.', { k: 'levelstar', n: 1 })],
+    pros: [T('Hajj Wealth', 'Mansa Musa’s pilgrimage flooded Cairo with gold.', { k: 'route', n: 0.25 })],
     cons: [
       T('Landlocked Sahel', 'The empire lay far from the coast.', { k: 'move', n: -1, who: 'naval' }),
       T('Fragile Union', 'After Mansa Musa the great empire began to fray.', { k: 'vision', n: -1 }),
@@ -156,7 +156,7 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
   ottoman: {
     pros: [T('Janissary Corps', 'The sultan’s slave-soldiers were the first standing army.', { k: 'atk', n: 0.5, who: 'ranged' })],
     cons: [
-      T('Conservative Ulema', 'Religious scholars resisted new learning.', { k: 'cost', of: 'tech', n: -1 }),
+      T('Conservative Ulema', 'Religious scholars resisted new learning.', { k: 'techcost', tech: 'philosophy', n: 2 }),
       T('Tax-Farming', 'Corrupt tax collectors drained the markets.', { k: 'income', per: 'market', n: -0.5 }),
     ],
   },
@@ -164,7 +164,7 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     pros: [T('Sky Watchers', 'Astronomers charted Venus and the eclipses.', { k: 'vision', n: 1 })],
     cons: [
       T('No Horses or Iron', 'Flint, obsidian and feet.', { k: 'cost', of: 'mounted', n: -2 }, { k: 'techcost', tech: 'smithing', n: 1 }),
-      T('Warring City-States', 'Tikal, Calakmul and their neighbours fought endlessly.', { k: 'terrain', on: 'city', n: -0.5 }),
+      T('Warring City-States', 'Tikal, Calakmul and their neighbours fought endlessly.', { k: 'terrain', on: 'city', n: -0.5 }, { k: 'cost', of: 'temple', n: -1 }),
     ],
   },
   korea: {
@@ -210,10 +210,10 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   arabia: {
-    pros: [T('Desert Caravans', 'Camel trains linked India, Africa and the Mediterranean.', { k: 'route', n: 0.25 })],
+    pros: [T('Desert Caravans', 'Camel trains linked India, Africa and the Mediterranean.', { k: 'route', n: 0.25 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
       T('Few Forests', 'Timber for ships had to be brought from afar.', { k: 'cost', of: 'naval', n: -1 }),
-      T('Tribal Rivalries', 'Old clan feuds never quite died.', { k: 'def', n: -0.5, who: 'melee' }),
+      T('Tribal Rivalries', 'Old clan feuds never quite died.', { k: 'techcost', tech: 'philosophy', n: 2 }),
     ],
   },
   rus: {
@@ -238,10 +238,10 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   nubia: {
-    pros: [T('Furnaces of Meroë', 'Mounds of iron slag still ring the city.', { k: 'stock', of: 'iron', n: 1 })],
+    pros: [T('Furnaces of Meroë', 'Mounds of iron slag still ring the city.', { k: 'stock', of: 'iron', n: 1 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
       T('The Cataracts', 'Rocky rapids broke the river into pieces.', { k: 'move', n: -1, who: 'naval' }),
-      T('Desert Frontier', 'Only a narrow strip along the Nile could be farmed.', { k: 'grow', on: 'farm', n: -1 }),
+      T('Desert Frontier', 'Only a narrow strip along the Nile could be farmed.', { k: 'techcost', tech: 'farming', n: 2 }),
     ],
   },
   majapahit: {
@@ -252,9 +252,9 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   spain: {
-    pros: [T('Reconquista Veterans', 'Seven centuries of frontier war.', { k: 'kill', n: 1 })],
+    pros: [T('Reconquista Veterans', 'Seven centuries of frontier war.', { k: 'kill', n: 1 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
-      T('Silver Inflation', 'So much silver arrived that prices soared.', { k: 'cost', of: 'build', n: -1 }),
+      T('Silver Inflation', 'So much silver arrived that prices soared.', { k: 'techcost', tech: 'trade', n: 2 }),
       T('Overstretched Empire', 'Armies on every continent, and never enough of them.', { k: 'terrain', on: 'away', n: -0.5 }),
     ],
   },
@@ -266,30 +266,30 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   assyria: {
-    pros: [T('Royal Road Couriers', 'Messengers changed horses at every post.', { k: 'move', n: 1, who: 'recon' })],
+    pros: [T('Royal Road Couriers', 'Messengers changed horses at every post.', { k: 'move', n: 1, who: 'recon' }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
-      T('Hated Overlords', 'Conquered peoples rose up again and again.', { k: 'terrain', on: 'away', n: -0.5 }),
+      T('Hated Overlords', 'Conquered peoples rose up again and again.', { k: 'vision', n: -1 }),
       T('Few Ships', 'A land empire that hired Phoenician fleets.', { k: 'move', n: -1, who: 'naval' }),
     ],
   },
   poland: {
     pros: [T('Szlachta Cavalry', 'Noble horsemen trained from childhood.', { k: 'atk', n: 0.5, who: 'mounted' })],
     cons: [
-      T('Liberum Veto', 'One noble could stop the whole Sejm.', { k: 'cost', of: 'tech', n: -1 }),
+      T('Liberum Veto', 'One noble could stop the whole Sejm.', { k: 'techcost', tech: 'philosophy', n: 2 }),
       T('Open Plains', 'No mountains to shelter behind.', { k: 'terrain', on: 'own', n: -0.5 }),
     ],
   },
   scotland: {
     pros: [T('Clan Loyalty', 'A clan follows its chief anywhere.', { k: 'heal', n: 1 })],
     cons: [
-      T('Thin Soil', 'Oats and barley on stony ground.', { k: 'grow', on: 'farm', n: -1 }),
+      T('Thin Soil', 'Oats and barley on stony ground.', { k: 'techcost', tech: 'farming', n: 2 }),
       T('Feuding Clans', 'Old grudges between the glens.', { k: 'vision', n: -1 }),
     ],
   },
   england: {
-    pros: [T('Island Fortress', 'The sea is a moat no army can cross.', { k: 'terrain', on: 'city', n: 0.5 })],
+    pros: [T('Island Fortress', 'The sea is a moat no army can cross.', { k: 'terrain', on: 'city', n: 0.5 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
-      T('Wars of the Roses', 'Barons fought each other for the crown.', { k: 'def', n: -0.5, who: 'melee' }),
+      T('Wars of the Roses', 'Barons fought each other for the crown.', { k: 'techcost', tech: 'riding', n: 2 }),
       T('Rainy Isles', 'Wet harvests and muddy roads.', { k: 'techcost', tech: 'roads', n: 2 }),
     ],
   },
@@ -301,31 +301,31 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   germany: {
-    pros: [T('Guild Masters', 'Craftsmen who set the finest standards.', { k: 'cost', of: 'build', n: 1 })],
+    pros: [T('Guild Masters', 'Craftsmen who set the finest standards.', { k: 'cost', of: 'build', n: 1 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
       T('Three Hundred States', 'Princes, bishops and free cities all at odds.', { k: 'vision', n: -1 }),
       T('Landlocked Heartland', 'Most of the empire lay far from the sea.', { k: 'move', n: -1, who: 'naval' }),
     ],
   },
   sweden: {
-    pros: [T('Copper Mountain', 'The great copper mine at Falun paid for armies.', { k: 'income', per: 'mine', n: 0.5 })],
+    pros: [T('Copper Mountain', 'The great copper mine at Falun paid for armies.', { k: 'income', per: 'mine', n: 0.5 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
-      T('Long Winters', 'The ground is frozen half the year.', { k: 'grow', on: 'farm', n: -1 }),
+      T('Long Winters', 'The ground is frozen half the year.', { k: 'techcost', tech: 'farming', n: 2 }),
       T('Thin Population', 'Few people for so wide a land.', { k: 'cost', of: 'build', n: -1 }),
     ],
   },
   portugal: {
     pros: [T('Navigators', 'The school of Sagres charted the unknown.', { k: 'vision', n: 1 })],
     cons: [
-      T('Small Kingdom', 'Few people for so many ships.', { k: 'unitcost', n: 1 }),
+      T('Small Kingdom', 'Few people for so many ships.', { k: 'techcost', tech: 'riding', n: 2 }),
       T('Spanish Shadow', 'A great neighbour on the only land border.', { k: 'terrain', on: 'own', n: -0.5 }),
     ],
   },
   venice: {
-    pros: [T('The Arsenal', 'A factory that built a galley a day.', { k: 'cost', of: 'naval', n: 1 })],
+    pros: [T('The Arsenal', 'A factory that built a galley a day.', { k: 'cost', of: 'naval', n: 1 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
       T('Few Fields', 'A city built on mud and water.', { k: 'grow', on: 'farm', n: -1 }),
-      T('Hired Swords', 'Venice paid others to fight on land.', { k: 'def', n: -0.5, who: 'melee' }),
+      T('Hired Swords', 'Venice paid others to fight on land.', { k: 'techcost', tech: 'riding', n: 2 }),
     ],
   },
   kongo: {
@@ -343,9 +343,9 @@ export const TRAITS: Record<TribeId, { pros: Trait[]; cons: Trait[] }> = {
     ],
   },
   mapuche: {
-    pros: [T('Guerrilla Toquis', 'War leaders chosen for skill alone.', { k: 'terrain', on: 'forest', n: 0.5 })],
+    pros: [T('Guerrilla Toquis', 'War leaders chosen for skill alone.', { k: 'terrain', on: 'forest', n: 0.5 }, { k: 'terrain', on: 'city', n: 0.5 }, { k: 'income', per: 'capital', n: 1 })],
     cons: [
-      T('No Cities', 'Villages, not towns.', { k: 'cost', of: 'build', n: -1 }),
+      T('No Cities', 'Villages, not towns.', { k: 'techcost', tech: 'masonry', n: 2 }),
       T('Scattered Lof', 'Families spread across the valleys.', { k: 'vision', n: -1 }),
     ],
   },

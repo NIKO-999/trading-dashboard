@@ -10,14 +10,14 @@ export interface Star { id: string; x: number; y: number; ring: TechDef['ring'] 
 export interface Sky { size: number; cx: number; cy: number; r: number; stars: Star[]; rings: { name: string; r: number; x: number; y: number }[] }
 
 /** Radius (fraction of the sky) of each band. */
-const CORE = [0, 0.19, 0.33, 0.47];
-const FORK = 0.585;
-const AETHER = 0.64;
-const CULTURE = [0.73, 0.815, 0.9];
+const CORE = [0, 0.22, 0.39, 0.555];
+const FORK = 0.665;
+const AETHER = 0.72;
+const CULTURE = [0.785, 0.86, 0.935];
 const CULTURE_TURN = 9; // degrees each step of an empire's line turns as it spirals out
 const WILD = 1;
 /** Closest two star centres may sit, in px. */
-export const STAR_GAP = 34;
+export const STAR_GAP = 42;
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const meanAngle = (as: number[]) => (Math.atan2(as.reduce((a, d) => a + Math.sin(rad(d)), 0), as.reduce((a, d) => a + Math.cos(rad(d)), 0)) * 180) / Math.PI;

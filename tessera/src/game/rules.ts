@@ -1030,7 +1030,7 @@ function baseDefense(s: GameState, u: Unit, t: Tile) {
   const c = cityById(s, t.cityId);
   if (c && c.owner === u.owner && def(u).skills.includes('fortify')) return garrisonBonus(s, c);
   const tribe = s.players[u.owner].tribe;
-  if (t.terrain === 'forest' && tribe === 'celts') return 2; // Sacred Groves
+  if (t.terrain === 'forest' && tribe === 'celts') return 1.75; // Sacred Groves
   if (t.terrain === 'forest' && hasTech(s, u.owner, 'archery')) return 1.5;
   if (t.terrain === 'mountain') return tribe === 'ethiopia' ? MOUNTAIN_DEFENSE + 0.5 : MOUNTAIN_DEFENSE; // Highland Fortress // high ground: the best cover on the map
   if (isWater(t) && hasTech(s, u.owner, 'aquaculture')) return 1.5;

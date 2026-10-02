@@ -115,7 +115,7 @@ export const SPECIALITY: Record<TribeId, Speciality> = {
   aboriginal: { kind: 'port', start: false, name: 'Stone Fish Traps', why: 'Budj Bim’s weirs and traps: port upgrades cost a third less and Harbours need no tech.' },
   china: { kind: 'market', start: true, name: 'Silk Markets', why: 'The Silk Road ends here: markets are built straight as Bazaars (and Silk Road doubles what their levels pay).' },
   india: { kind: 'temple', start: false, name: 'Temple Towns', why: 'Great temple towns of the south: temple upgrades cost a third less and Great Temples need no tech.' },
-  mali: { kind: 'mine', start: true, name: 'Gold of Bambuk', why: 'The richest gold fields known: mines are built straight as Deep Mines.' },
+  mali: { kind: 'mine', start: false, name: 'Gold of Bambuk', why: 'The richest gold fields known: mine upgrades cost a third less and Deep Mines need no tech.' },
   lakota: { kind: 'pasture', start: false, name: 'Horse Herds', why: 'The horse nation: pastures cost a third less and need no tech.' },
   ottoman: { kind: 'mine', start: false, name: 'Imperial Foundries', why: 'The cannon foundries of Tophane: mine upgrades cost a third less and Deep Mines need no tech.' },
   maya: { kind: 'temple', start: false, name: 'Pyramid Temples', why: 'Every city a temple city: temple upgrades cost a third less and Great Temples need no tech.' },

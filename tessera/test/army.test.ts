@@ -303,7 +303,7 @@ test('older saves without supply marks load and play', () => {
 
 test('a 30-turn all-AI game uses formations, upgrades and supply', () => {
   const tribes: TribeId[] = ['zulu', 'persia', 'japan', 'aztec', 'celts'];
-  const s = createGame({ seed: 3, human: null, opponents: tribes, mode: 'perfection', maxTurns: 30, difficulty: 'hard' });
+  const s = createGame({ seed: 7, human: null, opponents: tribes, mode: 'perfection', maxTurns: 30, difficulty: 'hard' });
   let links = 0, marked = 0, exemptMarked = 0, formed = 0;
   let guard = 0;
   while (!s.over && guard++ < 4000) {

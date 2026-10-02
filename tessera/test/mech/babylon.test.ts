@@ -27,16 +27,16 @@ function setup(seed = 5) {
 /** Free tiles next to `c`, in its own territory. */
 const ring = (s: GameState, c: City): Tile[] => neighbors(s, c.x, c.y).filter((t) => t.owner === c.id && t.cityId === null);
 
-test('Clay Tablets: a Eureka takes 60% off for Babylon, 40% for others', () => {
+test('Clay Tablets: a Eureka takes 50% off for Babylon, 40% for others', () => {
   const s = createGame({ seed: 7, human: 'babylon', opponents: ['japan', 'mongols'], mode: 'domination' });
   const tech = 'farming';
   for (const pid of [0, 1]) assert.ok(!s.players[pid].techs.includes(tech));
   const fullB = techCost(s, 0, tech), fullJ = techCost(s, 1, tech);
   s.players[0].sparks = [tech];
   s.players[1].sparks = [tech];
-  assert.equal(TABLET_OFF, 0.6);
+  assert.equal(TABLET_OFF, 0.5);
   assert.equal(EUREKA_OFF, 0.4);
-  assert.equal(techCost(s, 0, tech), Math.max(1, Math.ceil(fullB * (1 - TABLET_OFF))), 'Babylon: 60% off');
+  assert.equal(techCost(s, 0, tech), Math.max(1, Math.ceil(fullB * (1 - TABLET_OFF))), 'Babylon: 50% off');
   assert.equal(techCost(s, 1, tech), Math.max(1, Math.ceil(fullJ * (1 - EUREKA_OFF))), 'others: 40% off');
 });
 
@@ -116,7 +116,7 @@ test('star-gazers: raising a ziggurat reveals every tile within 3', () => {
   assert.equal(p.explored[beyond.y * s.size + beyond.x], false, 'but no further');
 });
 
-test('ziggurats make every tech 1★ cheaper each, at most 3★, never below 1★', () => {
+test('ziggurats make every tech 1★ cheaper each, at most 2★, never below 1★', () => {
   const { s, city } = setup();
   const tech = 'farming';
   const full = techCost(s, 0, tech);
@@ -127,7 +127,7 @@ test('ziggurats make every tech 1★ cheaper each, at most 3★, never below 1�
     assert.equal(zigguratTechOff(s, 0), Math.min(i + 1, TECH_OFF_MAX));
     assert.equal(techCost(s, 0, tech), Math.max(1, full - Math.min(i + 1, TECH_OFF_MAX)));
   }
-  assert.equal(techCost(s, 0, tech), full - 3, 'capped at −3');
+  assert.equal(techCost(s, 0, tech), full - TECH_OFF_MAX, 'capped');
   // never below 1: a tech already very cheap from a Eureka
   s.players[0].sparks = [tech];
   assert.ok(techCost(s, 0, tech) >= 1);

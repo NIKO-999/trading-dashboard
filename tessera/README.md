@@ -18,7 +18,7 @@ Lead one of fifty-one empires, each with its own biome, starting tech, unique un
 | Greek | olive coast | Gathering | Hoplite (replaces Defender) | Every tech costs 1★ less |
 | Zulu | savanna | Hunting | Impi (replaces Warrior) | Hunting grows a city by 2 |
 | Persian | gardens and plateaus | Riding | Immortal (replaces Swordsman) | Capturing a city pays 3★ |
-| Celtic | oak groves and mist | Hunting | Clansman (replaces Warrior) | Units in forest defend at ×2 |
+| Celtic | oak groves and mist | Hunting | Clansman (replaces Warrior) | Units in forest defend at ×1.75 |
 | Inuit | tundra and ice | Fishing | Harpooner (replaces Archer) | Fish harvests give +1 extra population |
 | Inca | terraced mountains | Climbing | Slinger (replaces Archer) | Mines give +1 extra population |
 | Aksumite | highland plateaus | Climbing | Shotelai (replaces Swordsman) | Units on mountains defend at ×2.5 |
@@ -38,7 +38,7 @@ Lead one of fifty-one empires, each with its own biome, starting tech, unique un
 | Arab | dunes and palm oases | Riding | Camel Rider (replaces Rider) | Techs known to a met empire cost 40% less |
 | Rus | birch forest and snow | Hunting | Druzhina (replaces Knight) | Every hunt pays +1★ |
 | Vietnamese | rice deltas and karsts | Gathering | Rattan Guard (replaces Warrior) | Units in forest or swamp defend +1 |
-| Babylonian | two great rivers | Gathering | Sabum Kibittum (replaces Warrior) | a Eureka makes its tech 60% cheaper (not 40%). |
+| Babylonian | two great rivers | Gathering | Sabum Kibittum (replaces Warrior) | a Eureka makes its tech 50% cheaper (not 40%). |
 | Nubian | the nile cataracts | Hunting | Pitati Archer (replaces Archer) | archers and other ranged units cost 1★ less. |
 | Javanese | volcanic islands | Fishing | Kris Warrior (replaces Swordsman) | every fish and fruit harvest pays +1★. |
 | Spanish | a dry high plateau and olive groves | Riding | Conquistador (replaces Knight) | every ship and warship you have pays +1★ a turn. |
