@@ -3,6 +3,7 @@
 import { TRAITS } from '../data/traits';
 import { UNIQUE_BY_ID } from '../data/uniqueTechs';
 import { SKILL_BY_ID } from '../data/skills';
+import { DOCTRINE_BY_ID } from '../data/doctrines';
 import { govPerks } from '../data/governments';
 import { condActive } from './alignment';
 import { TRIBES } from '../data/tribes';
@@ -60,6 +61,8 @@ export function perksOf(s: GameState, pid: number): Perk[] {
   for (const id of s.players[pid].techs) {
     const t = UNIQUE_BY_ID[id];
     if (t) { out.push(...t.perks); continue; }
+    const dc = DOCTRINE_BY_ID[id]; // the empire type's doctrine (data/doctrines)
+    if (dc) { out.push(...dc.perks); continue; }
     const k = SKILL_BY_ID[id]; // forks, Aether Links and Wildcards (which surge while their condition holds)
     if (!k) continue;
     out.push(...k.perks);

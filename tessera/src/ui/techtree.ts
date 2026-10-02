@@ -19,9 +19,9 @@ import { unitPortrait } from './menu';
 // The Constellation View: the skill tree as stars on a pitch-black sky (layout in ui/constellation.ts). Learned stars
 // shine gold (the Core Domain, forks and the empire's own line) or silver (Aether Links and Wildcards); the rest are
 // faint fine-line outlines whose shape tells the ring: circle core, triangle fork, diamond culture, hexagon link,
-// eight-point star wildcard. The sky is wider than a phone: it scrolls, and "Whole sky" shrinks it to fit.
+// eight-point star wildcard, pentagon doctrine. The sky is wider than a phone: it scrolls, and "Whole sky" shrinks it to fit.
 
-const GOLD = new Set<TechDef['ring']>(['core', 'fork', 'culture']);
+const GOLD = new Set<TechDef['ring']>(['core', 'fork', 'culture', 'doctrine']);
 
 /** A star's outline for its ring, centred on 0,0 with radius `r`. */
 function glyph(ring: TechDef['ring'], r: number): string {
@@ -36,6 +36,7 @@ function glyph(ring: TechDef['ring'], r: number): string {
     case 'culture': return `<polygon points="${poly(4, -Math.PI / 2)}"/>`;
     case 'aether': return `<polygon points="${poly(6, 0)}"/>`;
     case 'wild': return `<polygon points="${poly(8, -Math.PI / 2, 0.55)}"/>`;
+    case 'doctrine': return `<polygon points="${poly(5, -Math.PI / 2)}"/>`;
   }
 }
 
@@ -71,7 +72,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
     const keep = layer.querySelector<HTMLElement>('.tt-wrap');
     const scroll = keep && !keep.classList.contains('whole') ? { x: keep.scrollLeft, y: keep.scrollTop } : null; // keep the view on a redraw
     layer.innerHTML = '';
-    const size = Math.max(1000, Math.min(window.innerWidth - 8, 1300)); // a wide sky, so the stars and their names have room
+    const size = Math.max(1300, Math.min(window.innerWidth - 8, 1600)); // a wide sky, so the stars and their names have room
     if (sky?.size !== size) sky = skyLayout(p.tribe, size);
     const pos = new Map(sky.stars.map((st) => [st.id, st]));
     const status = new Map<string, ResearchStatus>(mine.map((t) => [t.id, researchStatus(s, pid, t.id)]));
@@ -135,7 +136,7 @@ export function showTechTree(s: GameState, pid: number, hud: () => Node, onChang
       wrap,
       h('div', { class: 'tt-foot' },
         h('button', { class: 'tt-zoom', onclick: () => { whole = !whole; render(); } }, whole ? 'Close-up' : 'Whole sky'),
-        h('span', {}, 'Gold and silver stars are learned. Triangles are forks: one side only. Hexagons link two finished branches. The outer ring surges with the map.'),
+        h('span', {}, 'Gold and silver stars are learned. Triangles are forks: one side only. Hexagons link two finished branches. Pentagons are your empire type’s own doctrine. The outer ring surges with the map.'),
       ),
     );
     // open centred on the Empire Origin (or where the player was looking)

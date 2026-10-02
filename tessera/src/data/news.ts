@@ -4,6 +4,14 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.55',
+    items: [
+      '🌌 A bigger skill tree: every empire type now has its own Doctrine, nine new techs (the pentagons) only it can learn.',
+      '⚔ Doctrine of War (military): Drill, Siegecraft and Cavalry tracks. 💰 Doctrine of Wealth (economy): Agrarian, Commerce and Learning. ⚓ Doctrine of the Sea (naval): Fleet, Fisheries and Exploration.',
+      '🔭 The sky is larger again and laid out so the new tracks fan out cleanly from the techs they grow from.',
+    ],
+  },
+  {
     version: '0.54',
     items: [
       '🌌 A wider skill tree: the sky is bigger and its rings spread out, so every tech and its name has room.',

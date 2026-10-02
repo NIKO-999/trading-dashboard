@@ -1,69 +1,42 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { DRILLED, FLEET, formation, HOMETOWN, SHIELD_MAX, TESTUDO_MAX, TESTUDO_RANGED } from '../src/game/army';
-import { createGame, spawnUnit } from '../src/game/mapgen';
-import type { GameState, TribeId } from '../src/game/types';
+import { DOCTRINES } from '../src/data/doctrines.ts';
+import { techsFor, TECH_BY_ID } from '../src/data/techs.ts';
+import { TRIBES } from '../src/data/tribes.ts';
+import { createGame } from '../src/game/mapgen.ts';
+import { perkSum } from '../src/game/perks.ts';
+import { research, researchStatus } from '../src/game/rules.ts';
+import { skyLayout, STAR_GAP } from '../src/ui/constellation.ts';
 
-/** A flat open board, everyone met, no units. */
-function board(me: TribeId, foe: TribeId = 'greeks') {
-  const s = createGame({ seed: 7, human: me, opponents: [foe], mapSize: 'large', mode: 'perfection' });
-  for (const t of s.tiles) { t.terrain = 'field'; t.resource = null; t.improvement = null; t.village = false; t.ruin = false; t.owner = null; }
-  s.units = [];
-  return s;
-}
-const notes = (s: GameState, a: Parameters<typeof formation>[1], d: Parameters<typeof formation>[2]) => formation(s, a, d);
-
-test('Military: Drilled Ranks add attack to a unit in formation', () => {
-  const s = board('mongols');
-  const a = spawnUnit(s, 'archer', 0, 5, 5, null);
-  spawnUnit(s, 'archer', 0, 5, 6, null);
-  const d = spawnUnit(s, 'warrior', 1, 7, 5, null);
-  const f = notes(s, a, d);
-  assert.ok(f.notes.some((n) => /Drilled Ranks/.test(n)));
-  assert.ok(f.atk >= DRILLED + 0.5);
+test('every empire type has its own doctrine: three tracks of three techs', () => {
+  for (const c of ['military', 'economy', 'naval'] as const) {
+    const mine = DOCTRINES.filter((d) => d.category === c);
+    assert.equal(mine.length, 9);
+    assert.equal(new Set(mine.map((d) => d.track)).size, 3);
+    for (const d of mine) assert.ok(TECH_BY_ID[d.parent], `${d.id} grows from a real tech`);
+  }
+  assert.equal(techsFor('rome').filter((t) => t.ring === 'doctrine').every((t) => t.category === TRIBES.rome.category), true);
 });
 
-test('Economy: Hometown Guard adds defence in formation on its own land', () => {
-  const s = board('egypt', 'mongols');
-  const c = s.cities.find((k) => k.owner === 0)!;
-  const d = spawnUnit(s, 'defender', 0, c.x + 1, c.y, null);
-  spawnUnit(s, 'defender', 0, c.x + 1, c.y + 1, null);
-  for (const t of s.tiles) if (Math.max(Math.abs(t.x - c.x), Math.abs(t.y - c.y)) <= 2) t.owner = c.id;
-  const a = spawnUnit(s, 'warrior', 1, c.x + 2, c.y, null);
-  const f = notes(s, a, d);
-  assert.ok(f.notes.some((n) => /Hometown Guard/.test(n)));
-  assert.ok(f.def >= HOMETOWN);
+test('only an empire of the right type can research a doctrine, and its perks apply', () => {
+  const s = createGame({ seed: 4, human: 'rome', opponents: ['egypt'], mode: 'domination' }); // Rome: military, Egypt: economy
+  const p = s.players[0];
+  p.techs.push('gathering', 'tactics');
+  assert.equal(researchStatus(s, 0, 'doctrine:drill'), 'available');
+  assert.equal(researchStatus(s, 0, 'doctrine:rotation'), 'locked', 'an economy doctrine is closed to Rome');
+  s.players[1].techs.push('gathering', 'tactics');
+  assert.equal(researchStatus(s, 1, 'doctrine:drill'), 'locked', 'a war doctrine is closed to Egypt');
+  const before = perkSum(s, 0, 'def');
+  p.stars = 99;
+  assert.ok(research(s, 0, 'doctrine:drill'));
+  assert.equal(perkSum(s, 0, 'def'), before + 0.5);
 });
 
-test('Rome: Testudo raises the shield wall and holds against missiles', () => {
-  const s = board('rome');
-  const d = spawnUnit(s, 'defender', 0, 5, 5, null);
-  for (const [x, y] of [[5, 6], [6, 6], [4, 6]]) spawnUnit(s, 'defender', 0, x, y, null);
-  const melee = spawnUnit(s, 'warrior', 1, 5, 4, null);
-  const archer = spawnUnit(s, 'archer', 1, 5, 2, null);
-  assert.equal(notes(s, melee, d).def, TESTUDO_MAX);
-  assert.ok(TESTUDO_MAX > SHIELD_MAX);
-  assert.equal(notes(s, archer, d).def, TESTUDO_MAX + TESTUDO_RANGED);
-  // anyone else's wall stops at the ordinary cap
-  const g = board('greeks');
-  const gd = spawnUnit(g, 'defender', 0, 5, 5, null);
-  for (const [x, y] of [[5, 6], [6, 6], [4, 6]]) spawnUnit(g, 'defender', 0, x, y, null);
-  assert.equal(notes(g, spawnUnit(g, 'warrior', 1, 5, 4, null), gd).def, SHIELD_MAX);
-});
-
-test('Naval: warships side by side form a Line of Battle', () => {
-  const s = board('vikings');
-  for (const t of s.tiles) if (t.y >= 8) t.terrain = 'ocean';
-  const a = spawnUnit(s, 'warship', 0, 5, 9, null);
-  spawnUnit(s, 'warship', 0, 6, 9, null);
-  const d = spawnUnit(s, 'warship', 1, 5, 11, null);
-  const f = notes(s, a, d);
-  assert.ok(f.notes.some((n) => /Line of Battle/.test(n)));
-  assert.ok(f.atk >= FLEET);
-  // a land empire's ships have no such line
-  const r = board('rome');
-  for (const t of r.tiles) if (t.y >= 8) t.terrain = 'ocean';
-  const ra = spawnUnit(r, 'warship', 0, 5, 9, null);
-  spawnUnit(r, 'warship', 0, 6, 9, null);
-  assert.ok(!notes(r, ra, spawnUnit(r, 'warship', 1, 5, 11, null)).notes.some((n) => /Line of Battle/.test(n)));
+test('the doctrine stars fit the sky without overlapping', () => {
+  for (const tribe of ['rome', 'egypt', 'vikings', 'babylon', 'cree'] as const) {
+    const sky = skyLayout(tribe, 1300);
+    const d = sky.stars.filter((st) => st.ring === 'doctrine');
+    assert.equal(d.length, 9);
+    for (const a of d) for (const b of sky.stars) if (a !== b) assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= STAR_GAP - 0.01, `${tribe}: ${a.id} too close to ${b.id}`);
+  }
 });

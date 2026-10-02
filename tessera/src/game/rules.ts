@@ -176,6 +176,7 @@ export function researchStatus(s: GameState, pid: number, tech: string): Researc
   if (hasTech(s, pid, tech)) return 'owned';
   const t = TECH_BY_ID[tech];
   if (t.tribe && t.tribe !== s.players[pid].tribe) return 'locked'; // someone else's skill line
+  if (t.category && t.category !== TRIBES[s.players[pid].tribe].category) return 'locked'; // another empire type's doctrine
   if (forkRivals(tech).some((r) => hasTech(s, pid, r))) return 'sealed';
   return prereqs(t).every((q) => hasTech(s, pid, q)) ? 'available' : 'locked';
 }

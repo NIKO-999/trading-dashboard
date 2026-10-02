@@ -134,6 +134,7 @@ function skillWant(s: GameState, pid: number, id: string, owned: Tile[], enemies
     case 'aether:cavalry': return units.filter((u) => MOUNTED_KINDS.includes(u.kind)).length >= 2 ? 5 : 2;
   }
   if (t.ring === 'wild') return condActive(s, pid, t.cond!) ? 6 : t.cond === 'late' && s.turn >= 15 ? 5 : 2;
+  if (t.ring === 'doctrine') return t.category === 'military' && fighting ? 7 : 5; // the empire type's own branch
   return 2;
 }
 

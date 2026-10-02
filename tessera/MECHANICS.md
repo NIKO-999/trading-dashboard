@@ -36,7 +36,7 @@
 
 ## 3. Techs and the skill tree (the Constellation)
 
-The skill tree is drawn as a constellation on a black sky: **three converging rings around the Empire Origin** (your empire's portrait in the centre). Learned stars shine gold (core, forks, your own line) or silver (Aether Links, Wildcards); the rest are faint fine-line outlines whose shape tells the ring (circle core, triangle fork, diamond culture, hexagon link, eight-point star wildcard). The sky is wider than a phone: it scrolls, and **Whole sky** shrinks it to fit.
+The skill tree is drawn as a constellation on a black sky: **converging rings around the Empire Origin** (your empire's portrait in the centre). Learned stars shine gold (core, forks, your own line) or silver (Aether Links, Wildcards); the rest are faint fine-line outlines whose shape tells the ring (circle core, triangle fork, diamond culture, hexagon link, eight-point star wildcard, pentagon doctrine). The sky is wider than a phone: it scrolls, and **Whole sky** shrinks it to fit.
 
 - **Tech cost** = `tier × (number of your cities) + 4`, so it gets dearer as you expand. Philosophy makes all future techs 33% cheaper; Greeks pay 1 less; empire traits can add or remove Stars.
 - A tech needs its parent first (tier-1 techs are always available).
@@ -64,6 +64,22 @@ The skill tree is drawn as a constellation on a black sky: **three converging ri
   - **Highland Snipers** (Climbing → Mining + Archery → Spiritualism): ranged units on a mountain shoot 2 tiles further and see through the fog as far as they shoot.
   - **Tidal Granaries** (Whaling → Aquaculture + Gathering → Farming): every port grows its city by 1 more and pays +1★ a turn.
   - **Iron Cavalry** (Horsemanship → Chivalry + Mining → Smithing): mounted units hit and defend 0.5 better.
+
+### Doctrine ring — your empire type's own branch (pentagons)
+Between the links and your own line lies a branch that only your **empire type** can research: three tracks of three techs, each growing straight out from a shared tech (the tracks are nudged apart so they never run side by side). They cost like tier 2, 3 and 4 techs. The computer players value them like a good skill (more so for a military empire at war).
+
+- **Doctrine of War** (military empires):
+  - *Drill* (from Tactics): Drill Sergeants: Foot soldiers defend 0.5 better. → Veteran Cadres: Units on your land heal 1 HP every turn. +1★ for every enemy you defeat. → Total War: All units hit 0.5 harder.
+  - *Siegecraft* (from Engineering): Sappers’ Craft: Siege engines cost 1★ less. → Siege Trains: Siege engines hit 0.5 harder. Siege engines move 1 further. → Grand Batteries: Siege engines shoot 1 tile further.
+  - *Cavalry* (from Horsemanship): Remount Depots: Mounted units cost 1★ less. → Light Horse: Scouts and voyagers move 1 further. Mounted units defend 0.5 better. → Shock Cavalry: Mounted units hit 0.5 harder. Mounted units defend 0.5 better.
+- **Doctrine of Wealth** (economy empires):
+  - *Agrarian* (from Farming): Crop Rotation: +1★ a turn for every 2 farms. → Public Granaries: A city that levels up gains 1 extra population. → Breadbasket: +1★ a turn from every city of level 3 or more.
+  - *Commerce* (from Roads): Guild Charters: +1★ a turn for every market. → Banking: Trade routes pay 25% more. +1★ a turn from your capital. → Stock Exchange: +1★ a turn from every city.
+  - *Learning* (from Meditation): Libraries: Research cost 1★ less. → Universities: +2★ whenever a city levels up. → Renaissance: World Wonders cost 25% less. Buildings cost 1★ less.
+- **Doctrine of the Sea** (naval empires):
+  - *Fleet* (from Sailing): Shipwrights: Ships cost 1★ less. → Ships of the Line: Boats and ships defend 1 better. → Admiralty: Boats and ships hit 1 harder.
+  - *Fisheries* (from Whaling): Fishing Fleets: Every fish harvest grows the city by 1 more. → Salt Cod: +1★ a turn for every port. → Sea Granaries: A city that levels up gains 1 extra population.
+  - *Exploration* (from Navigation): Charts and Compass: See 1 tile further around every unit and city. → Trade Winds: Boats and ships move 1 further. → Colonial Charters: Trade routes pay 50% more.
 
 ### Outer ring — Alignment (Wildcards, tier 4)
 Each gives its base perk always and **surges** with more while a map condition holds (a toast tells you when a surge starts or stops, and the readout under the score bar lists what is surging):

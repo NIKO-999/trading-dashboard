@@ -1,7 +1,7 @@
 {
   "name": "tessera",
   "private": true,
-  "version": "0.54.0",
+  "version": "0.55.0",
   "type": "module",
   "description": "Tessera \u2014 a turn-based tile-empire strategy game, installable as a PWA.",
   "scripts": {

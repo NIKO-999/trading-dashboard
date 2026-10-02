@@ -2,6 +2,8 @@ import type { Cond } from '../game/alignment';
 import { describePerk } from '../game/perks';
 import type { TribeId } from '../game/types';
 import { SKILLS } from './skills';
+import { DOCTRINES } from './doctrines';
+import { TRIBES, type Category } from './tribes';
 import { UNIQUE_TECHS } from './uniqueTechs';
 
 /**
@@ -9,9 +11,10 @@ import { UNIQUE_TECHS } from './uniqueTechs';
  *  - core    the 25 shared techs (the Core Domain), plus the two tier-3 forks (`fork`: one pick per group);
  *  - culture each empire's own 3-tech line (Master Culture), branching off a base tech;
  *  - aether  synergy nodes between two complete branches (`requires`), drawn in the middle ring;
- *  - wild    the outer Alignment ring: Wildcards that surge under a map condition (`cond`).
+ *  - wild    the outer Alignment ring: Wildcards that surge under a map condition (`cond`);
+ *  - doctrine the empire type's own branch (data/doctrines): War, Wealth or the Sea, three tracks of three techs.
  */
-export type TechRing = 'core' | 'fork' | 'culture' | 'aether' | 'wild';
+export type TechRing = 'core' | 'fork' | 'culture' | 'aether' | 'wild' | 'doctrine';
 
 export interface TechDef {
   id: string;
@@ -22,6 +25,8 @@ export interface TechDef {
   angle: number; // radial layout angle in degrees (0 = right, clockwise)
   ring: TechRing;
   tribe?: TribeId; // set on an empire's own skill line: only that empire can research it
+  category?: Category; // set on a doctrine: only empires of that type can research it
+  track?: string; // a doctrine's track
   requires?: string[]; // Aether Links: all of these must be known
   branches?: string;
   fork?: string; // fork group: learning one node seals the others
@@ -93,10 +98,16 @@ export const SKILL_DEFS: TechDef[] = SKILLS.map((k) => ({
   surge: k.surge?.map(describePerk).join(' '),
 }));
 
-export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries([...TECHS, ...UNIQUE_DEFS, ...SKILL_DEFS].map((t) => [t.id, t]));
+// Doctrines (data/doctrines.ts): each empire type's own branch.
+export const DOCTRINE_DEFS: TechDef[] = DOCTRINES.map((d) => ({
+  id: d.id, name: d.name, tier: d.tier, parent: d.parent, angle: 0, ring: 'doctrine', category: d.category, track: d.track, flavor: d.flavor,
+  unlocks: d.perks.map(describePerk).join(' '),
+}));
+
+export const TECH_BY_ID: Record<string, TechDef> = Object.fromEntries([...TECHS, ...UNIQUE_DEFS, ...SKILL_DEFS, ...DOCTRINE_DEFS].map((t) => [t.id, t]));
 
 /** Every tech this empire can research: the shared tree, the forks, links and wildcards, plus its own line. */
-export const techsFor = (tribe: TribeId): TechDef[] => [...TECHS, ...SKILL_DEFS, ...UNIQUE_DEFS.filter((t) => t.tribe === tribe)];
+export const techsFor = (tribe: TribeId): TechDef[] => [...TECHS, ...SKILL_DEFS, ...UNIQUE_DEFS.filter((t) => t.tribe === tribe), ...DOCTRINE_DEFS.filter((t) => t.category === TRIBES[tribe].category)];
 
 /** The other nodes of a fork group (sealed once one of the group is known). */
 export const forkRivals = (id: string): string[] => {
