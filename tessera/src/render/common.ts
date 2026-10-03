@@ -83,4 +83,6 @@ export interface Overlay {
   hudBottom?: number;
   /** The living layer (see render/living) shows the moving parts as sharp page elements: units with their badges and buttons, water life and banners are left out. */
   living?: boolean;
+  /** The viewer's rally flag (see game/rally), in its empire colour; `range` shades the tiles units can be called from while the picker is open. */
+  rally?: { x: number; y: number; r: number; color: string; range: boolean } | null;
 }

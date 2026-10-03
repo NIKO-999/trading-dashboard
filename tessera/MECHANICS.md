@@ -180,6 +180,14 @@ Details: a *ranged* attack is one from 2 or more tiles away. *Fortified* (Crossb
 - **Formations** add to the attack and defence above (§4a); the attack preview names them.
 - **Capturing:** a unit standing on an enemy city or an unclaimed **village** can capture it (villages become level-1 cities). A captured city loses its capital status and pending rewards; the capturer joins its garrison. Eliminating an empire's last city removes it. Taking a city founded by another people also offers one of that people's traditions (§10).
 
+## 4a. Rally flags (game/rally.ts)
+
+Tap any explored tile on your turn and choose **Plant a rally flag here**. Pick a range of 2–6 tiles from the flag. Your units in that range are listed, all ticked; untick any, or use Select all / none, then **March**. A player has one flag; planting it elsewhere moves it, and units whose old orders now lie outside the range stand down.
+
+- A unit under orders takes the reachable tile closest to the flag (its full move) straight away if it has not moved this turn, then again at the start of each of your turns. Land units never board a boat on the way and never step onto unexplored ground.
+- Its orders end when it stands on or next to the flag, when an enemy is within its attack range (it waits for you, and the camera goes to it), after two turns in which it can get no closer, or when you move or attack with it yourself.
+- Tap the flag to see how many are marching, call more units, or remove it (every march ends). The flag and the orders are saved with the game.
+
 ## 4a. Army: formations, upgrades and supply
 
 **Cavalry for every empire** (drawn in each empire's own style; all count as mounted for charges, Spearmen and mounted bonuses):

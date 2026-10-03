@@ -573,3 +573,21 @@ ul.traits .effect { display: block; font-weight: 600; }
 /* lists and cards keep a readable width */
 .desktop .modal { width: min(94vw, 520px); }
 .desktop .modal.stats, .desktop .modal.gov-card { width: min(94vw, 640px); }
+
+/* ------------------------------------------------ rally flag (see game/rally) */
+.rally-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 12px; }
+.rally-note { font-weight: 600; font-size: 0.95rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.rally-btn { padding: 8px 14px 6px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); color: #fff; font: inherit; font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
+.rally-btn.go { background: linear-gradient(180deg, #ffd24a, #e9a90f); border-color: #fff; color: #3a2a00; }
+.rally-btn:active { transform: scale(0.96); }
+.modal.rally-card .modal-body { font-size: 1rem; }
+.rally { display: flex; flex-direction: column; gap: 10px; }
+.rally p { margin: 0; }
+.rally-all { display: flex; justify-content: flex-end; }
+.rally-list { display: flex; flex-direction: column; gap: 6px; max-height: 42vh; overflow-y: auto; padding-right: 2px; -webkit-overflow-scrolling: touch; }
+.rally-unit { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.12); color: #fff; font: inherit; text-align: left; min-height: 46px; }
+.rally-unit.on { background: rgba(255,210,74,0.14); border-color: #ffd24a; }
+.rally-check { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 2px solid rgba(255,255,255,0.5); display: grid; place-items: center; font-weight: 700; color: #3a2a00; }
+.rally-unit.on .rally-check { background: #ffd24a; border-color: #ffd24a; }
+.rally-name { font-weight: 600; line-height: 1.2; }
+.desktop .rally-btn:hover, .desktop .rally-unit:hover { filter: brightness(1.15); }

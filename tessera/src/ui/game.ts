@@ -16,7 +16,7 @@ import { CLIMATE_INFO, isClimate } from '../data/terrain';
 import { UNITS } from '../data/units';
 import { aiStep } from '../game/ai';
 import { drain, type GameEvent } from '../game/events';
-import { tileAt } from '../game/grid';
+import { dist, tileAt } from '../game/grid';
 import {
   applyReward, attack, attackOptions, cityById, citiesOf, cityIncome, def, defenseBonus, doAction, popNeeded, hasTech, income, isExplored, maxHp,
   moveOptions, moveUnit, paxHolds, previewCombat, rewardOptions, score, seaBonus, tileActions, tileOwnerPlayer, unitAt, unitCap, attackRange, type Action } from '../game/rules';
@@ -53,6 +53,7 @@ import { unitPortrait } from './menu';
 import { showSharpnessTest } from './diag';
 import { modal, toast } from './modal';
 import { keyIsForPage, showShortcuts } from './desktop';
+import { clearRally, isRallying, orderRally, RALLY_DEFAULT, RALLY_RANGES, rallyCandidates, rallyOf, rallyStep, setRally, stopRally, type Rally, type RallyReport } from '../game/rally';
 import { showTechTree } from './techtree';
 import { adoptedLines, showCultureOffer } from './culture';
 import { adopt, offersOf } from '../game/culture';
@@ -570,6 +571,7 @@ export class GameView {
       case 'g': case 'G': this.openGovernment(); break;
       case 'e': case 'E': this.openStats(); break;
       case 'm': case 'M': this.openMenu(); break;
+      case 'f': case 'F': if (this.sel) this.openRally(this.sel.x, this.sel.y); break;
       case '?': showShortcuts(); break;
       default: {
         if (!/^[1-9]$/.test(k)) return;
@@ -646,11 +648,13 @@ export class GameView {
       const u = mine;
       if (this.ov.attacks.some((a) => a.x === x && a.y === y)) {
         const target = unitAt(this.s, x, y)!;
+        stopRally(u);
         this.rewardsAfter(this.act(() => attack(this.s, u, target))); // a kill can level up a city
         const still = this.s.units.includes(u);
         return this.select(still ? { x: u.x, y: u.y, mode: 'unit' } : null);
       }
       if (this.ov.moves.some((m) => m.x === x && m.y === y)) {
+        stopRally(u); // moving a unit by hand cancels its march to the flag
         this.rewardsAfter(this.act(() => moveUnit(this.s, u, x, y))); // stepping on ruins can level up a city
         const sp = this.tileScreen(x, y);
         if (sp.x < this.vw * 0.15 || sp.x > this.vw * 0.85 || sp.y < this.vh * 0.22 || sp.y > this.vh * 0.7) this.cam.glideTo(x, y, this.vw, this.vh * 0.9, 550);
@@ -808,6 +812,7 @@ export class GameView {
   // ------------------------------------------------------------ HUD & panel
 
   private refresh() {
+    if (!this.ov.rally?.range) this.syncRally(); // the flag follows whoever holds the device
     const p = this.s.players[this.me];
     const turnText = this.s.maxTurns > 0 ? `${Math.min(this.s.turn, this.s.maxTurns)}/${this.s.maxTurns}` : String(this.s.turn);
     const sc = score(this.s, this.me);
@@ -1001,6 +1006,113 @@ export class GameView {
 
   /** Bottom sheet for the selection: a title, a description and a row of round action buttons. */
   private updatePanel() {
+    this.buildPanel();
+    this.rallyRow();
+  }
+
+  // ------------------------------------------------------------ rally flag (see game/rally)
+
+  /** Draw the viewer's flag on the map (and the picker's range while it is open). */
+  private syncRally(range = false, at?: Rally) {
+    const f = at ?? rallyOf(this.s, this.me);
+    this.ov.rally = f ? { ...f, color: TRIBES[this.s.players[this.me].tribe].color, range } : null;
+    this.version++;
+  }
+
+  /** The flag's controls at the foot of the panel: plant or move it, call units, take it down, or stop one unit's march. */
+  private rallyRow() {
+    const sel = this.sel;
+    if (!sel || !this.myTurn() || this.busy || !isExplored(this.s, this.me, sel.x, sel.y)) return;
+    const flag = rallyOf(this.s, this.me);
+    const u = unitAt(this.s, sel.x, sel.y);
+    const pill = (label: string, onclick: () => void, cls = '') => h('button', { class: `rally-btn ${cls}`, onclick: () => { sfx.play('tap'); onclick(); } }, label);
+    const row = h('div', { class: 'rally-row' });
+    if (sel.mode === 'unit' && u && u.owner === this.me) {
+      if (isRallying(u)) row.append(h('span', { class: 'rally-note' }, '🚩 Marching to the flag'), pill('Stop', () => { stopRally(u); this.select(sel); }));
+      else if (flag && dist(u.x, u.y, flag.x, flag.y) <= flag.r && dist(u.x, u.y, flag.x, flag.y) > 1) row.append(pill('🚩 Send to the flag', () => { orderRally(this.s, this.me, [u.id]); this.marchNow(); }));
+    } else if (sel.mode === 'tile') {
+      if (flag && flag.x === sel.x && flag.y === sel.y) {
+        const n = this.s.units.filter((v) => v.owner === this.me && isRallying(v)).length;
+        row.append(h('span', { class: 'rally-note' }, `🚩 Rally flag${n ? ` · ${n} marching` : ''}`), pill('Call units', () => this.openRally(sel.x, sel.y), 'go'), pill('Remove', () => { clearRally(this.s, this.me); this.syncRally(); this.select(sel); }));
+      } else row.append(pill(flag ? '🚩 Move the rally flag here' : '🚩 Plant a rally flag here', () => this.openRally(sel.x, sel.y), 'go'));
+    }
+    if (row.childElementCount) this.panel.append(row);
+  }
+
+  /** The picker: how far to call units from, and which of them march (all of them unless you untick some). */
+  private openRally(x: number, y: number) {
+    if (!this.myTurn() || this.busy) return;
+    const prev = rallyOf(this.s, this.me);
+    let r = prev?.r ?? RALLY_DEFAULT;
+    const tribe = this.s.players[this.me].tribe;
+    const chosen = new Set<number>();
+    const ranges = h('div', { class: 'seg' });
+    const allBtn = h('button', { class: 'rally-btn' });
+    const list = h('div', { class: 'rally-list' });
+    const marchLabel = h('span', {}, 'March');
+    let cands: Unit[] = [];
+    const pickAll = () => { chosen.clear(); for (const u of cands) chosen.add(u.id); };
+    const draw = () => {
+      ranges.innerHTML = '';
+      for (const v of RALLY_RANGES) ranges.append(h('button', { class: v === r ? 'on' : '', onclick: () => { r = v; cands = rallyCandidates(this.s, this.me, x, y, r); pickAll(); draw(); } }, `${v}`));
+      list.innerHTML = '';
+      if (!cands.length) list.append(h('p', { class: 'muted small' }, `None of your units is within ${r} tiles. Pick a wider range, or plant the flag anyway and send units to it later.`));
+      for (const u of cands) {
+        const on = chosen.has(u.id);
+        const d = dist(u.x, u.y, x, y);
+        const note = d <= 1 ? 'already beside it' : isRallying(u) ? 'already marching' : u.moved ? 'moves next turn' : 'moves now';
+        list.append(h('button', { class: `rally-unit${on ? ' on' : ''}`, onclick: () => { if (on) chosen.delete(u.id); else chosen.add(u.id); draw(); } },
+          h('span', { class: 'rally-check' }, on ? '✓' : ''),
+          unitPortrait(u.kind, tribe, 34),
+          h('span', { class: 'rally-name' }, def(u).name, h('span', { class: 'muted small' }, ` ${d} ${d === 1 ? 'tile' : 'tiles'} · ${note}`)),
+        ));
+      }
+      allBtn.textContent = cands.length && chosen.size === cands.length ? 'Select none' : 'Select all';
+      marchLabel.textContent = chosen.size ? `March ${chosen.size}` : 'Plant flag';
+      this.syncRally(true, { x, y, r });
+    };
+    allBtn.addEventListener('click', () => { if (chosen.size === cands.length) chosen.clear(); else pickAll(); draw(); });
+    cands = rallyCandidates(this.s, this.me, x, y, r);
+    pickAll();
+    draw();
+    const body = h('div', { class: 'rally' },
+      h('p', { class: 'muted small' }, 'Units in range march towards the flag: now if they still can, then at the start of each of your turns, until they reach it. One stops if an enemy comes within its reach, and moving it yourself cancels its march.'),
+      h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Range'), ranges),
+      h('div', { class: 'rally-all' }, allBtn),
+      list);
+    modal({
+      title: 'Rally flag',
+      body: [body],
+      dismissable: true,
+      cls: 'rally-card',
+      buttons: [
+        { label: 'Cancel' },
+        { label: marchLabel, primary: true, onClick: () => {
+          setRally(this.s, this.me, x, y, r);
+          orderRally(this.s, this.me, [...chosen]);
+          this.syncRally();
+          this.marchNow();
+        } },
+      ],
+    });
+    // however the picker closes (a button, Esc, a tap outside), the range shading goes with it
+    const watch = setInterval(() => { if (!body.isConnected) { clearInterval(watch); this.syncRally(); } }, 200);
+  }
+
+  /** March every unit under orders that still can, and say how it went. */
+  private marchNow() {
+    if (!this.myTurn() || this.busy) return;
+    if (!this.s.units.some((u) => u.owner === this.me && isRallying(u))) return;
+    let rep: RallyReport = { moved: 0, arrived: 0, halted: [], stuck: 0 };
+    this.act(() => { rep = rallyStep(this.s, this.me); });
+    const bits = [rep.moved ? `${rep.moved} marched` : '', rep.arrived ? `${rep.arrived} reached the flag` : '', rep.halted.length ? `${rep.halted.length} stopped: an enemy is in reach` : '', rep.stuck ? `${rep.stuck} can get no closer` : ''].filter(Boolean);
+    if (bits.length) toast(`🚩 ${bits.join(' · ')}`, TRIBES[this.s.players[this.me].tribe].color);
+    if (rep.halted[0]) { const h0 = rep.halted[0]; this.cam.glideTo(h0.x, h0.y, this.vw, this.vh * 0.95, 400); this.select({ x: h0.x, y: h0.y, mode: 'unit' }); }
+    else if (this.sel) this.select(this.sel);
+    this.refresh();
+  }
+
+  private buildPanel() {
     const sel = this.sel;
     this.panel.innerHTML = '';
     this.panel.classList.toggle('hidden', !sel);
@@ -1588,6 +1700,7 @@ export class GameView {
       const mine = TRIBES[this.s.players[pid].tribe].people;
       for (const n of diploNews(this.s, pid, 4).reverse()) if (n.turn >= this.s.turn - 1 && n.text.includes(mine)) toast(n.text, TRIBES[this.s.players[pid].tribe].color);
     }
+    if (this.s.units.some((u) => u.owner === pid && isRallying(u))) setTimeout(() => { if (!this.destroyed && this.me === pid) this.marchNow(); }, 700); // units marching to the flag move on
     const welcomed = this.s.log.some((l) => l.text === `welcome:${pid}` || (l.text === 'welcome' && pid === this.s.players.findIndex((q) => q.human)));
     if (!welcomed) this.welcome();
     else {

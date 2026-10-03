@@ -632,6 +632,7 @@ function drawCityBorder(ctx: Ctx, s: GameState, cityId: number, now: number, exp
 }
 
 function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number, explored: (x: number, y: number) => boolean) {
+  if (ov.rally) drawRallyFlag(ctx, s, ov.rally, now, explored);
   if (ov.selected) {
     const t = tileAt(s, ov.selected.x, ov.selected.y);
     if (t && t.cityId !== null) drawCityBorder(ctx, s, t.cityId, now, explored);
@@ -687,6 +688,52 @@ function drawSelection(ctx: Ctx, s: GameState, ov: Overlay, now: number, explore
     ctx.ellipse(c.x, y, 14 + k * 8, 7 + k * 4, 0, 0, Math.PI * 2);
     ctx.stroke();
   });
+}
+
+/** The rally flag (see game/rally): a pole and a waving pennant in the empire's colour; while picking units, the tiles in range glow faintly. */
+function drawRallyFlag(ctx: Ctx, s: GameState, r: NonNullable<Overlay['rally']>, now: number, explored: (x: number, y: number) => boolean) {
+  if (r.range) {
+    ctx.save();
+    for (let y = r.y - r.r; y <= r.y + r.r; y++) for (let x = r.x - r.r; x <= r.x + r.r; x++) {
+      const t = tileAt(s, x, y);
+      if (!t || !explored(x, y)) continue;
+      const c = tileCenter(x, y);
+      diamondPath(ctx, c.x, c.y + (isWaterTile(t) ? WATER_DROP : 0), 0.96);
+      ctx.fillStyle = 'rgba(255,214,90,0.13)';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  const t = tileAt(s, r.x, r.y);
+  if (!t) return;
+  const c = tileCenter(r.x, r.y);
+  const bx = c.x + 4, by = c.y + (isWaterTile(t) ? WATER_DROP : 0) + 2;
+  const pulse = (Math.sin(now / 420) + 1) / 2;
+  glowDisc(ctx, bx - 4, by, 20, 'rgba(255,214,90,', 0.45 + pulse * 0.2); // a gold glow at its foot, so it reads apart from city banners
+  softShadow(ctx, bx, by + 1, 5, 2, 0.35);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3.4;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 40); ctx.stroke();
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 40); ctx.stroke();
+  const wave = Math.sin(now / 260) * 2;
+  const cloth = [bx, by - 40, bx + 21, by - 36 + wave, bx + 15, by - 30 + wave * 0.6, bx + 21, by - 24 + wave, bx, by - 23];
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i = 0; i < cloth.length; i += 2) (i ? ctx.lineTo : ctx.moveTo).call(ctx, cloth[i], cloth[i + 1]);
+  ctx.closePath();
+  ctx.fillStyle = r.color;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  poly(ctx, [bx, by - 40, bx + 21, by - 36 + wave, bx + 18, by - 34 + wave, bx, by - 37.6], shade(r.color, 0.3));
+  drawStar(ctx, bx + 8, by - 31 + wave * 0.5, 3.4, '#ffd24a'); // a gold star on the cloth
+  ellipse(ctx, bx, by - 41.5, 2, 2, '#ffd24a'); // finial
+  ctx.restore();
 }
 
 /** A soft round glow on the ground: `rgb` is 'rgba(r,g,b,' and `alpha` its strength at the centre. */

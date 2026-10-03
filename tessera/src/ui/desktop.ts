@@ -40,6 +40,7 @@ export const SHORTCUTS: [string, string][] = [
   ['W A S D / arrows', 'Pan the map'],
   ['+ − / mouse wheel', 'Zoom'],
   ['C', 'Centre on your capital'],
+  ['F', 'Rally flag on the selected tile'],
   ['T', 'Tech tree'],
   ['G', 'Govern'],
   ['E', 'Empires'],

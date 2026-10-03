@@ -4,6 +4,13 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.60',
+    items: [
+      '🚩 Rally flags: tap any tile and plant a rally flag, pick a range (2–6 tiles) and tick the units to send. All of them are ticked to start, and Select all / none switches them in one tap. They march there by themselves, now and at the start of each of your turns, until they arrive.',
+      '⚔ A marching unit stops and waits for you if an enemy comes within its reach, and moving it yourself cancels its march. Tap the flag to call more units or take it down. On a computer, F plants a flag on the selected tile.',
+    ],
+  },
+  {
     version: '0.59',
     items: [
       '🖥 A desktop layout: on a computer the city and unit panel opens down the right-hand side, the buttons stay in view, and New Game shows the empires beside the chosen empire and its options.',
