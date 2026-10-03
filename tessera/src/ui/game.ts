@@ -52,6 +52,7 @@ import { $ui, h, iconEl, paint, starSpan } from './dom';
 import { unitPortrait } from './menu';
 import { showSharpnessTest } from './diag';
 import { modal, toast } from './modal';
+import { keyIsForPage, showShortcuts } from './desktop';
 import { showTechTree } from './techtree';
 import { adoptedLines, showCultureOffer } from './culture';
 import { adopt, offersOf } from '../game/culture';
@@ -207,16 +208,17 @@ export class GameView {
     this.bottom = h('div', { class: 'bottom-bar' });
     // the vignette is a CSS layer (composited for free) rather than a full-screen gradient painted every frame
     root.append(h('div', { class: `game-ui${this.settings.buildInfo ? ' show-build' : ''}` }, h('div', { class: 'vignette' }), this.buildTag, this.hud, this.hint, this.banner, this.panel, this.bottom));
-    const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void) =>
-      h('button', { class: `dock-btn ${cls}`, onclick }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
+    const btn = (icon: Parameters<typeof iconEl>[0], label: string, cls: string, onclick: () => void, key?: string) =>
+      h('button', { class: `dock-btn ${cls}`, onclick, 'data-key': key, title: key ? `${label} (${key})` : label }, h('span', { class: 'round' }, iconEl(icon)), h('span', { class: 'dock-label' }, label));
     this.hud.after(this.chips.row);
     this.bottom.append(
-      btn('menu', 'Menu', 'dark', () => this.openMenu()),
-      btn('globe', 'Empires', 'dark', () => this.openStats()),
-      btn('tech', 'Tech Tree', 'blue', () => this.openTech()),
-      btn('column', 'Govern', 'dark gov-dock', () => this.openGovernment()), // governments and policy cards (see ui/government)
-      btn('check', 'End Turn', 'blue end-turn', () => void this.onEndTurn()),
+      btn('menu', 'Menu', 'dark', () => this.openMenu(), 'M'),
+      btn('globe', 'Empires', 'dark', () => this.openStats(), 'E'),
+      btn('tech', 'Tech Tree', 'blue', () => this.openTech(), 'T'),
+      btn('column', 'Govern', 'dark gov-dock', () => this.openGovernment(), 'G'), // governments and policy cards (see ui/government)
+      btn('check', 'End Turn', 'blue end-turn', () => void this.onEndTurn(), 'Enter'),
     );
+    root.querySelector('.game-ui')!.append(h('button', { class: 'key-hint', onclick: () => showShortcuts() }, '⌨ Shortcuts  ?'));
   }
 
   private resize() {
@@ -437,6 +439,7 @@ export class GameView {
     const c = this.canvas;
     const signal = this.inputAbort.signal;
     c.addEventListener('pointerdown', (e) => {
+      if (e.button === 2) return; // the right button closes the panel instead (see contextmenu below)
       sfx.unlock();
       this.cam.stop();
       vx = vy = 0;
@@ -513,6 +516,80 @@ export class GameView {
       e.preventDefault();
       this.cam.zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX, e.clientY);
     }, { passive: false, signal });
+    // a mouse: right-click closes the panel, and the keyboard drives the game (see ui/desktop for the list)
+    c.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!this.busy) this.select(null); }, { signal });
+    window.addEventListener('keydown', (e) => this.onKey(e), { signal });
+  }
+
+  /** Keyboard shortcuts. A dialog on top gets Esc and Enter; otherwise the keys act on the map. */
+  private onKey(e: KeyboardEvent) {
+    if (keyIsForPage(e)) return;
+    const k = e.key;
+    if ((k === 'Enter' || k === ' ') && (e.target as HTMLElement | null)?.tagName === 'BUTTON') { // a button still focused from a click must not fire again
+      e.preventDefault();
+      (e.target as HTMLElement).blur();
+    }
+    const ui = document.getElementById('ui')!;
+    const tree = ui.querySelector<HTMLElement>('.techtree');
+    const layers = ui.querySelectorAll<HTMLElement>('.modal-layer');
+    const top = layers[layers.length - 1];
+    if (tree || top) {
+      if (k === 'Escape') {
+        if (top) {
+          const btns = top.querySelectorAll<HTMLButtonElement>('.modal-buttons .mbtn');
+          if (top.classList.contains('dismissable')) top.remove();
+          else if (btns.length === 1) btns[0].click(); // a plain notice: its one button
+        } else tree!.querySelector<HTMLButtonElement>('[aria-label="Close skill tree"]')?.click();
+        e.preventDefault();
+      } else if (k === 'Enter' && top) {
+        const endAnyway = [...top.querySelectorAll<HTMLButtonElement>('.modal-buttons .mbtn')].find((b) => b.dataset.enter !== undefined);
+        if (endAnyway) { endAnyway.click(); e.preventDefault(); return; } // Enter twice ends the turn, as on a desktop strategy game
+        const primary = top.querySelectorAll<HTMLButtonElement>('.modal-buttons .mbtn.primary');
+        if (primary.length === 1) { primary[0].click(); e.preventDefault(); }
+      }
+      return;
+    }
+    if (document.querySelector('.pass-screen')) return; // Pass & Play hand-over: its own button
+    const pan = 90;
+    switch (k) {
+      case 'Escape': this.select(null); break;
+      case 'Enter': if (this.myTurn() && !this.busy) void this.onEndTurn(e.shiftKey); break; // Shift+Enter skips the "units haven't moved" check
+      case ' ': this.nextUnit(); break;
+      case 'ArrowLeft': case 'a': case 'A': this.cam.stop(); this.cam.x += pan; break;
+      case 'ArrowRight': case 'd': case 'D': this.cam.stop(); this.cam.x -= pan; break;
+      case 'ArrowUp': case 'w': case 'W': this.cam.stop(); this.cam.y += pan; break;
+      case 'ArrowDown': case 's': case 'S': this.cam.stop(); this.cam.y -= pan; break;
+      case '+': case '=': this.cam.zoomAt(1.15, this.vw / 2, this.vh / 2); break;
+      case '-': case '_': this.cam.zoomAt(1 / 1.15, this.vw / 2, this.vh / 2); break;
+      case 'c': case 'C': {
+        const cap = this.s.cities.find((c) => c.owner === this.me && c.capital);
+        if (cap) { this.cam.glideTo(cap.x, cap.y, this.vw, this.vh * 0.95, 350); this.select({ x: cap.x, y: cap.y, mode: 'tile' }); }
+        break;
+      }
+      case 't': case 'T': this.openTech(); break;
+      case 'g': case 'G': this.openGovernment(); break;
+      case 'e': case 'E': this.openStats(); break;
+      case 'm': case 'M': this.openMenu(); break;
+      case '?': showShortcuts(); break;
+      default: {
+        if (!/^[1-9]$/.test(k)) return;
+        const btn = this.panel.querySelectorAll<HTMLElement>('.sheet-actions > .rbtn')[Number(k) - 1];
+        if (!btn) return;
+        btn.click();
+      }
+    }
+    e.preventDefault();
+  }
+
+  /** Space: glide to the next of your units that has not moved yet this turn, and select it. */
+  private nextUnit() {
+    if (!this.myTurn() || this.busy) return;
+    const ready = this.s.units.filter((u) => u.owner === this.me && !u.moved).sort((a, b) => a.id - b.id);
+    if (!ready.length) { toast('Every unit has moved. Press Enter to end the turn.'); return; }
+    const cur = this.sel && this.sel.mode === 'unit' ? unitAt(this.s, this.sel.x, this.sel.y) : undefined;
+    const u = ready.find((r) => cur && r.id > cur.id) ?? ready[0];
+    this.cam.glideTo(u.x, u.y, this.vw, this.vh * 0.95, 300);
+    this.select({ x: u.x, y: u.y, mode: 'unit' });
   }
 
   /** A tap on one of the round buttons above the selected unit. */
@@ -1559,7 +1636,7 @@ export class GameView {
       body: [h('p', {}, 'Tap one to go to it, or end your turn anyway.'), h('div', { class: 'idle-list' }, ...rows), idle.length > 8 ? h('p', {}, `…and ${idle.length - 8} more.`) : ''],
       buttons: [
         { label: 'Show me', primary: true, onClick: () => goTo(idle[0]) },
-        { label: 'End turn anyway', onClick: () => void this.onEndTurn(true) },
+        { label: 'End turn anyway', enter: true, onClick: () => void this.onEndTurn(true) },
       ],
       dismissable: true,
     });
@@ -1701,6 +1778,7 @@ export class GameView {
         } },
         { label: 'Sharpness picker', onClick: () => this.showDisplayPicker() },
         { label: 'Sharpness test', onClick: () => showSharpnessTest() },
+        { label: 'Keyboard shortcuts', onClick: () => showShortcuts() },
         { label: 'Center on capital', onClick: () => { const c = citiesOf(this.s, this.me).find((k) => k.capital) ?? citiesOf(this.s, this.me)[0]; if (c) this.cam.glideTo(c.x, c.y, this.vw, this.vh * 0.95); } },
         { label: 'Quit to title', onClick: () => { if (!this.s.over) saveGame(this.s); this.onExit('title'); } },
       ],

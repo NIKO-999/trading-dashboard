@@ -13,6 +13,7 @@ import { HERO_JOIN_LEVEL, HEROES } from '../game/heroes';
 import { describePerk } from '../game/perks';
 import { roleName } from '../game/roles';
 import { SPECIALITY } from '../game/levels';
+import { applyLayout } from './desktop';
 import { TERRAIN_STYLES, type MapSize, type MapTerrain } from '../game/mapgen';
 import type { Difficulty, GameMode, TribeId } from '../game/types';
 import { drawUnitSprite } from '../render/draw';
@@ -325,14 +326,17 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
     const start = h('button', { class: 'pill wide', onclick: () => handlers.onNewGame(choice) }, 'START');
     if (problem) start.disabled = true;
 
+    const keepY = scroll.querySelector('.setup-side')?.scrollTop ?? 0; // the side column scrolls on its own on a desktop
     scroll.innerHTML = '';
-    const parts: (Node | null)[] = [
+    const pick: (Node | null)[] = [
       seg('Players', [[0, 'Solo'], [1, 'Pass & Play']], () => (choice.hotseat ? 1 : 0), (v) => { choice.hotseat = v === 1; render(); }),
       h('h3', {}, choice.hotseat ? 'Who plays each empire?' : 'Choose your empire'),
       cards,
       choice.hotseat
         ? h('p', { class: `setup-note${problem ? ' bad' : ''}` }, problem ?? `${humans} players take turns on this device, ${active - humans} AI ${active - humans === 1 ? 'rival' : 'rivals'}. Tap an empire to switch it between Player, AI and Off.`)
         : null,
+    ];
+    const parts: (Node | null)[] = [
       detail,
       choice.hotseat ? null : seg('Opponents', [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], () => choice.opponents, (v) => (choice.opponents = v)),
       seg('Map', [['normal', 'Normal'], ['large', 'Large'], ['huge', 'Huge'], ['giant', 'Giant'], ['epic', 'Epic']], () => choice.mapSize, (v) => (choice.mapSize = v)),
@@ -371,7 +375,10 @@ function showSetup(handlers: MenuHandlers, hotseat: boolean) {
         : 'Every empire is at war with every other, always.'),
       start,
     ];
-    scroll.append(...parts.filter((n): n is Node => n !== null));
+    // one column on a phone; on a desktop the empires fill the left and the chosen card and options stay in view on the right
+    const side = h('div', { class: 'setup-side' }, ...parts.filter((n): n is Node => n !== null));
+    scroll.append(h('div', { class: 'setup-cols' }, h('div', { class: 'setup-pick' }, ...pick.filter((n): n is Node => n !== null)), side));
+    side.scrollTop = keepY;
   };
   render();
   screen('setup', backBar(hotseat ? 'Pass & Play' : 'New Game', () => showTitle(handlers)), scroll);
@@ -449,6 +456,18 @@ function showSettings(handlers: MenuHandlers) {
     });
     return h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, label), b);
   };
+  const layoutRow = () => { // Auto: the desktop layout on a wide screen with a mouse (see ui/desktop)
+    const opts: ['auto' | 'desktop' | 'phone', string][] = [['auto', 'Auto'], ['desktop', 'Desktop'], ['phone', 'Phone']];
+    const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Layout'));
+    const group = h('div', { class: 'seg' });
+    const draw = () => {
+      group.innerHTML = '';
+      for (const [v, text] of opts) group.append(h('button', { class: (st.layout ?? 'auto') === v ? 'on' : '', onclick: () => { st.layout = v; saveSettings(st); applyLayout(v); draw(); } }, text));
+    };
+    draw();
+    row.append(group);
+    return row;
+  };
   const artRow = () => {
     const opts: [boolean, string][] = [[false, 'Soft'], [true, 'Crisp']];
     const row = h('div', { class: 'seg-row' }, h('div', { class: 'seg-label' }, 'Art style'));
@@ -488,6 +507,6 @@ function showSettings(handlers: MenuHandlers) {
   screen(
     'settings',
     backBar('Settings', () => showTitle(handlers)),
-    h('div', { class: 'scroll' }, toggle('Sound', 'sound'), toggle('Music', 'music'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), directRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
+    h('div', { class: 'scroll' }, layoutRow(), toggle('Sound', 'sound'), toggle('Music', 'music'), toggle('Guide hints', 'hints'), toggle('Fast rival turns', 'fastAi'), sharpRow(), artRow(), directRow(), h('button', { class: 'pill wide', onclick: () => showSharpnessTest() }, 'Sharpness test')),
   );
 }

@@ -68,6 +68,8 @@ export interface Settings {
   buildInfo?: boolean;
   /** The on-screen sharpness picker has been shown once. */
   displayPicked?: boolean;
+  /** Screen layout: Auto picks the desktop layout on a wide screen with a mouse (see ui/desktop). */
+  layout?: 'auto' | 'desktop' | 'phone';
 }
 /** iPhone / iPad Safari and web views: where the map has looked soft. */
 export const isIOS = () => typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1));

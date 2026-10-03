@@ -4,6 +4,14 @@ export interface News { version: string; items: string[] }
 
 export const NEWS: News[] = [
   {
+    version: '0.59',
+    items: [
+      '🖥 A desktop layout: on a computer the city and unit panel opens down the right-hand side, the buttons stay in view, and New Game shows the empires beside the chosen empire and its options.',
+      '⌨ Keyboard shortcuts: Enter ends the turn, Space jumps to the next unit, 1–9 press the panel’s actions, WASD or the arrows pan, + and − zoom, Esc or a right-click closes things, T / G / E / M open the Tech Tree, Govern, Empires and Menu. Press ? for the list.',
+      '⚙ Settings → Layout picks Auto, Desktop or Phone.',
+    ],
+  },
+  {
     version: '0.58',
     items: [
       '🌿 A fresh look for the Māori: golden flax cloaks and piupiu, red ochre, greenstone mere and a single huia feather in the topknot, instead of the heavy black.',

@@ -11,6 +11,7 @@ import { setDirectDraw } from './render/sprites';
 import { clearSave, loadGame, loadSettings, saveGame } from './save';
 import { GameView } from './ui/game';
 import { showTitle, type NewGameChoice } from './ui/menu';
+import { applyLayout } from './ui/desktop';
 import '@fontsource/josefin-sans/latin-300.css';
 import '@fontsource/josefin-sans/latin-400.css';
 import '@fontsource/josefin-sans/latin-600.css';
@@ -20,6 +21,7 @@ import '@fontsource/josefin-sans/latin-700-italic.css';
 import './style.css';
 
 registerSW({ immediate: true });
+applyLayout(); // the desktop layout on a wide screen with a mouse (see ui/desktop)
 sfx.enabled = loadSettings().sound;
 music.enabled = loadSettings().music;
 if (import.meta.env.DEV) Object.assign(window, { __music: music });

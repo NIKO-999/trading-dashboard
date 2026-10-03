@@ -5,6 +5,8 @@ export interface ModalButton {
   primary?: boolean;
   onClick?: () => void;
   keepOpen?: boolean;
+  /** The Enter key presses this button (see ui/game onKey). */
+  enter?: boolean;
 }
 
 /** Shows a centred card. Returns a close function. */
@@ -14,6 +16,7 @@ export function modal(opts: { title: string; body: (Node | string)[]; art?: Node
   const buttons = (opts.buttons ?? [{ label: 'OK', primary: true }]).map((b) =>
     h('button', {
       class: `mbtn${b.primary ? ' primary' : ''}`,
+      'data-enter': b.enter ? '' : undefined,
       onclick: () => {
         if (!b.keepOpen) close();
         b.onClick?.();
@@ -26,7 +29,10 @@ export function modal(opts: { title: string; body: (Node | string)[]; art?: Node
     buttons.length ? h('div', { class: 'modal-buttons' }, ...buttons) : null,
   );
   layer.append(card);
-  if (opts.dismissable) layer.addEventListener('click', (e) => e.target === layer && close());
+  if (opts.dismissable) {
+    layer.classList.add('dismissable'); // Esc closes it too (see ui/game onKey)
+    layer.addEventListener('click', (e) => e.target === layer && close());
+  }
   document.getElementById('ui')!.append(layer);
   return close;
 }
